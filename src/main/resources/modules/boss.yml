@@ -1,13 +1,46 @@
-# Cara pakai umum:
-# - enabled: true untuk aktif, false untuk mati.
-# - Setelah edit file ini, pakai /vs reload atau restart server.
-# - Jangan hapus spasi YAML dan tanda titik dua.
+# =========================================================
+# VELIORABOSS CONFIG
+# =========================================================
+# Fungsi:
+# - Event boss PvE. Admin bisa spawn boss manual.
+# - Damage player dicatat, top damage dapat reward coin.
+#
+# Cara pakai admin:
+# - /vboss spawn ancient_guardian
+# - /vboss status
+# - /vboss kill
+# - /vboss reload
+#
+# Cara tambah boss:
+# - copy ancient_guardian
+# - ganti type, health, name, dan reward
+# =========================================================
 
-# VelioraBoss: pondasi event boss PvE.
 enabled: true
+
 settings:
   auto-spawn: false
   spawn-interval-minutes: 120
+  default-boss: ancient_guardian
+
+bosses:
+  ancient_guardian:
+    type: ZOMBIE
+    name: '&cAncient Guardian'
+    health: 400
+    rewards:
+      top-damage-money: 2500
+
+  frost_reaper:
+    type: SKELETON
+    name: '&bFrost Reaper'
+    health: 350
+    rewards:
+      top-damage-money: 2200
+
 messages:
+  no-permission: '&8【&aVelioraBoss&8】 &cKamu tidak punya izin.'
+  reload: '&8【&aVelioraBoss&8】 &aConfig berhasil direload.'
   spawn: '&8【&aVelioraBoss&8】 &cBoss &f%boss% &cmuncul!'
   defeated: '&8【&aVelioraBoss&8】 &aBoss &f%boss% &aberhasil dikalahkan.'
+  top-damage-reward: '&8【&aVelioraBoss&8】 &aKamu mendapat reward top damage: &e%money% coin&a.'

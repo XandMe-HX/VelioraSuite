@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.2.0
+version: 1.5.0
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: Veliora Gardens
@@ -74,6 +74,7 @@ commands:
 
   vannounce:
     description: Admin announcement command.
+    aliases: [vannounce]
     permission: veliorasuite.announcement.admin
 
   kit:
@@ -89,6 +90,47 @@ commands:
   vf:
     description: VelioraFishing command.
     aliases: [veliorafishing]
+
+  vclearlag:
+    description: Manage VelioraClearLag.
+    aliases: [vclag, velioraclearlag]
+    permission: veliorasuite.clearlag.admin
+
+  vanti:
+    description: Manage VelioraAnti.
+    permission: veliorasuite.anti.admin
+
+  skills:
+    description: Open VelioraSkills profile.
+    aliases: [skill, sk]
+
+  vskills:
+    description: Admin command for VelioraSkills.
+    permission: veliorasuite.skills.admin
+
+  vquest:
+    description: VelioraQuest command.
+    aliases: [quest, quests]
+
+  vtrader:
+    description: VelioraTrader command.
+    aliases: [trader]
+
+  vboss:
+    description: VelioraBoss command.
+    permission: veliorasuite.boss.admin
+
+  daily:
+    description: Claim daily reward.
+    aliases: [reward, rewards]
+
+  vreward:
+    description: Admin command for VelioraRewards.
+    permission: veliorasuite.rewards.admin
+
+  vchat:
+    description: Manage VelioraChat.
+    permission: veliorasuite.chat.admin
 
 permissions:
   veliorasuite.admin:
@@ -173,3 +215,16 @@ permissions:
   veliorasuite.chat.admin:
     description: Allows managing Chat module.
     default: op
+
+  veliorasuite.anti.admin:
+    description: Manage VelioraAnti.
+    default: op
+  veliorasuite.quest.use:
+    description: Use VelioraQuest.
+    default: true
+  veliorasuite.trader.use:
+    description: Use VelioraTrader.
+    default: true
+  veliorasuite.daily.use:
+    description: Claim daily rewards.
+    default: true

@@ -1,26 +1,62 @@
-# Cara pakai umum:
-# - enabled: true untuk aktif, false untuk mati.
-# - Setelah edit file ini, pakai /vs reload atau restart server.
-# - Jangan hapus spasi YAML dan tanda titik dua.
+# =========================================================
+# VELIORAANTI CONFIG
+# =========================================================
+# Fungsi:
+# - Mengurangi spam chat, command spam, repeated message, caps berlebihan, dan kata terlarang.
+# - Ini bukan anti-cheat combat. Jangan dipakai untuk menggantikan anti-cheat besar.
+#
+# Cara pakai admin:
+# - /vanti status -> cek status cache anti spam
+# - /vanti reload -> reload file ini
+#
+# Tips edit:
+# - anti-caps default false karena player kadang pakai caps untuk bercanda.
+# - isi blocked-words dengan kata kasar/toxic yang mau diblokir.
+# =========================================================
 
-# VelioraAnti: keamanan chat ringan, bukan anti-cheat combat.
 enabled: true
+
 anti-spam:
   enabled: true
   chat-cooldown-seconds: 2
+
+anti-repeated:
+  enabled: true
+  cooldown-seconds: 10
+
 anti-caps:
   enabled: false
+  min-length: 8
   max-caps-percent: 80
+
 anti-command-spam:
   enabled: true
   default-cooldown-seconds: 3
   commands:
     rtp: 30
     tpa: 10
+    spawn: 5
+    kit: 3
+    kits: 3
+
+anti-bot:
+  enabled: true
+  window-seconds: 10
+  max-joins-same-ip: 3
+
 chat-filter:
   enabled: true
   blocked-words:
     - toxicword
+    - kontol
+    - memek
+
 messages:
+  no-permission: '&8【&aVelioraAnti&8】 &cKamu tidak punya izin.'
   spam: '&8【&aVelioraAnti&8】 &cJangan spam chat.'
-  command-cooldown: '&8【&aVelioraAnti&8】 &cTunggu sebelum memakai command itu lagi.'
+  repeated: '&8【&aVelioraAnti&8】 &cJangan kirim pesan yang sama berulang-ulang.'
+  caps: '&8【&aVelioraAnti&8】 &eCaps kamu dikurangi otomatis.'
+  blocked-word: '&8【&aVelioraAnti&8】 &cPesan kamu mengandung kata yang tidak diizinkan.'
+  command-cooldown: '&8【&aVelioraAnti&8】 &cTunggu sebentar sebelum memakai command itu lagi.'
+  bot-kick: '&cTerlalu banyak join dari IP yang sama. Coba lagi nanti.'
+  reload: '&8【&aVelioraAnti&8】 &aConfig berhasil direload.'

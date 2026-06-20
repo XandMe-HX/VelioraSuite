@@ -1,20 +1,44 @@
-# Cara pakai umum:
-# - enabled: true untuk aktif, false untuk mati.
-# - Setelah edit file ini, pakai /vs reload atau restart server.
-# - Jangan hapus spasi YAML dan tanda titik dua.
+# =========================================================
+# VELIORASKILLS CONFIG
+# =========================================================
+# Fungsi:
+# - Pengganti AuraSkills sederhana milik VelioraSuite.
+# - Player dapat exp skill dari mining, woodcutting, farming, fishing, dan combat.
+# - Mana regen otomatis dan bisa dipakai nanti untuk Quest/Skill lanjutan.
+#
+# Cara pakai player:
+# - /skills
+# - /sk
+#
+# Cara pakai admin:
+# - /vskills reload
+# =========================================================
 
-# VelioraSkills: pengganti AuraSkills versi Veliora.
 enabled: true
+
+settings:
+  base-exp: 100
+  exp-per-level: 50
+
 mana:
   enabled: true
   max: 20
   regen-amount: 1
   regen-seconds: 300
+
+gain:
+  mining: 5
+  woodcutting: 4
+  farming: 3
+  fishing: 5
+  combat: 6
+
 skills:
   mining: true
   woodcutting: true
   farming: true
   fishing: true
   combat: true
+
 messages:
   level-up: '&8【&aVelioraSkills&8】 &aSkill &f%skill% &anaik ke level &f%level%&a!'

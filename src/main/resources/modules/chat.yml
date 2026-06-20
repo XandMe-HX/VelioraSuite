@@ -1,12 +1,27 @@
-# Cara pakai umum:
-# - enabled: true untuk aktif, false untuk mati.
-# - Setelah edit file ini, pakai /vs reload atau restart server.
-# - Jangan hapus spasi YAML dan tanda titik dua.
+# =========================================================
+# VELIORACHAT CONFIG
+# =========================================================
+# Fungsi:
+# - Mengatur format chat basic.
+# - Team prefix bisa muncul dari VelioraTeam.
+#
+# Catatan penting:
+# - Kalau kamu masih pakai EssentialsChat dan sudah nyaman, biarkan format.enabled: false.
+# - Kalau ingin VelioraSuite yang mengatur chat, ubah format.enabled: true.
+#
+# Placeholder internal:
+# - %team_prefix% -> prefix team seperti 【GARDN】
+# - %player% -> nama player
+# - %message% -> isi chat
+# =========================================================
 
-# VelioraChat: pondasi format chat. Team prefix tetap dari VelioraTeam.
 enabled: true
+
 format:
   enabled: false
+  default-rank-prefix: ''
   pattern: '%team_prefix%%luckperms_prefix% %player% &8: &f%message%'
+
 messages:
+  no-permission: '&8【&aVelioraChat&8】 &cKamu tidak punya izin.'
   reload: '&8【&aVelioraChat&8】 &aConfig chat berhasil direload.'

@@ -1,21 +1,72 @@
-# Cara pakai umum:
-# - enabled: true untuk aktif, false untuk mati.
-# - Setelah edit file ini, pakai /vs reload atau restart server.
-# - Jangan hapus spasi YAML dan tanda titik dua.
+# =========================================================
+# VELIORAQUEST CONFIG
+# =========================================================
+# Fungsi:
+# - Sistem quest sederhana dari VelioraSuite.
+# - Player bisa start quest, progress otomatis, lalu claim reward otomatis saat selesai.
+#
+# Cara pakai player:
+# - /vquest list
+# - /vquest start <quest>
+# - /vquest status
+# - /vquest abandon
+#
+# Tipe quest:
+# - break: progress dari menghancurkan block
+# - kill: progress dari membunuh mob
+# - fish: progress dari mancing
+#
+# Cara tambah quest:
+# - copy salah satu quest di bawah
+# - ganti id, display-name, type, targets, target-amount, rewards
+# =========================================================
 
-# VelioraQuest: pondasi quest NPC/GUI. Belum mengganti plugin quest lain secara penuh.
 enabled: true
-settings:
-  use-gui: true
-  require-npc: true
-categories:
-  woodcutting: true
-  mining: true
-  farming: true
-  fishing: true
-  monster: true
-  enchanting: true
-  alchemy: true
-  cooking: true
+
+quests:
+  wood_1:
+    display-name: 'Woodcutting I'
+    type: break
+    targets: [OAK_LOG, BIRCH_LOG, SPRUCE_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG]
+    target-amount: 32
+    rewards:
+      money: 500
+      exp: 20
+
+  mining_1:
+    display-name: 'Mining I'
+    type: break
+    targets: [COAL_ORE, IRON_ORE, COPPER_ORE, DEEPSLATE_COAL_ORE, DEEPSLATE_IRON_ORE, DEEPSLATE_COPPER_ORE]
+    target-amount: 24
+    rewards:
+      money: 650
+      exp: 25
+
+  fishing_1:
+    display-name: 'Fishing I'
+    type: fish
+    targets: [ANY]
+    target-amount: 10
+    rewards:
+      money: 700
+      exp: 25
+
+  monster_1:
+    display-name: 'Monster Hunter I'
+    type: kill
+    targets: [ZOMBIE, SKELETON, SPIDER, CREEPER]
+    target-amount: 15
+    rewards:
+      money: 900
+      exp: 35
+
 messages:
-  open: '&8【&aVelioraQuest&8】 &aMembuka menu quest.'
+  reload: '&8【&aVelioraQuest&8】 &aConfig berhasil direload.'
+  not-found: '&8【&aVelioraQuest&8】 &cQuest &f%quest% &ctidak ditemukan.'
+  already-active: '&8【&aVelioraQuest&8】 &cKamu masih punya quest aktif. Selesaikan atau /vquest abandon.'
+  no-active: '&8【&aVelioraQuest&8】 &7Kamu belum punya quest aktif.'
+  started: '&8【&aVelioraQuest&8】 &aQuest &f%quest% &adimulai.'
+  status: '&8【&aVelioraQuest&8】 &f%quest% &7progress: &a%progress%&7/&a%target%'
+  progress: '&8【&aVelioraQuest&8】 &f%quest% &7progress: &a%progress%&7/&a%target%'
+  completed: '&8【&aVelioraQuest&8】 &aQuest &f%quest% &aselesai. Reward: &e%money% coin &7+ &b%exp% exp&a.'
+  abandoned: '&8【&aVelioraQuest&8】 &7Quest kamu dibatalkan.'

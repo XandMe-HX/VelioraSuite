@@ -1,13 +1,69 @@
-# Cara pakai umum:
-# - enabled: true untuk aktif, false untuk mati.
-# - Setelah edit file ini, pakai /vs reload atau restart server.
-# - Jangan hapus spasi YAML dan tanda titik dua.
+# =========================================================
+# VELIORATRADER CONFIG
+# =========================================================
+# Fungsi:
+# - Merchant GUI sederhana. Player ketik /vtrader lalu beli item pakai coin/Vault.
+# - Announcement otomatis bisa mengingatkan player bahwa trader tersedia.
+#
+# Cara pakai player:
+# - /vtrader
+#
+# Cara pakai admin:
+# - /vtrader reload
+#
+# Cara tambah item:
+# - copy item di bagian items
+# - ganti id, slot, material, amount, price, name, lore
+# =========================================================
 
-# VelioraTrader: pondasi trader/merchant event.
 enabled: true
+
 settings:
+  auto-announcement: true
   spawn-interval-minutes: 60
-  despawn-minutes: 20
+  location-name: 'Spawn'
+
+gui:
+  title: '&8Veliora Trader'
+  size: 27
+
+items:
+  golden_carrot:
+    enabled: true
+    slot: 10
+    material: GOLDEN_CARROT
+    amount: 16
+    price: 2500
+    name: '&6Golden Carrot x16'
+    lore:
+      - '&7Makanan premium untuk survival.'
+      - '&7Harga: &e%price% coin'
+  ender_pearl:
+    enabled: true
+    slot: 12
+    material: ENDER_PEARL
+    amount: 8
+    price: 4000
+    name: '&5Ender Pearl x8'
+    lore:
+      - '&7Item mobilitas.'
+      - '&7Harga: &e%price% coin'
+  name_tag:
+    enabled: true
+    slot: 14
+    material: NAME_TAG
+    amount: 1
+    price: 15000
+    name: '&fName Tag'
+    lore:
+      - '&7Untuk memberi nama mob.'
+      - '&7Harga: &e%price% coin'
+
 messages:
-  spawn: '&8【&aVelioraTrader&8】 &eTrader misterius muncul di &f%location%&e!'
+  no-permission: '&8【&aVelioraTrader&8】 &cKamu tidak punya izin.'
+  reload: '&8【&aVelioraTrader&8】 &aConfig berhasil direload.'
+  spawn: '&8【&aVelioraTrader&8】 &eTrader misterius tersedia di &f%location%&e! Ketik &a/vtrader&e.'
   despawn: '&8【&aVelioraTrader&8】 &7Trader telah pergi.'
+  economy-not-ready: '&8【&aVelioraTrader&8】 &cEconomy belum siap. Pastikan Vault aktif.'
+  not-enough-money: '&8【&aVelioraTrader&8】 &cCoin tidak cukup. Harga: &e%price% coin&c.'
+  bought: '&8【&aVelioraTrader&8】 &aKamu membeli &f%item% &adengan harga &e%price% coin&a.'

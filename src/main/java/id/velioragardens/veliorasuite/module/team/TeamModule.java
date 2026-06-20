@@ -46,6 +46,10 @@ public final class TeamModule extends AbstractModule {
         plugin.getLogger().info("VelioraTeam module stopped.");
     }
 
+    public TeamManager getTeamManager() {
+        return teamManager;
+    }
+
     private void reloadModuleOnly() {
         configFile.reload();
         if (teamManager != null) {
