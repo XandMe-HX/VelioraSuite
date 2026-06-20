@@ -16,6 +16,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +74,12 @@ public final class KitManager {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ColorUtil.color(configFile.get().getString(path + ".display.name", "&a" + id)));
         List<String> lore = new ArrayList<>();
-        for (String line : configFile.get().getStringList(path + ".display.lore")) lore.add(ColorUtil.color(line.replace("%status%", status(player, id))));
+        for (String line : configFile.get().getStringList(path + ".display.lore")) {
+            lore.add(ColorUtil.color(line
+                    .replace("%status%", status(player, id))
+                    .replace("%price%", priceText(id))
+                    .replace("%kit%", id)));
+        }
         meta.setLore(lore);
         meta.getPersistentDataContainer().set(kitKey, PersistentDataType.STRING, id);
         item.setItemMeta(meta);
@@ -80,15 +87,30 @@ public final class KitManager {
     }
 
     public boolean claim(Player player, String id, boolean adminGive) {
-        if (!configFile.get().isConfigurationSection("kits." + id)) { player.sendMessage(colorMsg("kit-not-found").replace("%kit%", id)); return false; }
-        if (!adminGive && !hasAccess(player, id)) { player.sendMessage(colorMsg("no-permission-kit")); return false; }
-        if (!adminGive && !canClaim(player, id)) { player.sendMessage(colorMsg("cooldown").replace("%time%", remaining(player, id))); return false; }
+        if (!configFile.get().isConfigurationSection("kits." + id)) {
+            player.sendMessage(colorMsg("kit-not-found").replace("%kit%", id));
+            return false;
+        }
+        if (!adminGive && !hasAccess(player, id)) {
+            player.sendMessage(colorMsg("no-permission-kit"));
+            return false;
+        }
+        if (!adminGive && !canClaim(player, id)) {
+            player.sendMessage(colorMsg("cooldown").replace("%time%", remaining(player, id)));
+            return false;
+        }
+        double cost = price(id);
+        boolean paidKit = !adminGive && priceEnabled(id) && cost > 0;
+        if (paidKit && !charge(player, id, cost)) {
+            return false;
+        }
         for (ItemStack item : buildItems(id)) {
             Map<Integer, ItemStack> leftovers = player.getInventory().addItem(item);
             for (ItemStack leftover : leftovers.values()) player.getWorld().dropItemNaturally(player.getLocation(), leftover);
         }
         if (!adminGive) setClaim(player, id);
-        player.sendMessage(colorMsg("claim-success").replace("%kit%", name(id)));
+        String key = paidKit ? "claim-success-paid" : "claim-success";
+        player.sendMessage(colorMsg(key).replace("%kit%", name(id)).replace("%price%", formatMoney(cost)));
         return true;
     }
 
@@ -134,7 +156,61 @@ public final class KitManager {
     private boolean canClaim(Player player, String id) { long claim = data.getLong("players." + player.getUniqueId() + "." + id + ".last-claim", 0); String cd = configFile.get().getString("kits." + id + ".cooldown", "0"); long millis = TimeUtil.parseDurationToMillis(cd); if (millis == -1L) return claim <= 0; return claim <= 0 || System.currentTimeMillis() - claim >= millis; }
     private void setClaim(Player player, String id) { data.set("players." + player.getUniqueId() + "." + id + ".last-claim", System.currentTimeMillis()); save(); }
     private String remaining(Player player, String id) { long claim = data.getLong("players." + player.getUniqueId() + "." + id + ".last-claim", 0); long millis = TimeUtil.parseDurationToMillis(configFile.get().getString("kits." + id + ".cooldown", "0")); if (millis == -1L) return "sudah pernah claim"; long left = Math.max(0, (claim + millis - System.currentTimeMillis()) / 1000); return TimeUtil.formatSeconds(left); }
-    private String status(Player player, String id) { if (!hasAccess(player, id)) return "&cTerkunci"; if (!canClaim(player, id)) return "&eCooldown: " + remaining(player, id); return "&aBisa claim"; }
+    private boolean priceEnabled(String id) {
+        return configFile.get().getBoolean("kits." + id + ".price.enabled", false);
+    }
+
+    private double price(String id) {
+        return Math.max(0.0D, configFile.get().getDouble("kits." + id + ".price.amount", 0.0D));
+    }
+
+    private Economy economy() {
+        return plugin.getHookManager() == null ? null : plugin.getHookManager().getEconomy();
+    }
+
+    private boolean charge(Player player, String id, double cost) {
+        Economy economy = economy();
+        if (economy == null) {
+            player.sendMessage(colorMsg("economy-not-ready"));
+            return false;
+        }
+        if (!economy.has(player, cost)) {
+            player.sendMessage(colorMsg("not-enough-money").replace("%price%", formatMoney(cost)).replace("%balance%", formatMoney(economy.getBalance(player))));
+            return false;
+        }
+        EconomyResponse response = economy.withdrawPlayer(player, cost);
+        if (!response.transactionSuccess()) {
+            player.sendMessage(colorMsg("payment-failed"));
+            return false;
+        }
+        return true;
+    }
+
+    private String priceText(String id) {
+        double cost = price(id);
+        if (!priceEnabled(id) || cost <= 0) return configFile.get().getString("gui.free-text", "Gratis");
+        return formatMoney(cost);
+    }
+
+    private String formatMoney(double amount) {
+        Economy economy = economy();
+        if (economy != null) return economy.format(amount);
+        if (amount == Math.floor(amount)) return String.format(Locale.US, "%,.0f coin", amount);
+        return String.format(Locale.US, "%,.2f coin", amount);
+    }
+
+    private String status(Player player, String id) {
+        if (!hasAccess(player, id)) return "&cTerkunci";
+        if (!canClaim(player, id)) return "&eCooldown: " + remaining(player, id);
+        if (priceEnabled(id) && price(id) > 0) {
+            Economy economy = economy();
+            if (economy == null) return "&cEconomy belum siap";
+            if (!economy.has(player, price(id))) return "&cCoin tidak cukup";
+            return "&aBisa beli";
+        }
+        return "&aBisa claim";
+    }
+
     private String name(String id) { return ColorUtil.color(configFile.get().getString("kits." + id + ".display.name", id)); }
     private String colorMsg(String key) { return ColorUtil.color(configFile.get().getString("messages." + key, "&cMessage not found: " + key).replace("%prefix%", configFile.get().getString("messages.prefix", "&8【&aVelioraKits&8】"))); }
 }

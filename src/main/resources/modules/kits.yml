@@ -4,17 +4,37 @@
 # Fungsi:
 # - Mengganti Essentials /kit dengan GUI kit punya VelioraSuite.
 # - Player cukup ketik /kit atau /kits, lalu klik item di GUI.
+# - Kit bisa gratis, butuh permission, bayar coin, atau permission + coin.
 # - Premium Kit dikunci pakai permission LuckPerms.
+#
+# Cara pakai player:
+# - /kit
+# - /kits
+# Keduanya akan membuka GUI kit.
+#
 # Cara pakai admin:
-# - /vkit reload
-# - /vkits give <player> <kit>
-# - /vkits reset <player> <kit>
-# Permission premium:
-# - veliorasuite.kits.premium.1
-# - veliorasuite.kits.premium.2
-# - veliorasuite.kits.premium.3
-# Catatan:
-# - Matikan /kit Essentials agar tidak bentrok.
+# - /vkit reload                    -> reload config kits setelah diedit
+# - /vkits give <player> <kit>       -> memberi kit ke player tanpa cooldown/biaya
+# - /vkits reset <player> <kit>      -> reset cooldown kit player
+#
+# Cara setting harga:
+# price.enabled: true  -> kit harus dibeli pakai coin/Vault
+# price.enabled: false -> kit gratis
+# price.amount: 25000  -> harga kit
+#
+# Cara setting permission premium:
+# - isi permission: 'veliorasuite.kits.premium.1'
+# - lalu kasih permission itu ke rank LuckPerms.
+# Contoh LuckPerms:
+# /lp group premium permission set veliorasuite.kits.premium.1 true
+# /lp group premiumplus permission set veliorasuite.kits.premium.2 true
+# /lp group ultimate permission set veliorasuite.kits.premium.3 true
+#
+# Catatan penting:
+# - Matikan command /kit dan /kits di Essentials agar tidak bentrok.
+# - Jangan hapus spasi YAML.
+# - Material wajib pakai nama item Minecraft/Paper, contoh: DIAMOND_SWORD.
+# - Enchant format: 'ENCHANT:LEVEL', contoh: 'PROTECTION:2'.
 # =========================================================
 
 enabled: true
@@ -22,14 +42,19 @@ enabled: true
 gui:
   title: '&8Veliora Kits'
   size: 27
+  free-text: 'Gratis'
 
 messages:
   prefix: '&8【&aVelioraKits&8】'
   claim-success: '%prefix% &aKamu berhasil mengambil kit &f%kit%&a.'
+  claim-success-paid: '%prefix% &aKamu berhasil membeli kit &f%kit% &adengan harga &e%price%&a.'
   no-permission-kit: '%prefix% &cKamu belum punya akses ke kit ini.'
   cooldown: '%prefix% &cKit ini belum bisa diambil. Tunggu &f%time%&c.'
   kit-not-found: '%prefix% &cKit &f%kit% &ctidak ditemukan.'
   not-enough-space: '%prefix% &cInventory penuh. Item sisa dijatuhkan ke tanah.'
+  not-enough-money: '%prefix% &cCoin kamu tidak cukup. Harga kit ini &e%price%&c. Coin kamu sekarang &e%balance%&c.'
+  economy-not-ready: '%prefix% &cEconomy belum siap. Pastikan Vault dan plugin economy aktif.'
+  payment-failed: '%prefix% &cPembayaran gagal. Coba lagi atau hubungi admin.'
 
 kits:
   starter:
@@ -37,12 +62,16 @@ kits:
     slot: 10
     permission: ''
     cooldown: 'once'
+    price:
+      enabled: false
+      amount: 0
     display:
       material: CHEST
       locked-material: BARRIER
       name: '&aStarter Kit'
       lore:
         - '&7Kit awal untuk semua player.'
+        - '&7Harga: &f%price%'
         - '&7Status: %status%'
         - ''
         - '&eKlik untuk claim.'
@@ -75,15 +104,19 @@ kits:
     slot: 12
     permission: ''
     cooldown: '24h'
+    price:
+      enabled: true
+      amount: 5000
     display:
       material: BREAD
       locked-material: BARRIER
       name: '&eFood Kit'
       lore:
         - '&7Makanan dan bibit untuk survival.'
+        - '&7Harga: &f%price%'
         - '&7Status: %status%'
         - ''
-        - '&eKlik untuk claim.'
+        - '&eKlik untuk claim/beli.'
     items:
       - material: BREAD
         amount: 64
@@ -99,15 +132,20 @@ kits:
     slot: 14
     permission: 'veliorasuite.kits.premium.1'
     cooldown: '7d'
+    price:
+      enabled: true
+      amount: 25000
     display:
       material: IRON_CHESTPLATE
       locked-material: BARRIER
       name: '&bPremium Kit 1'
       lore:
         - '&7Butuh permission premium 1.'
+        - '&7Permission: &fveliorasuite.kits.premium.1'
+        - '&7Harga: &f%price%'
         - '&7Status: %status%'
         - ''
-        - '&eKlik untuk claim.'
+        - '&eKlik untuk beli/claim.'
     items:
       - material: IRON_HELMET
         amount: 1
@@ -135,15 +173,20 @@ kits:
     slot: 15
     permission: 'veliorasuite.kits.premium.2'
     cooldown: '7d'
+    price:
+      enabled: true
+      amount: 50000
     display:
       material: DIAMOND_CHESTPLATE
       locked-material: BARRIER
       name: '&dPremium Kit 2'
       lore:
         - '&7Butuh permission premium 2.'
+        - '&7Permission: &fveliorasuite.kits.premium.2'
+        - '&7Harga: &f%price%'
         - '&7Status: %status%'
         - ''
-        - '&eKlik untuk claim.'
+        - '&eKlik untuk beli/claim.'
     items:
       - material: DIAMOND_HELMET
         amount: 1
@@ -171,15 +214,20 @@ kits:
     slot: 16
     permission: 'veliorasuite.kits.premium.3'
     cooldown: '7d'
+    price:
+      enabled: true
+      amount: 100000
     display:
       material: NETHERITE_CHESTPLATE
       locked-material: BARRIER
       name: '&6Premium Kit 3'
       lore:
         - '&7Butuh permission premium 3.'
+        - '&7Permission: &fveliorasuite.kits.premium.3'
+        - '&7Harga: &f%price%'
         - '&7Status: %status%'
         - ''
-        - '&eKlik untuk claim.'
+        - '&eKlik untuk beli/claim.'
     items:
       - material: NETHERITE_HELMET
         amount: 1
