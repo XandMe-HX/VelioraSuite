@@ -1,0 +1,61 @@
+# =========================================================
+# VELIORA LOGIN SECURITY CONFIG
+# =========================================================
+# Fungsi:
+# - Sistem /register dan /login untuk server offline-mode/cracked.
+# - Player yang belum login tidak bisa gerak, chat, command, break, place.
+# Cara pakai player:
+# - /register Password123 Password123
+# - /login Password123
+# - /changepass PasswordLama PasswordBaru
+# Admin:
+# - /vls reload
+# - /vls setpass <player> <newPassword>
+# - /vls unregister <player>
+# =========================================================
+
+enabled: true
+
+register:
+  min-password-length: 6
+  max-password-length: 32
+  require-confirm-password: true
+  block-player-name-password: true
+
+login:
+  max-failed-attempts: 5
+  kick-on-max-failed: true
+  timeout-seconds: 60
+
+protection:
+  block-movement: true
+  block-chat: true
+  block-commands: true
+  allowed-commands-before-login:
+    - login
+    - register
+
+messages:
+  prefix: '&8【&aVelioraLogin&8】'
+  usage-register: '%prefix% &eGunakan: &f/register <password> <confirmPassword> &7Contoh: &f/register Password123 Password123'
+  usage-login: '%prefix% &eGunakan: &f/login <password> &7Contoh: &f/login Password123'
+  usage-changepass: '%prefix% &eGunakan: &f/changepass <passwordLama> <passwordBaru> &7Contoh: &f/changepass Password123 PasswordBaru123'
+  need-register: '%prefix% &eKamu belum register. Gunakan &f/register Password123 Password123&e.'
+  need-login: '%prefix% &eKamu belum login. Gunakan &f/login Password123&e.'
+  need-login-or-register: '%prefix% &eKamu harus login/register dulu sebelum bermain.'
+  register-success: '%prefix% &aRegister berhasil. Selamat bermain!'
+  login-success: '%prefix% &aLogin berhasil. Selamat bermain!'
+  logout-success: '%prefix% &aKamu berhasil logout. Login lagi untuk bermain.'
+  changepass-success: '%prefix% &aPassword berhasil diganti.'
+  wrong-password: '%prefix% &cPassword salah. Percobaan: &f%attempt%&c/&f%max_attempts%&c.'
+  wrong-old-password: '%prefix% &cPassword lama salah.'
+  too-many-attempts: '&cTerlalu banyak salah password.'
+  password-not-match: '%prefix% &cPassword konfirmasi tidak sama.'
+  already-registered: '%prefix% &cKamu sudah register.'
+  already-logged-in: '%prefix% &cKamu sudah login.'
+  invalid-password-length: '%prefix% &cPassword harus %min%-%max% karakter.'
+  password-same-name: '%prefix% &cPassword tidak boleh sama dengan nama player.'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  reload: '%prefix% &aConfig login berhasil direload.'
+  admin-setpass: '%prefix% &aPassword player &f%player% &aberhasil direset.'
+  admin-unregister: '%prefix% &aAkun login player &f%player% &aberhasil dihapus.'

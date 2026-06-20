@@ -1,0 +1,38 @@
+# =========================================================
+# VELIORASUITE - MAIN CONFIG
+# =========================================================
+# Cara pakai:
+# 1. true  = module aktif
+# 2. false = module mati
+# 3. Setelah edit, restart server atau gunakan /vs reload
+# 4. File module ada di folder plugins/VelioraSuite/modules/
+# 5. Jangan hapus tanda petik, titik dua, atau spasi YAML.
+# =========================================================
+
+settings:
+  debug: false
+  prefix: '&8【&aVelioraSuite&8】'
+
+storage:
+  # Untuk sekarang SQLite paling simple karena tidak butuh database luar.
+  type: sqlite
+  sqlite:
+    file: database.db
+
+modules:
+  clearlag: true
+  anti: true
+  quest: true
+  skills: true
+  trader: true
+  fishing: true
+  boss: true
+  rewards: true
+  chat: true
+  team: true
+  guide: true
+  security: true
+  login: true
+  report: true
+  announcement: true
+  kits: true

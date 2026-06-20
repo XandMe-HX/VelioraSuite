@@ -1,0 +1,16 @@
+# Cara pakai umum:
+# - enabled: true untuk aktif, false untuk mati.
+# - Setelah edit file ini, pakai /vs reload atau restart server.
+# - Jangan hapus spasi YAML dan tanda titik dua.
+
+# VelioraRewards: hadiah harian kecil agar ekonomi tidak rusak.
+enabled: true
+daily:
+  enabled: true
+  cooldown-hours: 24
+  rewards:
+    money: 250
+    exp: 25
+messages:
+  claim: '&8【&aVelioraRewards&8】 &aKamu berhasil claim daily reward.'
+  cooldown: '&8【&aVelioraRewards&8】 &cDaily reward masih cooldown.'

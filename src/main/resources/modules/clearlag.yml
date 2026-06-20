@@ -1,0 +1,32 @@
+# Cara pakai umum:
+# - enabled: true untuk aktif, false untuk mati.
+# - Setelah edit file ini, pakai /vs reload atau restart server.
+# - Jangan hapus spasi YAML dan tanda titik dua.
+
+# VelioraClearLag: pembersih item/entity agar server lebih ringan.
+enabled: true
+auto-clear:
+  enabled: true
+  interval-seconds: 600
+  minimum-item-age-seconds: 300
+warning:
+  enabled: true
+  times: [60, 10]
+remove:
+  dropped-items: true
+  experience-orbs: true
+  arrows: true
+protect:
+  armor-stands: true
+  villagers: true
+  named-entities: true
+  tamed-animals: true
+  vehicles-with-passenger: true
+whitelist-items:
+  - DIAMOND
+  - EMERALD
+  - NETHERITE_INGOT
+  - ENCHANTED_BOOK
+messages:
+  warning: '&8【&aVelioraClearLag&8】 &eItem di tanah akan dibersihkan dalam &f%time% &edetik.'
+  cleared: '&8【&aVelioraClearLag&8】 &aMembersihkan &f%amount% &aitem.'

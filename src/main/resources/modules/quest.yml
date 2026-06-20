@@ -1,0 +1,21 @@
+# Cara pakai umum:
+# - enabled: true untuk aktif, false untuk mati.
+# - Setelah edit file ini, pakai /vs reload atau restart server.
+# - Jangan hapus spasi YAML dan tanda titik dua.
+
+# VelioraQuest: pondasi quest NPC/GUI. Belum mengganti plugin quest lain secara penuh.
+enabled: true
+settings:
+  use-gui: true
+  require-npc: true
+categories:
+  woodcutting: true
+  mining: true
+  farming: true
+  fishing: true
+  monster: true
+  enchanting: true
+  alchemy: true
+  cooking: true
+messages:
+  open: '&8【&aVelioraQuest&8】 &aMembuka menu quest.'

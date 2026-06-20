@@ -1,0 +1,108 @@
+# =========================================================
+# VELIORATEAM CONFIG
+# =========================================================
+# Cara pakai:
+# - Player pakai /vteam create <nama>
+# - /team sengaja tidak dipakai karena bentrok dengan command vanilla Minecraft.
+# - Nama team muncul di chat seperti: 【GARDN】 [Rank] XandMe: halo
+# - Untuk chat khusus team pakai /vteam msg <pesan>
+# - Setelah edit file ini, pakai /vteam reload
+# =========================================================
+
+enabled: true
+
+settings:
+  create-cost: 250000
+  upgrade-cost: 500000
+  allow-offline-targets: false
+
+  name:
+    min-length: 5
+    max-length: 6
+    letters-only: true
+    allow-numbers: false
+    allow-symbols: false
+    force-uppercase: true
+
+  limits:
+    default-max-members: 5
+    upgraded-max-members: 10
+    max-upgrade-level: 2
+    one-team-per-player: true
+
+permissions:
+  owner-can-add-admin: true
+  owner-can-add-member: true
+  admin-can-add-member: true
+  owner-can-kick: true
+  admin-can-kick: false
+  owner-can-upgrade: true
+  admin-can-upgrade: true
+
+economy:
+  enabled: true
+  require-vault: true
+  money-format: '%,d'
+
+chat:
+  enabled: true
+  bracket-left: '【'
+  bracket-right: '】'
+  no-team-placeholder: ''
+  format: '&8【&a%team%&8】 '
+
+blacklist:
+  enabled: true
+  blocked-names:
+    - TOXIC
+    - ADMIN
+    - OWNER
+    - STAFF
+    - MOD
+    - ANJING
+    - TOLOL
+    - BANGSAT
+    - KONTOL
+    - MEMEK
+
+messages:
+  prefix: '&8【&aVelioraTeam&8】'
+
+  general:
+    team-not-found: '%prefix% &cTeam tidak ditemukan.'
+
+  create:
+    success: '%prefix% &aTeam &8【&f%team%&8】 &aberhasil dibuat dengan biaya &e%cost%&a.'
+    already-in-team: '%prefix% &cKamu sudah berada di team.'
+    not-enough-money: '%prefix% &cUangmu tidak cukup. Dibutuhkan &e%cost%&c.'
+    invalid-name: '%prefix% &cNama team harus %min%-%max% huruf, tanpa angka dan simbol.'
+    blocked-name: '%prefix% &cNama team tersebut tidak diizinkan.'
+    already-exists: '%prefix% &cTeam dengan nama itu sudah ada.'
+
+  upgrade:
+    success: '%prefix% &aTeam &8【&f%team%&8】 &aberhasil di-upgrade. Slot sekarang &e%max_members%&a.'
+    max-level: '%prefix% &cTeam ini sudah mencapai batas upgrade maksimal.'
+    not-owner-or-admin: '%prefix% &cHanya owner/admin team yang bisa upgrade.'
+    not-enough-money: '%prefix% &cUangmu tidak cukup untuk upgrade. Dibutuhkan &e%cost%&c.'
+
+  member:
+    add-success: '%prefix% &aPlayer &f%player% &aberhasil ditambahkan ke team.'
+    admin-add-success: '%prefix% &aPlayer &f%player% &asekarang menjadi admin team.'
+    team-full: '%prefix% &cTeam sudah penuh. Upgrade team untuk menambah slot.'
+    not-in-team: '%prefix% &cKamu tidak berada di team mana pun.'
+    target-not-found: '%prefix% &cPlayer tersebut tidak ditemukan.'
+    target-already-in-team: '%prefix% &cPlayer tersebut sudah punya team.'
+    no-permission-team: '%prefix% &cKamu tidak punya izin untuk mengatur team ini.'
+
+  kick:
+    success: '%prefix% &aPlayer &f%player% &aberhasil dikeluarkan dari team.'
+    owner-cannot-kick-self: '%prefix% &cOwner tidak bisa kick diri sendiri. Gunakan fitur disband jika nanti dibuat.'
+
+  leave:
+    confirm: '%prefix% &eKamu yakin ingin keluar dari team &8【&f%team%&8】&e? Ketik &a/yes &eatau &c/no&e.'
+    success: '%prefix% &aKamu berhasil keluar dari team &8【&f%team%&8】&a.'
+    cancelled: '%prefix% &7Keluar team dibatalkan.'
+
+  team-chat:
+    empty: '%prefix% &cPesan team tidak boleh kosong.'
+    format: '&8【&aTeam %team%&8】 &f%player%&7: &f%message%'

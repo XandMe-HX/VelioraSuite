@@ -1,0 +1,3 @@
+package id.velioragardens.veliorasuite.module.kits;
+import org.bukkit.event.EventHandler; import org.bukkit.event.Listener; import org.bukkit.event.inventory.InventoryClickEvent; import org.bukkit.entity.Player;
+public final class KitListener implements Listener { private final KitManager manager; public KitListener(KitManager manager){this.manager=manager;} @EventHandler public void onClick(InventoryClickEvent event){ if (!(event.getWhoClicked() instanceof Player player)) return; if (!event.getView().getTitle().equals(manager.title())) return; event.setCancelled(true); String id = manager.getKitFromItem(event.getCurrentItem()); if (id != null) manager.claim(player, id, false); } }

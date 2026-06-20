@@ -1,0 +1,304 @@
+# =========================================================
+# VELIORAGUIDE CONFIG
+# =========================================================
+# Fungsi:
+# - Mengirim panduan server ke chat dengan sistem halaman.
+# - Java bisa klik tombol Next/Back.
+# - Bedrock bisa ketik manual, contoh /vguide 2.
+# Cara edit:
+# - Tambah halaman di guides.guide.pages.<nomor>
+# - Tambah lines sesuai kebutuhan.
+# - Pakai /vguide reload setelah edit.
+# Format wajib per command:
+# [ Command ] -> perintah
+# [ Kegunaan ] -> buat apa
+# [ Contoh ] -> contoh yang benar
+# [ Cara Pakai ] -> langkah-langkah
+# =========================================================
+
+enabled: true
+
+navigation:
+  enabled: true
+  clickable-java: true
+  show-manual-command: true
+  buttons:
+    back: '&8[&e< Back&8]'
+    next: '&8[&aNext >&8]'
+
+messages:
+  prefix: '&8【&aVelioraGuide&8】'
+  general:
+    no-permission: '%prefix% &cKamu tidak punya izin.'
+    reloaded: '%prefix% &aGuide berhasil direload.'
+    invalid-page: '%prefix% &cHalaman &f%page% &ctidak valid.'
+    no-pages: '%prefix% &cBelum ada halaman untuk guide ini.'
+
+guides:
+  rules:
+    settings:
+      default-page: 1
+    pages:
+      1:
+        title: 'Veliora Server Rules'
+        lines:
+          - '&8〔 &aVeliora Server Rules &8〕'
+          - ''
+          - '&7[ &fAturan Umum &7]'
+          - '&f- Dilarang toxic, menghina, atau rasis.'
+          - '&f- Dilarang spam chat atau flood.'
+          - '&f- Dilarang promosi tanpa izin.'
+          - '&f- Wajib saling menghargai.'
+          - '&f- Gunakan bahasa yang sopan.'
+          - ''
+          - '&7[ &fGameplay &7]'
+          - '&f- Dilarang cheat, hack, x-ray.'
+          - '&f- Dilarang bug abuse / exploit.'
+          - '&f- Wajib lapor jika ada bug.'
+          - '&f- Dilarang memanfaatkan bug sistem.'
+      2:
+        title: 'Rules Boss Ekonomi'
+        lines:
+          - '&8〔 &aBoss, Ekonomi, Sanksi &8〕'
+          - ''
+          - '&7[ &fBoss & Mob &7]'
+          - '&f- Dilarang spam kill dragon.'
+          - '&f- Warden max 2x kill.'
+          - '&f- Cooldown 2 hari.'
+          - ''
+          - '&7[ &fEkonomi &7]'
+          - '&f- Dilarang jual beli uang real.'
+          - '&f- Pelanggaran bisa kick / ban.'
+          - ''
+          - '&7[ &fSanksi &7]'
+          - '&f- 1x: peringatan.'
+          - '&f- 2x: ban 15 hari.'
+          - '&f- Berat: kick / ban.'
+          - ''
+          - '&7Keputusan staff bersifat mutlak.'
+
+  product:
+    settings:
+      default-page: 1
+    pages:
+      1:
+        title: 'Veliora Product'
+        lines:
+          - '&8〔 &aVeliora Product &8〕'
+          - ''
+          - '&7[ &fInfo &7]'
+          - '&fProduk server bisa berupa rank, kit premium, item kosmetik, atau layanan event.'
+          - ''
+          - '&7[ &fCara Tanya &7]'
+          - '&f1. Hubungi staff.'
+          - '&f2. Tanyakan produk yang tersedia.'
+          - '&f3. Ikuti arahan pembayaran resmi.'
+          - ''
+          - '&7[ &fCatatan &7]'
+          - '&fJangan transaksi dengan player yang mengaku staff.'
+
+  guide:
+    settings:
+      default-page: 1
+    pages:
+      1:
+        title: 'Login Security'
+        lines:
+          - '&8〔 &aVeliora Login Security &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/register <password> <confirmPassword>'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMendaftarkan akun agar nama player kamu aman.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/register Password123 Password123'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Join server.'
+          - '&f2. Ketik contoh command di atas.'
+          - '&f3. Jika berhasil, akun kamu tersimpan.'
+          - '&f4. Setelah itu kamu bisa bermain.'
+      2:
+        title: 'Login Command'
+        lines:
+          - '&8〔 &aLogin Command &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/login <password>'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMasuk ke akun yang sudah terdaftar.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/login Password123'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Join server.'
+          - '&f2. Ketik /login Password123.'
+          - '&f3. Jika password benar, kamu bisa bermain.'
+      3:
+        title: 'Team Command'
+        lines:
+          - '&8〔 &aVelioraTeam &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/vteam create <nama>'
+          - '&a/vteam msg <pesan>'
+          - '&a/vteam leave'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMembuat team dan chat khusus team.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/vteam create GARDN'
+          - '&a/vteam msg ayo mining bareng'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Ketik /vteam create GARDN.'
+          - '&f2. Bayar biaya pembuatan team.'
+          - '&f3. Gunakan /vteam addmember XandMe untuk tambah member.'
+          - '&f4. Gunakan /vteam msg <pesan> untuk chat team.'
+      4:
+        title: 'Kits Command'
+        lines:
+          - '&8〔 &aVelioraKits &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/kit'
+          - '&a/kits'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMembuka menu kit server.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/kits'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Ketik /kits.'
+          - '&f2. GUI kit akan terbuka.'
+          - '&f3. Klik kit yang tersedia.'
+          - '&f4. Item masuk ke inventory.'
+          - ''
+          - '&7[ &fCatatan &7]'
+          - '&fPremium kit butuh permission rank premium.'
+      5:
+        title: 'Report Command'
+        lines:
+          - '&8〔 &aVelioraReport &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/report <player> <alasan>'
+          - '&a/bugreport <pesan>'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMelaporkan player mencurigakan atau bug server.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/report Player123 cheat hit jauh'
+          - '&a/bugreport NPC quest tidak bisa diklik'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Ketik contoh command.'
+          - '&f2. Report masuk ke admin.'
+          - '&f3. Tunggu staff mengecek laporan.'
+      6:
+        title: 'Fishing Command'
+        lines:
+          - '&8〔 &aVelioraFishing &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/vf top'
+          - '&a/vf stats'
+          - '&a/vf sell'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMelihat ranking, statistik, dan menjual ikan custom.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/vf top'
+          - '&a/vf sell'
+          - ''
+          - '&7[ &fCara Fishing &7]'
+          - '&f1. Pegang fishing rod.'
+          - '&f2. Lempar pancing ke air.'
+          - '&f3. Tunggu ikan menggigit.'
+          - '&f4. Klik kanan saat waktunya.'
+          - '&f5. Kamu bisa dapat ikan vanilla, custom, mythic, atau secret.'
+      7:
+        title: 'Basic Command'
+        lines:
+          - '&8〔 &aBasic Server Command &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/spawn'
+          - '&a/tpa <nama>'
+          - '&a/tpaccept'
+          - '&a/tpdeny'
+          - '&a/rtp'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/tpa XandMe'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Pakai /spawn untuk kembali ke spawn.'
+          - '&f2. Pakai /tpa XandMe untuk minta teleport.'
+          - '&f3. Pakai /rtp untuk mencari tempat survival.'
+      8:
+        title: 'Economy Command'
+        lines:
+          - '&8〔 &aEconomy Command &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/balance'
+          - '&a/baltop'
+          - '&a/shop'
+          - '&a/sellgui'
+          - '&a/pay <nama> <jumlah>'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/pay XandMe 1000'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Cek uang dengan /balance.'
+          - '&f2. Buka shop dengan /shop.'
+          - '&f3. Kirim uang dengan /pay XandMe 1000.'
+      9:
+        title: 'RedProtect Claim'
+        lines:
+          - '&8〔 &aRedProtect Claim &8〕'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMelindungi area base agar tidak mudah digrief.'
+          - ''
+          - '&7[ &fCara Claim &7]'
+          - '&f1. Kelilingi area pakai fence.'
+          - '&f2. Pasang sign.'
+          - '&f3. Tulis [RP] di baris pertama.'
+          - '&f4. Tulis nama base di baris kedua.'
+          - '&f5. Area akan terclaim.'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/rp addmember <nama>'
+          - '&a/rp flag'
+          - '&a/rp delete'
+      10:
+        title: 'Fun Command'
+        lines:
+          - '&8〔 &aFun Command &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/sit'
+          - '&a/lay'
+          - '&a/crawl'
+          - '&a/bellyflop'
+          - '&a/skin <nama>'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/skin Notch'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Pakai /sit untuk duduk.'
+          - '&f2. Pakai /lay untuk tiduran.'
+          - '&f3. Pakai /skin <nama> untuk ganti skin.'

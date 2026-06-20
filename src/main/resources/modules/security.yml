@@ -1,0 +1,84 @@
+# =========================================================
+# VELIORASECURITY CONFIG
+# =========================================================
+# Fungsi:
+# - Menyembunyikan /pl, /plugins, /version, dll dari player biasa.
+# - Memblokir command sensitif seperti /op, /stop, /lp, /luckperms.
+# - Mengurangi command tab complete agar plugin server tidak mudah terlihat.
+# Cara pakai:
+# - Edit daftar blocked command di bawah.
+# - Setelah edit, pakai /vsecurity reload
+# =========================================================
+
+enabled: true
+
+settings:
+  bypass-permission: 'veliorasuite.security.bypass'
+  admin-permission: 'veliorasuite.security.admin'
+
+protection:
+  block-commands:
+    enabled: true
+    exact:
+      - pl
+      - plugins
+      - bukkit:pl
+      - bukkit:plugins
+      - version
+      - ver
+      - about
+      - help
+      - '?'
+      - op
+      - deop
+      - stop
+      - reload
+      - restart
+      - save-off
+      - save-on
+      - whitelist
+      - lp
+      - luckperms
+      - pex
+    prefixes:
+      - bukkit:
+      - minecraft:
+      - spigot:
+      - paper:
+      - luckperms:
+      - essentials:
+
+tab-complete:
+  enabled: true
+  allowed-commands:
+    - spawn
+    - tpa
+    - tpaccept
+    - tpdeny
+    - rtp
+    - shop
+    - sell
+    - sellgui
+    - balance
+    - baltop
+    - pay
+    - vguide
+    - vrules
+    - vproduct
+    - vteam
+    - report
+    - bugreport
+    - kit
+    - kits
+    - vf
+    - sit
+    - lay
+    - crawl
+    - skin
+    - register
+    - login
+
+messages:
+  blocked-command: '&8【&aVelioraSecurity&8】 &cCommand ini tidak bisa digunakan.'
+  no-permission: '&8【&aVelioraSecurity&8】 &cKamu tidak punya izin.'
+  reload: '&8【&aVelioraSecurity&8】 &aConfig berhasil direload.'

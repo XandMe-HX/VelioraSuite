@@ -1,0 +1,12 @@
+# Cara pakai umum:
+# - enabled: true untuk aktif, false untuk mati.
+# - Setelah edit file ini, pakai /vs reload atau restart server.
+# - Jangan hapus spasi YAML dan tanda titik dua.
+
+# VelioraChat: pondasi format chat. Team prefix tetap dari VelioraTeam.
+enabled: true
+format:
+  enabled: false
+  pattern: '%team_prefix%%luckperms_prefix% %player% &8: &f%message%'
+messages:
+  reload: '&8【&aVelioraChat&8】 &aConfig chat berhasil direload.'

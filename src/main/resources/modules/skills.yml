@@ -1,0 +1,20 @@
+# Cara pakai umum:
+# - enabled: true untuk aktif, false untuk mati.
+# - Setelah edit file ini, pakai /vs reload atau restart server.
+# - Jangan hapus spasi YAML dan tanda titik dua.
+
+# VelioraSkills: pengganti AuraSkills versi Veliora.
+enabled: true
+mana:
+  enabled: true
+  max: 20
+  regen-amount: 1
+  regen-seconds: 300
+skills:
+  mining: true
+  woodcutting: true
+  farming: true
+  fishing: true
+  combat: true
+messages:
+  level-up: '&8【&aVelioraSkills&8】 &aSkill &f%skill% &anaik ke level &f%level%&a!'

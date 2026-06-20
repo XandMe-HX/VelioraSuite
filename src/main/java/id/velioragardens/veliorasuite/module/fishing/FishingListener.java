@@ -1,0 +1,3 @@
+package id.velioragardens.veliorasuite.module.fishing;
+import org.bukkit.entity.Item; import org.bukkit.event.EventHandler; import org.bukkit.event.Listener; import org.bukkit.event.player.PlayerFishEvent;
+public final class FishingListener implements Listener { private final FishingManager manager; public FishingListener(FishingManager manager){this.manager=manager;} @EventHandler(ignoreCancelled=true) public void onFish(PlayerFishEvent event){ if(event.getState()!= PlayerFishEvent.State.CAUGHT_FISH) return; if(event.getCaught() instanceof Item item){ item.setItemStack(manager.createCatch(event.getPlayer())); } } }

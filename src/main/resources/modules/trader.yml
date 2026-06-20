@@ -1,0 +1,13 @@
+# Cara pakai umum:
+# - enabled: true untuk aktif, false untuk mati.
+# - Setelah edit file ini, pakai /vs reload atau restart server.
+# - Jangan hapus spasi YAML dan tanda titik dua.
+
+# VelioraTrader: pondasi trader/merchant event.
+enabled: true
+settings:
+  spawn-interval-minutes: 60
+  despawn-minutes: 20
+messages:
+  spawn: '&8【&aVelioraTrader&8】 &eTrader misterius muncul di &f%location%&e!'
+  despawn: '&8【&aVelioraTrader&8】 &7Trader telah pergi.'

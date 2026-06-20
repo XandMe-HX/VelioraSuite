@@ -1,0 +1,26 @@
+# Cara pakai umum:
+# - enabled: true untuk aktif, false untuk mati.
+# - Setelah edit file ini, pakai /vs reload atau restart server.
+# - Jangan hapus spasi YAML dan tanda titik dua.
+
+# VelioraAnti: keamanan chat ringan, bukan anti-cheat combat.
+enabled: true
+anti-spam:
+  enabled: true
+  chat-cooldown-seconds: 2
+anti-caps:
+  enabled: false
+  max-caps-percent: 80
+anti-command-spam:
+  enabled: true
+  default-cooldown-seconds: 3
+  commands:
+    rtp: 30
+    tpa: 10
+chat-filter:
+  enabled: true
+  blocked-words:
+    - toxicword
+messages:
+  spam: '&8【&aVelioraAnti&8】 &cJangan spam chat.'
+  command-cooldown: '&8【&aVelioraAnti&8】 &cTunggu sebelum memakai command itu lagi.'

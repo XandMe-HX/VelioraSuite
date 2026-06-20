@@ -1,0 +1,203 @@
+# =========================================================
+# VELIORAKITS CONFIG
+# =========================================================
+# Fungsi:
+# - Mengganti Essentials /kit dengan GUI kit punya VelioraSuite.
+# - Player cukup ketik /kit atau /kits, lalu klik item di GUI.
+# - Premium Kit dikunci pakai permission LuckPerms.
+# Cara pakai admin:
+# - /vkit reload
+# - /vkits give <player> <kit>
+# - /vkits reset <player> <kit>
+# Permission premium:
+# - veliorasuite.kits.premium.1
+# - veliorasuite.kits.premium.2
+# - veliorasuite.kits.premium.3
+# Catatan:
+# - Matikan /kit Essentials agar tidak bentrok.
+# =========================================================
+
+enabled: true
+
+gui:
+  title: '&8Veliora Kits'
+  size: 27
+
+messages:
+  prefix: '&8【&aVelioraKits&8】'
+  claim-success: '%prefix% &aKamu berhasil mengambil kit &f%kit%&a.'
+  no-permission-kit: '%prefix% &cKamu belum punya akses ke kit ini.'
+  cooldown: '%prefix% &cKit ini belum bisa diambil. Tunggu &f%time%&c.'
+  kit-not-found: '%prefix% &cKit &f%kit% &ctidak ditemukan.'
+  not-enough-space: '%prefix% &cInventory penuh. Item sisa dijatuhkan ke tanah.'
+
+kits:
+  starter:
+    enabled: true
+    slot: 10
+    permission: ''
+    cooldown: 'once'
+    display:
+      material: CHEST
+      locked-material: BARRIER
+      name: '&aStarter Kit'
+      lore:
+        - '&7Kit awal untuk semua player.'
+        - '&7Status: %status%'
+        - ''
+        - '&eKlik untuk claim.'
+    items:
+      - material: LEATHER_HELMET
+        amount: 1
+      - material: LEATHER_CHESTPLATE
+        amount: 1
+      - material: LEATHER_LEGGINGS
+        amount: 1
+      - material: LEATHER_BOOTS
+        amount: 1
+      - material: STONE_SWORD
+        amount: 1
+      - material: STONE_PICKAXE
+        amount: 1
+      - material: STONE_AXE
+        amount: 1
+      - material: STONE_SHOVEL
+        amount: 1
+      - material: OAK_FENCE
+        amount: 64
+      - material: OAK_FENCE
+        amount: 64
+      - material: SHULKER_BOX
+        amount: 1
+
+  food:
+    enabled: true
+    slot: 12
+    permission: ''
+    cooldown: '24h'
+    display:
+      material: BREAD
+      locked-material: BARRIER
+      name: '&eFood Kit'
+      lore:
+        - '&7Makanan dan bibit untuk survival.'
+        - '&7Status: %status%'
+        - ''
+        - '&eKlik untuk claim.'
+    items:
+      - material: BREAD
+        amount: 64
+      - material: GOLDEN_CARROT
+        amount: 32
+      - material: WHEAT_SEEDS
+        amount: 64
+      - material: CARROT
+        amount: 64
+
+  premium_1:
+    enabled: true
+    slot: 14
+    permission: 'veliorasuite.kits.premium.1'
+    cooldown: '7d'
+    display:
+      material: IRON_CHESTPLATE
+      locked-material: BARRIER
+      name: '&bPremium Kit 1'
+      lore:
+        - '&7Butuh permission premium 1.'
+        - '&7Status: %status%'
+        - ''
+        - '&eKlik untuk claim.'
+    items:
+      - material: IRON_HELMET
+        amount: 1
+        enchants: ['PROTECTION:1', 'UNBREAKING:1']
+      - material: IRON_CHESTPLATE
+        amount: 1
+        enchants: ['PROTECTION:1', 'UNBREAKING:1']
+      - material: IRON_LEGGINGS
+        amount: 1
+        enchants: ['PROTECTION:1', 'UNBREAKING:1']
+      - material: IRON_BOOTS
+        amount: 1
+        enchants: ['PROTECTION:1', 'UNBREAKING:1']
+      - material: IRON_SWORD
+        amount: 1
+        enchants: ['SHARPNESS:1']
+      - material: IRON_PICKAXE
+        amount: 1
+        enchants: ['EFFICIENCY:1']
+      - material: GOLDEN_CARROT
+        amount: 32
+
+  premium_2:
+    enabled: true
+    slot: 15
+    permission: 'veliorasuite.kits.premium.2'
+    cooldown: '7d'
+    display:
+      material: DIAMOND_CHESTPLATE
+      locked-material: BARRIER
+      name: '&dPremium Kit 2'
+      lore:
+        - '&7Butuh permission premium 2.'
+        - '&7Status: %status%'
+        - ''
+        - '&eKlik untuk claim.'
+    items:
+      - material: DIAMOND_HELMET
+        amount: 1
+        enchants: ['PROTECTION:2', 'UNBREAKING:2']
+      - material: DIAMOND_CHESTPLATE
+        amount: 1
+        enchants: ['PROTECTION:2', 'UNBREAKING:2']
+      - material: DIAMOND_LEGGINGS
+        amount: 1
+        enchants: ['PROTECTION:2', 'UNBREAKING:2']
+      - material: DIAMOND_BOOTS
+        amount: 1
+        enchants: ['PROTECTION:2', 'UNBREAKING:2']
+      - material: DIAMOND_SWORD
+        amount: 1
+        enchants: ['SHARPNESS:2']
+      - material: DIAMOND_PICKAXE
+        amount: 1
+        enchants: ['EFFICIENCY:2']
+      - material: GOLDEN_CARROT
+        amount: 64
+
+  premium_3:
+    enabled: true
+    slot: 16
+    permission: 'veliorasuite.kits.premium.3'
+    cooldown: '7d'
+    display:
+      material: NETHERITE_CHESTPLATE
+      locked-material: BARRIER
+      name: '&6Premium Kit 3'
+      lore:
+        - '&7Butuh permission premium 3.'
+        - '&7Status: %status%'
+        - ''
+        - '&eKlik untuk claim.'
+    items:
+      - material: NETHERITE_HELMET
+        amount: 1
+        enchants: ['PROTECTION:3', 'UNBREAKING:3']
+      - material: NETHERITE_CHESTPLATE
+        amount: 1
+        enchants: ['PROTECTION:3', 'UNBREAKING:3']
+      - material: NETHERITE_LEGGINGS
+        amount: 1
+        enchants: ['PROTECTION:3', 'UNBREAKING:3']
+      - material: NETHERITE_BOOTS
+        amount: 1
+        enchants: ['PROTECTION:3', 'UNBREAKING:3']
+      - material: NETHERITE_SWORD
+        amount: 1
+        enchants: ['SHARPNESS:3']
+      - material: NETHERITE_PICKAXE
+        amount: 1
+        enchants: ['EFFICIENCY:3']
+      - material: GOLDEN_APPLE
+        amount: 32
