@@ -1,0 +1,16 @@
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+.idea/
+.vscode/
+*.iml
+
+.DS_Store
+Thumbs.db
+
+logs/
+crash-reports/
+plugins/VelioraSuite/database.db
