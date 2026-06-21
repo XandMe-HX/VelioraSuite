@@ -9,8 +9,8 @@
 # - Kalau ada perubahan besar, lebih aman restart server.
 #
 # Catatan:
-# - Untuk sekarang ini masih CORE CLEAN.
-# - Module seperti guide, kits, team, fishing, boss, dll akan ditambah satu-satu.
+# - VelioraGuide sudah aktif sebagai module pertama.
+# - Module lain seperti kits, team, fishing, boss, dll akan ditambah satu-satu.
 # =========================================================
 
 settings:
@@ -18,7 +18,7 @@ settings:
   prefix: '&8【&aVelioraSuite&8】'
 
 modules:
-  guide: false
+  guide: true
   login-security: false
   team: false
   kits: false
