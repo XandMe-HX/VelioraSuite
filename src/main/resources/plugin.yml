@@ -1,0 +1,29 @@
+name: VelioraSuite
+version: 1.0.0
+main: id.velioragardens.veliorasuite.VelioraSuite
+api-version: '1.21'
+author: XandMe
+description: Clean modular plugin suite for Veliora Gardens.
+
+softdepend:
+  - Vault
+  - PlaceholderAPI
+  - LuckPerms
+
+commands:
+  veliorasuite:
+    description: Main command for VelioraSuite.
+    usage: /veliorasuite
+    aliases:
+      - vsuite
+      - vs
+    permission: veliorasuite.admin
+
+permissions:
+  veliorasuite.admin:
+    description: Allows access to VelioraSuite admin command.
+    default: op
+
+  veliorasuite.bypass:
+    description: Allows bypassing VelioraSuite protections.
+    default: op
