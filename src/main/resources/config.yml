@@ -9,7 +9,7 @@
 # - Kalau ada perubahan besar, lebih aman restart server.
 #
 # Catatan:
-# - VelioraGuide sudah aktif sebagai module pertama.
+# - VelioraGuide dan VelioraAnnouncement sudah aktif.
 # - Module lain seperti kits, team, fishing, boss, dll akan ditambah satu-satu.
 # =========================================================
 
@@ -23,7 +23,7 @@ modules:
   team: false
   kits: false
   report: false
-  announcement: false
+  announcement: true
   fishing: false
   skills: false
   quest: false
