@@ -4,7 +4,7 @@ VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
 ## Status
 
-Clean rebuild tahap pertama: core plugin saja.
+Clean rebuild tahap kedua: Core Plugin + VelioraGuide.
 
 ## Fitur Core
 
@@ -13,6 +13,30 @@ Clean rebuild tahap pertama: core plugin saja.
 - `/vs modules`
 - `/vs version`
 - `/vs debug`
+
+## VelioraGuide
+
+Command:
+
+- `/vguide`
+- `/vguide <page>`
+- `/vrules`
+- `/vrules <page>`
+- `/vproduct`
+- `/vproduct <page>`
+- `/vguide reload`
+
+File config:
+
+```text
+plugins/VelioraSuite/modules/guide.yml
+```
+
+Cara edit:
+
+1. Buka `guide.yml`.
+2. Tambahkan atau ubah halaman di `sections.guide.pages`, `sections.rules.pages`, atau `sections.product.pages`.
+3. Jalankan `/vguide reload` atau `/vs reload`.
 
 ## Target
 
