@@ -1,0 +1,152 @@
+# =========================================================
+# VELIORAGUIDE CONFIG
+# =========================================================
+# Fungsi:
+# - Mengirim panduan server lewat chat.
+# - Mirip sistem halaman seperti /rp ? 1, tapi versi Veliora.
+#
+# Command:
+# - /vguide        -> buka guide halaman 1
+# - /vguide 2      -> buka guide halaman 2
+# - /vrules        -> buka rules halaman 1
+# - /vproduct      -> buka product halaman 1
+# - /vguide reload -> reload file ini, khusus admin
+#
+# Cara edit:
+# - Tambah halaman baru di sections.<guide/rules/product>.pages.<nomor>
+# - Isi lines dengan teks yang ingin dikirim ke player.
+# - Pakai & untuk warna Minecraft.
+# - Setelah edit, jalankan /vguide reload atau /vs reload.
+# =========================================================
+
+enabled: true
+
+settings:
+  clear-chat-before-page: true
+  clear-chat-lines: 8
+  show-navigation: true
+  clickable-buttons-java: true
+  bedrock-navigation-hint: true
+
+messages:
+  no-permission: '&8【&aVelioraGuide&8】 &cKamu tidak punya izin.'
+  invalid-page: '&8【&aVelioraGuide&8】 &cHalaman tidak valid.'
+  page-not-found: '&8【&aVelioraGuide&8】 &cHalaman &f%page% &ctidak ditemukan.'
+  reload-success: '&8【&aVelioraGuide&8】 &aGuide berhasil direload.'
+
+sections:
+  guide:
+    display-name: 'VelioraGuide'
+    pages:
+      1:
+        title: '&aLogin Command'
+        lines:
+          - '&8〔 &aVeliora Guide &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/register <password> <confirmPassword>'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMendaftarkan akun agar nama player kamu aman.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/register Password123 Password123'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Join server.'
+          - '&f2. Ketik contoh command di atas.'
+          - '&f3. Jika berhasil, akun kamu tersimpan.'
+          - '&f4. Setelah itu kamu bisa bermain.'
+      2:
+        title: '&aLogin Command'
+        lines:
+          - '&8〔 &aVeliora Guide &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/login <password>'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fMasuk ke akun yang sudah terdaftar.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/login Password123'
+          - ''
+          - '&7[ &fCara Pakai &7]'
+          - '&f1. Join server.'
+          - '&f2. Ketik &a/login Password123&f.'
+          - '&f3. Jika password benar, kamu bisa bermain.'
+      3:
+        title: '&aBasic Command'
+        lines:
+          - '&8〔 &aBasic Command &8〕'
+          - ''
+          - '&7[ &fCommand &7]'
+          - '&a/spawn'
+          - '&a/rtp'
+          - '&a/tpa <nama>'
+          - '&a/tpaccept'
+          - '&a/tpdeny'
+          - ''
+          - '&7[ &fKegunaan &7]'
+          - '&fCommand dasar untuk mulai survival dan teleport.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&a/tpa XandMe'
+          - ''
+          - '&7[ &fTips &7]'
+          - '&fGunakan /rtp untuk cari tempat survival baru.'
+
+  rules:
+    display-name: 'VelioraRules'
+    pages:
+      1:
+        title: '&cAturan Umum'
+        lines:
+          - '&8〔 &cVeliora Server Rules &8〕'
+          - ''
+          - '&7[ &fAturan Umum &7]'
+          - '&f- Dilarang berkata toxic, menghina, atau rasis.'
+          - '&f- Dilarang spam chat atau flood.'
+          - '&f- Dilarang promosi tanpa izin.'
+          - '&f- Wajib saling menghargai.'
+          - '&f- Gunakan bahasa yang sopan.'
+          - ''
+          - '&7[ &fGameplay &7]'
+          - '&f- Dilarang cheat, hack, atau x-ray.'
+          - '&f- Dilarang bug abuse atau exploit.'
+          - '&f- Wajib lapor jika ada bug.'
+          - '&f- Dilarang memanfaatkan bug sistem.'
+      2:
+        title: '&cSanksi'
+        lines:
+          - '&8〔 &cVeliora Server Rules &8〕'
+          - ''
+          - '&7[ &fEkonomi &7]'
+          - '&f- Dilarang jual beli uang real.'
+          - '&f- Dilarang menipu player lain.'
+          - ''
+          - '&7[ &fSanksi &7]'
+          - '&f- 1x: Peringatan.'
+          - '&f- 2x: Ban sementara.'
+          - '&f- Pelanggaran berat: Kick atau ban.'
+          - ''
+          - '&7[ &fCatatan &7]'
+          - '&fRules bisa berubah sewaktu-waktu.'
+          - '&fKeputusan staff bersifat mutlak.'
+
+  product:
+    display-name: 'VelioraProduct'
+    pages:
+      1:
+        title: '&6Veliora Product'
+        lines:
+          - '&8〔 &6Veliora Product &8〕'
+          - ''
+          - '&7[ &fInfo &7]'
+          - '&fHalaman ini dipakai untuk info rank, kit premium, event, atau produk server.'
+          - ''
+          - '&7[ &fContoh &7]'
+          - '&fPremium Kit bisa dibuka sesuai permission rank.'
+          - ''
+          - '&7[ &fCatatan &7]'
+          - '&fProduk dan benefit bisa berubah sewaktu-waktu.'

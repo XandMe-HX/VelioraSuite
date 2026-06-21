@@ -1,0 +1,34 @@
+# =========================================================
+# VELIORASUITE CONFIG
+# =========================================================
+# Ini adalah config utama VelioraSuite.
+#
+# Cara pakai:
+# - Ubah enabled menjadi true/false untuk menyalakan atau mematikan module.
+# - Setelah edit config, jalankan /vs reload.
+# - Kalau ada perubahan besar, lebih aman restart server.
+#
+# Catatan:
+# - VelioraGuide sudah aktif sebagai module pertama.
+# - Module lain seperti kits, team, fishing, boss, dll akan ditambah satu-satu.
+# =========================================================
+
+settings:
+  debug: false
+  prefix: '&8【&aVelioraSuite&8】'
+
+modules:
+  guide: true
+  login-security: false
+  team: false
+  kits: false
+  report: false
+  announcement: false
+  fishing: false
+  skills: false
+  quest: false
+  trader: false
+  boss: false
+  clearlag: false
+  security: false
+  chat: false
