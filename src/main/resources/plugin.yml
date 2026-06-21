@@ -45,7 +45,7 @@ commands:
     usage: /velioraannouncement <reload|status|send>
     aliases:
       - vannounce
-      - vannounce
+      - va
     permission: veliorasuite.announcement.admin
 
 permissions:
