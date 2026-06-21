@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.0.0
+version: 1.1.0
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
@@ -19,6 +19,27 @@ commands:
       - vs
     permission: veliorasuite.admin
 
+  velioraguide:
+    description: Open Veliora guide pages.
+    usage: /velioraguide [page|reload]
+    aliases:
+      - vguide
+    permission: veliorasuite.guide.use
+
+  veliorarules:
+    description: Open Veliora rules pages.
+    usage: /veliorarules [page]
+    aliases:
+      - vrules
+    permission: veliorasuite.guide.use
+
+  velioraproduct:
+    description: Open Veliora product pages.
+    usage: /velioraproduct [page]
+    aliases:
+      - vproduct
+    permission: veliorasuite.guide.use
+
 permissions:
   veliorasuite.admin:
     description: Allows access to VelioraSuite admin command.
@@ -26,4 +47,12 @@ permissions:
 
   veliorasuite.bypass:
     description: Allows bypassing VelioraSuite protections.
+    default: op
+
+  veliorasuite.guide.use:
+    description: Allows players to open Veliora guide pages.
+    default: true
+
+  veliorasuite.guide.admin:
+    description: Allows admins to reload VelioraGuide.
     default: op
