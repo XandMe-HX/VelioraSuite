@@ -80,6 +80,10 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
                 teamManager.requestLeave(player);
                 return true;
             }
+            case "disband", "delete", "bubarkan" -> {
+                teamManager.disbandTeam(player);
+                return true;
+            }
             case "msg" -> {
                 if (args.length < 2) {
                     player.sendMessage(ColorUtil.color("&8[&aVelioraTeam&8] &cGunakan: &f/vteam msg <pesan>"));
@@ -132,6 +136,7 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(ColorUtil.color("&e/vteam kick <nama> &7- Kick member"));
         player.sendMessage(ColorUtil.color("&e/vteam msg <pesan> &7- Chat khusus team"));
         player.sendMessage(ColorUtil.color("&e/vteam leave &7- Keluar team"));
+        player.sendMessage(ColorUtil.color("&e/vteam disband &7- Bubarkan team khusus owner"));
         player.sendMessage(ColorUtil.color("&e/vteam info &7- Info team"));
         player.sendMessage(ColorUtil.color("&8&m------------------------------"));
     }
@@ -139,7 +144,7 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return filter(Arrays.asList("create", "upgrade", "addadmin", "addmember", "kick", "msg", "leave", "info", "list", "reload"), args[0]);
+            return filter(Arrays.asList("create", "upgrade", "addadmin", "addmember", "kick", "msg", "leave", "disband", "info", "list", "reload"), args[0]);
         }
         return new ArrayList<>();
     }

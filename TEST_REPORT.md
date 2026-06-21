@@ -1,13 +1,26 @@
-# VelioraSuite v1.5.0 - Local Check Report
+# VelioraSuite v1.6.0 - Local Check Report
 
 Checked before packaging:
 
-- Root ZIP structure: only `.github`, `src`, `.gitignore`, `README.md`, `pom.xml`, `TEST_REPORT.md`.
+- Root ZIP structure checked: only `.github`, `src`, `.gitignore`, `README.md`, `pom.xml`, `TEST_REPORT.md`.
 - No `.java` file placed in repository root.
 - YAML files parsed successfully with Python YAML parser.
-- `plugin.yml` contains commands for every registered module command.
+- Braces in Java files were checked with a static balance check.
+- `plugin.yml` version updated to `1.6.0`.
+- `pom.xml` version updated to `1.6.0`.
 - Module resources are present in `src/main/resources/modules/`.
 - Config files include comments explaining how to edit/use the feature.
+
+Main fixes in this build:
+
+- VelioraTeam: `/vteam disband`, missing owner leave message, team prefix placeholders.
+- VelioraFishing: actionbar timing minigame and `/vf sell` GUI.
+- VelioraClearLag: item stack amount counting and mob cluster cleaner.
+- VelioraQuest: GUI, clearer targets, more quest categories.
+- VelioraSkills: quest-based skill EXP, actionbar, PlaceholderAPI placeholders.
+- VelioraTrader: NPC-style villager trader, saved locations, auto despawn.
+- VelioraBoss: rarity, bossbar, skills, true damage, last hit/top damage rewards.
+- VelioraGuide: optional blank-line clear when switching pages.
 
 Limit:
 

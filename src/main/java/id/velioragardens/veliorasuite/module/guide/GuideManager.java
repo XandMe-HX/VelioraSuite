@@ -41,6 +41,11 @@ public final class GuideManager {
             targetPage = pages.containsKey(defaultPage) ? defaultPage : pages.keySet().iterator().next();
         }
 
+        if (configFile.get().getBoolean("navigation.clear-chat-before-page", true)) {
+            int blankLines = Math.max(0, configFile.get().getInt("navigation.clear-chat-lines", 20));
+            for (int i = 0; i < blankLines; i++) sendMessage(sender, "");
+        }
+
         GuidePage guidePage = pages.get(targetPage);
         for (String line : guidePage.getLines()) {
             sendMessage(sender, line);

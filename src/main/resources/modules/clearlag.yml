@@ -2,19 +2,14 @@
 # VELIORACLEALAG CONFIG
 # =========================================================
 # Fungsi:
-# - Membersihkan item/entity yang tidak penting supaya TPS server lebih stabil.
-# - Aman: tidak menghapus player, villager, armor stand, entity bernama, pet jinak, dan item whitelist.
+# - Membersihkan item/entity yang tidak penting supaya TPS server stabil.
+# - Menghitung JUMLAH item stack, bukan cuma jumlah entity item.
+# - Bisa membatasi mob yang terlalu menumpuk dalam radius tertentu.
 #
-# Cara pakai admin:
-# - /vclearlag status  -> melihat timer clear berikutnya
-# - /vclearlag clear   -> clear manual tanpa menunggu timer
-# - /vclearlag reload  -> reload file ini setelah diedit
-#
-# Cara edit:
-# - interval-seconds: jarak auto clear dalam detik. 600 = 10 menit.
-# - minimum-item-age-seconds: item baru jatuh tidak akan dihapus sebelum umur ini.
-# - warning.times: detik sebelum clear untuk kirim peringatan.
-# - whitelist-items: material yang tidak boleh dihapus. Pakai nama material Minecraft/Paper.
+# Command admin:
+# - /vclearlag status
+# - /vclearlag clear
+# - /vclearlag reload
 # =========================================================
 
 enabled: true
@@ -44,6 +39,18 @@ protect:
   tamed-animals: true
   vehicles-with-passenger: true
 
+mob-limiter:
+  enabled: true
+  radius: 8.0
+  max-same-mob-in-radius: 8
+  minimum-age-seconds: 60
+  player-safe-radius: 24.0
+  remove-unreachable: true
+  protected-types:
+    - VILLAGER
+    - WANDERING_TRADER
+    - IRON_GOLEM
+
 worlds:
   enabled-worlds: []
   disabled-worlds:
@@ -64,7 +71,7 @@ whitelist-items:
 messages:
   no-permission: '&8【&aVelioraClearLag&8】 &cKamu tidak punya izin.'
   warning: '&8【&aVelioraClearLag&8】 &eItem di tanah akan dibersihkan dalam &f%time% &edetik.'
-  cleared: '&8【&aVelioraClearLag&8】 &aMembersihkan &f%amount% &aitem agar server tetap ringan.'
+  cleared: '&8【&aVelioraClearLag&8】 &aMembersihkan &f%amount% &aitem/mob dari &f%entities% &aentity.'
   no-items: '&8【&aVelioraClearLag&8】 &7Tidak ada item yang perlu dibersihkan.'
-  manual-clear: '&8【&aVelioraClearLag&8】 &aAdmin &f%player% &amembersihkan &f%amount% &aitem.'
+  manual-clear: '&8【&aVelioraClearLag&8】 &aAdmin &f%player% &amembersihkan &f%amount% &aitem/mob dari &f%entities% &aentity.'
   reload: '&8【&aVelioraClearLag&8】 &aConfig berhasil direload.'

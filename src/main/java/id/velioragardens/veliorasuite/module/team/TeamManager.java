@@ -323,6 +323,41 @@ public final class TeamManager {
         }
     }
 
+
+    public boolean disbandTeam(Player actor) {
+        Team team = getTeamByPlayer(actor.getUniqueId());
+        if (team == null) {
+            message(actor, "member.not-in-team", Map.of());
+            return false;
+        }
+
+        if (!team.isOwner(actor.getUniqueId()) && !actor.hasPermission("veliorasuite.team.admin")) {
+            message(actor, "member.owner-only", Map.of());
+            return false;
+        }
+
+        String path = "teams." + team.getName();
+        data.set(path, null);
+        pendingLeave.remove(actor.getUniqueId());
+        save();
+
+        message(actor, "disband.success", Map.of("team", team.getName()));
+        for (UUID uuid : team.getMembers()) {
+            Player member = Bukkit.getPlayer(uuid);
+            if (member != null && member.isOnline()) {
+                message(member, "disband.notify", Map.of("team", team.getName()));
+            }
+        }
+        for (UUID uuid : team.getAdmins()) {
+            Player admin = Bukkit.getPlayer(uuid);
+            if (admin != null && admin.isOnline()) {
+                message(admin, "disband.notify", Map.of("team", team.getName()));
+            }
+        }
+
+        return true;
+    }
+
     public Team getTeam(String rawName) {
         if (rawName == null) {
             return null;
@@ -379,6 +414,10 @@ public final class TeamManager {
         }
 
         return teamsMap;
+    }
+
+    public boolean isChatPrefixEnabled() {
+        return config().getBoolean("chat.enabled", true) && config().getBoolean("chat.inject-prefix", true);
     }
 
     public String getTeamPrefix(UUID uuid) {
@@ -586,7 +625,12 @@ public final class TeamManager {
     }
 
     private String formatMoney(int amount) {
-        return config().getString("economy.money-format", "%,d").formatted(amount);
+        String pattern = config().getString("economy.money-format", "%,d");
+        try {
+            return pattern.formatted(amount);
+        } catch (Exception ignored) {
+            return String.format("%,d", amount);
+        }
     }
 
     private FileConfiguration config() {

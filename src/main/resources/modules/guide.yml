@@ -22,6 +22,9 @@ navigation:
   enabled: true
   clickable-java: true
   show-manual-command: true
+  # Saat pindah halaman, plugin akan kirim beberapa baris kosong supaya chat lama terdorong ke atas.
+  clear-chat-before-page: true
+  clear-chat-lines: 20
   buttons:
     back: '&8[&e< Back&8]'
     next: '&8[&aNext >&8]'
@@ -147,6 +150,7 @@ guides:
           - '&a/vteam create <nama>'
           - '&a/vteam msg <pesan>'
           - '&a/vteam leave'
+          - '&a/vteam disband'
           - ''
           - '&7[ &fKegunaan &7]'
           - '&fMembuat team dan chat khusus team.'
@@ -154,12 +158,14 @@ guides:
           - '&7[ &fContoh &7]'
           - '&a/vteam create GARDN'
           - '&a/vteam msg ayo mining bareng'
+          - '&a/vteam disband'
           - ''
           - '&7[ &fCara Pakai &7]'
           - '&f1. Ketik /vteam create GARDN.'
           - '&f2. Bayar biaya pembuatan team.'
           - '&f3. Gunakan /vteam addmember XandMe untuk tambah member.'
           - '&f4. Gunakan /vteam msg <pesan> untuk chat team.'
+          - '&f5. Owner bisa pakai /vteam disband untuk bubarin team.'
       4:
         title: 'Kits Command'
         lines:
@@ -216,20 +222,23 @@ guides:
           - '&a/vf top'
           - '&a/vf stats'
           - '&a/vf sell'
+          - '&a/vf sellhand'
           - ''
           - '&7[ &fKegunaan &7]'
-          - '&fMelihat ranking, statistik, dan menjual ikan custom.'
+          - '&fMelihat ranking, statistik, dan menjual ikan custom lewat GUI.'
           - ''
           - '&7[ &fContoh &7]'
           - '&a/vf top'
           - '&a/vf sell'
+          - '&a/vf sellhand'
           - ''
           - '&7[ &fCara Fishing &7]'
           - '&f1. Pegang fishing rod.'
           - '&f2. Lempar pancing ke air.'
           - '&f3. Tunggu ikan menggigit.'
-          - '&f4. Klik kanan saat waktunya.'
-          - '&f5. Kamu bisa dapat ikan vanilla, custom, mythic, atau secret.'
+          - '&f4. Kalau dapat ikan bagus, minigame actionbar muncul.'
+          - '&f5. Klik saat penanda berada di area kuning.'
+          - '&f6. /vf sell membuka GUI jual ikan seperti shop.'
       7:
         title: 'Basic Command'
         lines:
@@ -324,25 +333,28 @@ guides:
           - '&7[ &fCara Pakai &7]'
           - '&f1. Ketik /sk.'
           - '&f2. Lihat level mining, farming, fishing, combat, dan woodcutting.'
-          - '&f3. Naikkan skill dengan aktivitas survival.'
+          - '&f3. Skill naik dari reward quest agar quest terasa berguna.'
+          - '&f4. Placeholder mana: %veliorasuite_mana%/%veliorasuite_max_mana%.'
       12:
         title: 'Quest Command'
         lines:
           - '&8〔 &aVelioraQuest &8〕'
           - ''
           - '&7[ &fCommand &7]'
+          - '&a/vquest'
           - '&a/vquest list'
           - '&a/vquest start <quest>'
           - '&a/vquest status'
           - ''
           - '&7[ &fContoh &7]'
-          - '&a/vquest start wood_1'
+          - '&a/vquest start woodcutting_1'
           - ''
           - '&7[ &fCara Pakai &7]'
-          - '&f1. Ketik /vquest list.'
-          - '&f2. Pilih quest yang tersedia.'
-          - '&f3. Ketik /vquest start wood_1.'
+          - '&f1. Ketik /vquest untuk buka GUI quest.'
+          - '&f2. Klik quest yang tersedia.'
+          - '&f3. Baca targetnya: mining, farming, chef, monster, fishing, dll.'
           - '&f4. Progress akan naik otomatis.'
+          - '&f5. Saat selesai kamu dapat money, exp, dan skill exp.'
       13:
         title: 'Trader Command'
         lines:

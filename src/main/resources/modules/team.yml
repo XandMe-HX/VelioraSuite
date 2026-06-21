@@ -1,12 +1,24 @@
 # =========================================================
 # VELIORATEAM CONFIG
 # =========================================================
-# Cara pakai:
-# - Player pakai /vteam create <nama>
-# - /team sengaja tidak dipakai karena bentrok dengan command vanilla Minecraft.
-# - Nama team muncul di chat seperti: 【GARDN】 [Rank] XandMe: halo
-# - Untuk chat khusus team pakai /vteam msg <pesan>
-# - Setelah edit file ini, pakai /vteam reload
+# Fungsi:
+# - Membuat team berbayar untuk identitas player.
+# - Nama team bisa muncul di chat seperti: 【GARDN】 [Rank] XandMe: halo.
+# - Chat khusus team: /vteam msg <pesan>
+# - Bubarkan team khusus owner: /vteam disband
+#
+# Cara pakai player:
+# - /vteam create GARDN
+# - /vteam addmember XandMe
+# - /vteam msg ayo mining bareng
+# - /vteam leave lalu /yes atau /no
+# - /vteam disband khusus owner untuk bubarin team
+#
+# Catatan chat:
+# - Sistem akan mencoba inject prefix team otomatis ke chat.
+# - Jika server kamu pakai EssentialsChat dan prefix tidak muncul,
+#   tambahkan PlaceholderAPI ini di format chat Essentials:
+#   %veliorasuite_team_prefix%
 # =========================================================
 
 enabled: true
@@ -15,6 +27,10 @@ settings:
   create-cost: 250000
   upgrade-cost: 500000
   allow-offline-targets: false
+
+  leave:
+    owner-cannot-leave: true
+    confirm-timeout-seconds: 30
 
   name:
     min-length: 5
@@ -46,8 +62,7 @@ economy:
 
 chat:
   enabled: true
-  bracket-left: '【'
-  bracket-right: '】'
+  inject-prefix: true
   no-team-placeholder: ''
   format: '&8【&a%team%&8】 '
 
@@ -93,15 +108,26 @@ messages:
     target-not-found: '%prefix% &cPlayer tersebut tidak ditemukan.'
     target-already-in-team: '%prefix% &cPlayer tersebut sudah punya team.'
     no-permission-team: '%prefix% &cKamu tidak punya izin untuk mengatur team ini.'
+    owner-only: '%prefix% &cHanya owner team yang bisa melakukan ini.'
+    you-added-member: '%prefix% &aKamu ditambahkan ke team &8【&f%team%&8】&a.'
+    you-added-admin: '%prefix% &aKamu dijadikan admin di team &8【&f%team%&8】&a.'
 
   kick:
     success: '%prefix% &aPlayer &f%player% &aberhasil dikeluarkan dari team.'
-    owner-cannot-kick-self: '%prefix% &cOwner tidak bisa kick diri sendiri. Gunakan fitur disband jika nanti dibuat.'
+    owner-cannot-kick-self: '%prefix% &cOwner tidak bisa kick diri sendiri. Gunakan &f/vteam disband &cuntuk membubarkan team.'
+    not-in-your-team: '%prefix% &cPlayer &f%player% &ctidak ada di team kamu.'
+    you-kicked: '%prefix% &cKamu dikeluarkan dari team &8【&f%team%&8】&c.'
 
   leave:
     confirm: '%prefix% &eKamu yakin ingin keluar dari team &8【&f%team%&8】&e? Ketik &a/yes &eatau &c/no&e.'
     success: '%prefix% &aKamu berhasil keluar dari team &8【&f%team%&8】&a.'
     cancelled: '%prefix% &7Keluar team dibatalkan.'
+    no-pending: '%prefix% &7Tidak ada konfirmasi team yang menunggu.'
+    owner-cannot-leave: '%prefix% &cOwner tidak bisa keluar dari team sendiri. Gunakan &f/vteam disband &cuntuk membubarkan team.'
+
+  disband:
+    success: '%prefix% &cTeam &8【&f%team%&8】 &cberhasil dibubarkan.'
+    notify: '%prefix% &cTeam &8【&f%team%&8】 &ctelah dibubarkan oleh owner.'
 
   team-chat:
     empty: '%prefix% &cPesan team tidak boleh kosong.'

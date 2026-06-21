@@ -8,7 +8,7 @@
 # Command:
 # - /vf top      -> ranking pemancing
 # - /vf stats    -> statistik kamu
-# - /vf sell     -> jual ikan custom di tangan
+# - /vf sell     -> buka GUI jual semua ikan custom
 # - /vf reload   -> reload config, khusus admin
 # Cara edit:
 # - Tambahkan ikan di bagian catches.<rarity>
@@ -31,6 +31,32 @@ broadcast-rarities:
   - MYTHIC
   - SECRET
 
+
+minigame:
+  enabled: true
+  # Sampah dan vanilla tidak masuk minigame supaya player tidak capek.
+  rarities: [COMMON, EPIC, LEGEND, MYTHIC, SECRET]
+  bar-length: 20
+  # Semakin kecil target-width, semakin susah.
+  target-width:
+    common: 6
+    epic: 5
+    legend: 4
+    mythic: 3
+    secret: 2
+  time-seconds:
+    common: 7
+    epic: 6
+    legend: 5
+    mythic: 5
+    secret: 4
+  actionbar: '&aTarik ikan! &f%bar% &7Klik saat penanda ada di warna kuning!'
+
+sell-gui:
+  enabled: true
+  title: '&8Jual Ikan Veliora'
+  size: 54
+
 item-lore:
   - '&7Rarity: &f%rarity%'
   - '&7Origin: &f%origin%'
@@ -44,6 +70,9 @@ messages:
   not-fish: '%prefix% &cItem di tanganmu bukan ikan custom VelioraFishing.'
   no-economy: '%prefix% &cVault economy tidak ditemukan, ikan belum bisa dijual.'
   sell-success: '%prefix% &aIkan berhasil dijual seharga &e$%price%&a.'
+  minigame-start: '%prefix% &eTarikan kuat! Ikan &f%rarity% &emenggigit. Klik saat bar berada di warna kuning!'
+  minigame-success: '%prefix% &aBerhasil menarik &f%fish% &7(%rarity%)&a!'
+  minigame-fail: '%prefix% &cIkannya lepas karena timing kamu kurang tepat.'
   reload: '%prefix% &aConfig fishing berhasil direload.'
 
 catches:

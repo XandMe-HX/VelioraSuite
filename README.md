@@ -1,28 +1,21 @@
-# VelioraSuite v1.5.0
+# VelioraSuite v1.6.0
 
 VelioraSuite adalah plugin modular untuk server **Veliora Gardens**.
 Semua contoh memakai nama **XandMe**. Nama asli owner tidak dipakai di source, config, README, atau guide.
 
-## Status v1.5.0
+## Status v1.6.0
 
-Versi ini dibuat sebagai **full all-in-one build** dengan module utama:
+Versi ini adalah revisi dari hasil test server langsung:
 
-- VelioraClearLag
-- VelioraAnti
-- VelioraQuest
-- VelioraSkills
-- VelioraTrader
-- VelioraFishing
-- VelioraBoss
-- VelioraRewards
-- VelioraChat
-- VelioraTeam
-- VelioraGuide
-- VelioraSecurity
-- Veliora Login Security / VLS
-- VelioraReport
-- VelioraAnnouncement
-- VelioraKits
+- Team prefix chat diperkuat.
+- VelioraTeam punya `/vteam disband` untuk owner.
+- VelioraFishing ditambah minigame actionbar dan GUI jual ikan.
+- VelioraClearLag menghitung jumlah item stack dan punya mob limiter.
+- VelioraQuest dibuat GUI dan target quest lebih jelas.
+- VelioraSkills dibuat lebih nyambung ke quest + actionbar + PlaceholderAPI.
+- VelioraTrader dibuat lebih mirip plugin VelioraTrader: lokasi spawn, NPC ringan, despawn, GUI merchant.
+- VelioraBoss dibuat lebih mirip VelioraBossSystem: rarity, bossbar, skill, true damage, last hit, top damage reward.
+- VelioraGuide bisa mendorong chat lama ke atas saat pindah page.
 
 ## Build
 
@@ -47,15 +40,7 @@ Atau gunakan GitHub Actions di tab **Actions**.
 5. Edit config di `plugins/VelioraSuite/modules/`.
 6. Gunakan `/vs reload` atau command reload module masing-masing.
 
-## Catatan aman
-
-- Jangan hapus plugin economy/Vault/LuckPerms sebelum fitur VelioraSuite selesai dites di server test.
-- Untuk Essentials, matikan `/kit` dan `/kits` kalau ingin VelioraKits yang mengambil command tersebut.
-- Untuk chat, biarkan `modules/chat.yml -> format.enabled: false` kalau masih pakai EssentialsChat.
-- ClearLag punya whitelist dan proteksi entity penting.
-- LoginSecurity menyimpan password dalam hash SHA-256 + salt, bukan password mentah.
-
-## Command utama
+## Command penting
 
 ```text
 /vs
@@ -63,9 +48,9 @@ Atau gunakan GitHub Actions di tab **Actions**.
 /vanti
 /vquest
 /skills atau /sk
-/vtrader
+/vtrader atau /vtr
 /vf
-/vboss
+/vboss atau /vbs
 /daily
 /vchat
 /vteam
@@ -86,3 +71,21 @@ Atau gunakan GitHub Actions di tab **Actions**.
 /vkit
 /vkits
 ```
+
+## Catatan chat team
+
+Jika team prefix belum muncul di EssentialsChat, tambahkan PlaceholderAPI ini ke format chat Essentials:
+
+```text
+%veliorasuite_team_prefix%
+```
+
+Contoh format:
+
+```text
+%veliorasuite_team_prefix%{PREFIX}{DISPLAYNAME} &8: &f{MESSAGE}
+```
+
+## Catatan safe test
+
+Tetap test di server test dulu sebelum menggantikan plugin lama. Jangan langsung hapus ClearLag lama, EssentialsChat, AuraSkills, atau plugin penting lain sebelum fitur pengganti benar-benar cocok di server kamu.

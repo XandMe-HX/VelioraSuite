@@ -13,13 +13,22 @@ public final class TeamChatListener implements Listener {
         this.teamManager = teamManager;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
+        if (!teamManager.isChatPrefixEnabled()) {
+            return;
+        }
+
         String prefix = teamManager.getTeamPrefix(event.getPlayer().getUniqueId());
         if (prefix == null || prefix.isBlank()) {
             return;
         }
 
-        event.setFormat(prefix + event.getFormat());
+        String format = event.getFormat();
+        if (format == null || format.startsWith(prefix)) {
+            return;
+        }
+
+        event.setFormat(prefix + format);
     }
 }

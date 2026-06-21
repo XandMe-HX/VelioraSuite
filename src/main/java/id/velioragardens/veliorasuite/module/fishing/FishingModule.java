@@ -18,5 +18,5 @@ public final class FishingModule extends AbstractModule {
         if (command != null) { FishingCommand executor = new FishingCommand(fishingManager); command.setExecutor(executor); command.setTabCompleter(executor); }
         plugin.getLogger().info("VelioraFishing module started.");
     }
-    @Override protected void onDisable() { if (listener != null) HandlerList.unregisterAll(listener); if (fishingManager != null) fishingManager.save(); plugin.getLogger().info("VelioraFishing module stopped."); }
+    @Override protected void onDisable() { if (listener != null) HandlerList.unregisterAll(listener); if (fishingManager != null) fishingManager.shutdown(); plugin.getLogger().info("VelioraFishing module stopped."); }
 }

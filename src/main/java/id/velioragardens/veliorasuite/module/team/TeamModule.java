@@ -9,6 +9,7 @@ public final class TeamModule extends AbstractModule {
 
     private TeamManager teamManager;
     private TeamChatListener chatListener;
+    private TeamPlaceholderExpansion placeholderExpansion;
 
     public TeamModule(VelioraSuite plugin) {
         super(plugin, "team", "team");
@@ -29,6 +30,16 @@ public final class TeamModule extends AbstractModule {
             plugin.getServer().getPluginManager().registerEvents(chatListener, plugin);
         }
 
+        if (plugin.getHookManager().isHooked("PlaceholderAPI")) {
+            try {
+                this.placeholderExpansion = new TeamPlaceholderExpansion(teamManager);
+                this.placeholderExpansion.register();
+                plugin.getLogger().info("VelioraTeam PlaceholderAPI expansion registered.");
+            } catch (Throwable throwable) {
+                plugin.getLogger().warning("Gagal register placeholder VelioraTeam: " + throwable.getMessage());
+            }
+        }
+
         plugin.getLogger().info("VelioraTeam module started.");
     }
 
@@ -37,6 +48,14 @@ public final class TeamModule extends AbstractModule {
         if (chatListener != null) {
             HandlerList.unregisterAll(chatListener);
             chatListener = null;
+        }
+
+        if (placeholderExpansion != null) {
+            try {
+                placeholderExpansion.unregister();
+            } catch (Throwable ignored) {
+            }
+            placeholderExpansion = null;
         }
 
         if (teamManager != null) {
