@@ -1,8 +1,6 @@
 target/
-*.class
 *.jar
-*.war
-*.ear
+*.class
 
 .idea/
 .vscode/
@@ -13,4 +11,4 @@ Thumbs.db
 
 logs/
 crash-reports/
-plugins/VelioraSuite/database.db
+plugins/
