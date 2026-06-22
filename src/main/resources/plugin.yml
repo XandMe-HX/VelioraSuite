@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.1.0
+version: 1.2.0
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
@@ -40,6 +40,14 @@ commands:
       - vproduct
     permission: veliorasuite.guide.use
 
+  velioraannouncement:
+    description: Manage Veliora automatic announcements.
+    usage: /velioraannouncement <reload|status|send>
+    aliases:
+      - vannounce
+      - va
+    permission: veliorasuite.announcement.admin
+
 permissions:
   veliorasuite.admin:
     description: Allows access to VelioraSuite admin command.
@@ -55,4 +63,8 @@ permissions:
 
   veliorasuite.guide.admin:
     description: Allows admins to reload VelioraGuide.
+    default: op
+
+  veliorasuite.announcement.admin:
+    description: Allows admins to manage VelioraAnnouncement.
     default: op

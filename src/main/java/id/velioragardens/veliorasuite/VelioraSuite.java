@@ -1,6 +1,8 @@
 package id.velioragardens.veliorasuite;
 
 import id.velioragardens.veliorasuite.command.VelioraCommand;
+import id.velioragardens.veliorasuite.module.announcement.AnnouncementCommand;
+import id.velioragardens.veliorasuite.module.announcement.AnnouncementManager;
 import id.velioragardens.veliorasuite.module.guide.GuideCommand;
 import id.velioragardens.veliorasuite.module.guide.GuideManager;
 import org.bukkit.command.PluginCommand;
@@ -13,6 +15,7 @@ public final class VelioraSuite extends JavaPlugin {
     private static VelioraSuite instance;
 
     private GuideManager guideManager;
+    private AnnouncementManager announcementManager;
 
     public static VelioraSuite getInstance() {
         return instance;
@@ -30,6 +33,7 @@ public final class VelioraSuite extends JavaPlugin {
         createFolder("database");
 
         loadGuideModule();
+        loadAnnouncementModule();
         registerCommands();
 
         getLogger().info("VelioraSuite core enabled.");
@@ -37,15 +41,19 @@ public final class VelioraSuite extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (announcementManager != null) {
+            announcementManager.shutdown();
+        }
+
         getLogger().info("VelioraSuite core disabled.");
     }
 
     public void reloadSuite() {
         reloadConfig();
 
-        if (guideManager != null) {
-            guideManager.reload();
-        }
+        loadGuideModule();
+        loadAnnouncementModule();
+        registerCommands();
 
         getLogger().info("VelioraSuite core reloaded.");
     }
@@ -62,6 +70,22 @@ public final class VelioraSuite extends JavaPlugin {
         guideManager.load();
     }
 
+    private void loadAnnouncementModule() {
+        if (announcementManager != null) {
+            announcementManager.shutdown();
+            announcementManager = null;
+        }
+
+        if (!getConfig().getBoolean("modules.announcement", false)) {
+            return;
+        }
+
+        saveResourceIfNotExists("modules/announcement.yml");
+
+        announcementManager = new AnnouncementManager(this);
+        announcementManager.load();
+    }
+
     private void registerCommands() {
         PluginCommand command = getCommand("veliorasuite");
 
@@ -75,6 +99,7 @@ public final class VelioraSuite extends JavaPlugin {
         command.setTabCompleter(velioraCommand);
 
         registerGuideCommands();
+        registerAnnouncementCommand();
     }
 
     private void registerGuideCommands() {
@@ -98,6 +123,23 @@ public final class VelioraSuite extends JavaPlugin {
         GuideCommand guideCommand = new GuideCommand(guideManager, sectionName);
         command.setExecutor(guideCommand);
         command.setTabCompleter(guideCommand);
+    }
+
+    private void registerAnnouncementCommand() {
+        if (announcementManager == null) {
+            return;
+        }
+
+        PluginCommand command = getCommand("velioraannouncement");
+
+        if (command == null) {
+            getLogger().warning("Command /velioraannouncement tidak ditemukan di plugin.yml.");
+            return;
+        }
+
+        AnnouncementCommand announcementCommand = new AnnouncementCommand(announcementManager);
+        command.setExecutor(announcementCommand);
+        command.setTabCompleter(announcementCommand);
     }
 
     private void saveResourceIfNotExists(String path) {
