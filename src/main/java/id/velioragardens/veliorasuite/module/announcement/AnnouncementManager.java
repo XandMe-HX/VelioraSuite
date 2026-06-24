@@ -5,306 +5,294 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class AnnouncementManager {
 
     private final VelioraSuite plugin;
-    private final List<String> activeIds = new ArrayList<>();
+    private final AnnouncementConfigManager configManager;
+    private final AnnouncementTask task;
+    private final Map<String, AnnouncementMessage> activeAnnouncements = new LinkedHashMap<>();
 
-    private FileConfiguration config;
-    private BukkitTask task;
     private int currentIndex = 0;
+    private String lastRandomId = "";
 
     public AnnouncementManager(VelioraSuite plugin) {
         this.plugin = plugin;
+        this.configManager = new AnnouncementConfigManager(plugin);
+        this.task = new AnnouncementTask(plugin, this);
     }
 
     public void load() {
-        File file = new File(plugin.getDataFolder(), "modules/announcement.yml");
+        configManager.load();
+        activeAnnouncements.clear();
+        currentIndex = 0;
+        lastRandomId = "";
 
-        if (!file.exists()) {
-            plugin.saveResource("modules/announcement.yml", false);
+        for (AnnouncementMessage announcement : configManager.getAnnouncements()) {
+            if (announcement.isValid()) {
+                activeAnnouncements.put(announcement.getId(), announcement);
+            }
         }
 
-        this.config = YamlConfiguration.loadConfiguration(file);
-        this.currentIndex = 0;
-        reloadActiveIds();
-
-        plugin.getLogger().info("VelioraAnnouncement loaded with " + activeIds.size() + " active announcement(s).");
+        plugin.getLogger().info("VelioraAnnouncement loaded with " + activeAnnouncements.size() + " active announcement(s).");
     }
 
     public void start() {
-        startTask();
+        stop();
+
+        if (!isEnabled()) {
+            plugin.getLogger().info("VelioraAnnouncement tidak dijalankan karena settings.enabled=false.");
+            return;
+        }
+
+        if (!configManager.isAutoStart()) {
+            plugin.getLogger().info("VelioraAnnouncement auto-start dimatikan dari config.");
+            return;
+        }
+
+        long initialDelay = configManager.getInitialDelaySeconds() * 20L;
+        long interval = getIntervalSeconds() * 20L;
+        task.start(initialDelay, interval);
+    }
+
+    public void stop() {
+        task.stop();
     }
 
     public void reload() {
-        boolean wasRunning = isRunning();
-        stopTask();
+        stop();
         load();
-
-        if (wasRunning) {
-            startTask();
-        }
+        start();
     }
 
     public void shutdown() {
-        stopTask();
-        activeIds.clear();
+        stop();
+        activeAnnouncements.clear();
     }
 
     public boolean isEnabled() {
-        return config != null && config.getBoolean("enabled", true);
+        return configManager.isEnabled();
     }
 
     public boolean isRunning() {
-        return task != null && !task.isCancelled();
+        return task.isRunning();
     }
 
     public int getIntervalSeconds() {
-        if (config == null) return 300;
-        return Math.max(10, config.getInt("settings.interval-seconds", 300));
+        return configManager.getIntervalSeconds();
     }
 
     public String getMode() {
-        if (config == null) return "RANDOM";
-        return config.getString("settings.mode", "RANDOM").toUpperCase(Locale.ROOT);
+        return configManager.getMode();
     }
 
     public int getActiveCount() {
-        return activeIds.size();
+        return activeAnnouncements.size();
     }
 
     public List<String> getActiveIds() {
-        return Collections.unmodifiableList(activeIds);
+        return new ArrayList<>(activeAnnouncements.keySet());
     }
 
     public void sendNext() {
-        if (!isEnabled()) return;
-
-        if (activeIds.isEmpty()) {
+        if (!isEnabled() || activeAnnouncements.isEmpty()) {
             return;
         }
 
-        if (!config.getBoolean("settings.send-on-empty-server", false) && Bukkit.getOnlinePlayers().isEmpty()) {
-            return;
+        AnnouncementMessage announcement = getNextAnnouncement();
+
+        if (announcement != null) {
+            broadcast(announcement);
         }
-
-        String id;
-        String mode = getMode();
-
-        if (mode.equals("SEQUENTIAL")) {
-            if (currentIndex >= activeIds.size()) {
-                currentIndex = 0;
-            }
-
-            id = activeIds.get(currentIndex);
-            currentIndex++;
-        } else {
-            id = activeIds.get(ThreadLocalRandom.current().nextInt(activeIds.size()));
-        }
-
-        broadcast(id);
     }
 
     public boolean sendById(String id) {
-        if (id == null || id.isBlank()) return false;
-
-        String normalizedId = id.toLowerCase(Locale.ROOT);
-
-        if (!activeIds.contains(normalizedId)) {
+        if (id == null || id.isBlank()) {
             return false;
         }
 
-        broadcast(normalizedId);
+        AnnouncementMessage announcement = activeAnnouncements.get(id.toLowerCase(Locale.ROOT));
+
+        if (announcement == null) {
+            return false;
+        }
+
+        broadcast(announcement);
         return true;
     }
 
     public void sendStatus(CommandSender sender) {
-        for (String line : config.getStringList("messages.status")) {
-            sender.sendMessage(color(line
-                    .replace("%enabled%", String.valueOf(isEnabled()))
-                    .replace("%running%", String.valueOf(isRunning()))
-                    .replace("%auto_start%", String.valueOf(config.getBoolean("settings.auto-start", true)))
-                    .replace("%mode%", getMode())
-                    .replace("%interval%", String.valueOf(getIntervalSeconds()))
-                    .replace("%total%", String.valueOf(getActiveCount()))));
+        List<String> lines = configManager.getMessageList("status", List.of(
+                "&8&m--------------------------------",
+                "&a&lVelioraAnnouncement Status",
+                "&7Enabled: &f%enabled%",
+                "&7Running: &f%running%",
+                "&7Mode: &f%mode%",
+                "&7Interval: &f%interval%s",
+                "&7Total Message: &f%total%",
+                "&8&m--------------------------------"
+        ));
+
+        for (String line : lines) {
+            sender.sendMessage(color(applyCommonPlaceholders(line)));
         }
     }
 
     public void sendList(CommandSender sender) {
-        String prefix = config.getString("messages.prefix", "&8【&aVelioraAnnouncement&8】");
-        sender.sendMessage(color("&8&m--------------------------------"));
-        sender.sendMessage(color("&a&lVelioraAnnouncement List"));
+        sender.sendMessage(color(configManager.getMessage("list-header", "&8&m--------------------------------")));
+        sender.sendMessage(color(configManager.getMessage("list-title", "&a&lVelioraAnnouncement List")));
 
-        if (activeIds.isEmpty()) {
-            sender.sendMessage(color(prefix + " &cTidak ada announcement aktif."));
+        if (activeAnnouncements.isEmpty()) {
+            sender.sendMessage(color(configManager.getMessage("list-empty", "%prefix% &cTidak ada announcement aktif.")));
         } else {
-            for (String id : activeIds) {
-                sender.sendMessage(color("&7- &f" + id));
+            String format = configManager.getMessage("list-format", "&7- &f%id%");
+
+            for (String id : activeAnnouncements.keySet()) {
+                sender.sendMessage(color(format.replace("%id%", id)));
             }
         }
 
-        sender.sendMessage(color("&8&m--------------------------------"));
+        sender.sendMessage(color(configManager.getMessage("list-footer", "&8&m--------------------------------")));
     }
 
     public void sendHelp(CommandSender sender) {
-        sender.sendMessage(color("&8&m--------------------------------"));
-        sender.sendMessage(color("&a&lVelioraAnnouncement"));
-        sender.sendMessage(color("&e/vannounce status &7- Melihat status announcement."));
-        sender.sendMessage(color("&e/vannounce list &7- Melihat id announcement aktif."));
-        sender.sendMessage(color("&e/vannounce send <id> &7- Mengirim announcement."));
-        sender.sendMessage(color("&e/vannounce reload &7- Reload announcement."));
-        sender.sendMessage(color("&8&m--------------------------------"));
+        List<String> lines = configManager.getMessageList("help", List.of(
+                "&8&m--------------------------------",
+                "&a&lVelioraAnnouncement",
+                "&e/vannounce help &7- Melihat bantuan command.",
+                "&e/vannounce status &7- Melihat status announcement.",
+                "&e/vannounce list &7- Melihat id announcement aktif.",
+                "&e/vannounce send <id> &7- Mengirim announcement.",
+                "&e/vannounce reload &7- Reload announcement.",
+                "&8&m--------------------------------"
+        ));
+
+        for (String line : lines) {
+            sender.sendMessage(color(line));
+        }
     }
 
     public void sendReloadSuccess(CommandSender sender) {
-        send(sender, getMessage("reload-success"));
+        send(sender, configManager.getMessage("reload-success", "%prefix% &aAnnouncement berhasil direload."));
     }
 
     public void sendNoPermission(CommandSender sender) {
-        send(sender, getMessage("no-permission"));
+        send(sender, configManager.getMessage("no-permission", "%prefix% &cKamu tidak punya izin."));
     }
 
     public void sendNotFound(CommandSender sender, String id) {
-        send(sender, getMessage("not-found").replace("%id%", id));
+        send(sender, configManager.getMessage("not-found", "%prefix% &cAnnouncement &f%id% &ctidak ditemukan.").replace("%id%", id));
     }
 
-    public void sendNoAnnouncements(CommandSender sender) {
-        send(sender, getMessage("no-announcements"));
+    public void sendUsageSend(CommandSender sender) {
+        send(sender, configManager.getMessage("usage-send", "%prefix% &cGunakan: &f/vannounce send <id>"));
     }
 
     public void sendManualSuccess(CommandSender sender, String id) {
-        send(sender, getMessage("send-success").replace("%id%", id));
+        send(sender, configManager.getMessage("send-success", "%prefix% &aAnnouncement &f%id% &aberhasil dikirim.").replace("%id%", id));
     }
 
-    private void reloadActiveIds() {
-        activeIds.clear();
+    private AnnouncementMessage getNextAnnouncement() {
+        List<AnnouncementMessage> announcements = new ArrayList<>(activeAnnouncements.values());
 
-        ConfigurationSection section = config.getConfigurationSection("announcements");
-        if (section == null) {
-            return;
+        if (announcements.isEmpty()) {
+            return null;
         }
 
-        for (String id : section.getKeys(false)) {
-            if (!section.getBoolean(id + ".enabled", true)) {
-                continue;
-            }
-
-            List<String> lines = section.getStringList(id + ".lines");
-            if (lines.isEmpty()) {
-                continue;
-            }
-
-            activeIds.add(id.toLowerCase(Locale.ROOT));
+        if (getMode().equals("RANDOM")) {
+            return getRandomAnnouncement(announcements);
         }
+
+        if (currentIndex >= announcements.size()) {
+            currentIndex = 0;
+        }
+
+        AnnouncementMessage announcement = announcements.get(currentIndex);
+        currentIndex++;
+        return announcement;
     }
 
-    private void startTask() {
-        stopTask();
-
-        if (!isEnabled() || !config.getBoolean("settings.auto-start", true)) {
-            return;
+    private AnnouncementMessage getRandomAnnouncement(List<AnnouncementMessage> announcements) {
+        if (announcements.size() == 1 || !configManager.isRandomAvoidRepeat()) {
+            AnnouncementMessage announcement = announcements.get(ThreadLocalRandom.current().nextInt(announcements.size()));
+            lastRandomId = announcement.getId();
+            return announcement;
         }
 
-        long initialDelay = Math.max(0, config.getInt("settings.initial-delay-seconds", 60)) * 20L;
-        long interval = getIntervalSeconds() * 20L;
+        AnnouncementMessage announcement;
+        int tries = 0;
 
-        task = Bukkit.getScheduler().runTaskTimer(plugin, this::sendNext, initialDelay, interval);
+        do {
+            announcement = announcements.get(ThreadLocalRandom.current().nextInt(announcements.size()));
+            tries++;
+        } while (announcement.getId().equals(lastRandomId) && tries < 10);
+
+        lastRandomId = announcement.getId();
+        return announcement;
     }
 
-    private void stopTask() {
-        if (task != null) {
-            task.cancel();
-            task = null;
-        }
-    }
-
-    private void broadcast(String id) {
-        String path = "announcements." + id;
-        List<String> lines = config.getStringList(path + ".lines");
+    private void broadcast(AnnouncementMessage announcement) {
+        List<String> lines = announcement.getLines();
 
         if (lines.isEmpty()) {
             return;
         }
 
-        boolean usePermission = config.getBoolean("settings.use-per-announcement-permission", false);
-        String permission = config.getString(path + ".permission", "");
-
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!canReceive(player)) {
+            if (!announcement.canReceive(player)) {
                 continue;
             }
 
-            if (usePermission && permission != null && !permission.isBlank() && !player.hasPermission(permission)) {
-                continue;
-            }
-
-            for (String line : lines) {
-                player.sendMessage(color(line));
-            }
-
+            sendAnnouncementLines(player, lines);
             playSound(player);
-        }
-
-        if (config.getBoolean("settings.send-to-console", false)) {
-            for (String line : lines) {
-                Bukkit.getConsoleSender().sendMessage(color(line));
-            }
         }
     }
 
-    private boolean canReceive(Player player) {
-        if (!config.getBoolean("settings.worlds.enabled", false)) {
-            return true;
+    private void sendAnnouncementLines(Player player, List<String> lines) {
+        String prefix = configManager.getPrefix();
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String output = i == 0 ? prefix + line : line;
+            player.sendMessage(color(output));
         }
-
-        String worldName = player.getWorld().getName();
-        List<String> whitelist = config.getStringList("settings.worlds.whitelist");
-        List<String> blacklist = config.getStringList("settings.worlds.blacklist");
-
-        if (blacklist.contains(worldName)) {
-            return false;
-        }
-
-        return whitelist.isEmpty() || whitelist.contains(worldName);
     }
 
     private void playSound(Player player) {
-        if (!config.getBoolean("settings.sound.enabled", false)) {
+        if (!configManager.isSoundEnabled()) {
             return;
         }
 
-        String soundName = config.getString("settings.sound.name", "ENTITY_EXPERIENCE_ORB_PICKUP");
+        Sound sound = configManager.getSound();
 
-        try {
-            Sound sound = Sound.valueOf(soundName.toUpperCase(Locale.ROOT));
-            float volume = (float) config.getDouble("settings.sound.volume", 1.0);
-            float pitch = (float) config.getDouble("settings.sound.pitch", 1.0);
-            player.playSound(player.getLocation(), sound, volume, pitch);
-        } catch (IllegalArgumentException ignored) {
+        if (sound == null) {
+            return;
         }
+
+        player.playSound(player.getLocation(), sound, configManager.getSoundVolume(), configManager.getSoundPitch());
     }
 
-    private String getMessage(String path) {
-        String prefix = config.getString("messages.prefix", "&8【&aVelioraAnnouncement&8】");
-        return config.getString("messages." + path, "%prefix% &cMessage not found: " + path)
-                .replace("%prefix%", prefix);
+    private String applyCommonPlaceholders(String text) {
+        return text
+                .replace("%prefix%", configManager.getPrefix())
+                .replace("%enabled%", String.valueOf(isEnabled()))
+                .replace("%running%", String.valueOf(isRunning()))
+                .replace("%auto_start%", String.valueOf(configManager.isAutoStart()))
+                .replace("%mode%", getMode())
+                .replace("%interval%", String.valueOf(getIntervalSeconds()))
+                .replace("%total%", String.valueOf(getActiveCount()));
     }
 
     private void send(CommandSender sender, String message) {
-        sender.sendMessage(color(message));
+        sender.sendMessage(color(applyCommonPlaceholders(message)));
     }
 
     private String color(String text) {
