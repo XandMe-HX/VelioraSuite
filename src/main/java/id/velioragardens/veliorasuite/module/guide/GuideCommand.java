@@ -6,7 +6,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,7 +64,7 @@ public final class GuideCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            List<String> options = new ArrayList<>(Arrays.asList("1", "2", "3"));
+            List<String> options = new ArrayList<>(guideManager.getPageSuggestions(sectionName));
 
             if (sender.hasPermission("veliorasuite.guide.admin")) {
                 options.add("reload");
