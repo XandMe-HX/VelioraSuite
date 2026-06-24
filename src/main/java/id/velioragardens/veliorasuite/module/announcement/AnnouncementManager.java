@@ -147,20 +147,20 @@ public final class AnnouncementManager {
     }
 
     public void sendList(CommandSender sender) {
-        sender.sendMessage(color(configManager.getMessage("list-header", "&8&m--------------------------------")));
-        sender.sendMessage(color(configManager.getMessage("list-title", "&a&lVelioraAnnouncement List")));
+        sender.sendMessage(color(applyCommonPlaceholders(configManager.getMessage("list-header", "&8&m--------------------------------"))));
+        sender.sendMessage(color(applyCommonPlaceholders(configManager.getMessage("list-title", "&a&lVelioraAnnouncement List"))));
 
         if (activeAnnouncements.isEmpty()) {
-            sender.sendMessage(color(configManager.getMessage("list-empty", "%prefix% &cTidak ada announcement aktif.")));
+            sender.sendMessage(color(applyCommonPlaceholders(configManager.getMessage("list-empty", "%prefix% &cTidak ada announcement aktif."))));
         } else {
             String format = configManager.getMessage("list-format", "&7- &f%id%");
 
             for (String id : activeAnnouncements.keySet()) {
-                sender.sendMessage(color(format.replace("%id%", id)));
+                sender.sendMessage(color(applyCommonPlaceholders(format).replace("%id%", id)));
             }
         }
 
-        sender.sendMessage(color(configManager.getMessage("list-footer", "&8&m--------------------------------")));
+        sender.sendMessage(color(applyCommonPlaceholders(configManager.getMessage("list-footer", "&8&m--------------------------------"))));
     }
 
     public void sendHelp(CommandSender sender) {
@@ -176,7 +176,7 @@ public final class AnnouncementManager {
         ));
 
         for (String line : lines) {
-            sender.sendMessage(color(line));
+            sender.sendMessage(color(applyCommonPlaceholders(line)));
         }
     }
 
@@ -282,7 +282,7 @@ public final class AnnouncementManager {
 
     private String applyCommonPlaceholders(String text) {
         return text
-                .replace("%prefix%", configManager.getPrefix())
+                .replace("%prefix%", configManager.getMessage("prefix", "&8[&bVelioraAnnouncement&8]"))
                 .replace("%enabled%", String.valueOf(isEnabled()))
                 .replace("%running%", String.valueOf(isRunning()))
                 .replace("%auto_start%", String.valueOf(configManager.isAutoStart()))
