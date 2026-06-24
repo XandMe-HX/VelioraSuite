@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -153,6 +154,21 @@ public final class ChatManager {
     }
 
     public void sendStatus(CommandSender sender) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("%formatter%", String.valueOf(configManager.isFormatterEnabled()));
+        placeholders.put("%essentials_mode%", String.valueOf(configManager.isEssentialsMode()));
+        placeholders.put("%protection%", String.valueOf(configManager.isProtectionEnabled()));
+        placeholders.put("%chat_cooldown%", String.valueOf(configManager.isCooldownEnabled()));
+        placeholders.put("%chat_cooldown_seconds%", String.valueOf(configManager.getCooldownSeconds()));
+        placeholders.put("%command_cooldown%", String.valueOf(configManager.isCommandSpamEnabled()));
+        placeholders.put("%command_cooldown_seconds%", String.valueOf(configManager.getCommandSpamSeconds()));
+        placeholders.put("%anti_repeat%", String.valueOf(configManager.isAntiRepeatEnabled()));
+        placeholders.put("%anti_repeat_max%", String.valueOf(configManager.getMaxRepeat()));
+        placeholders.put("%anti_caps%", String.valueOf(configManager.isAntiCapsEnabled()));
+        placeholders.put("%word_filter%", String.valueOf(configManager.isWordFilterEnabled()));
+        placeholders.put("%word_filter_action%", configManager.getWordFilterAction());
+        placeholders.put("%placeholderapi%", String.valueOf(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null));
+
         sendLines(sender, configManager.getMessageList("status", List.of(
                 "&8&m--------------------------------",
                 "&b&lVelioraChat Status",
@@ -166,21 +182,7 @@ public final class ChatManager {
                 "&7Word Filter: &f%word_filter% &7(%word_filter_action%)",
                 "&7PlaceholderAPI: &f%placeholderapi%",
                 "&8&m--------------------------------"
-        )), Map.of(
-                "%formatter%", String.valueOf(configManager.isFormatterEnabled()),
-                "%essentials_mode%", String.valueOf(configManager.isEssentialsMode()),
-                "%protection%", String.valueOf(configManager.isProtectionEnabled()),
-                "%chat_cooldown%", String.valueOf(configManager.isCooldownEnabled()),
-                "%chat_cooldown_seconds%", String.valueOf(configManager.getCooldownSeconds()),
-                "%command_cooldown%", String.valueOf(configManager.isCommandSpamEnabled()),
-                "%command_cooldown_seconds%", String.valueOf(configManager.getCommandSpamSeconds()),
-                "%anti_repeat%", String.valueOf(configManager.isAntiRepeatEnabled()),
-                "%anti_repeat_max%", String.valueOf(configManager.getMaxRepeat()),
-                "%anti_caps%", String.valueOf(configManager.isAntiCapsEnabled()),
-                "%word_filter%", String.valueOf(configManager.isWordFilterEnabled()),
-                "%word_filter_action%", configManager.getWordFilterAction(),
-                "%placeholderapi%", String.valueOf(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)
-        ));
+        )), placeholders);
     }
 
     public void sendReloadSuccess(CommandSender sender) {
