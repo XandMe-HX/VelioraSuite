@@ -2,11 +2,82 @@
 
 VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
+Author / owner name yang dipakai di source, config, guide, command, dan dokumentasi: **XandMe**.
+
 ## Status
 
-Clean rebuild tahap ketiga: Core Plugin + VelioraGuide + VelioraAnnouncement.
+Clean rebuild branch `clean-core`.
 
-## Fitur Core
+Tahap saat ini:
+
+- Core clean sudah dipisah ke manager.
+- VelioraGuide sudah aktif sebagai module.
+- VelioraAnnouncement sudah aktif sebagai module.
+- Module lain sudah mulai dibuat sebagai skeleton/planned module.
+- Logic besar seperti Fishing, Trader, Boss, ClearLag, Chat, Security, Quest, dan LoginSecurity dikerjakan bertahap.
+
+## Target
+
+- Paper / Purpur 1.21.8
+- Java 21
+- Maven
+- Package utama: `id.velioragardens.veliorasuite`
+
+## Struktur Core
+
+```text
+src/main/java/id/velioragardens/veliorasuite/
+├── VelioraSuite.java
+├── api/
+│   ├── VelioraModule.java
+│   └── PlannedModule.java
+├── command/
+│   ├── VelioraCommand.java
+│   └── DisabledCommand.java
+├── core/
+│   ├── ConfigManager.java
+│   ├── MessageManager.java
+│   ├── ModuleManager.java
+│   └── HookManager.java
+└── module/
+    ├── guide/
+    ├── announcement/
+    ├── loginsecurity/
+    ├── team/
+    ├── kits/
+    ├── report/
+    ├── fishing/
+    ├── skills/
+    ├── quest/
+    ├── boss/
+    └── security/
+```
+
+## File Runtime
+
+```text
+plugins/VelioraSuite/
+├── config.yml
+├── messages.yml
+├── modules.yml
+├── database/
+│   └── veliorasuite.db
+├── data/
+└── modules/
+    ├── guide.yml
+    ├── announcement.yml
+    ├── loginsecurity.yml
+    ├── team.yml
+    ├── kits.yml
+    ├── report.yml
+    ├── fishing.yml
+    ├── skills.yml
+    ├── quest.yml
+    ├── boss.yml
+    └── security.yml
+```
+
+## Core Command
 
 - `/vs`
 - `/vs reload`
@@ -32,12 +103,6 @@ File config:
 plugins/VelioraSuite/modules/guide.yml
 ```
 
-Cara edit:
-
-1. Buka `guide.yml`.
-2. Tambahkan atau ubah halaman di `sections.guide.pages`, `sections.rules.pages`, atau `sections.product.pages`.
-3. Jalankan `/vguide reload` atau `/vs reload`.
-
 ## VelioraAnnouncement
 
 Command:
@@ -52,24 +117,8 @@ File config:
 plugins/VelioraSuite/modules/announcement.yml
 ```
 
-Cara edit:
+## Catatan Development
 
-1. Buka `announcement.yml`.
-2. Atur `settings.interval-seconds` untuk jeda broadcast.
-3. Atur `settings.mode` menjadi `RANDOM` atau `SEQUENTIAL`.
-4. Tambahkan pesan baru di `announcements`.
-5. Jalankan `/vannounce reload` atau `/vs reload`.
+Jangan langsung menumpuk semua logic di `VelioraSuite.java` atau `Module.java`.
 
-## Target
-
-- Paper / Purpur 1.21.8
-- Java 21
-- Maven
-
-## Catatan
-
-Semua contoh memakai nama **XandMe**. Nama asli owner tidak dipakai di source, config, README, atau guide.
-
-## Author
-
-XandMe
+Setiap module besar nanti wajib dipisah menjadi manager, command, listener, data manager, model, dan class pendukung lain sesuai kebutuhan.
