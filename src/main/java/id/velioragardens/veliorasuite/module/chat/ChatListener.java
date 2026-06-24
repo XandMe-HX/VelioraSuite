@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.chat;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
 public final class ChatListener implements Listener {
 
@@ -28,5 +29,12 @@ public final class ChatListener implements Listener {
         }
 
         event.setMessage(result.message());
+    }
+
+    @EventHandler
+    public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        if (chatManager.shouldCancelCommand(event.getPlayer(), event.getMessage())) {
+            event.setCancelled(true);
+        }
     }
 }
