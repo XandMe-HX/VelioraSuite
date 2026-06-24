@@ -2,7 +2,7 @@
 # VelioraTeam Configuration
 # ==================================================
 # File ini mengatur sistem team player Veliora Gardens.
-# Semua harga, limit member, permission, format chat,
+# Semua harga, limit member, permission, format team tag,
 # pesan, dan data tampilan bisa diubah dari sini.
 #
 # Setelah mengubah file ini, jalankan:
@@ -62,12 +62,21 @@ settings:
   allow-setowner-non-member: true
 
   # Tag team langsung dari VelioraTeam listener.
-  # Default false agar tidak dobel jika VelioraChat atau EssentialsChat
-  # sudah memakai placeholder team tag.
-  # Aktifkan hanya kalau tidak memakai VelioraChat formatter/EssentialsChat placeholder.
+  # enabled hanya untuk direct chat listener lama.
+  # Default false agar tag tidak dobel di chat.
+  # Untuk TAB nametag/belowname, tetap pakai PlaceholderAPI:
+  # %veliorasuite_team_tag%
+  #
+  # Contoh TAB tagprefix:
+  # tagprefix: '%veliorasuite_team_tag%&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
+  #
+  # Jika player punya team Shadow:
+  # %veliorasuite_team_tag% -> &8【&bShadow&8】&f 
+  # Jika player tidak punya team:
+  # %veliorasuite_team_tag% -> kosong
   chat-tag:
     enabled: false
-    format: '&8[&b%team%&8] '
+    format: '&8【&b%team%&8】&f '
     max-team-name-length-in-chat: 12
 
 commands:
@@ -97,7 +106,8 @@ permissions:
   bypass-limit: 'veliorasuite.team.bypasslimit'
 
 formats:
-  chat-tag: '&8[&b%team%&8] '
+  # Format fallback lama. Placeholder TAB tetap mengambil settings.chat-tag.format.
+  chat-tag: '&8【&b%team%&8】&f '
   team-chat: '&8[&bTeam Chat&8] &f%player%&7: &f%message%'
 
   list-header:
