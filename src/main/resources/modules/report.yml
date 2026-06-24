@@ -1,8 +1,145 @@
-enabled: false
+# ==================================================
+# VelioraReport Configuration
+# ==================================================
+# File ini mengatur sistem laporan player Veliora Gardens.
+# Semua command, permission, cooldown, pesan, notifikasi,
+# dan format report bisa diubah dari sini.
+#
+# Setelah mengubah file ini, jalankan:
+# - /reports reload
+# atau
+# - /vs reload
+# ==================================================
 
 settings:
-  store-in-sqlite: true
-  allow-self-report: false
+  # Mengaktifkan atau mematikan module report.
+  enabled: true
+
+  # Prefix default untuk semua pesan VelioraReport.
+  prefix: '&8[&cVelioraReport&8] '
+
+  # Minimal panjang alasan report.
+  min-reason-length: 5
+
+  # Maksimal panjang alasan report.
+  max-reason-length: 120
+
+  # Cooldown membuat report agar tidak spam.
+  # Format: 10s, 5m, 1h, 1d.
+  cooldown: '60s'
+
+  # Jika true, player tidak bisa report diri sendiri.
+  block-self-report: true
+
+  # Jika true, staff online menerima notifikasi saat report baru dibuat.
+  notify-staff: true
+
+  # Jika true, lokasi player saat membuat report akan disimpan.
+  save-location: true
+
+commands:
+  # Section ini untuk dokumentasi command di config.
+  player-main: '/report'
+  staff-main: '/reports'
+
+  aliases:
+    player:
+      - '/vreport'
+    staff:
+      - '/vreports'
+
+  examples:
+    - '/report Steve cheating'
+    - '/report bug ada bug claim'
+    - '/reports list'
+    - '/reports view 1'
+    - '/reports close 1 sudah ditindak'
+    - '/reports reopen 1'
+
+permissions:
+  # Permission untuk player membuat report.
+  use: 'veliorasuite.report.use'
+
+  # Permission staff untuk melihat dan mengelola report.
+  staff: 'veliorasuite.report.staff'
+
+  # Permission admin penuh.
+  admin: 'veliorasuite.report.admin'
+
+  # Permission reload config report.
+  reload: 'veliorasuite.report.reload'
+
+  # Permission bypass cooldown report.
+  bypass-cooldown: 'veliorasuite.report.bypasscooldown'
 
 messages:
-  prefix: '&8【&aVelioraReport&8】'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  module-disabled: '%prefix% &cVelioraReport sedang dimatikan.'
+  reload-success: '%prefix% &aVelioraReport berhasil direload.'
+  invalid-usage-player: '%prefix% &cGunakan: &f/report <player> <alasan>'
+  invalid-usage-bug: '%prefix% &cGunakan: &f/report bug <alasan>'
+  invalid-usage-staff: '%prefix% &cGunakan: &f/reports <list|view|close|reopen|reload>'
+  target-not-found: '%prefix% &cPlayer &f%target% &ctidak ditemukan.'
+  cannot-report-self: '%prefix% &cKamu tidak bisa melaporkan diri sendiri.'
+  reason-too-short: '%prefix% &cAlasan terlalu pendek. Minimal &f%min% &ckarakter.'
+  reason-too-long: '%prefix% &cAlasan terlalu panjang. Maksimal &f%max% &ckarakter.'
+  on-cooldown: '%prefix% &cTunggu &f%time% &csebelum membuat report lagi.'
+  report-created: '%prefix% &aReport berhasil dibuat dengan ID &f#%id%&a.'
+  report-not-found: '%prefix% &cReport ID &f#%id% &ctidak ditemukan.'
+  report-closed: '%prefix% &aReport &f#%id% &aberhasil ditutup.'
+  report-reopened: '%prefix% &aReport &f#%id% &aberhasil dibuka kembali.'
+  no-open-reports: '%prefix% &aTidak ada report terbuka.'
+
+  help-player:
+    - '&8&m--------------------------------'
+    - '&c&lVelioraReport'
+    - '&f/report <player> <alasan> &7- Laporkan player.'
+    - '&f/report bug <alasan> &7- Laporkan bug.'
+    - '&8&m--------------------------------'
+
+  help-staff:
+    - '&8&m--------------------------------'
+    - '&c&lVelioraReport Staff'
+    - '&f/reports list &7- Lihat report terbuka.'
+    - '&f/reports view <id> &7- Lihat detail report.'
+    - '&f/reports close <id> <catatan> &7- Tutup report.'
+    - '&f/reports reopen <id> &7- Buka ulang report.'
+    - '&f/reports reload &7- Reload config.'
+    - '&8&m--------------------------------'
+
+formats:
+  staff-notify:
+    - '&8&m--------------------------------'
+    - '&c&lReport Baru'
+    - '&7ID: &f#%id%'
+    - '&7Type: &f%type%'
+    - '&7Reporter: &f%reporter%'
+    - '&7Target: &f%target%'
+    - '&7Alasan: &f%reason%'
+    - '&7Gunakan: &f/reports view %id%'
+    - '&8&m--------------------------------'
+
+  list-header:
+    - '&8&m--------------------------------'
+    - '&c&lReport Terbuka'
+
+  list-format: '&7#%id% &8| &f%type% &8| &f%reporter% &7-> &f%target% &8| &c%reason%'
+
+  list-footer:
+    - '&8&m--------------------------------'
+
+  view:
+    - '&8&m--------------------------------'
+    - '&c&lDetail Report #%id%'
+    - '&7Status: &f%status%'
+    - '&7Type: &f%type%'
+    - '&7Reporter: &f%reporter%'
+    - '&7Target: &f%target%'
+    - '&7World: &f%world%'
+    - '&7Lokasi: &f%x%, %y%, %z%'
+    - '&7Alasan: &f%reason%'
+    - '&7Dibuat: &f%created%'
+    - '&7Ditutup oleh: &f%closed_by%'
+    - '&7Catatan close: &f%close_note%'
+    - '&8&m--------------------------------'
