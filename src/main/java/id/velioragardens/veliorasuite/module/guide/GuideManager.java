@@ -113,8 +113,8 @@ public final class GuideManager {
             return;
         }
 
-        if (config.getBoolean("settings.clear-chat-before-page", true)) {
-            int clearLines = Math.max(0, config.getInt("settings.clear-chat-lines", 8));
+        if (config.getBoolean("settings.clear-chat-before-page", false)) {
+            int clearLines = Math.max(0, config.getInt("settings.clear-chat-lines", 0));
             for (int i = 0; i < clearLines; i++) {
                 sender.sendMessage("");
             }
@@ -145,23 +145,31 @@ public final class GuideManager {
     }
 
     private void sendNavigation(CommandSender sender, String commandLabel, int page, int maxPage) {
+        boolean hasBack = page > 1;
+        boolean hasNext = page < maxPage;
         int previousPage = Math.max(1, page - 1);
         int nextPage = Math.min(maxPage, page + 1);
 
-        String pageInfo = color(" &7Page &f" + page + "&7/&f" + maxPage + " ");
+        sender.sendMessage(color("&8&m--------------------------------"));
 
         if (sender instanceof Player player && config.getBoolean("settings.clickable-buttons-java", true)) {
-            TextComponent back = new TextComponent(color("&e[ Back ]"));
-            back.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + commandLabel + " " + previousPage));
+            TextComponent back = new TextComponent(color(hasBack ? "&e[Back]" : "&7[Back]"));
+            if (hasBack) {
+                back.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + commandLabel + " " + previousPage));
+            }
 
-            TextComponent info = new TextComponent(pageInfo);
+            TextComponent info = new TextComponent(color(" &7Page &f" + page + "&7/&f" + maxPage + " "));
 
-            TextComponent next = new TextComponent(color("&a[ Next ]"));
-            next.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + commandLabel + " " + nextPage));
+            TextComponent next = new TextComponent(color(hasNext ? "&a[Next]" : "&7[Next]"));
+            if (hasNext) {
+                next.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + commandLabel + " " + nextPage));
+            }
 
             player.spigot().sendMessage(back, info, next);
         } else {
-            sender.sendMessage(color("&e[ Back ]&7 Page &f" + page + "&7/&f" + maxPage + " &a[ Next ]"));
+            String back = hasBack ? "&e[Back]" : "&7[Back]";
+            String next = hasNext ? "&a[Next]" : "&7[Next]";
+            sender.sendMessage(color(back + " &7Page &f" + page + "&7/&f" + maxPage + " " + next));
         }
 
         if (config.getBoolean("settings.bedrock-navigation-hint", true)) {
