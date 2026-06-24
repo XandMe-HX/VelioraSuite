@@ -6,11 +6,15 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 public final class AnnouncementCommand implements CommandExecutor, TabCompleter {
+
+    private static final String PERMISSION_ADMIN = "veliorasuite.announcement.admin";
+    private static final String PERMISSION_RELOAD = "veliorasuite.announcement.reload";
+    private static final String PERMISSION_SEND = "veliorasuite.announcement.send";
+    private static final String PERMISSION_STATUS = "veliorasuite.announcement.status";
 
     private final AnnouncementManager announcementManager;
 
@@ -20,12 +24,12 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("veliorasuite.announcement.admin")) {
-            announcementManager.sendNoPermission(sender);
-            return true;
-        }
-
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+            if (!hasAnyAnnouncementPermission(sender)) {
+                announcementManager.sendNoPermission(sender);
+                return true;
+            }
+
             announcementManager.sendHelp(sender);
             return true;
         }
@@ -34,24 +38,44 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
 
         switch (subCommand) {
             case "status" -> {
+                if (!hasPermission(sender, PERMISSION_STATUS)) {
+                    announcementManager.sendNoPermission(sender);
+                    return true;
+                }
+
                 announcementManager.sendStatus(sender);
                 return true;
             }
 
             case "list" -> {
+                if (!hasPermission(sender, PERMISSION_STATUS)) {
+                    announcementManager.sendNoPermission(sender);
+                    return true;
+                }
+
                 announcementManager.sendList(sender);
                 return true;
             }
 
             case "reload" -> {
+                if (!hasPermission(sender, PERMISSION_RELOAD)) {
+                    announcementManager.sendNoPermission(sender);
+                    return true;
+                }
+
                 announcementManager.reload();
                 announcementManager.sendReloadSuccess(sender);
                 return true;
             }
 
             case "send" -> {
+                if (!hasPermission(sender, PERMISSION_SEND)) {
+                    announcementManager.sendNoPermission(sender);
+                    return true;
+                }
+
                 if (args.length < 2) {
-                    announcementManager.sendNoAnnouncements(sender);
+                    announcementManager.sendUsageSend(sender);
                     return true;
                 }
 
@@ -68,6 +92,11 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
             }
 
             default -> {
+                if (!hasAnyAnnouncementPermission(sender)) {
+                    announcementManager.sendNoPermission(sender);
+                    return true;
+                }
+
                 announcementManager.sendHelp(sender);
                 return true;
             }
@@ -76,19 +105,45 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("veliorasuite.announcement.admin")) {
-            return new ArrayList<>();
-        }
-
         if (args.length == 1) {
-            return filter(Arrays.asList("help", "status", "list", "reload", "send"), args[0]);
+            List<String> options = new ArrayList<>();
+
+            if (hasAnyAnnouncementPermission(sender)) {
+                options.add("help");
+            }
+
+            if (hasPermission(sender, PERMISSION_STATUS)) {
+                options.add("status");
+                options.add("list");
+            }
+
+            if (hasPermission(sender, PERMISSION_RELOAD)) {
+                options.add("reload");
+            }
+
+            if (hasPermission(sender, PERMISSION_SEND)) {
+                options.add("send");
+            }
+
+            return filter(options, args[0]);
         }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("send")) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("send") && hasPermission(sender, PERMISSION_SEND)) {
             return filter(announcementManager.getActiveIds(), args[1]);
         }
 
         return new ArrayList<>();
+    }
+
+    private boolean hasPermission(CommandSender sender, String permission) {
+        return sender.hasPermission(PERMISSION_ADMIN) || sender.hasPermission(permission);
+    }
+
+    private boolean hasAnyAnnouncementPermission(CommandSender sender) {
+        return sender.hasPermission(PERMISSION_ADMIN)
+                || sender.hasPermission(PERMISSION_STATUS)
+                || sender.hasPermission(PERMISSION_RELOAD)
+                || sender.hasPermission(PERMISSION_SEND);
     }
 
     private List<String> filter(List<String> options, String input) {
