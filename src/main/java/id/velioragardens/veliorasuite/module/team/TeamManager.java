@@ -369,16 +369,20 @@ public final class TeamManager {
     }
 
     private boolean validateTeamName(Player player, String name) {
+        if (!name.matches("^[A-Z]+$")) {
+            send(player, "team-name-invalid", "%prefix% &cNama team tidak valid. Gunakan huruf besar A-Z saja, tanpa angka/simbol/emoji. Contoh: &fSHDW", Map.of());
+            return false;
+        }
         if (name.length() < configManager.getMinTeamNameLength()) {
-            send(player, "team-name-too-short", "%prefix% &cNama team terlalu pendek. Minimal &f%min% &ckarakter.", Map.of("%min%", String.valueOf(configManager.getMinTeamNameLength())));
+            send(player, "team-name-too-short", "%prefix% &cNama team terlalu pendek. Minimal &f%min% &churuf.", Map.of("%min%", String.valueOf(configManager.getMinTeamNameLength())));
             return false;
         }
         if (name.length() > configManager.getMaxTeamNameLength()) {
-            send(player, "team-name-too-long", "%prefix% &cNama team terlalu panjang. Maksimal &f%max% &ckarakter.", Map.of("%max%", String.valueOf(configManager.getMaxTeamNameLength())));
+            send(player, "team-name-too-long", "%prefix% &cNama team terlalu panjang. Maksimal &f%max% &churuf.", Map.of("%max%", String.valueOf(configManager.getMaxTeamNameLength())));
             return false;
         }
         if (!configManager.getTeamNamePattern().matcher(name).matches()) {
-            send(player, "team-name-invalid", "%prefix% &cNama team tidak valid. Gunakan huruf, angka, atau underscore.", Map.of());
+            send(player, "team-name-invalid", "%prefix% &cNama team tidak valid. Gunakan huruf besar A-Z saja, tanpa angka/simbol/emoji. Contoh: &fSHDW", Map.of());
             return false;
         }
         for (String blocked : configManager.getBlockedNames()) {
