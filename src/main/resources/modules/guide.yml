@@ -2,7 +2,7 @@
 # VELIORAGUIDE CONFIG
 # =========================================================
 # Fungsi:
-# - Mengirim panduan, rules, dan product server lewat chat.
+# - Mengirim panduan, rules, rank, dan product server lewat chat.
 # - Gunakan font biasa agar mudah dibaca player.
 # - Jangan pakai small caps.
 #
@@ -11,6 +11,8 @@
 # - /vguide <page>    -> buka Panduan Server halaman tertentu
 # - /vrules           -> buka Rules Server halaman 1
 # - /vrules <page>    -> buka Rules Server halaman tertentu
+# - /vrank            -> buka Toko Rank Server halaman 1
+# - /vrank <page>     -> buka Toko Rank Server halaman tertentu
 # - /vproduct         -> buka Product/Fitur Server halaman 1
 # - /vproduct <page>  -> buka Product/Fitur Server halaman tertentu
 # - /vguide reload    -> reload file ini, khusus admin
@@ -180,6 +182,124 @@ sections:
           - '&f- Stay fair and have fun.'
           - '&f- Gunakan server dengan sopan dan sportif.'
 
+  rank:
+    command: 'vrank'
+    title: '&eToko Rank Server'
+    pages:
+      1:
+        title: '&eToko Rank Server'
+        lines:
+          - '&8[ &eToko Rank Server &8]'
+          - '&7Tempat untuk mendapatkan rank dengan keuntungan eksklusif'
+          - '&7dan fitur tambahan untuk meningkatkan kenyamanan bermain.'
+          - '&fGunakan &e/vrank <page> &funtuk melihat daftar rank.'
+      2:
+        title: '&eWarga &7- &aRp5.000'
+        lines:
+          - '&8[ &eWarga &7- &aRp5.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome limit 1x'
+          - '&7- Block claim 15K'
+          - '&7- Claim limit 2x'
+          - '&7- Skill: /anvil'
+      3:
+        title: '&ePetani &7- &aRp10.000'
+        lines:
+          - '&8[ &ePetani &7- &aRp10.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome limit 2x'
+          - '&7- Block claim 20K'
+          - '&7- Claim limit 2x'
+          - '&7- Skill: /anvil'
+      4:
+        title: '&ePengrajin &7- &aRp15.000'
+        lines:
+          - '&8[ &ePengrajin &7- &aRp15.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome limit 2x'
+          - '&7- Block claim 25K'
+          - '&7- Claim limit 2x'
+          - '&7- Skill: /anvil'
+      5:
+        title: '&eHunter &7- &aRp20.000'
+        lines:
+          - '&8[ &eHunter &7- &aRp20.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome 3x'
+          - '&7- Block claim limited 30K'
+          - '&7- Claim 3x'
+          - '&7- Skill: /anvil, /workbench'
+      6:
+        title: '&eScout &7- &aRp30.000'
+        lines:
+          - '&8[ &eScout &7- &aRp30.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome 3x'
+          - '&7- Block claim limited 45K'
+          - '&7- Claim 3x'
+          - '&7- Skill: /anvil, /workbench'
+      7:
+        title: '&eKnight &7- &aRp50.000'
+        lines:
+          - '&8[ &eKnight &7- &aRp50.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome 4x'
+          - '&7- Block claim limited 60K'
+          - '&7- Claim 4x'
+          - '&7- Skill: /anvil, /workbench'
+      8:
+        title: '&eWizard &7- &aRp55.000'
+        lines:
+          - '&8[ &eWizard &7- &aRp55.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome 4x'
+          - '&7- Block claim limited 80K'
+          - '&7- Claim 4x'
+          - '&7- Skill: /anvil, /workbench, /cartographytable'
+      9:
+        title: '&eMithril &7- &aRp80.000'
+        lines:
+          - '&8[ &eMithril &7- &aRp80.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome 5x'
+          - '&7- Block claim limited 100K'
+          - '&7- Claim 5x'
+          - '&7- Skill: /anvil, /workbench, /cartographytable'
+      10:
+        title: '&eArchon &7- &aRp120.000'
+        lines:
+          - '&8[ &eArchon &7- &aRp120.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome 6x'
+          - '&7- Block claim limited 300K'
+          - '&7- Claim 6x'
+          - '&7- Skill: /anvil, /workbench, /cartographytable, /ec'
+      11:
+        title: '&eOverlord &7- &aRp150.000'
+        lines:
+          - '&8[ &eOverlord &7- &aRp150.000 &8]'
+          - '&fBenefit:'
+          - '&7- Sethome 6x'
+          - '&7- Block claim limited 900K'
+          - '&7- Claim 6x'
+          - '&7- Skill: /anvil, /workbench, /cartographytable, /smithingtable, /ec'
+      12:
+        title: '&eStreamer &7- &fUsing Terms'
+        lines:
+          - '&8[ &eStreamer &7- &fUsing Terms &8]'
+          - '&fBenefit:'
+          - '&7- Rank khusus untuk content creator.'
+          - '&7- Syarat dan ketentuan ditentukan oleh staff.'
+          - '&7- Hubungi admin untuk informasi lebih lanjut.'
+      13:
+        title: '&eVtuber &7- &fUsing Terms'
+        lines:
+          - '&8[ &eVtuber &7- &fUsing Terms &8]'
+          - '&fBenefit:'
+          - '&7- Rank khusus untuk vtuber/content creator.'
+          - '&7- Syarat dan ketentuan ditentukan oleh staff.'
+          - '&7- Hubungi admin untuk informasi lebih lanjut.'
+
   product:
     display-name: 'Product dan Fitur Server'
     pages:
@@ -193,6 +313,15 @@ sections:
           - '&fKits, Team, Report, dan fitur lain.'
           - '&fDibuat bertahap agar ringan dan rapi.'
       2:
+        title: '&eRank Server'
+        lines:
+          - '&8[ &eRank Server &8]'
+          - '&7Veliora Gardens menyediakan rank server'
+          - '&7dengan benefit tambahan untuk kenyamanan bermain.'
+          - '&fCommand: &e/vrank'
+          - '&fIsi: &7harga rank, benefit, sethome, claim, dan skill.'
+          - '&7Gunakan &e/vrank <page> &7untuk melihat detail.'
+      3:
         title: '&6VelioraFishing'
         lines:
           - '&8[ &6VelioraFishing &8]'
@@ -201,7 +330,7 @@ sections:
           - '&fTetap memakai mekanik fishing vanilla.'
           - '&fAman untuk AuraSkills.'
           - '&7Command: &a/vf top'
-      3:
+      4:
         title: '&6VelioraTrader'
         lines:
           - '&8[ &6VelioraTrader &8]'
@@ -210,7 +339,7 @@ sections:
           - '&fTrader hilang otomatis jika waktu habis.'
           - '&7Command: &a/vtr spawn'
           - '&7Command: &a/vtr reload'
-      4:
+      5:
         title: '&6VelioraBoss'
         lines:
           - '&8[ &6VelioraBoss &8]'
@@ -218,7 +347,7 @@ sections:
           - '&fMendukung bossbar, skill, dan rarity.'
           - '&fAda top damage dan reward.'
           - '&fDibuat agar tidak mengganggu mob biasa.'
-      5:
+      6:
         title: '&6VelioraQuest'
         lines:
           - '&8[ &6VelioraQuest &8]'
@@ -226,7 +355,7 @@ sections:
           - '&fQuest bisa mining, farming, fishing,'
           - '&fkill mob, playtime, dan lainnya.'
           - '&fReward dibuat kecil dan aman.'
-      6:
+      7:
         title: '&6VelioraClearLag'
         lines:
           - '&8[ &6VelioraClearLag &8]'
@@ -234,7 +363,7 @@ sections:
           - '&fTidak menghapus boss, trader, atau NPC.'
           - '&fTidak menghapus armor stand dan villager.'
           - '&fTidak menghapus item penting.'
-      7:
+      8:
         title: '&6VelioraChat'
         lines:
           - '&8[ &6VelioraChat &8]'
@@ -242,7 +371,7 @@ sections:
           - '&fMendukung format chat dan filter.'
           - '&fAda cooldown, anti repeat, dan anti caps.'
           - '&fSupport LuckPerms dan PlaceholderAPI.'
-      8:
+      9:
         title: '&6VelioraSecurity'
         lines:
           - '&8[ &6VelioraSecurity &8]'
@@ -250,7 +379,7 @@ sections:
           - '&fBerisi anti spam dan anti bot basic.'
           - '&fAda command cooldown.'
           - '&fAda join protection untuk player baru.'
-      9:
+      10:
         title: '&6Kits Team Report'
         lines:
           - '&8[ &6Kits Team Report &8]'
@@ -258,11 +387,11 @@ sections:
           - '&fVelioraTeam: buat team dan invite teman.'
           - '&fVelioraReport: lapor pelanggaran ke staff.'
           - '&fSemua fitur dibuat bertahap.'
-      10:
+      11:
         title: '&6Announcement Guide'
         lines:
           - '&8[ &6Announcement Guide &8]'
           - '&fVelioraAnnouncement: broadcast otomatis.'
           - '&fBisa random atau berurutan.'
-          - '&fVelioraGuide: panduan, rules, product.'
-          - '&fGunakan /vguide, /vrules, /vproduct.'
+          - '&fVelioraGuide: panduan, rules, rank, product.'
+          - '&fGunakan /vguide, /vrules, /vrank, /vproduct.'
