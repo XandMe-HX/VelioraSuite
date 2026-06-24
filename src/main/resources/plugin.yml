@@ -55,6 +55,13 @@ commands:
       - vann
       - va
 
+  kits:
+    description: Open and claim Veliora kits.
+    usage: /kits <help|open|list|claim|preview|buy|cooldown|reload>
+    aliases:
+      - veliorakits
+      - vkits
+
 permissions:
   veliorasuite.admin:
     description: Allows access to VelioraSuite admin command.
@@ -86,4 +93,24 @@ permissions:
 
   veliorasuite.announcement.status:
     description: Allows viewing VelioraAnnouncement status and list.
+    default: op
+
+  veliorasuite.kits.use:
+    description: Allows players to use VelioraKits.
+    default: true
+
+  veliorasuite.kits.admin:
+    description: Allows full access to VelioraKits.
+    default: op
+
+  veliorasuite.kits.reload:
+    description: Allows reloading VelioraKits.
+    default: op
+
+  veliorasuite.kits.bypasscooldown:
+    description: Allows bypassing kit cooldown.
+    default: op
+
+  veliorasuite.kits.bypassprice:
+    description: Allows bypassing kit prices.
     default: op
