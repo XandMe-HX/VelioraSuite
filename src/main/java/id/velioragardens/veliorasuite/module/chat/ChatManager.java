@@ -6,6 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class ChatManager {
@@ -13,6 +14,7 @@ public final class ChatManager {
     private final VelioraSuite plugin;
     private final ChatConfigManager configManager;
     private final ChatCooldownManager cooldownManager;
+    private final ChatCooldownManager commandCooldownManager;
     private final ChatFilterManager filterManager;
     private final ChatPlaceholderManager placeholderManager;
     private final ChatFormatManager formatManager;
@@ -21,6 +23,7 @@ public final class ChatManager {
         this.plugin = plugin;
         this.configManager = new ChatConfigManager(plugin);
         this.cooldownManager = new ChatCooldownManager();
+        this.commandCooldownManager = new ChatCooldownManager();
         this.filterManager = new ChatFilterManager(configManager);
         this.placeholderManager = new ChatPlaceholderManager(plugin, configManager);
         this.formatManager = new ChatFormatManager(configManager, placeholderManager);
@@ -34,11 +37,13 @@ public final class ChatManager {
     public void reload() {
         configManager.load();
         cooldownManager.clear();
+        commandCooldownManager.clear();
         filterManager.clear();
     }
 
     public void shutdown() {
         cooldownManager.clear();
+        commandCooldownManager.clear();
         filterManager.clear();
     }
 
@@ -97,6 +102,34 @@ public final class ChatManager {
         return ChatProcessResult.formatted(formatManager.formatPublicChat(player, finalMessage));
     }
 
+    public boolean shouldCancelCommand(Player player, String commandLine) {
+        if (!configManager.isEnabled() || !configManager.isProtectionEnabled() || !configManager.isCommandSpamEnabled()) {
+            return false;
+        }
+        if (player.hasPermission(configManager.getBypassCommandCooldownPermission()) || hasAdminPermission(player)) {
+            return false;
+        }
+
+        String command = normalizeCommand(commandLine);
+        if (command.isBlank() || isIgnoredCommand(command)) {
+            return false;
+        }
+
+        int cooldownSeconds = getCommandCooldownSeconds(command);
+        if (cooldownSeconds <= 0) {
+            return false;
+        }
+
+        long remaining = commandCooldownManager.getRemainingSeconds(player.getUniqueId());
+        if (remaining > 0) {
+            send(player, "command-cooldown", "%prefix% &cTunggu &f%time%s &csebelum memakai command lagi.", Map.of("%time%", String.valueOf(remaining)));
+            return true;
+        }
+
+        commandCooldownManager.setCooldown(player.getUniqueId(), cooldownSeconds);
+        return false;
+    }
+
     public void broadcastFormatted(String formattedMessage) {
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
@@ -110,8 +143,11 @@ public final class ChatManager {
         sendLines(sender, configManager.getMessageList("help", List.of(
                 "&8&m--------------------------------",
                 "&b&lVelioraChat",
-                "&f/vchat status &7- Cek status chat.",
+                "&f/vchat status &7- Lihat status formatter dan protection.",
                 "&f/vchat reload &7- Reload config.",
+                "&7Chat cooldown: &fsettings.cooldown.seconds",
+                "&7Command cooldown: &fsettings.command-spam.seconds",
+                "&7Word filter: &fsettings.word-filter.blocked-words",
                 "&8&m--------------------------------"
         )), Map.of());
     }
@@ -122,14 +158,28 @@ public final class ChatManager {
                 "&b&lVelioraChat Status",
                 "&7Formatter: &f%formatter%",
                 "&7Essentials Mode: &f%essentials_mode%",
-                "&7PlaceholderAPI: &f%placeholderapi%",
                 "&7Protection: &f%protection%",
+                "&7Chat Cooldown: &f%chat_cooldown% &7(%chat_cooldown_seconds%s)",
+                "&7Command Cooldown: &f%command_cooldown% &7(%command_cooldown_seconds%s)",
+                "&7Anti Repeat: &f%anti_repeat% &7(max %anti_repeat_max%)",
+                "&7Anti Caps: &f%anti_caps%",
+                "&7Word Filter: &f%word_filter% &7(%word_filter_action%)",
+                "&7PlaceholderAPI: &f%placeholderapi%",
                 "&8&m--------------------------------"
         )), Map.of(
                 "%formatter%", String.valueOf(configManager.isFormatterEnabled()),
                 "%essentials_mode%", String.valueOf(configManager.isEssentialsMode()),
-                "%placeholderapi%", String.valueOf(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null),
-                "%protection%", String.valueOf(configManager.isProtectionEnabled())
+                "%protection%", String.valueOf(configManager.isProtectionEnabled()),
+                "%chat_cooldown%", String.valueOf(configManager.isCooldownEnabled()),
+                "%chat_cooldown_seconds%", String.valueOf(configManager.getCooldownSeconds()),
+                "%command_cooldown%", String.valueOf(configManager.isCommandSpamEnabled()),
+                "%command_cooldown_seconds%", String.valueOf(configManager.getCommandSpamSeconds()),
+                "%anti_repeat%", String.valueOf(configManager.isAntiRepeatEnabled()),
+                "%anti_repeat_max%", String.valueOf(configManager.getMaxRepeat()),
+                "%anti_caps%", String.valueOf(configManager.isAntiCapsEnabled()),
+                "%word_filter%", String.valueOf(configManager.isWordFilterEnabled()),
+                "%word_filter_action%", configManager.getWordFilterAction(),
+                "%placeholderapi%", String.valueOf(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)
         ));
     }
 
@@ -139,6 +189,38 @@ public final class ChatManager {
 
     public void sendNoPermission(CommandSender sender) {
         send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of());
+    }
+
+    private int getCommandCooldownSeconds(String command) {
+        Integer extra = configManager.getExtraCommandCooldowns().get(command);
+        if (extra != null) {
+            return extra;
+        }
+        return configManager.isCommandSpamApplyToAllCommands() ? configManager.getCommandSpamSeconds() : 0;
+    }
+
+    private boolean isIgnoredCommand(String command) {
+        String withSlash = "/" + command;
+        for (String ignored : configManager.getIgnoredCommands()) {
+            if (ignored == null || ignored.isBlank()) continue;
+            String normalized = ignored.trim().toLowerCase(Locale.ROOT);
+            if (!normalized.startsWith("/")) normalized = "/" + normalized;
+            if (normalized.equals(withSlash)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeCommand(String commandLine) {
+        if (commandLine == null || commandLine.isBlank()) {
+            return "";
+        }
+        String command = commandLine.trim().split("\\s+")[0].toLowerCase(Locale.ROOT);
+        if (command.startsWith("/")) {
+            command = command.substring(1);
+        }
+        return command;
     }
 
     private void sendFilterMessage(Player player, String messageKey) {
