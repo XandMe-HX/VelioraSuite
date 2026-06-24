@@ -25,13 +25,13 @@ public final class KitsListener implements Listener {
             return;
         }
 
-        if (!(event.getInventory().getHolder() instanceof KitGuiManager.KitsGuiHolder holder)) {
+        if (!(event.getView().getTopInventory().getHolder() instanceof KitGuiManager.KitsGuiHolder holder)) {
             return;
         }
 
         event.setCancelled(true);
 
-        if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getInventory().getSize()) {
+        if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getView().getTopInventory().getSize()) {
             return;
         }
 
