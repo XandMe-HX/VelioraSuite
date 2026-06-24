@@ -11,7 +11,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -68,7 +71,7 @@ public final class GuideManager {
                 ));
             }
 
-            pages.put(sectionName.toLowerCase(), sectionPages);
+            pages.put(sectionName.toLowerCase(Locale.ROOT), sectionPages);
         }
 
         plugin.getLogger().info("VelioraGuide loaded with " + pages.size() + " section(s).");
@@ -78,8 +81,24 @@ public final class GuideManager {
         load();
     }
 
+    public List<String> getPageSuggestions(String sectionName) {
+        TreeMap<Integer, GuidePage> sectionPages = pages.get(sectionName.toLowerCase(Locale.ROOT));
+        List<String> suggestions = new ArrayList<>();
+
+        if (sectionPages == null || sectionPages.isEmpty()) {
+            suggestions.add("1");
+            return suggestions;
+        }
+
+        for (Integer pageNumber : sectionPages.keySet()) {
+            suggestions.add(String.valueOf(pageNumber));
+        }
+
+        return suggestions;
+    }
+
     public void sendPage(CommandSender sender, String sectionName, int pageNumber, String commandLabel) {
-        TreeMap<Integer, GuidePage> sectionPages = pages.get(sectionName.toLowerCase());
+        TreeMap<Integer, GuidePage> sectionPages = pages.get(sectionName.toLowerCase(Locale.ROOT));
 
         if (sectionPages == null || sectionPages.isEmpty()) {
             send(sender, getMessage("page-not-found").replace("%page%", String.valueOf(pageNumber)));

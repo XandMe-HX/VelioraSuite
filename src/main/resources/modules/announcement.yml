@@ -1,122 +1,224 @@
-# =========================================================
-# VELIORAANNOUNCEMENT CONFIG
-# =========================================================
-# Fungsi:
-# - Mengirim broadcast otomatis ke chat server.
-# - Cocok untuk mengingatkan player tentang /vguide, /vrules, /shop, claim, event, Discord, dan report.
+# ==================================================
+# VelioraAnnouncement Configuration
+# ==================================================
+# File ini mengatur sistem pengumuman otomatis server.
+# Semua pesan, interval, mode, sound, permission, world
+# filter, dan isi announcement bisa diubah dari sini.
 #
-# Command admin:
-# - /vannounce status       -> melihat status announcement
-# - /vannounce reload       -> reload file ini
-# - /vannounce send <id>    -> mengirim announcement tertentu secara manual
+# Command utama:
+# - /vannounce help
+# - /vannounce status
+# - /vannounce list
+# - /vannounce reload
+# - /vannounce send <id>
 #
-# Cara edit:
-# - Ubah interval-seconds untuk mengatur jeda broadcast otomatis.
-# - Ubah mode menjadi SEQUENTIAL atau RANDOM.
-# - Tambahkan pesan baru di bagian announcements.
-# - Setelah edit, jalankan /vannounce reload atau /vs reload.
-# =========================================================
-
-enabled: true
+# Alias:
+# - /vann
+# - /vannounce
+# - /va
+#
+# Setelah mengubah file ini, jalankan:
+# - /vannounce reload
+# atau
+# - /vs reload
+# ==================================================
 
 settings:
-  # Jika true, announcement otomatis berjalan saat server hidup.
+  # Mengaktifkan atau mematikan module announcement.
+  # true = aktif
+  # false = mati
+  enabled: true
+
+  # Jika true, scheduler announcement otomatis berjalan saat module aktif.
+  # Jika false, announcement hanya bisa dikirim manual dengan /vannounce send <id>.
   auto-start: true
 
-  # Waktu tunggu sebelum announcement pertama dikirim setelah server start.
+  # Waktu tunggu sebelum announcement otomatis pertama dikirim setelah server start.
+  # Satuan: detik
+  # Contoh: 60 = 1 menit
   initial-delay-seconds: 60
 
-  # Jeda antar announcement otomatis.
-  # Contoh: 300 = 5 menit, 600 = 10 menit.
+  # Jeda antar broadcast otomatis dalam detik.
+  # Default aman untuk survival/MMORPG: 300 detik atau 5 menit.
+  # Contoh:
+  # 300 = 5 menit
+  # 600 = 10 menit
+  # Minimal aman dari plugin: 10 detik.
   interval-seconds: 300
 
-  # Mode pengiriman:
-  # SEQUENTIAL = urut dari atas ke bawah.
-  # RANDOM = acak.
-  mode: 'RANDOM'
+  # Mode broadcast otomatis.
+  # SEQUENTIAL = berurutan dari atas ke bawah
+  # RANDOM = acak
+  mode: SEQUENTIAL
 
-  # Jika false, announcement tidak dikirim saat server kosong.
-  send-on-empty-server: false
+  # Jika mode RANDOM aktif, opsi ini mencegah pesan yang sama
+  # muncul dua kali berturut-turut jika jumlah announcement lebih dari 1.
+  random-avoid-repeat: true
 
-  # Jika true, console juga akan menerima announcement.
-  send-to-console: false
+  # Prefix default untuk announcement.
+  # Prefix akan ditambahkan pada baris pertama announcement.
+  prefix: '&8[&bVeliora&8] '
 
-  # Jika true, player harus punya permission di announcement.permission agar menerima pesan.
-  # Bisa dikosongkan per announcement kalau ingin semua player menerima.
-  use-per-announcement-permission: false
+sound:
+  # Sound saat announcement dikirim ke player.
+  # true = aktif
+  # false = mati
+  enabled: true
 
-  # Filter world global.
-  worlds:
-    enabled: false
-    # Jika whitelist kosong, semua world boleh menerima kecuali yang ada di blacklist.
-    whitelist: []
-    blacklist:
-      - 'disabledworld'
+  # Nama sound Minecraft/Paper.
+  # Contoh:
+  # ENTITY_EXPERIENCE_ORB_PICKUP
+  # BLOCK_NOTE_BLOCK_PLING
+  name: 'ENTITY_EXPERIENCE_ORB_PICKUP'
 
-  sound:
-    enabled: false
-    # Nama sound harus sesuai enum Bukkit/Paper.
-    name: 'ENTITY_EXPERIENCE_ORB_PICKUP'
-    volume: 1.0
-    pitch: 1.0
+  # Volume sound.
+  # Contoh: 0.5 pelan, 1.0 normal, 2.0 keras.
+  volume: 1.0
+
+  # Pitch sound.
+  # Contoh: 1.0 normal, 1.2 sedikit tinggi.
+  pitch: 1.2
+
+commands:
+  # Section ini untuk dokumentasi command di config.
+  # Command asli tetap didaftarkan lewat plugin.yml.
+  main: '/vannounce'
+  aliases:
+    - '/vann'
+    - '/va'
+  examples:
+    - '/vannounce help'
+    - '/vannounce status'
+    - '/vannounce list'
+    - '/vannounce reload'
+    - '/vannounce send welcome'
+
+permissions:
+  # Permission penuh untuk semua fitur announcement.
+  admin: 'veliorasuite.announcement.admin'
+
+  # Permission untuk melihat status dan list announcement.
+  status: 'veliorasuite.announcement.status'
+
+  # Permission untuk reload config announcement.
+  reload: 'veliorasuite.announcement.reload'
+
+  # Permission untuk mengirim announcement manual.
+  send: 'veliorasuite.announcement.send'
 
 messages:
-  prefix: '&8【&aVelioraAnnouncement&8】'
+  # Semua pesan command VelioraAnnouncement bisa diedit di sini.
+  prefix: '&8[&bVelioraAnnouncement&8]'
+
   no-permission: '%prefix% &cKamu tidak punya izin.'
-  reload-success: '%prefix% &aAnnouncement berhasil direload.'
+  reload-success: '%prefix% &aAnnouncement berhasil direload dan task sudah direstart dengan aman.'
+  send-success: '%prefix% &aAnnouncement &f%id% &aberhasil dikirim.'
+  not-found: '%prefix% &cAnnouncement &f%id% &ctidak ditemukan atau sedang nonaktif.'
+  usage-send: '%prefix% &cGunakan: &f/vannounce send <id>'
+
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraAnnouncement'
+    - '&f/vannounce help &7- Melihat bantuan command.'
+    - '&f/vannounce status &7- Melihat status module.'
+    - '&f/vannounce list &7- Melihat ID aktif.'
+    - '&f/vannounce reload &7- Reload config dan task.'
+    - '&f/vannounce send <id> &7- Kirim manual.'
+    - '&8&m--------------------------------'
+
   status:
     - '&8&m--------------------------------'
-    - '&a&lVelioraAnnouncement Status'
+    - '&b&lVelioraAnnouncement Status'
     - '&7Enabled: &f%enabled%'
+    - '&7Running: &f%running%'
     - '&7Auto Start: &f%auto_start%'
     - '&7Mode: &f%mode%'
     - '&7Interval: &f%interval%s'
-    - '&7Total Message: &f%total%'
+    - '&7Total Announcement Aktif: &f%total%'
     - '&8&m--------------------------------'
-  send-success: '%prefix% &aAnnouncement &f%id% &aberhasil dikirim.'
-  not-found: '%prefix% &cAnnouncement &f%id% &ctidak ditemukan.'
-  no-announcements: '%prefix% &cTidak ada announcement aktif.'
+
+  list-header: '&8&m--------------------------------'
+  list-title: '&b&lAnnouncement Aktif'
+  list-format: '&7- &f%id%'
+  list-empty: '%prefix% &cTidak ada announcement aktif.'
+  list-footer: '&8&m--------------------------------'
 
 announcements:
+  welcome:
+    # Aktifkan atau matikan announcement ini.
+    enabled: true
+
+    # Permission khusus untuk menerima announcement ini.
+    # Kosongkan agar semua player bisa melihat.
+    permission: ''
+
+    # World yang bisa menerima announcement ini.
+    # Kosongkan [] agar semua world bisa menerima.
+    # Contoh:
+    # worlds:
+    #   - 'world'
+    #   - 'survival'
+    worlds: []
+
+    # Isi pesan announcement.
+    # Bisa lebih dari 1 baris.
+    # Prefix dari settings.prefix otomatis muncul di baris pertama.
+    lines:
+      - '&bVeliora Gardens &7adalah server survival MMORPG cozy.'
+      - '&7Gunakan &f/vguide &7untuk melihat panduan server.'
+
   rules:
     enabled: true
     permission: ''
+    worlds: []
     lines:
-      - '&8【&aVeliora&8】 &fJangan lupa baca rules dengan &a/vrules&f.'
+      - '&eJangan lupa baca rules server.'
+      - '&7Gunakan &f/vrules &7untuk melihat aturan.'
 
-  guide:
+  product:
     enabled: true
     permission: ''
+    worlds: []
     lines:
-      - '&8【&aVeliora&8】 &fBingung command? Gunakan &a/vguide&f.'
-
-  claim:
-    enabled: true
-    permission: ''
-    lines:
-      - '&8【&aVeliora&8】 &fClaim base kamu agar aman dari grief.'
+      - '&bMau lihat fitur server?'
+      - '&7Gunakan &f/vproduct &7untuk melihat product dan fitur Veliora.'
 
   shop:
     enabled: true
     permission: ''
+    worlds: []
     lines:
-      - '&8【&aVeliora&8】 &fButuh jual beli item? Gunakan &a/shop&f.'
+      - '&aButuh item atau ingin jual hasil farming?'
+      - '&7Gunakan &f/shop &7atau &f/sellgui&7.'
+
+  fishing:
+    enabled: true
+    permission: ''
+    worlds: []
+    lines:
+      - '&bSuka mancing?'
+      - '&7Gunakan &f/vf top &7untuk melihat top pemancing.'
+
+  claim:
+    enabled: true
+    permission: ''
+    worlds: []
+    lines:
+      - '&aJangan lupa amankan base kamu.'
+      - '&7Claim area agar bangunan tidak mudah diganggu player lain.'
 
   report:
     enabled: true
     permission: ''
+    worlds: []
     lines:
-      - '&8【&aVeliora&8】 &fMenemukan bug atau player mencurigakan? Gunakan &a/report &fatau &a/bugreport&f.'
+      - '&cMelihat player mencurigakan atau menemukan bug?'
+      - '&7Laporkan ke staff agar bisa dicek.'
 
   discord:
     enabled: false
     permission: ''
+    worlds: []
     lines:
-      - '&8【&aVeliora&8】 &fGabung Discord Veliora Gardens untuk info event terbaru.'
-
-  custom-example:
-    enabled: false
-    permission: ''
-    lines:
-      - '&8【&aVeliora&8】 &fIni contoh custom announcement.'
-      - '&7Kamu bisa tambah lines sebanyak yang dibutuhkan.'
+      - '&bGabung Discord Veliora Gardens untuk info event terbaru.'
+      - '&7Link Discord bisa ditambahkan oleh staff di config ini.'

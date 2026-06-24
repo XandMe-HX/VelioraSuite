@@ -49,11 +49,18 @@ commands:
 
   velioraannouncement:
     description: Manage Veliora automatic announcements.
-    usage: /velioraannouncement <reload|status|send>
+    usage: /velioraannouncement <help|status|list|reload|send>
     aliases:
       - vannounce
+      - vann
       - va
-    permission: veliorasuite.announcement.admin
+
+  kits:
+    description: Open and claim Veliora kits.
+    usage: /kits <help|open|list|claim|preview|buy|cooldown|reload>
+    aliases:
+      - veliorakits
+      - vkits
 
 permissions:
   veliorasuite.admin:
@@ -73,5 +80,37 @@ permissions:
     default: op
 
   veliorasuite.announcement.admin:
-    description: Allows admins to manage VelioraAnnouncement.
+    description: Allows full access to VelioraAnnouncement.
+    default: op
+
+  veliorasuite.announcement.reload:
+    description: Allows reloading VelioraAnnouncement.
+    default: op
+
+  veliorasuite.announcement.send:
+    description: Allows sending manual announcements.
+    default: op
+
+  veliorasuite.announcement.status:
+    description: Allows viewing VelioraAnnouncement status and list.
+    default: op
+
+  veliorasuite.kits.use:
+    description: Allows players to use VelioraKits.
+    default: true
+
+  veliorasuite.kits.admin:
+    description: Allows full access to VelioraKits.
+    default: op
+
+  veliorasuite.kits.reload:
+    description: Allows reloading VelioraKits.
+    default: op
+
+  veliorasuite.kits.bypasscooldown:
+    description: Allows bypassing kit cooldown.
+    default: op
+
+  veliorasuite.kits.bypassprice:
+    description: Allows bypassing kit prices.
     default: op
