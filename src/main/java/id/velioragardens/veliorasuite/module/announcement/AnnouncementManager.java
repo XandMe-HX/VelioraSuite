@@ -39,15 +39,24 @@ public final class AnnouncementManager {
         }
 
         this.config = YamlConfiguration.loadConfiguration(file);
+        this.currentIndex = 0;
         reloadActiveIds();
-        startTask();
 
         plugin.getLogger().info("VelioraAnnouncement loaded with " + activeIds.size() + " active announcement(s).");
     }
 
+    public void start() {
+        startTask();
+    }
+
     public void reload() {
+        boolean wasRunning = isRunning();
         stopTask();
         load();
+
+        if (wasRunning) {
+            startTask();
+        }
     }
 
     public void shutdown() {
@@ -57,6 +66,10 @@ public final class AnnouncementManager {
 
     public boolean isEnabled() {
         return config != null && config.getBoolean("enabled", true);
+    }
+
+    public boolean isRunning() {
+        return task != null && !task.isCancelled();
     }
 
     public int getIntervalSeconds() {
@@ -122,11 +135,38 @@ public final class AnnouncementManager {
         for (String line : config.getStringList("messages.status")) {
             sender.sendMessage(color(line
                     .replace("%enabled%", String.valueOf(isEnabled()))
+                    .replace("%running%", String.valueOf(isRunning()))
                     .replace("%auto_start%", String.valueOf(config.getBoolean("settings.auto-start", true)))
                     .replace("%mode%", getMode())
                     .replace("%interval%", String.valueOf(getIntervalSeconds()))
                     .replace("%total%", String.valueOf(getActiveCount()))));
         }
+    }
+
+    public void sendList(CommandSender sender) {
+        String prefix = config.getString("messages.prefix", "&8【&aVelioraAnnouncement&8】");
+        sender.sendMessage(color("&8&m--------------------------------"));
+        sender.sendMessage(color("&a&lVelioraAnnouncement List"));
+
+        if (activeIds.isEmpty()) {
+            sender.sendMessage(color(prefix + " &cTidak ada announcement aktif."));
+        } else {
+            for (String id : activeIds) {
+                sender.sendMessage(color("&7- &f" + id));
+            }
+        }
+
+        sender.sendMessage(color("&8&m--------------------------------"));
+    }
+
+    public void sendHelp(CommandSender sender) {
+        sender.sendMessage(color("&8&m--------------------------------"));
+        sender.sendMessage(color("&a&lVelioraAnnouncement"));
+        sender.sendMessage(color("&e/vannounce status &7- Melihat status announcement."));
+        sender.sendMessage(color("&e/vannounce list &7- Melihat id announcement aktif."));
+        sender.sendMessage(color("&e/vannounce send <id> &7- Mengirim announcement."));
+        sender.sendMessage(color("&e/vannounce reload &7- Reload announcement."));
+        sender.sendMessage(color("&8&m--------------------------------"));
     }
 
     public void sendReloadSuccess(CommandSender sender) {
