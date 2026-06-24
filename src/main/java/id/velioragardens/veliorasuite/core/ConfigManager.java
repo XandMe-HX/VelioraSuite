@@ -17,13 +17,10 @@ public final class ConfigManager {
             "report",
             "announcement",
             "fishing",
-            "clearlag",
             "skills",
             "quest",
-            "trader",
             "boss",
-            "security",
-            "chat"
+            "security"
     );
 
     private final VelioraSuite plugin;
