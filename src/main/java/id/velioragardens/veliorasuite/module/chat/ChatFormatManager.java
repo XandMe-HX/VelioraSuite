@@ -1,6 +1,5 @@
 package id.velioragardens.veliorasuite.module.chat;
 
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -28,14 +27,20 @@ public final class ChatFormatManager {
         ));
 
         if (configManager.isUsePlaceholderApi() && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            try {
-                result = PlaceholderAPI.setPlaceholders(player, result);
-            } catch (RuntimeException ignored) {
-                // PlaceholderAPI is optional. If a placeholder fails, keep the safe internal format.
-            }
+            result = applyPlaceholderApi(player, result);
         }
 
         return configManager.color(result);
+    }
+
+    private String applyPlaceholderApi(Player player, String text) {
+        try {
+            Class<?> placeholderApi = Class.forName("me.clip.placeholderapi.PlaceholderAPI");
+            Object result = placeholderApi.getMethod("setPlaceholders", org.bukkit.OfflinePlayer.class, String.class).invoke(null, player, text);
+            return result instanceof String value ? value : text;
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            return text;
+        }
     }
 
     private String apply(String text, Map<String, String> placeholders) {
