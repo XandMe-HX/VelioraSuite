@@ -3,27 +3,36 @@
 # ==================================================
 # Module chat format dan proteksi chat ringan.
 #
-# Mode:
-# - formatter-enabled true = VelioraChat format chat publik.
-# - essentials-mode true = EssentialsChat yang format chat,
-#   VelioraChat hanya sediakan placeholder team tag/proteksi.
-#
-# Jika pakai EssentialsChat:
-# Masukkan placeholder ini ke format EssentialsChat jika support:
+# Catatan team tag:
+# Team tag tidak dipakai untuk chat publik lagi.
+# Jangan inject team tag ke EssentialsChat atau chat formatter.
+# Untuk menampilkan team di atas kepala player, gunakan TAB plugin
+# dengan PlaceholderAPI placeholder berikut:
 # %veliorasuite_team_tag%
 #
-# Contoh:
-# format: '%veliorasuite_team_tag%{PREFIX}{DISPLAYNAME}&7: &f{MESSAGE}'
+# Contoh TAB/groups.yml:
+# owner:
+#   tabprefix: '&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
+#   tagprefix: '%veliorasuite_team_tag%&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
 #
-# Jika EssentialsChat tidak membaca placeholder PlaceholderAPI,
-# gunakan formatter VelioraChat saja.
+# warga:
+#   tabprefix: '&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
+#   tagprefix: '%veliorasuite_team_tag%&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
+#
+# Jika punya team:
+# 【Shadow】 【 OWNER 】 XandMe
+#
+# Jika tidak punya team:
+# 【 OWNER 】 XandMe
 # ==================================================
 
 settings:
   enabled: true
   prefix: '&8[&bVelioraChat&8] '
 
-  formatter-enabled: true
+  # Default false agar VelioraChat tidak memaksa format chat publik.
+  # Aktifkan hanya jika ingin VelioraChat menggantikan chat formatter lain.
+  formatter-enabled: false
   essentials-mode: false
   use-placeholderapi: true
   team-tag-placeholder-enabled: true
@@ -58,7 +67,9 @@ permissions:
   bypass-filter: 'veliorasuite.chat.bypassfilter'
 
 formats:
-  public-chat: '%veliorateam_tag%&7%luckperms_prefix%&f%player%&7: &f%message%'
+  # Tidak memakai team tag di chat default.
+  # Team tag untuk nametag pakai %veliorasuite_team_tag% di TAB plugin.
+  public-chat: '&7%luckperms_prefix%&f%player%&7: &f%message%'
   team-tag-empty: ''
   luckperms-prefix-empty: ''
 
