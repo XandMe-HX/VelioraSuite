@@ -9,6 +9,13 @@ softdepend:
   - Vault
   - PlaceholderAPI
   - LuckPerms
+  - Essentials
+  - EconomyShopGUI
+  - RedProtect
+  - SkinsRestorer
+  - GSit
+  - Geyser-Spigot
+  - floodgate
 
 commands:
   veliorasuite:
