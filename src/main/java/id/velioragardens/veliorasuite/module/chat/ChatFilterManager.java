@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public final class ChatFilterManager {
 
@@ -38,6 +40,9 @@ public final class ChatFilterManager {
                 return FilterResult.cancel("word-blocked");
             }
             result = wordResult.message();
+            if (wordResult.changed()) {
+                return FilterResult.changed(result, "");
+            }
         }
 
         return FilterResult.allowed(result);
@@ -77,20 +82,97 @@ public final class ChatFilterManager {
     private WordFilterResult applyWordFilter(String message) {
         String result = message;
         boolean changed = false;
+        String lowerOriginal = message.toLowerCase(Locale.ROOT);
+        String normalizedI = normalize(message, false);
+        String normalizedL = normalize(message, true);
+
+        for (String pattern : configManager.getBlockedPatterns()) {
+            if (pattern == null || pattern.isBlank()) continue;
+            try {
+                if (Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(message).find()) {
+                    if (configManager.getWordFilterAction().equals("CANCEL")) {
+                        return new WordFilterResult(result, true, false);
+                    }
+                    return new WordFilterResult(configManager.getReplacement(), false, true);
+                }
+            } catch (PatternSyntaxException ignored) {
+                // Invalid custom regex should not break chat.
+            }
+        }
 
         for (String blocked : configManager.getBlockedWords()) {
             if (blocked == null || blocked.isBlank()) continue;
-            if (!result.toLowerCase(Locale.ROOT).contains(blocked.toLowerCase(Locale.ROOT))) continue;
 
-            if (configManager.getWordFilterAction().equals("CANCEL")) {
-                return new WordFilterResult(result, true);
+            String cleanBlocked = blocked.toLowerCase(Locale.ROOT).trim();
+            if (cleanBlocked.isBlank()) continue;
+
+            boolean exactDetected = lowerOriginal.contains(cleanBlocked);
+            boolean normalizedDetected = false;
+
+            if (configManager.isCheckNormalizedEnabled()) {
+                String normalizedBlockedI = normalize(cleanBlocked, false);
+                String normalizedBlockedL = normalize(cleanBlocked, true);
+                normalizedDetected = normalizedI.contains(normalizedBlockedI) || normalizedL.contains(normalizedBlockedL);
             }
 
-            result = result.replaceAll("(?i)" + java.util.regex.Pattern.quote(blocked), configManager.getReplacement());
-            changed = true;
+            if (!exactDetected && !normalizedDetected) continue;
+
+            if (configManager.getWordFilterAction().equals("CANCEL")) {
+                return new WordFilterResult(result, true, false);
+            }
+
+            if (exactDetected) {
+                result = result.replaceAll("(?i)" + Pattern.quote(cleanBlocked), configManager.getReplacement());
+                lowerOriginal = result.toLowerCase(Locale.ROOT);
+                normalizedI = normalize(result, false);
+                normalizedL = normalize(result, true);
+                changed = true;
+            } else {
+                return new WordFilterResult(configManager.getReplacement(), false, true);
+            }
         }
 
         return new WordFilterResult(result, false, changed);
+    }
+
+    private String normalize(String input, boolean oneAsL) {
+        if (input == null) return "";
+
+        StringBuilder builder = new StringBuilder();
+        char previous = 0;
+        int repeatCount = 0;
+
+        for (char raw : input.toLowerCase(Locale.ROOT).toCharArray()) {
+            char mapped = mapLeet(raw, oneAsL);
+            if (!Character.isLetterOrDigit(mapped)) {
+                if (configManager.isBlockSeparatedLettersEnabled()) continue;
+                mapped = raw;
+            }
+
+            if (configManager.isReduceRepeatedLettersEnabled() && mapped == previous) {
+                repeatCount++;
+                if (repeatCount > 1) continue;
+            } else {
+                repeatCount = 1;
+                previous = mapped;
+            }
+
+            builder.append(mapped);
+        }
+
+        return builder.toString();
+    }
+
+    private char mapLeet(char input, boolean oneAsL) {
+        return switch (input) {
+            case '0' -> 'o';
+            case '1' -> oneAsL ? 'l' : 'i';
+            case '3' -> 'e';
+            case '4', '@' -> 'a';
+            case '5', '$' -> 's';
+            case '7' -> 't';
+            default -> input;
+        };
     }
 
     public record FilterResult(boolean cancelled, String message, String messageKey, boolean changed) {
@@ -100,8 +182,5 @@ public final class ChatFilterManager {
     }
 
     private record WordFilterResult(String message, boolean cancelled, boolean changed) {
-        private WordFilterResult(String message, boolean cancelled) {
-            this(message, cancelled, false);
-        }
     }
 }
