@@ -1,0 +1,9 @@
+enabled: false
+
+settings:
+  anti-spam: true
+  command-cooldown: true
+  join-protection: true
+
+messages:
+  prefix: '&8【&aVelioraSecurity&8】'
