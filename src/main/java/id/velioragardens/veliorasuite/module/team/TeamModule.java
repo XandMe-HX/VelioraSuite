@@ -66,6 +66,10 @@ public final class TeamModule implements VelioraModule {
         return enabled;
     }
 
+    public TeamManager getTeamManager() {
+        return teamManager;
+    }
+
     private void registerCommand() {
         PluginCommand command = plugin.getCommand("team");
 
