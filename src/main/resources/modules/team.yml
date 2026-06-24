@@ -61,10 +61,12 @@ settings:
   # Jika true, admin bisa setowner ke player yang belum member team.
   allow-setowner-non-member: true
 
-  # Tag team di chat publik.
-  # Matikan jika bentrok dengan EssentialsChat/VelioraChat/plugin chat lain.
+  # Tag team langsung dari VelioraTeam listener.
+  # Default false agar tidak dobel jika VelioraChat atau EssentialsChat
+  # sudah memakai placeholder team tag.
+  # Aktifkan hanya kalau tidak memakai VelioraChat formatter/EssentialsChat placeholder.
   chat-tag:
-    enabled: true
+    enabled: false
     format: '&8[&b%team%&8] '
     max-team-name-length-in-chat: 12
 
