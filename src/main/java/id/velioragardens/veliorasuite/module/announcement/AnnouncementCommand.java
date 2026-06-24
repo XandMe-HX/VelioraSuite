@@ -11,11 +11,6 @@ import java.util.Locale;
 
 public final class AnnouncementCommand implements CommandExecutor, TabCompleter {
 
-    private static final String PERMISSION_ADMIN = "veliorasuite.announcement.admin";
-    private static final String PERMISSION_RELOAD = "veliorasuite.announcement.reload";
-    private static final String PERMISSION_SEND = "veliorasuite.announcement.send";
-    private static final String PERMISSION_STATUS = "veliorasuite.announcement.status";
-
     private final AnnouncementManager announcementManager;
 
     public AnnouncementCommand(AnnouncementManager announcementManager) {
@@ -38,7 +33,7 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
 
         switch (subCommand) {
             case "status" -> {
-                if (!hasPermission(sender, PERMISSION_STATUS)) {
+                if (!hasPermission(sender, announcementManager.getStatusPermission())) {
                     announcementManager.sendNoPermission(sender);
                     return true;
                 }
@@ -48,7 +43,7 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
             }
 
             case "list" -> {
-                if (!hasPermission(sender, PERMISSION_STATUS)) {
+                if (!hasPermission(sender, announcementManager.getStatusPermission())) {
                     announcementManager.sendNoPermission(sender);
                     return true;
                 }
@@ -58,7 +53,7 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
             }
 
             case "reload" -> {
-                if (!hasPermission(sender, PERMISSION_RELOAD)) {
+                if (!hasPermission(sender, announcementManager.getReloadPermission())) {
                     announcementManager.sendNoPermission(sender);
                     return true;
                 }
@@ -69,7 +64,7 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
             }
 
             case "send" -> {
-                if (!hasPermission(sender, PERMISSION_SEND)) {
+                if (!hasPermission(sender, announcementManager.getSendPermission())) {
                     announcementManager.sendNoPermission(sender);
                     return true;
                 }
@@ -112,23 +107,23 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
                 options.add("help");
             }
 
-            if (hasPermission(sender, PERMISSION_STATUS)) {
+            if (hasPermission(sender, announcementManager.getStatusPermission())) {
                 options.add("status");
                 options.add("list");
             }
 
-            if (hasPermission(sender, PERMISSION_RELOAD)) {
+            if (hasPermission(sender, announcementManager.getReloadPermission())) {
                 options.add("reload");
             }
 
-            if (hasPermission(sender, PERMISSION_SEND)) {
+            if (hasPermission(sender, announcementManager.getSendPermission())) {
                 options.add("send");
             }
 
             return filter(options, args[0]);
         }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("send") && hasPermission(sender, PERMISSION_SEND)) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("send") && hasPermission(sender, announcementManager.getSendPermission())) {
             return filter(announcementManager.getActiveIds(), args[1]);
         }
 
@@ -136,14 +131,14 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
     }
 
     private boolean hasPermission(CommandSender sender, String permission) {
-        return sender.hasPermission(PERMISSION_ADMIN) || sender.hasPermission(permission);
+        return sender.hasPermission(announcementManager.getAdminPermission()) || sender.hasPermission(permission);
     }
 
     private boolean hasAnyAnnouncementPermission(CommandSender sender) {
-        return sender.hasPermission(PERMISSION_ADMIN)
-                || sender.hasPermission(PERMISSION_STATUS)
-                || sender.hasPermission(PERMISSION_RELOAD)
-                || sender.hasPermission(PERMISSION_SEND);
+        return sender.hasPermission(announcementManager.getAdminPermission())
+                || sender.hasPermission(announcementManager.getStatusPermission())
+                || sender.hasPermission(announcementManager.getReloadPermission())
+                || sender.hasPermission(announcementManager.getSendPermission());
     }
 
     private List<String> filter(List<String> options, String input) {
