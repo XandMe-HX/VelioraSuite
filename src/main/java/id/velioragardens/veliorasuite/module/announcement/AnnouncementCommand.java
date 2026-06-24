@@ -25,14 +25,24 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
             return true;
         }
 
-        if (args.length == 0 || args[0].equalsIgnoreCase("status")) {
-            announcementManager.sendStatus(sender);
+        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+            announcementManager.sendHelp(sender);
             return true;
         }
 
         String subCommand = args[0].toLowerCase(Locale.ROOT);
 
         switch (subCommand) {
+            case "status" -> {
+                announcementManager.sendStatus(sender);
+                return true;
+            }
+
+            case "list" -> {
+                announcementManager.sendList(sender);
+                return true;
+            }
+
             case "reload" -> {
                 announcementManager.reload();
                 announcementManager.sendReloadSuccess(sender);
@@ -58,7 +68,7 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
             }
 
             default -> {
-                announcementManager.sendStatus(sender);
+                announcementManager.sendHelp(sender);
                 return true;
             }
         }
@@ -71,7 +81,7 @@ public final class AnnouncementCommand implements CommandExecutor, TabCompleter 
         }
 
         if (args.length == 1) {
-            return filter(Arrays.asList("status", "reload", "send"), args[0]);
+            return filter(Arrays.asList("help", "status", "list", "reload", "send"), args[0]);
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("send")) {
