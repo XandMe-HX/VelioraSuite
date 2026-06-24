@@ -269,11 +269,19 @@ public final class KitsManager {
             return true;
         }
 
-        if (!kit.getPermission().isBlank()) {
-            return player.hasPermission(kit.getPermission());
+        if (!configManager.isUsePerKitPermission()) {
+            return true;
         }
 
-        return !configManager.isUsePerKitPermission() || true;
+        if (kit.getPermission().isBlank()) {
+            return true;
+        }
+
+        if (kit.getPermission().equalsIgnoreCase("auto")) {
+            return player.hasPermission(configManager.getKitPermissionPrefix() + kit.getId());
+        }
+
+        return player.hasPermission(kit.getPermission());
     }
 
     private boolean hasPremiumPermission(Player player, Kit kit) {
