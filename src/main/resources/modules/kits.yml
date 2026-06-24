@@ -1,0 +1,8 @@
+enabled: false
+
+settings:
+  gui-enabled: true
+  default-cooldown-seconds: 86400
+
+messages:
+  prefix: '&8【&aVelioraKits&8】'
