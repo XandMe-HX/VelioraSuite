@@ -6,7 +6,7 @@
 #
 # Catatan:
 # - core selalu aktif.
-# - guide, announcement, kits, report, dan team sudah punya logic phase 1.
+# - guide, announcement, kits, report, team, dan chat sudah punya logic phase 1.
 # - module lain masih skeleton dan akan dibuat bertahap.
 # =========================================================
 
@@ -25,4 +25,4 @@ modules:
   trader: false
   boss: false
   security: false
-  chat: false
+  chat: true
