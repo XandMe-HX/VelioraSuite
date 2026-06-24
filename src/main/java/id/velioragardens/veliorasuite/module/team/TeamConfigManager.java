@@ -70,21 +70,21 @@ public final class TeamConfigManager {
     }
 
     public int getMaxTeamNameLength() {
-        return Math.max(getMinTeamNameLength(), getInt("settings.max-team-name-length", 12));
+        return Math.max(getMinTeamNameLength(), getInt("settings.max-team-name-length", 5));
     }
 
     public Pattern getTeamNamePattern() {
-        String regex = getString("settings.team-name-regex", "^[a-zA-Z0-9_]+$");
+        String regex = getString("settings.team-name-regex", "^[A-Z]{3,5}$");
         try {
             return Pattern.compile(regex);
         } catch (PatternSyntaxException exception) {
-            plugin.getLogger().warning("VelioraTeam: team-name-regex tidak valid. Fallback ke huruf/angka/underscore.");
-            return Pattern.compile("^[a-zA-Z0-9_]+$");
+            plugin.getLogger().warning("VelioraTeam: team-name-regex tidak valid. Fallback ke A-Z 3-5 huruf.");
+            return Pattern.compile("^[A-Z]{3,5}$");
         }
     }
 
     public List<String> getBlockedNames() {
-        return config == null ? List.of("admin", "owner", "staff", "mod") : config.getStringList("settings.blocked-names");
+        return config == null ? List.of("ADMIN", "OWNER", "STAFF", "MOD") : config.getStringList("settings.blocked-names");
     }
 
     public boolean isAllowSetOwnerNonMember() {
@@ -92,15 +92,15 @@ public final class TeamConfigManager {
     }
 
     public boolean isChatTagEnabled() {
-        return getBoolean("settings.chat-tag.enabled", true);
+        return getBoolean("settings.chat-tag.enabled", false);
     }
 
     public String getChatTagFormat() {
-        return getString("settings.chat-tag.format", getString("formats.chat-tag", "&8[&b%team%&8] "));
+        return getString("settings.chat-tag.format", getString("formats.chat-tag", "&f【&b&l%team%&f】&f "));
     }
 
     public int getMaxTeamNameLengthInChat() {
-        return Math.max(1, getInt("settings.chat-tag.max-team-name-length-in-chat", 12));
+        return Math.max(1, getInt("settings.chat-tag.max-team-name-length-in-chat", 5));
     }
 
     public String getUsePermission() {
