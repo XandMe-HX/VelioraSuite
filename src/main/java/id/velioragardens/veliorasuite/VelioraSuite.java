@@ -1,10 +1,24 @@
 package id.velioragardens.veliorasuite;
 
 import id.velioragardens.veliorasuite.command.VelioraCommand;
-import id.velioragardens.veliorasuite.module.announcement.AnnouncementCommand;
-import id.velioragardens.veliorasuite.module.announcement.AnnouncementManager;
-import id.velioragardens.veliorasuite.module.guide.GuideCommand;
-import id.velioragardens.veliorasuite.module.guide.GuideManager;
+import id.velioragardens.veliorasuite.core.ConfigManager;
+import id.velioragardens.veliorasuite.core.HookManager;
+import id.velioragardens.veliorasuite.core.MessageManager;
+import id.velioragardens.veliorasuite.core.ModuleManager;
+import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
+import id.velioragardens.veliorasuite.module.boss.BossModule;
+import id.velioragardens.veliorasuite.module.chat.ChatModule;
+import id.velioragardens.veliorasuite.module.clearlag.ClearLagModule;
+import id.velioragardens.veliorasuite.module.fishing.FishingModule;
+import id.velioragardens.veliorasuite.module.guide.GuideModule;
+import id.velioragardens.veliorasuite.module.kits.KitsModule;
+import id.velioragardens.veliorasuite.module.loginsecurity.LoginSecurityModule;
+import id.velioragardens.veliorasuite.module.quest.QuestModule;
+import id.velioragardens.veliorasuite.module.report.ReportModule;
+import id.velioragardens.veliorasuite.module.security.SecurityModule;
+import id.velioragardens.veliorasuite.module.skills.SkillsModule;
+import id.velioragardens.veliorasuite.module.team.TeamModule;
+import id.velioragardens.veliorasuite.module.trader.TraderModule;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,8 +28,10 @@ public final class VelioraSuite extends JavaPlugin {
 
     private static VelioraSuite instance;
 
-    private GuideManager guideManager;
-    private AnnouncementManager announcementManager;
+    private ConfigManager configManager;
+    private MessageManager messageManager;
+    private HookManager hookManager;
+    private ModuleManager moduleManager;
 
     public static VelioraSuite getInstance() {
         return instance;
@@ -25,68 +41,60 @@ public final class VelioraSuite extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        saveDefaultConfig();
-        saveResourceIfNotExists("messages.yml");
-        saveResourceIfNotExists("database/schema.sql");
+        this.configManager = new ConfigManager(this);
+        this.configManager.load();
 
-        createFolder("modules");
-        createFolder("database");
+        this.messageManager = new MessageManager(this);
+        this.messageManager.load();
 
-        loadGuideModule();
-        loadAnnouncementModule();
-        registerCommands();
+        this.hookManager = new HookManager(this);
+        this.hookManager.loadHooks();
 
-        getLogger().info("VelioraSuite core enabled.");
+        this.moduleManager = new ModuleManager(this);
+        registerModules();
+        registerCoreCommand();
+        this.moduleManager.enableAll();
+
+        getLogger().info("VelioraSuite clean core enabled.");
     }
 
     @Override
     public void onDisable() {
-        if (announcementManager != null) {
-            announcementManager.shutdown();
+        if (moduleManager != null) {
+            moduleManager.disableAll();
         }
 
-        getLogger().info("VelioraSuite core disabled.");
+        getLogger().info("VelioraSuite clean core disabled.");
     }
 
     public void reloadSuite() {
-        reloadConfig();
+        configManager.reload();
+        messageManager.reload();
+        hookManager.loadHooks();
+        moduleManager.reloadAll();
 
-        loadGuideModule();
-        loadAnnouncementModule();
-        registerCommands();
-
-        getLogger().info("VelioraSuite core reloaded.");
+        getLogger().info("VelioraSuite clean core reloaded.");
     }
 
-    private void loadGuideModule() {
-        if (!getConfig().getBoolean("modules.guide", false)) {
-            guideManager = null;
-            return;
-        }
+    private void registerModules() {
+        moduleManager.register(new GuideModule(this));
+        moduleManager.register(new AnnouncementModule(this));
 
-        saveResourceIfNotExists("modules/guide.yml");
-
-        guideManager = new GuideManager(this);
-        guideManager.load();
+        moduleManager.register(new LoginSecurityModule(this));
+        moduleManager.register(new TeamModule(this));
+        moduleManager.register(new KitsModule(this));
+        moduleManager.register(new ReportModule(this));
+        moduleManager.register(new FishingModule(this));
+        moduleManager.register(new ClearLagModule(this));
+        moduleManager.register(new SkillsModule(this));
+        moduleManager.register(new QuestModule(this));
+        moduleManager.register(new TraderModule(this));
+        moduleManager.register(new BossModule(this));
+        moduleManager.register(new SecurityModule(this));
+        moduleManager.register(new ChatModule(this));
     }
 
-    private void loadAnnouncementModule() {
-        if (announcementManager != null) {
-            announcementManager.shutdown();
-            announcementManager = null;
-        }
-
-        if (!getConfig().getBoolean("modules.announcement", false)) {
-            return;
-        }
-
-        saveResourceIfNotExists("modules/announcement.yml");
-
-        announcementManager = new AnnouncementManager(this);
-        announcementManager.load();
-    }
-
-    private void registerCommands() {
+    private void registerCoreCommand() {
         PluginCommand command = getCommand("veliorasuite");
 
         if (command == null) {
@@ -97,52 +105,25 @@ public final class VelioraSuite extends JavaPlugin {
         VelioraCommand velioraCommand = new VelioraCommand(this);
         command.setExecutor(velioraCommand);
         command.setTabCompleter(velioraCommand);
-
-        registerGuideCommands();
-        registerAnnouncementCommand();
     }
 
-    private void registerGuideCommands() {
-        if (guideManager == null) {
-            return;
-        }
-
-        registerGuideCommand("velioraguide", "guide");
-        registerGuideCommand("veliorarules", "rules");
-        registerGuideCommand("velioraproduct", "product");
+    public ConfigManager getConfigManager() {
+        return configManager;
     }
 
-    private void registerGuideCommand(String commandName, String sectionName) {
-        PluginCommand command = getCommand(commandName);
-
-        if (command == null) {
-            getLogger().warning("Command /" + commandName + " tidak ditemukan di plugin.yml.");
-            return;
-        }
-
-        GuideCommand guideCommand = new GuideCommand(guideManager, sectionName);
-        command.setExecutor(guideCommand);
-        command.setTabCompleter(guideCommand);
+    public MessageManager getMessageManager() {
+        return messageManager;
     }
 
-    private void registerAnnouncementCommand() {
-        if (announcementManager == null) {
-            return;
-        }
-
-        PluginCommand command = getCommand("velioraannouncement");
-
-        if (command == null) {
-            getLogger().warning("Command /velioraannouncement tidak ditemukan di plugin.yml.");
-            return;
-        }
-
-        AnnouncementCommand announcementCommand = new AnnouncementCommand(announcementManager);
-        command.setExecutor(announcementCommand);
-        command.setTabCompleter(announcementCommand);
+    public HookManager getHookManager() {
+        return hookManager;
     }
 
-    private void saveResourceIfNotExists(String path) {
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
+
+    public void saveResourceIfNotExists(String path) {
         File file = new File(getDataFolder(), path);
 
         if (!file.exists()) {
@@ -150,7 +131,7 @@ public final class VelioraSuite extends JavaPlugin {
         }
     }
 
-    private void createFolder(String folderName) {
+    public void createFolder(String folderName) {
         File folder = new File(getDataFolder(), folderName);
 
         if (!folder.exists()) {
