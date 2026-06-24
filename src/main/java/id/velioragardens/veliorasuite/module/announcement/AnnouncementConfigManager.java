@@ -69,6 +69,22 @@ public final class AnnouncementConfigManager {
         return getString("settings.prefix", "&8[&bVeliora&8] ");
     }
 
+    public String getAdminPermission() {
+        return getString("permissions.admin", "veliorasuite.announcement.admin");
+    }
+
+    public String getStatusPermission() {
+        return getString("permissions.status", "veliorasuite.announcement.status");
+    }
+
+    public String getReloadPermission() {
+        return getString("permissions.reload", "veliorasuite.announcement.reload");
+    }
+
+    public String getSendPermission() {
+        return getString("permissions.send", "veliorasuite.announcement.send");
+    }
+
     public boolean isSoundEnabled() {
         return getBoolean("sound.enabled", getBoolean("settings.sound.enabled", false));
     }
