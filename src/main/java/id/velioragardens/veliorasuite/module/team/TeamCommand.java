@@ -110,30 +110,6 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
                 teamManager.setOwner(sender, args[1], Bukkit.getPlayerExact(args[2]));
                 return true;
             }
-            case "delete" -> {
-                if (!teamManager.hasDeletePermission(sender)) {
-                    teamManager.sendNoPermission(sender);
-                    return true;
-                }
-                if (args.length < 2) {
-                    teamManager.sendUsage(sender);
-                    return true;
-                }
-                teamManager.deleteTeam(sender, args[1]);
-                return true;
-            }
-            case "info" -> {
-                if (!teamManager.hasAdminPermission(sender)) {
-                    teamManager.sendNoPermission(sender);
-                    return true;
-                }
-                if (args.length < 2) {
-                    teamManager.sendUsage(sender);
-                    return true;
-                }
-                teamManager.infoTeam(sender, args[1]);
-                return true;
-            }
             case "reload" -> {
                 if (!teamManager.hasReloadPermission(sender)) {
                     teamManager.sendNoPermission(sender);
@@ -158,8 +134,6 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
                 options.addAll(Arrays.asList("help", "create", "invite", "accept", "leave", "list", "chat", "upgrade"));
             }
             if (teamManager.hasSetOwnerPermission(sender)) options.add("setowner");
-            if (teamManager.hasDeletePermission(sender)) options.add("delete");
-            if (teamManager.hasAdminPermission(sender)) options.add("info");
             if (teamManager.hasReloadPermission(sender)) options.add("reload");
             return filter(options, args[0]);
         }
@@ -169,7 +143,7 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
             if (first.equals("invite")) {
                 return filter(onlinePlayers(), args[1]);
             }
-            if (Arrays.asList("setowner", "delete", "info").contains(first)) {
+            if (first.equals("setowner")) {
                 return filter(teamManager.getDataManager().getTeamNames(), args[1]);
             }
             if (first.equals("leave")) {
