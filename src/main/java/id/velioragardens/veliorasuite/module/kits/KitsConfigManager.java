@@ -102,6 +102,11 @@ public final class KitsConfigManager {
         return color(getString("gui.title", "&8Veliora Kits"));
     }
 
+    public String getPreviewTitle(String kitDisplayName) {
+        return color(getString("gui.preview-title", getString("messages.preview-title", "&8Preview: %kit%"))
+                .replace("%kit%", kitDisplayName));
+    }
+
     public int getGuiSize() {
         int size = getInt("gui.size", 54);
         if (size < 9 || size > 54 || size % 9 != 0) {
@@ -270,7 +275,13 @@ public final class KitsConfigManager {
                 }
             }
 
-            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantName));
+            Enchantment enchantment;
+            try {
+                enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantName));
+            } catch (IllegalArgumentException exception) {
+                enchantment = null;
+            }
+
             if (enchantment == null) {
                 enchantment = Enchantment.getByName(enchantName.toUpperCase(Locale.ROOT));
             }
