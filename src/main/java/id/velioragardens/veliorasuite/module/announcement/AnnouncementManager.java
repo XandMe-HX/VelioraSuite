@@ -102,6 +102,22 @@ public final class AnnouncementManager {
         return new ArrayList<>(activeAnnouncements.keySet());
     }
 
+    public String getAdminPermission() {
+        return configManager.getAdminPermission();
+    }
+
+    public String getStatusPermission() {
+        return configManager.getStatusPermission();
+    }
+
+    public String getReloadPermission() {
+        return configManager.getReloadPermission();
+    }
+
+    public String getSendPermission() {
+        return configManager.getSendPermission();
+    }
+
     public void sendNext() {
         if (!isEnabled() || activeAnnouncements.isEmpty()) {
             return;
