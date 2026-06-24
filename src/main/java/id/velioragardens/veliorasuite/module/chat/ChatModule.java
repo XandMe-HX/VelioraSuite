@@ -3,7 +3,6 @@ package id.velioragardens.veliorasuite.module.chat;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
 import id.velioragardens.veliorasuite.command.DisabledCommand;
-import id.velioragardens.veliorasuite.module.chat.placeholder.VelioraPlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.HandlerList;
@@ -13,7 +12,7 @@ public final class ChatModule implements VelioraModule {
     private final VelioraSuite plugin;
     private ChatManager chatManager;
     private ChatListener chatListener;
-    private VelioraPlaceholderExpansion placeholderExpansion;
+    private Object placeholderExpansion;
     private boolean enabled;
 
     public ChatModule(VelioraSuite plugin) {
@@ -49,10 +48,7 @@ public final class ChatModule implements VelioraModule {
             chatListener = null;
         }
 
-        if (placeholderExpansion != null) {
-            placeholderExpansion.unregister();
-            placeholderExpansion = null;
-        }
+        unregisterPlaceholderExpansion();
 
         if (chatManager != null) {
             chatManager.shutdown();
@@ -98,9 +94,28 @@ public final class ChatModule implements VelioraModule {
             return;
         }
 
-        placeholderExpansion = new VelioraPlaceholderExpansion(plugin, chatManager.getPlaceholderManager());
-        placeholderExpansion.register();
-        plugin.getLogger().info("VelioraChat PlaceholderAPI expansion registered: veliorasuite.");
+        try {
+            placeholderExpansion = new id.velioragardens.veliorasuite.module.chat.placeholder.VelioraPlaceholderExpansion(plugin, chatManager.getPlaceholderManager());
+            placeholderExpansion.getClass().getMethod("register").invoke(placeholderExpansion);
+            plugin.getLogger().info("VelioraChat PlaceholderAPI expansion registered: veliorasuite.");
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            placeholderExpansion = null;
+            plugin.getLogger().warning("VelioraChat: gagal register PlaceholderAPI expansion. PlaceholderAPI akan dilewati.");
+        }
+    }
+
+    private void unregisterPlaceholderExpansion() {
+        if (placeholderExpansion == null) {
+            return;
+        }
+
+        try {
+            placeholderExpansion.getClass().getMethod("unregister").invoke(placeholderExpansion);
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            // PlaceholderAPI is optional.
+        }
+
+        placeholderExpansion = null;
     }
 
     private void registerDisabledCommand() {
