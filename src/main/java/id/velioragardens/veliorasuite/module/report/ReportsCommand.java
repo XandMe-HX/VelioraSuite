@@ -20,7 +20,16 @@ public final class ReportsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+        if (args.length == 0) {
+            if (!reportManager.hasStaffPermission(sender)) {
+                reportManager.sendNoPermission(sender);
+                return true;
+            }
+            reportManager.sendOpenReports(sender);
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("help")) {
             if (!reportManager.hasStaffPermission(sender)) {
                 reportManager.sendNoPermission(sender);
                 return true;
