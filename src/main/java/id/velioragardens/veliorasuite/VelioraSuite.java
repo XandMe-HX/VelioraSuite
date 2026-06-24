@@ -7,8 +7,6 @@ import id.velioragardens.veliorasuite.core.MessageManager;
 import id.velioragardens.veliorasuite.core.ModuleManager;
 import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
-import id.velioragardens.veliorasuite.module.chat.ChatModule;
-import id.velioragardens.veliorasuite.module.clearlag.ClearLagModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import id.velioragardens.veliorasuite.module.guide.GuideModule;
 import id.velioragardens.veliorasuite.module.kits.KitsModule;
@@ -18,7 +16,6 @@ import id.velioragardens.veliorasuite.module.report.ReportModule;
 import id.velioragardens.veliorasuite.module.security.SecurityModule;
 import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
-import id.velioragardens.veliorasuite.module.trader.TraderModule;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -79,19 +76,15 @@ public final class VelioraSuite extends JavaPlugin {
     private void registerModules() {
         moduleManager.register(new GuideModule(this));
         moduleManager.register(new AnnouncementModule(this));
-
         moduleManager.register(new LoginSecurityModule(this));
         moduleManager.register(new TeamModule(this));
         moduleManager.register(new KitsModule(this));
         moduleManager.register(new ReportModule(this));
         moduleManager.register(new FishingModule(this));
-        moduleManager.register(new ClearLagModule(this));
         moduleManager.register(new SkillsModule(this));
         moduleManager.register(new QuestModule(this));
-        moduleManager.register(new TraderModule(this));
         moduleManager.register(new BossModule(this));
         moduleManager.register(new SecurityModule(this));
-        moduleManager.register(new ChatModule(this));
     }
 
     private void registerCoreCommand() {
