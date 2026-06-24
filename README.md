@@ -187,6 +187,19 @@ Command:
 - `/team info <team>`
 - `/team reload`
 
+Aturan nama team baru:
+
+```text
+^[A-Z]{3,5}$
+```
+
+Nama team baru wajib huruf besar A-Z saja, minimal 3 huruf dan maksimal 5 huruf.
+Tidak boleh huruf kecil, angka, spasi, simbol, emoji, atau tanda `-`.
+Contoh valid: `SHDW`, `NOVA`, `VOID`, `SKY`, `TEAM`.
+Contoh tidak valid: `Shadow`, `shadow`, `SHADOW`, `SHDW1`, `SH-DW`, `SH DW`, `🔥ABC`.
+
+Catatan: team lama yang sudah ada tetap dibaca, tetapi create team baru wajib mengikuti aturan baru.
+
 File config/data:
 
 ```text
@@ -227,6 +240,12 @@ Placeholder:
 VelioraSuite tidak menyimpan team tag ke Essentials userdata dan tidak mengubah LuckPerms prefix player.
 Team tag disediakan lewat PlaceholderAPI supaya bisa dipakai oleh TAB plugin.
 
+Format default team tag:
+
+```text
+&f【&b&l%team%&f】&f 
+```
+
 Gunakan placeholder ini di depan `tagprefix` rank di `TAB/groups.yml`:
 
 ```yaml
@@ -242,7 +261,7 @@ warga:
 Hasil jika player punya team:
 
 ```text
-【Shadow】 【 OWNER 】 XandMe
+【SHDW】 【 OWNER 】 XandMe
 ```
 
 Hasil jika player tidak punya team:
