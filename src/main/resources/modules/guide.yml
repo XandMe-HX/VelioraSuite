@@ -24,8 +24,8 @@
 enabled: true
 
 settings:
-  clear-chat-before-page: true
-  clear-chat-lines: 8
+  clear-chat-before-page: false
+  clear-chat-lines: 0
   show-navigation: true
   clickable-buttons-java: true
   bedrock-navigation-hint: true
@@ -118,7 +118,7 @@ sections:
         title: '&cAturan Umum'
         lines:
           - '&8[ &cAturan Umum &8]'
-          - '&f- Dilarang berkata toxic, menghina, atau rasis.'
+          - '&f- Dilarang toxic, menghina, atau rasis.'
           - '&f- Dilarang spam chat atau flood.'
           - '&f- Dilarang promosi tanpa izin.'
           - '&f- Wajib saling menghargai.'
@@ -132,9 +132,9 @@ sections:
           - '&f- Wajib lapor jika menemukan bug.'
           - '&f- Dilarang memanfaatkan bug sistem.'
       3:
-        title: '&cBoss dan Mob'
+        title: '&cBoss & Mob'
         lines:
-          - '&8[ &cBoss dan Mob &8]'
+          - '&8[ &cBoss & Mob &8]'
           - '&f- Dilarang spam kill dragon.'
           - '&f- Warden maksimal 2x kill.'
           - '&f- Cooldown warden 2 hari.'
@@ -162,13 +162,13 @@ sections:
           - '&f- Admin bisa memberi hadiah event.'
           - '&f- Interaksi server bisa menjadi konten.'
           - '&f- Admin akan memberi info jika event ditunda.'
-          - '&f- Ikuti arahan staff saat event berjalan.'
+          - '&f- Ikuti aturan event yang sedang berjalan.'
       7:
         title: '&cSanksi'
         lines:
           - '&8[ &cSanksi &8]'
           - '&f- Pelanggaran ringan: peringatan.'
-          - '&f- Pelanggaran sedang: mute, kick, atau ban sementara.'
+          - '&f- Pelanggaran sedang: mute/kick/ban sementara.'
           - '&f- Pelanggaran berat: ban.'
           - '&f- Keputusan staff bersifat final.'
       8:
