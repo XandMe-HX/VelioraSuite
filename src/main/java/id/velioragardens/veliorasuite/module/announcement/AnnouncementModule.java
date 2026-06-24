@@ -31,6 +31,10 @@ public final class AnnouncementModule implements VelioraModule {
     public void enable() {
         enabled = true;
         registerCommand();
+
+        if (announcementManager != null) {
+            announcementManager.start();
+        }
     }
 
     @Override
@@ -50,6 +54,10 @@ public final class AnnouncementModule implements VelioraModule {
             announcementManager.reload();
         } else {
             load();
+
+            if (enabled && announcementManager != null) {
+                announcementManager.start();
+            }
         }
     }
 
