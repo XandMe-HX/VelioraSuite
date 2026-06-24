@@ -1,8 +1,330 @@
-enabled: false
+# ==================================================
+# VelioraKits Configuration
+# ==================================================
+# File ini mengatur sistem kit server Veliora Gardens.
+# Semua kit, item, GUI, reward, cooldown, harga,
+# permission, premium level, command, dan pesan bisa
+# diubah dari file ini.
+#
+# Setelah mengubah file ini, jalankan:
+# - /kits reload
+# atau
+# - /vs reload
+# ==================================================
 
 settings:
-  gui-enabled: true
-  default-cooldown-seconds: 86400
+  # Mengaktifkan atau mematikan fitur kits dari sisi module.
+  enabled: true
+
+  # Prefix default untuk pesan command.
+  prefix: '&8[&bVelioraKits&8] '
+
+  # Command utama module ini.
+  command: '/kits'
+
+  # Jika true, command /kits langsung membuka GUI.
+  open-gui-on-main-command: true
+
+  # Jika true, kit bisa memakai permission per kit.
+  # Jika permission pada kit kosong, kit bisa dipakai semua player.
+  use-per-kit-permission: true
+
+  # Prefix permission premium.
+  # premium-level: 1 -> veliorakits.premium.1
+  # premium-level: 2 -> veliorakits.premium.2
+  premium-permission-prefix: 'veliorakits.premium.'
+
+  # Jika true, player tidak bisa claim saat inventory penuh.
+  block-claim-when-inventory-full: true
+
+  # Jika true, item yang tidak muat akan jatuh ke tanah.
+  # Default false agar aman untuk survival/MMORPG.
+  drop-extra-items: false
+
+  first-join-kit:
+    # Jika true, player baru otomatis mendapat kit ini saat join pertama.
+    enabled: true
+
+    # ID kit yang diberikan saat first join.
+    kit: 'starter'
+
+commands:
+  # Section ini untuk dokumentasi command di config.
+  main: '/kits'
+  aliases:
+    - '/veliorakits'
+    - '/vkits'
+  examples:
+    - '/kits'
+    - '/kits help'
+    - '/kits claim starter'
+    - '/kits preview starter'
+    - '/kits buy premium1'
+    - '/kits cooldown'
+    - '/kits reload'
+
+permissions:
+  # Permission untuk memakai /kits.
+  use: 'veliorasuite.kits.use'
+
+  # Permission admin penuh.
+  admin: 'veliorasuite.kits.admin'
+
+  # Permission reload config.
+  reload: 'veliorasuite.kits.reload'
+
+  # Bypass cooldown claim kit.
+  bypass-cooldown: 'veliorasuite.kits.bypasscooldown'
+
+  # Bypass harga pembelian kit.
+  bypass-price: 'veliorasuite.kits.bypassprice'
+
+  # Prefix permission kit manual jika ingin dipakai.
+  kit-prefix: 'veliorasuite.kits.kit.'
+
+  # Prefix permission premium.
+  premium-prefix: 'veliorakits.premium.'
+
+gui:
+  # Judul GUI utama.
+  title: '&8Veliora Kits'
+
+  # Ukuran GUI. Harus kelipatan 9, maksimal 54.
+  size: 54
+
+  # Judul GUI preview kit.
+  preview-title: '&8Preview: %kit%'
+
+  filler:
+    # Filler background GUI.
+    enabled: true
+    material: BLACK_STAINED_GLASS_PANE
+    name: ' '
+    lore: []
+
+  status-lore:
+    available:
+      - ''
+      - '&aStatus: Bisa diambil'
+      - '&7Klik kiri untuk claim.'
+      - '&7Klik kanan untuk preview.'
+
+    cooldown:
+      - ''
+      - '&cStatus: Cooldown'
+      - '&7Sisa waktu: &f%time%'
+      - '&7Klik kanan untuk preview.'
+
+    locked-permission:
+      - ''
+      - '&cStatus: Terkunci'
+      - '&7Kamu tidak punya permission kit ini.'
+
+    locked-premium:
+      - ''
+      - '&cStatus: Premium'
+      - '&7Butuh permission: &f%premium_permission%'
+
+    need-buy:
+      - ''
+      - '&eStatus: Belum dibeli'
+      - '&7Harga: &a$%price%'
+      - '&7Shift klik untuk membeli.'
+      - '&7Klik kanan untuk preview.'
+
+    bought:
+      - ''
+      - '&aStatus: Sudah dibeli'
+      - '&7Klik kiri untuk claim.'
+      - '&7Klik kanan untuk preview.'
 
 messages:
-  prefix: '&8【&aVelioraKits&8】'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  module-disabled: '%prefix% &cVelioraKits sedang dimatikan.'
+  reload-success: '%prefix% &aVelioraKits berhasil direload.'
+  kit-not-found: '%prefix% &cKit &f%kit% &ctidak ditemukan.'
+  kit-disabled: '%prefix% &cKit &f%kit% &csedang dimatikan.'
+  kit-claimed: '%prefix% &aKamu berhasil claim kit &f%kit%&a.'
+  kit-preview: '%prefix% &aPreview kit &f%kit%&a.'
+  kit-bought: '%prefix% &aKamu berhasil membeli kit &f%kit% &adengan harga &f$%price%&a.'
+  already-bought: '%prefix% &cKamu sudah membeli kit ini.'
+  not-enough-money: '%prefix% &cUang kamu kurang. Butuh &f$%price%&c.'
+  vault-not-found: '%prefix% &cEconomy belum tersedia, pembelian kit tidak bisa digunakan.'
+  kit-on-cooldown: '%prefix% &cKit &f%kit% &cmasih cooldown: &f%time%&c.'
+  inventory-full: '%prefix% &cInventory kamu penuh. Kosongkan beberapa slot dulu.'
+  premium-required: '%prefix% &cKit ini butuh akses premium: &f%premium_permission%'
+  need-buy: '%prefix% &cKit ini harus dibeli dulu. Gunakan &f/kits buy %kit%&c.'
+  buy-not-required: '%prefix% &cKit ini tidak perlu dibeli.'
+  buy-each-claim: '%prefix% &cKit ini dibayar setiap claim. Gunakan &f/kits claim %kit%&c.'
+  first-join-given: '%prefix% &aKamu menerima first join kit &f%kit%&a.'
+  usage-claim: '%prefix% &cGunakan: &f/kits claim <kit>'
+  usage-preview: '%prefix% &cGunakan: &f/kits preview <kit>'
+  usage-buy: '%prefix% &cGunakan: &f/kits buy <kit>'
+  no-cooldown: '%prefix% &aTidak ada kit yang sedang cooldown.'
+  preview-title: '&8Preview: %kit%'
+
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraKits'
+    - '&f/kits &7- Membuka GUI kit.'
+    - '&f/kits list &7- Melihat kit aktif.'
+    - '&f/kits claim <kit> &7- Claim kit.'
+    - '&f/kits preview <kit> &7- Preview kit.'
+    - '&f/kits buy <kit> &7- Beli kit.'
+    - '&f/kits cooldown &7- Cek cooldown.'
+    - '&f/kits reload &7- Reload config.'
+    - '&8&m--------------------------------'
+
+kits:
+  starter:
+    # Kit awal untuk player baru.
+    enabled: true
+    display-name: '&aStarter Kit'
+    description:
+      - '&7Kit awal untuk player baru.'
+      - '&7Berisi item survival dasar.'
+
+    # Permission khusus kit ini. Kosongkan agar semua player bisa claim.
+    permission: ''
+
+    # 0 = bukan premium.
+    premium-level: 0
+
+    # Format cooldown: 10s, 30m, 24h, 3d.
+    cooldown: '24h'
+
+    buy:
+      enabled: false
+      price: 0
+      one-time-purchase: true
+
+    gui:
+      slot: 10
+      material: CHEST
+      name: '&aStarter Kit'
+      lore:
+        - '&7Kit awal untuk survival.'
+        - '&7Cooldown: &f24 jam'
+
+    items:
+      - material: STONE_SWORD
+        amount: 1
+        name: '&aStarter Sword'
+        lore:
+          - '&7Pedang awal untuk bertahan hidup.'
+        enchants: []
+
+      - material: STONE_PICKAXE
+        amount: 1
+        name: '&aStarter Pickaxe'
+        lore:
+          - '&7Pickaxe awal untuk mining.'
+        enchants: []
+
+      - material: BREAD
+        amount: 16
+        name: ''
+        lore: []
+        enchants: []
+
+      - material: TORCH
+        amount: 32
+        name: ''
+        lore: []
+        enchants: []
+
+    rewards:
+      # Uang Vault. Jika Vault tidak ada, reward money dilewati.
+      money: 250
+
+      # EXP vanilla.
+      exp: 50
+
+      # Command dari console.
+      # Placeholder: %player%, %kit%
+      commands:
+        - 'eco give %player% 250'
+
+  premium1:
+    enabled: true
+    display-name: '&bPremium Kit I'
+    description:
+      - '&7Kit premium level 1.'
+      - '&7Butuh permission premium.'
+
+    permission: ''
+    premium-level: 1
+    cooldown: '3d'
+
+    buy:
+      enabled: true
+      price: 5000
+      one-time-purchase: true
+
+    gui:
+      slot: 12
+      material: ENDER_CHEST
+      name: '&bPremium Kit I'
+      lore:
+        - '&7Kit premium level 1.'
+        - '&7Harga: &a$5000'
+        - '&7Permission: &fveliorakits.premium.1'
+
+    items:
+      - material: IRON_SWORD
+        amount: 1
+        name: '&bPremium Sword I'
+        lore:
+          - '&7Pedang premium level 1.'
+        enchants:
+          - 'SHARPNESS:1'
+
+      - material: COOKED_BEEF
+        amount: 32
+        name: ''
+        lore: []
+        enchants: []
+
+    rewards:
+      money: 500
+      exp: 100
+      commands: []
+
+  premium2:
+    enabled: true
+    display-name: '&dPremium Kit II'
+    description:
+      - '&7Kit premium level 2.'
+
+    permission: ''
+    premium-level: 2
+    cooldown: '5d'
+
+    buy:
+      enabled: true
+      price: 10000
+      one-time-purchase: true
+
+    gui:
+      slot: 14
+      material: DIAMOND
+      name: '&dPremium Kit II'
+      lore:
+        - '&7Kit premium level 2.'
+        - '&7Harga: &a$10000'
+        - '&7Permission: &fveliorakits.premium.2'
+
+    items:
+      - material: IRON_PICKAXE
+        amount: 1
+        name: '&dPremium Pickaxe II'
+        lore:
+          - '&7Pickaxe premium level 2.'
+        enchants:
+          - 'EFFICIENCY:2'
+
+    rewards:
+      money: 1000
+      exp: 150
+      commands: []
