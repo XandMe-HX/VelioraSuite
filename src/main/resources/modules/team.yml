@@ -42,21 +42,24 @@ settings:
   # Timeout konfirmasi owner leave dalam detik.
   owner-leave-confirm-timeout-seconds: 30
 
-  # Minimal panjang nama team.
+  # Aturan nama team baru:
+  # - Hanya huruf besar A-Z.
+  # - Tidak boleh huruf kecil, angka, spasi, simbol, emoji, atau tanda -.
+  # - Minimal 3 huruf, maksimal 5 huruf.
+  # - Contoh valid: SHDW, NOVA, VOID, SKY, TEAM.
+  # - Contoh tidak valid: Shadow, shadow, SHADOW, SHDW1, SH-DW, SH DW, 🔥ABC.
+  #
+  # Catatan: team lama yang sudah ada tetap dibaca, tapi create team baru wajib ikut aturan ini.
   min-team-name-length: 3
-
-  # Maksimal panjang nama team.
-  max-team-name-length: 12
-
-  # Regex nama team. Default: huruf, angka, underscore.
-  team-name-regex: '^[a-zA-Z0-9_]+$'
+  max-team-name-length: 5
+  team-name-regex: '^[A-Z]{3,5}$'
 
   # Nama team yang tidak boleh dipakai.
   blocked-names:
-    - 'admin'
-    - 'owner'
-    - 'staff'
-    - 'mod'
+    - 'ADMIN'
+    - 'OWNER'
+    - 'STAFF'
+    - 'MOD'
 
   # Jika true, admin bisa setowner ke player yang belum member team.
   allow-setowner-non-member: true
@@ -70,20 +73,20 @@ settings:
   # Contoh TAB tagprefix:
   # tagprefix: '%veliorasuite_team_tag%&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
   #
-  # Jika player punya team Shadow:
-  # %veliorasuite_team_tag% -> &8【&bShadow&8】&f 
+  # Jika player punya team SHDW:
+  # %veliorasuite_team_tag% -> &f【&b&lSHDW&f】&f 
   # Jika player tidak punya team:
   # %veliorasuite_team_tag% -> kosong
   chat-tag:
     enabled: false
-    format: '&8【&b%team%&8】&f '
-    max-team-name-length-in-chat: 12
+    format: '&f【&b&l%team%&f】&f '
+    max-team-name-length-in-chat: 5
 
 commands:
   main: '/team'
   examples:
     - '/team help'
-    - '/team create Shadow'
+    - '/team create SHDW'
     - '/team invite Steve'
     - '/team accept'
     - '/team leave'
@@ -91,9 +94,9 @@ commands:
     - '/team list'
     - '/team chat halo semua'
     - '/team upgrade'
-    - '/team setowner Shadow Steve'
-    - '/team delete Shadow'
-    - '/team info Shadow'
+    - '/team setowner SHDW Steve'
+    - '/team delete SHDW'
+    - '/team info SHDW'
     - '/team reload'
 
 permissions:
@@ -107,7 +110,7 @@ permissions:
 
 formats:
   # Format fallback lama. Placeholder TAB tetap mengambil settings.chat-tag.format.
-  chat-tag: '&8【&b%team%&8】&f '
+  chat-tag: '&f【&b&l%team%&f】&f '
   team-chat: '&8[&bTeam Chat&8] &f%player%&7: &f%message%'
 
   list-header:
@@ -132,9 +135,9 @@ messages:
   not-in-team: '%prefix% &cKamu belum punya team.'
   team-not-found: '%prefix% &cTeam &f%team% &ctidak ditemukan.'
   team-name-exists: '%prefix% &cNama team &f%team% &csudah dipakai.'
-  team-name-invalid: '%prefix% &cNama team tidak valid. Gunakan huruf, angka, atau underscore.'
-  team-name-too-short: '%prefix% &cNama team terlalu pendek. Minimal &f%min% &ckarakter.'
-  team-name-too-long: '%prefix% &cNama team terlalu panjang. Maksimal &f%max% &ckarakter.'
+  team-name-invalid: '%prefix% &cNama team tidak valid. Gunakan huruf besar A-Z saja, tanpa angka/simbol/emoji. Contoh: &fSHDW'
+  team-name-too-short: '%prefix% &cNama team terlalu pendek. Minimal &f%min% &churuf.'
+  team-name-too-long: '%prefix% &cNama team terlalu panjang. Maksimal &f%max% &churuf.'
   blocked-name: '%prefix% &cNama team ini tidak boleh dipakai.'
   only-owner: '%prefix% &cHanya owner team yang bisa melakukan ini.'
   target-not-found: '%prefix% &cPlayer &f%player% &ctidak ditemukan.'
@@ -163,6 +166,7 @@ messages:
     - '&8&m--------------------------------'
     - '&b&lVelioraTeam'
     - '&f/team create <nama> &7- Membuat team.'
+    - '&7  Nama team wajib huruf besar A-Z, 3-5 huruf. Contoh: &fSHDW'
     - '&f/team invite <player> &7- Invite player.'
     - '&f/team accept &7- Terima invite.'
     - '&f/team leave &7- Keluar dari team.'
