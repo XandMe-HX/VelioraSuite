@@ -1,0 +1,8 @@
+enabled: false
+
+settings:
+  auto-start-new-player-quest: true
+  store-progress-in-sqlite: true
+
+messages:
+  prefix: '&8【&aVelioraQuest&8】'
