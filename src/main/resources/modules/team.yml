@@ -1,0 +1,12 @@
+# VelioraTeam config
+# Logic detail akan dibuat pada tahap module Team.
+
+enabled: false
+
+settings:
+  max-members: 8
+  allow-team-chat: true
+
+messages:
+  prefix: '&8【&aVelioraTeam&8】'
+  disabled: '%prefix% &cModule team sedang dimatikan.'
