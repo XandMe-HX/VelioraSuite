@@ -83,7 +83,7 @@ commands:
 
   team:
     description: Manage VelioraTeam teams.
-    usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|reload>
+    usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|delete|info|reload>
 
 permissions:
   veliorasuite.admin:
@@ -172,6 +172,10 @@ permissions:
 
   veliorasuite.team.setowner:
     description: Allows changing team owner.
+    default: op
+
+  veliorasuite.team.delete:
+    description: Allows deleting teams.
     default: op
 
   veliorasuite.team.bypasscost:
