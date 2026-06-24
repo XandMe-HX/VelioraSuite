@@ -49,11 +49,11 @@ commands:
 
   velioraannouncement:
     description: Manage Veliora automatic announcements.
-    usage: /velioraannouncement <reload|status|send>
+    usage: /velioraannouncement <help|status|list|reload|send>
     aliases:
       - vannounce
+      - vann
       - va
-    permission: veliorasuite.announcement.admin
 
 permissions:
   veliorasuite.admin:
@@ -73,5 +73,17 @@ permissions:
     default: op
 
   veliorasuite.announcement.admin:
-    description: Allows admins to manage VelioraAnnouncement.
+    description: Allows full access to VelioraAnnouncement.
+    default: op
+
+  veliorasuite.announcement.reload:
+    description: Allows reloading VelioraAnnouncement.
+    default: op
+
+  veliorasuite.announcement.send:
+    description: Allows sending manual announcements.
+    default: op
+
+  veliorasuite.announcement.status:
+    description: Allows viewing VelioraAnnouncement status and list.
     default: op
