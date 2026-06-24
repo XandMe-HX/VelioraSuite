@@ -120,11 +120,20 @@ public final class GuideManager {
             }
         }
 
+        if (config.getBoolean("settings.layout.blank-line-before-page", true)) {
+            sender.sendMessage("");
+        }
+
+        if (config.getBoolean("settings.layout.show-top-separator", true)) {
+            send(sender, getSeparator());
+        }
+
         for (String line : page.getLines()) {
             sender.sendMessage(color(line
                     .replace("%page%", String.valueOf(pageNumber))
                     .replace("%max_page%", String.valueOf(maxPage))
-                    .replace("%title%", page.getTitle())));
+                    .replace("%title%", page.getTitle())
+                    .replace("%command%", commandLabel)));
         }
 
         if (config.getBoolean("settings.show-navigation", true)) {
@@ -150,31 +159,56 @@ public final class GuideManager {
         int previousPage = Math.max(1, page - 1);
         int nextPage = Math.min(maxPage, page + 1);
 
-        sender.sendMessage(color("&8&m--------------------------------"));
+        send(sender, getSeparator());
+
+        String backText = getFooterValue(hasBack ? "back-active" : "back-disabled", hasBack ? "&e[Back]" : "&7[Back]");
+        String nextText = getFooterValue(hasNext ? "next-active" : "next-disabled", hasNext ? "&a[Next]" : "&7[Next]");
+        String pageText = applyFooterPlaceholders(getFooterValue("page-format", "&7Page &f%page%&7/&f%max_page%"), page, maxPage, commandLabel);
 
         if (sender instanceof Player player && config.getBoolean("settings.clickable-buttons-java", true)) {
-            TextComponent back = new TextComponent(color(hasBack ? "&e[Back]" : "&7[Back]"));
+            TextComponent back = new TextComponent(color(backText));
             if (hasBack) {
                 back.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + commandLabel + " " + previousPage));
             }
 
-            TextComponent info = new TextComponent(color(" &7Page &f" + page + "&7/&f" + maxPage + " "));
+            TextComponent info = new TextComponent(color(" " + pageText + " "));
 
-            TextComponent next = new TextComponent(color(hasNext ? "&a[Next]" : "&7[Next]"));
+            TextComponent next = new TextComponent(color(nextText));
             if (hasNext) {
                 next.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + commandLabel + " " + nextPage));
             }
 
             player.spigot().sendMessage(back, info, next);
         } else {
-            String back = hasBack ? "&e[Back]" : "&7[Back]";
-            String next = hasNext ? "&a[Next]" : "&7[Next]";
-            sender.sendMessage(color(back + " &7Page &f" + page + "&7/&f" + maxPage + " " + next));
+            sender.sendMessage(color(backText + " " + pageText + " " + nextText));
+        }
+
+        if (config.getBoolean("settings.layout.blank-line-after-navigation", true)) {
+            sender.sendMessage("");
         }
 
         if (config.getBoolean("settings.bedrock-navigation-hint", true)) {
-            sender.sendMessage(color("&7Java: klik tombol. Bedrock: &f/" + commandLabel + " <halaman>"));
+            send(sender, applyFooterPlaceholders(getFooterValue("bedrock-help", "&7Java: klik tombol. Bedrock: &f/%command% <halaman>"), page, maxPage, commandLabel));
         }
+
+        if (config.getBoolean("settings.layout.show-bottom-separator", true)) {
+            send(sender, getSeparator());
+        }
+    }
+
+    private String applyFooterPlaceholders(String text, int page, int maxPage, String commandLabel) {
+        return text
+                .replace("%page%", String.valueOf(page))
+                .replace("%max_page%", String.valueOf(maxPage))
+                .replace("%command%", commandLabel);
+    }
+
+    private String getSeparator() {
+        return config.getString("settings.colors.separator", "&8&m--------------------------------");
+    }
+
+    private String getFooterValue(String path, String fallback) {
+        return config.getString("settings.footer." + path, fallback);
     }
 
     private String getMessage(String path) {
