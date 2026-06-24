@@ -16,7 +16,7 @@ public final class KitPreviewManager {
 
     public void openPreview(Player player, Kit kit) {
         int size = Math.max(9, Math.min(54, ((kit.getItems().size() + 8) / 9) * 9));
-        String title = configManager.color(configManager.getMessage("preview-title", "&8Preview: %kit%").replace("%kit%", kit.getDisplayName()));
+        String title = configManager.getPreviewTitle(kit.getDisplayName());
         Inventory inventory = Bukkit.createInventory(null, size, title);
 
         for (ItemStack item : kit.getItems()) {
