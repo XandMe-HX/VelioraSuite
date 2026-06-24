@@ -209,6 +209,10 @@ permissions:
     description: Allows bypassing chat cooldown.
     default: op
 
+  veliorasuite.chat.bypasscommandcooldown:
+    description: Allows bypassing command spam cooldown.
+    default: op
+
   veliorasuite.chat.bypassfilter:
     description: Allows bypassing chat filters.
     default: op
