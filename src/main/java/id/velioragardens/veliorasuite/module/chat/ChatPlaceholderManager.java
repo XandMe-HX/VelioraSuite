@@ -1,0 +1,103 @@
+package id.velioragardens.veliorasuite.module.chat;
+
+import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.api.VelioraModule;
+import id.velioragardens.veliorasuite.module.team.TeamModule;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
+
+import java.lang.reflect.Method;
+import java.util.Optional;
+import java.util.UUID;
+
+public final class ChatPlaceholderManager {
+
+    private final VelioraSuite plugin;
+    private final ChatConfigManager configManager;
+
+    public ChatPlaceholderManager(VelioraSuite plugin, ChatConfigManager configManager) {
+        this.plugin = plugin;
+        this.configManager = configManager;
+    }
+
+    public String getTeamName(UUID uuid) {
+        if (!configManager.isTeamTagPlaceholderEnabled() || uuid == null) {
+            return "";
+        }
+
+        TeamModule teamModule = getTeamModule();
+        if (teamModule == null || teamModule.getTeamManager() == null) {
+            return "";
+        }
+
+        return teamModule.getTeamManager().getTagManager().getTeamName(uuid);
+    }
+
+    public String getTeamTag(UUID uuid) {
+        if (!configManager.isTeamTagPlaceholderEnabled() || uuid == null) {
+            return configManager.getTeamTagEmpty();
+        }
+
+        TeamModule teamModule = getTeamModule();
+        if (teamModule == null || teamModule.getTeamManager() == null) {
+            return configManager.getTeamTagEmpty();
+        }
+
+        String tag = teamModule.getTeamManager().getTagManager().getRawTagPrefix(uuid);
+        return tag.isBlank() ? configManager.getTeamTagEmpty() : tag;
+    }
+
+    public String getLuckPermsPrefix(Player player) {
+        if (player == null || Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
+            return configManager.getLuckPermsPrefixEmpty();
+        }
+
+        try {
+            Class<?> luckPermsClass = Class.forName("net.luckperms.api.LuckPerms");
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            RegisteredServiceProvider<?> registration = Bukkit.getServicesManager().getRegistration((Class) luckPermsClass);
+            if (registration == null) {
+                return configManager.getLuckPermsPrefixEmpty();
+            }
+
+            Object luckPerms = registration.getProvider();
+            Object userManager = luckPerms.getClass().getMethod("getUserManager").invoke(luckPerms);
+            Object user = userManager.getClass().getMethod("getUser", UUID.class).invoke(userManager, player.getUniqueId());
+            if (user == null) {
+                return configManager.getLuckPermsPrefixEmpty();
+            }
+
+            Object cachedData = user.getClass().getMethod("getCachedData").invoke(user);
+            Object metaData = cachedData.getClass().getMethod("getMetaData").invoke(cachedData);
+            Method getPrefix = metaData.getClass().getMethod("getPrefix");
+            Object prefix = getPrefix.invoke(metaData);
+            return prefix instanceof String text ? text : configManager.getLuckPermsPrefixEmpty();
+        } catch (Exception exception) {
+            return configManager.getLuckPermsPrefixEmpty();
+        }
+    }
+
+    public String getPlaceholder(OfflinePlayer player, String identifier) {
+        if (identifier == null) {
+            return "";
+        }
+
+        UUID uuid = player == null ? null : player.getUniqueId();
+        return switch (identifier.toLowerCase()) {
+            case "team_name" -> getTeamName(uuid);
+            case "team_tag" -> getTeamTag(uuid);
+            case "player_name" -> player == null ? "" : player.getName();
+            default -> "";
+        };
+    }
+
+    private TeamModule getTeamModule() {
+        Optional<VelioraModule> module = plugin.getModuleManager().getModule("team");
+        if (module.isEmpty() || !(module.get() instanceof TeamModule teamModule)) {
+            return null;
+        }
+        return teamModule;
+    }
+}
