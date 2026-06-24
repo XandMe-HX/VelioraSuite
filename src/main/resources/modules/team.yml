@@ -81,8 +81,6 @@ commands:
     - '/team chat halo semua'
     - '/team upgrade'
     - '/team setowner Shadow Steve'
-    - '/team delete Shadow'
-    - '/team info Shadow'
     - '/team reload'
 
 permissions:
@@ -90,7 +88,6 @@ permissions:
   admin: 'veliorasuite.team.admin'
   reload: 'veliorasuite.team.reload'
   setowner: 'veliorasuite.team.setowner'
-  delete: 'veliorasuite.team.delete'
   bypass-cost: 'veliorasuite.team.bypasscost'
   bypass-limit: 'veliorasuite.team.bypasslimit'
 
@@ -143,8 +140,6 @@ messages:
   already-upgraded: '%prefix% &cTeam kamu sudah mencapai upgrade maksimal.'
   setowner-success: '%prefix% &aOwner team &f%team% &aberhasil dipindahkan ke &f%player%&a.'
   setowner-received: '%prefix% &aKamu sekarang menjadi owner team &f%team%&a.'
-  team-deleted: '%prefix% &aTeam &f%team% &aberhasil dihapus.'
-  team-info: '%prefix% &b%team% &7Owner: &f%owner% &7Member: &f%members%/%max_members% &7Upgrade: &f%upgraded%'
   reload-success: '%prefix% &aVelioraTeam berhasil direload.'
 
   help:
