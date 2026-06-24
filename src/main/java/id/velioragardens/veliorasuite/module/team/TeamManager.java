@@ -87,6 +87,10 @@ public final class TeamManager {
         return sender.hasPermission(configManager.getSetOwnerPermission()) || hasAdminPermission(sender);
     }
 
+    public boolean hasDeletePermission(CommandSender sender) {
+        return sender.hasPermission(configManager.getDeletePermission()) || hasAdminPermission(sender);
+    }
+
     public void sendHelp(CommandSender sender) {
         sendLines(sender, configManager.getMessageList("help", List.of(
                 "&8&m--------------------------------",
@@ -99,6 +103,8 @@ public final class TeamManager {
                 "&f/team chat <pesan> &7- Chat khusus team.",
                 "&f/team upgrade &7- Upgrade kapasitas team.",
                 "&f/team setowner <team> <player> &7- Pindah owner team.",
+                "&f/team delete <team> &7- Hapus team. Admin only.",
+                "&f/team info <team> &7- Lihat detail team. Admin only.",
                 "&f/team reload &7- Reload config.",
                 "&8&m--------------------------------"
         )), Map.of());
@@ -293,6 +299,37 @@ public final class TeamManager {
         dataManager.saveTeam(team);
         send(sender, "setowner-success", "%prefix% &aOwner team &f%team% &aberhasil dipindahkan ke &f%player%&a.", teamPlaceholders(team, Map.of("%player%", target.getName())));
         send(target, "setowner-received", "%prefix% &aKamu sekarang menjadi owner team &f%team%&a.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void deleteTeam(CommandSender sender, String teamName) {
+        if (!hasDeletePermission(sender)) {
+            send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of());
+            return;
+        }
+
+        Team team = dataManager.getTeam(teamName);
+        if (team == null) {
+            send(sender, "team-not-found", "%prefix% &cTeam &f%team% &ctidak ditemukan.", Map.of("%team%", teamName));
+            return;
+        }
+
+        dataManager.deleteTeam(team);
+        send(sender, "team-deleted", "%prefix% &aTeam &f%team% &aberhasil dihapus.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void infoTeam(CommandSender sender, String teamName) {
+        if (!hasAdminPermission(sender)) {
+            send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of());
+            return;
+        }
+
+        Team team = dataManager.getTeam(teamName);
+        if (team == null) {
+            send(sender, "team-not-found", "%prefix% &cTeam &f%team% &ctidak ditemukan.", Map.of("%team%", teamName));
+            return;
+        }
+
+        send(sender, "team-info", "%prefix% &b%team% &7Owner: &f%owner% &7Member: &f%members%/%max_members% &7Upgrade: &f%upgraded%", teamPlaceholders(team, Map.of()));
     }
 
     public void sendReloadSuccess(CommandSender sender) {
