@@ -21,7 +21,27 @@ public final class KitsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0 || args[0].equalsIgnoreCase("open")) {
+        if (args.length == 0) {
+            if (!hasUse(sender)) {
+                send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.");
+                return true;
+            }
+
+            if (kitsManager.getConfigManager().isOpenGuiOnMainCommand()) {
+                if (!(sender instanceof Player player)) {
+                    send(sender, "player-only", "%prefix% &cCommand ini hanya bisa digunakan oleh player.");
+                    return true;
+                }
+
+                kitsManager.openGui(player);
+            } else {
+                kitsManager.sendHelp(sender);
+            }
+
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("open")) {
             if (!(sender instanceof Player player)) {
                 send(sender, "player-only", "%prefix% &cCommand ini hanya bisa digunakan oleh player.");
                 return true;
