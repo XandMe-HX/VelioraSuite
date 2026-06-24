@@ -47,6 +47,13 @@ commands:
       - vproduct
     permission: veliorasuite.guide.use
 
+  veliorarank:
+    description: Open Veliora rank shop guide.
+    usage: /veliorarank [page]
+    aliases:
+      - vrank
+    permission: veliorasuite.guide.use
+
   velioraannouncement:
     description: Manage Veliora automatic announcements.
     usage: /velioraannouncement <help|status|list|reload|send>
