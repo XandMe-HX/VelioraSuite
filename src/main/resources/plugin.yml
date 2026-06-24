@@ -85,6 +85,13 @@ commands:
     description: Manage VelioraTeam teams.
     usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|delete|info|reload>
 
+  veliorachat:
+    description: Manage VelioraChat.
+    usage: /veliorachat <help|status|reload>
+    aliases:
+      - vchat
+      - vc
+
 permissions:
   veliorasuite.admin:
     description: Allows access to VelioraSuite admin command.
@@ -184,4 +191,24 @@ permissions:
 
   veliorasuite.team.bypasslimit:
     description: Allows bypassing team member limits.
+    default: op
+
+  veliorasuite.chat.use:
+    description: Allows using VelioraChat commands.
+    default: true
+
+  veliorasuite.chat.admin:
+    description: Allows full access to VelioraChat.
+    default: op
+
+  veliorasuite.chat.reload:
+    description: Allows reloading VelioraChat.
+    default: op
+
+  veliorasuite.chat.bypasscooldown:
+    description: Allows bypassing chat cooldown.
+    default: op
+
+  veliorasuite.chat.bypassfilter:
+    description: Allows bypassing chat filters.
     default: op
