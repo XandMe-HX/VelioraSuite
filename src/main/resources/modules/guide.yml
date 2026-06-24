@@ -2,21 +2,23 @@
 # VELIORAGUIDE CONFIG
 # =========================================================
 # Fungsi:
-# - Mengirim panduan server lewat chat.
-# - Mirip sistem halaman seperti /rp ? 1, tapi versi Veliora.
+# - Mengirim panduan, rules, dan product server lewat chat.
+# - Gunakan font biasa agar mudah dibaca player.
+# - Jangan pakai small caps.
 #
-# Command:
-# - /vguide        -> buka guide halaman 1
-# - /vguide 2      -> buka guide halaman 2
-# - /vrules        -> buka rules halaman 1
-# - /vproduct      -> buka product halaman 1
-# - /vguide reload -> reload file ini, khusus admin
+# Command utama:
+# - /vguide           -> buka Panduan Server halaman 1
+# - /vguide <page>    -> buka Panduan Server halaman tertentu
+# - /vrules           -> buka Rules Server halaman 1
+# - /vrules <page>    -> buka Rules Server halaman tertentu
+# - /vproduct         -> buka Product/Fitur Server halaman 1
+# - /vproduct <page>  -> buka Product/Fitur Server halaman tertentu
+# - /vguide reload    -> reload file ini, khusus admin
 #
-# Cara edit:
-# - Tambah halaman baru di sections.<guide/rules/product>.pages.<nomor>
-# - Isi lines dengan teks yang ingin dikirim ke player.
-# - Pakai & untuk warna Minecraft.
-# - Setelah edit, jalankan /vguide reload atau /vs reload.
+# Aturan update:
+# - Jika ada module, command, atau fitur berubah, update guide ini juga.
+# - Tujuannya supaya panduan tidak berbeda dengan fitur asli server.
+# - Jangan masukkan nama asli owner. Pakai XandMe saja jika butuh contoh nama.
 # =========================================================
 
 enabled: true
@@ -36,117 +38,231 @@ messages:
 
 sections:
   guide:
-    display-name: 'VelioraGuide'
+    display-name: 'Panduan Server'
     pages:
       1:
-        title: '&aLogin Command'
+        title: '&aPanduan Awal'
         lines:
-          - '&8〔 &aVeliora Guide &8〕'
-          - ''
-          - '&7[ &fCommand &7]'
-          - '&a/register <password> <confirmPassword>'
-          - ''
-          - '&7[ &fKegunaan &7]'
-          - '&fMendaftarkan akun agar nama player kamu aman.'
-          - ''
-          - '&7[ &fContoh &7]'
-          - '&a/register Password123 Password123'
-          - ''
-          - '&7[ &fCara Pakai &7]'
-          - '&f1. Join server.'
-          - '&f2. Ketik contoh command di atas.'
-          - '&f3. Jika berhasil, akun kamu tersimpan.'
-          - '&f4. Setelah itu kamu bisa bermain.'
+          - '&8[ &aPanduan Awal &8]'
+          - '&fGunakan &a/spawn &funtuk kembali ke spawn.'
+          - '&fGunakan &a/rtp &funtuk mencari tempat survival.'
+          - '&fGunakan &a/shop &funtuk beli dan jual item.'
+          - '&fGunakan &a/skills &fatau &a/sk &funtuk skill.'
+          - '&fGunakan &a/warp &funtuk tempat penting.'
+          - '&fGunakan &a/vguide <page> &funtuk halaman lain.'
       2:
-        title: '&aLogin Command'
+        title: '&aTeleport'
         lines:
-          - '&8〔 &aVeliora Guide &8〕'
-          - ''
-          - '&7[ &fCommand &7]'
-          - '&a/login <password>'
-          - ''
-          - '&7[ &fKegunaan &7]'
-          - '&fMasuk ke akun yang sudah terdaftar.'
-          - ''
-          - '&7[ &fContoh &7]'
-          - '&a/login Password123'
-          - ''
-          - '&7[ &fCara Pakai &7]'
-          - '&f1. Join server.'
-          - '&f2. Ketik &a/login Password123&f.'
-          - '&f3. Jika password benar, kamu bisa bermain.'
+          - '&8[ &aTeleport &8]'
+          - '&a/spawn &7- &fkembali ke spawn.'
+          - '&a/rtp &7- &fteleport acak.'
+          - '&a/warp <nama> &7- &ftempat publik.'
+          - '&a/tpa <nama> &7- &fminta teleport.'
+          - '&a/tpaccept &7- &fterima teleport.'
+          - '&a/tpdeny &7- &ftolak teleport.'
       3:
-        title: '&aBasic Command'
+        title: '&aShop dan Uang'
         lines:
-          - '&8〔 &aBasic Command &8〕'
-          - ''
-          - '&7[ &fCommand &7]'
-          - '&a/spawn'
-          - '&a/rtp'
-          - '&a/tpa <nama>'
-          - '&a/tpaccept'
-          - '&a/tpdeny'
-          - ''
-          - '&7[ &fKegunaan &7]'
-          - '&fCommand dasar untuk mulai survival dan teleport.'
-          - ''
-          - '&7[ &fContoh &7]'
-          - '&a/tpa XandMe'
-          - ''
-          - '&7[ &fTips &7]'
-          - '&fGunakan /rtp untuk cari tempat survival baru.'
+          - '&8[ &aShop dan Uang &8]'
+          - '&a/shop &7- &fbuka toko server.'
+          - '&a/sell &7- &fjual item cepat.'
+          - '&a/sellgui &7- &fjual item lewat menu.'
+          - '&a/balance &7- &fcek uang.'
+          - '&a/baltop &7- &ftop saldo.'
+          - '&a/pay <nama> <jumlah> &7- &fkirim uang.'
+      4:
+        title: '&aSkill dan Fishing'
+        lines:
+          - '&8[ &aSkill dan Fishing &8]'
+          - '&a/skills &7- &fbuka menu skill.'
+          - '&a/sk &7- &falias menu skill.'
+          - '&fNaikkan skill dengan aktivitas survival.'
+          - '&fFishing tetap memakai mekanik vanilla.'
+          - '&fIkuti event fishing jika tersedia.'
+          - '&fReward dibuat aman untuk ekonomi server.'
+      5:
+        title: '&aClaim dan Skin'
+        lines:
+          - '&8[ &aClaim dan Skin &8]'
+          - '&fClaim area agar base aman.'
+          - '&fGunakan shovel claim jika sistem aktif.'
+          - '&fJangan claim area milik player lain.'
+          - '&fGunakan command skin dari SkinsRestorer.'
+          - '&fContoh umum: &a/skin set <nama>&f.'
+          - '&fTanya staff jika command berbeda.'
+      6:
+        title: '&aCommand Penting 1'
+        lines:
+          - '&8[ &aCommand Penting 1 &8]'
+          - '&a/spawn &7- &fkembali ke spawn.'
+          - '&a/rtp &7- &fteleport acak.'
+          - '&a/warp <nama> &7- &ftempat publik.'
+          - '&a/tpa <nama> &7- &fminta teleport.'
+          - '&a/tpaccept &7- &fterima teleport.'
+          - '&a/tpdeny &7- &ftolak teleport.'
+      7:
+        title: '&aCommand Penting 2'
+        lines:
+          - '&8[ &aCommand Penting 2 &8]'
+          - '&a/shop &7- &fbuka toko.'
+          - '&a/balance &7- &fcek uang.'
+          - '&a/baltop &7- &ftop saldo.'
+          - '&a/pay <nama> <jumlah> &7- &fkirim uang.'
+          - '&a/sell &7- &fjual item.'
+          - '&a/skills &7- &fbuka skill.'
 
   rules:
-    display-name: 'VelioraRules'
+    display-name: 'Rules Server'
     pages:
       1:
         title: '&cAturan Umum'
         lines:
-          - '&8〔 &cVeliora Server Rules &8〕'
-          - ''
-          - '&7[ &fAturan Umum &7]'
+          - '&8[ &cAturan Umum &8]'
           - '&f- Dilarang berkata toxic, menghina, atau rasis.'
           - '&f- Dilarang spam chat atau flood.'
           - '&f- Dilarang promosi tanpa izin.'
           - '&f- Wajib saling menghargai.'
           - '&f- Gunakan bahasa yang sopan.'
-          - ''
-          - '&7[ &fGameplay &7]'
-          - '&f- Dilarang cheat, hack, atau x-ray.'
-          - '&f- Dilarang bug abuse atau exploit.'
-          - '&f- Wajib lapor jika ada bug.'
-          - '&f- Dilarang memanfaatkan bug sistem.'
       2:
+        title: '&cGameplay'
+        lines:
+          - '&8[ &cGameplay &8]'
+          - '&f- Dilarang cheat, hack, x-ray, atau mod ilegal.'
+          - '&f- Dilarang bug abuse atau exploit.'
+          - '&f- Wajib lapor jika menemukan bug.'
+          - '&f- Dilarang memanfaatkan bug sistem.'
+      3:
+        title: '&cBoss dan Mob'
+        lines:
+          - '&8[ &cBoss dan Mob &8]'
+          - '&f- Dilarang spam kill dragon.'
+          - '&f- Warden maksimal 2x kill.'
+          - '&f- Cooldown warden 2 hari.'
+          - '&f- Jangan merusak event boss.'
+      4:
+        title: '&cEkonomi'
+        lines:
+          - '&8[ &cEkonomi &8]'
+          - '&f- Dilarang jual beli uang server dengan uang asli.'
+          - '&f- Dilarang scam player.'
+          - '&f- Dilarang manipulasi bug economy.'
+          - '&f- Pelanggaran bisa terkena kick atau ban.'
+      5:
+        title: '&cInteraksi'
+        lines:
+          - '&8[ &cInteraksi &8]'
+          - '&f- Lapor masalah ke admin.'
+          - '&f- Dilarang provokasi.'
+          - '&f- Staff bisa dilaporkan jika melanggar.'
+          - '&f- Jangan mengganggu player lain berlebihan.'
+      6:
+        title: '&cEvent'
+        lines:
+          - '&8[ &cEvent &8]'
+          - '&f- Admin bisa memberi hadiah event.'
+          - '&f- Interaksi server bisa menjadi konten.'
+          - '&f- Admin akan memberi info jika event ditunda.'
+          - '&f- Ikuti arahan staff saat event berjalan.'
+      7:
         title: '&cSanksi'
         lines:
-          - '&8〔 &cVeliora Server Rules &8〕'
-          - ''
-          - '&7[ &fEkonomi &7]'
-          - '&f- Dilarang jual beli uang real.'
-          - '&f- Dilarang menipu player lain.'
-          - ''
-          - '&7[ &fSanksi &7]'
-          - '&f- 1x: Peringatan.'
-          - '&f- 2x: Ban sementara.'
-          - '&f- Pelanggaran berat: Kick atau ban.'
-          - ''
-          - '&7[ &fCatatan &7]'
-          - '&fRules bisa berubah sewaktu-waktu.'
-          - '&fKeputusan staff bersifat mutlak.'
+          - '&8[ &cSanksi &8]'
+          - '&f- Pelanggaran ringan: peringatan.'
+          - '&f- Pelanggaran sedang: mute, kick, atau ban sementara.'
+          - '&f- Pelanggaran berat: ban.'
+          - '&f- Keputusan staff bersifat final.'
+      8:
+        title: '&cCatatan'
+        lines:
+          - '&8[ &cCatatan &8]'
+          - '&f- Rules bisa berubah kapan saja.'
+          - '&f- Player dianggap setuju setelah bermain.'
+          - '&f- Stay fair and have fun.'
+          - '&f- Gunakan server dengan sopan dan sportif.'
 
   product:
-    display-name: 'VelioraProduct'
+    display-name: 'Product dan Fitur Server'
     pages:
       1:
-        title: '&6Veliora Product'
+        title: '&6VelioraSuite'
         lines:
-          - '&8〔 &6Veliora Product &8〕'
-          - ''
-          - '&7[ &fInfo &7]'
-          - '&fHalaman ini dipakai untuk info rank, kit premium, event, atau produk server.'
-          - ''
-          - '&7[ &fContoh &7]'
-          - '&fPremium Kit bisa dibuka sesuai permission rank.'
-          - ''
-          - '&7[ &fCatatan &7]'
-          - '&fProduk dan benefit bisa berubah sewaktu-waktu.'
+          - '&8[ &6VelioraSuite &8]'
+          - '&fPlugin utama modular Veliora Gardens.'
+          - '&fBerisi module Guide, Announcement, Fishing,'
+          - '&fTrader, Boss, Quest, Chat, Security,'
+          - '&fKits, Team, Report, dan fitur lain.'
+          - '&fDibuat bertahap agar ringan dan rapi.'
+      2:
+        title: '&6VelioraFishing'
+        lines:
+          - '&8[ &6VelioraFishing &8]'
+          - '&fSistem fishing custom dengan minigame.'
+          - '&fAda rarity ikan, leaderboard, dan reward.'
+          - '&fTetap memakai mekanik fishing vanilla.'
+          - '&fAman untuk AuraSkills.'
+          - '&7Command: &a/vf top'
+      3:
+        title: '&6VelioraTrader'
+        lines:
+          - '&8[ &6VelioraTrader &8]'
+          - '&fNPC merchant event muncul periodik.'
+          - '&fItem dijual berdasarkan rarity.'
+          - '&fTrader hilang otomatis jika waktu habis.'
+          - '&7Command: &a/vtr spawn'
+          - '&7Command: &a/vtr reload'
+      4:
+        title: '&6VelioraBoss'
+        lines:
+          - '&8[ &6VelioraBoss &8]'
+          - '&fSistem boss event server.'
+          - '&fMendukung bossbar, skill, dan rarity.'
+          - '&fAda top damage dan reward.'
+          - '&fDibuat agar tidak mengganggu mob biasa.'
+      5:
+        title: '&6VelioraQuest'
+        lines:
+          - '&8[ &6VelioraQuest &8]'
+          - '&fSistem quest otomatis untuk player.'
+          - '&fQuest bisa mining, farming, fishing,'
+          - '&fkill mob, playtime, dan lainnya.'
+          - '&fReward dibuat kecil dan aman.'
+      6:
+        title: '&6VelioraClearLag'
+        lines:
+          - '&8[ &6VelioraClearLag &8]'
+          - '&fSistem pembersih item jatuh yang aman.'
+          - '&fTidak menghapus boss, trader, atau NPC.'
+          - '&fTidak menghapus armor stand dan villager.'
+          - '&fTidak menghapus item penting.'
+      7:
+        title: '&6VelioraChat'
+        lines:
+          - '&8[ &6VelioraChat &8]'
+          - '&fSistem chat server.'
+          - '&fMendukung format chat dan filter.'
+          - '&fAda cooldown, anti repeat, dan anti caps.'
+          - '&fSupport LuckPerms dan PlaceholderAPI.'
+      8:
+        title: '&6VelioraSecurity'
+        lines:
+          - '&8[ &6VelioraSecurity &8]'
+          - '&fSistem keamanan ringan.'
+          - '&fBerisi anti spam dan anti bot basic.'
+          - '&fAda command cooldown.'
+          - '&fAda join protection untuk player baru.'
+      9:
+        title: '&6Kits Team Report'
+        lines:
+          - '&8[ &6Kits Team Report &8]'
+          - '&fVelioraKits: claim kit dengan cooldown.'
+          - '&fVelioraTeam: buat team dan invite teman.'
+          - '&fVelioraReport: lapor pelanggaran ke staff.'
+          - '&fSemua fitur dibuat bertahap.'
+      10:
+        title: '&6Announcement Guide'
+        lines:
+          - '&8[ &6Announcement Guide &8]'
+          - '&fVelioraAnnouncement: broadcast otomatis.'
+          - '&fBisa random atau berurutan.'
+          - '&fVelioraGuide: panduan, rules, product.'
+          - '&fGunakan /vguide, /vrules, /vproduct.'
