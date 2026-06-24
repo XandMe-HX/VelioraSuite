@@ -6,9 +6,11 @@
 # - Cocok untuk mengingatkan player tentang /vguide, /vrules, /shop, claim, event, Discord, dan report.
 #
 # Command admin:
-# - /vannounce status       -> melihat status announcement
-# - /vannounce reload       -> reload file ini
-# - /vannounce send <id>    -> mengirim announcement tertentu secara manual
+# - /vannounce help        -> melihat bantuan command
+# - /vannounce status      -> melihat status announcement
+# - /vannounce list        -> melihat id announcement aktif
+# - /vannounce reload      -> reload file ini
+# - /vannounce send <id>   -> mengirim announcement tertentu secara manual
 #
 # Cara edit:
 # - Ubah interval-seconds untuk mengatur jeda broadcast otomatis.
@@ -20,42 +22,22 @@
 enabled: true
 
 settings:
-  # Jika true, announcement otomatis berjalan saat server hidup.
   auto-start: true
-
-  # Waktu tunggu sebelum announcement pertama dikirim setelah server start.
   initial-delay-seconds: 60
-
-  # Jeda antar announcement otomatis.
-  # Contoh: 300 = 5 menit, 600 = 10 menit.
   interval-seconds: 300
-
-  # Mode pengiriman:
-  # SEQUENTIAL = urut dari atas ke bawah.
-  # RANDOM = acak.
   mode: 'RANDOM'
-
-  # Jika false, announcement tidak dikirim saat server kosong.
   send-on-empty-server: false
-
-  # Jika true, console juga akan menerima announcement.
   send-to-console: false
-
-  # Jika true, player harus punya permission di announcement.permission agar menerima pesan.
-  # Bisa dikosongkan per announcement kalau ingin semua player menerima.
   use-per-announcement-permission: false
 
-  # Filter world global.
   worlds:
     enabled: false
-    # Jika whitelist kosong, semua world boleh menerima kecuali yang ada di blacklist.
     whitelist: []
     blacklist:
       - 'disabledworld'
 
   sound:
     enabled: false
-    # Nama sound harus sesuai enum Bukkit/Paper.
     name: 'ENTITY_EXPERIENCE_ORB_PICKUP'
     volume: 1.0
     pitch: 1.0
@@ -68,6 +50,7 @@ messages:
     - '&8&m--------------------------------'
     - '&a&lVelioraAnnouncement Status'
     - '&7Enabled: &f%enabled%'
+    - '&7Running: &f%running%'
     - '&7Auto Start: &f%auto_start%'
     - '&7Mode: &f%mode%'
     - '&7Interval: &f%interval%s'
@@ -90,6 +73,12 @@ announcements:
     lines:
       - '&8【&aVeliora&8】 &fBingung command? Gunakan &a/vguide&f.'
 
+  product:
+    enabled: true
+    permission: ''
+    lines:
+      - '&8【&aVeliora&8】 &fLihat fitur server dengan &a/vproduct&f.'
+
   claim:
     enabled: true
     permission: ''
@@ -106,7 +95,7 @@ announcements:
     enabled: true
     permission: ''
     lines:
-      - '&8【&aVeliora&8】 &fMenemukan bug atau player mencurigakan? Gunakan &a/report &fatau &a/bugreport&f.'
+      - '&8【&aVeliora&8】 &fMenemukan bug atau player mencurigakan? Gunakan &a/report&f.'
 
   discord:
     enabled: false
