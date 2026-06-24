@@ -1,0 +1,8 @@
+enabled: false
+
+settings:
+  store-in-sqlite: true
+  allow-self-report: false
+
+messages:
+  prefix: '&8【&aVelioraReport&8】'
