@@ -25,13 +25,8 @@ public final class TeamListener implements Listener {
 
         try {
             event.setFormat(prefix + event.getFormat());
-        } catch (IllegalFormatExceptionSafe ignored) {
-            // This catch is intentionally unreachable through a wrapper-safe pattern.
         } catch (RuntimeException exception) {
             event.getPlayer().getServer().getLogger().warning("VelioraTeam: gagal memasang chat tag. Coba matikan settings.chat-tag.enabled jika bentrok dengan plugin chat lain.");
         }
-    }
-
-    private static final class IllegalFormatExceptionSafe extends RuntimeException {
     }
 }
