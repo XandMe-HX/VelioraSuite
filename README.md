@@ -16,7 +16,8 @@ Tahap saat ini:
 - VelioraKits sudah aktif sebagai module.
 - VelioraReport sudah aktif sebagai module.
 - VelioraTeam sudah aktif sebagai module.
-- Logic besar seperti Fishing, Trader, Boss, ClearLag, Chat, Security, Quest, dan LoginSecurity dikerjakan bertahap.
+- VelioraChat sudah aktif sebagai module.
+- Logic besar seperti Fishing, Trader, Boss, ClearLag, Security, Quest, dan LoginSecurity dikerjakan bertahap.
 
 ## Target
 
@@ -57,6 +58,7 @@ src/main/java/id/velioragardens/veliorasuite/
     ├── team/
     ├── kits/
     ├── report/
+    ├── chat/
     ├── fishing/
     ├── skills/
     ├── quest/
@@ -81,6 +83,7 @@ plugins/VelioraSuite/
     ├── team.yml
     ├── kits.yml
     ├── report.yml
+    ├── chat.yml
     ├── fishing.yml
     ├── skills.yml
     ├── quest.yml
@@ -180,6 +183,8 @@ Command:
 - `/team chat <pesan>`
 - `/team upgrade`
 - `/team setowner <team> <player>`
+- `/team delete <team>`
+- `/team info <team>`
 - `/team reload`
 
 File config/data:
@@ -187,6 +192,69 @@ File config/data:
 ```text
 plugins/VelioraSuite/modules/team.yml
 plugins/VelioraSuite/data/teams.yml
+```
+
+## VelioraChat
+
+Command:
+
+- `/vchat help`
+- `/vchat status`
+- `/vchat reload`
+
+File config:
+
+```text
+plugins/VelioraSuite/modules/chat.yml
+```
+
+PlaceholderAPI identifier:
+
+```text
+veliorasuite
+```
+
+Placeholder:
+
+```text
+%veliorasuite_team_name%
+%veliorasuite_team_tag%
+%veliorasuite_player_name%
+```
+
+## TAB Nametag Team Tag
+
+VelioraSuite tidak menyimpan team tag ke Essentials userdata dan tidak mengubah LuckPerms prefix player.
+Team tag disediakan lewat PlaceholderAPI supaya bisa dipakai oleh TAB plugin.
+
+Gunakan placeholder ini di depan `tagprefix` rank di `TAB/groups.yml`:
+
+```yaml
+owner:
+  tabprefix: '&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
+  tagprefix: '%veliorasuite_team_tag%&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
+
+warga:
+  tabprefix: '&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
+  tagprefix: '%veliorasuite_team_tag%&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
+```
+
+Hasil jika player punya team:
+
+```text
+【Shadow】 【 OWNER 】 XandMe
+```
+
+Hasil jika player tidak punya team:
+
+```text
+【 OWNER 】 XandMe
+```
+
+Test placeholder:
+
+```text
+/papi parse me %veliorasuite_team_tag%
 ```
 
 ## Catatan Development
