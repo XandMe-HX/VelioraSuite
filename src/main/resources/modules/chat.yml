@@ -112,12 +112,12 @@ settings:
 
     # Kata dasar toxic. Jangan tampilkan daftar ini ke player.
     # Bisa ditambah/dikurangi sesuai kebutuhan server.
+    # Hindari kata terlalu pendek yang mudah false-positive di kata normal.
     blocked-words:
       - 'contohbadword'
       - 'anjing'
       - 'anjg'
       - 'ajg'
-      - 'asu'
       - 'bangsat'
       - 'goblok'
       - 'tolol'
@@ -134,7 +134,6 @@ settings:
       - 'pepek'
       - 'babi'
       - 'taik'
-      - 'tai'
       - 'jancok'
       - 'jancuk'
       - 'kampret'
