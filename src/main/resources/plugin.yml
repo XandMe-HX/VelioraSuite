@@ -69,6 +69,18 @@ commands:
       - veliorakits
       - vkits
 
+  report:
+    description: Create a VelioraReport player or bug report.
+    usage: /report <player|bug> <reason>
+    aliases:
+      - vreport
+
+  reports:
+    description: Manage VelioraReport reports.
+    usage: /reports <list|view|close|reopen|reload>
+    aliases:
+      - vreports
+
 permissions:
   veliorasuite.admin:
     description: Allows access to VelioraSuite admin command.
@@ -120,4 +132,24 @@ permissions:
 
   veliorasuite.kits.bypassprice:
     description: Allows bypassing kit prices.
+    default: op
+
+  veliorasuite.report.use:
+    description: Allows players to create reports.
+    default: true
+
+  veliorasuite.report.staff:
+    description: Allows staff to view and manage reports.
+    default: op
+
+  veliorasuite.report.admin:
+    description: Allows full access to VelioraReport.
+    default: op
+
+  veliorasuite.report.reload:
+    description: Allows reloading VelioraReport.
+    default: op
+
+  veliorasuite.report.bypasscooldown:
+    description: Allows bypassing report cooldown.
     default: op
