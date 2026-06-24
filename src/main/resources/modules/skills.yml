@@ -1,0 +1,8 @@
+enabled: false
+
+settings:
+  addon-mode: true
+  milestone-rewards: true
+
+messages:
+  prefix: '&8【&aVelioraSkills&8】'

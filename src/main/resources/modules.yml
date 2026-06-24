@@ -1,0 +1,28 @@
+# =========================================================
+# VELIORASUITE MODULES
+# =========================================================
+# Ubah true/false untuk menyalakan atau mematikan module.
+# Jalankan /vs reload setelah mengubah file ini.
+#
+# Catatan:
+# - core selalu aktif.
+# - guide dan announcement sudah punya logic awal.
+# - module lain masih skeleton dan akan dibuat bertahap.
+# =========================================================
+
+modules:
+  core: true
+  guide: true
+  loginsecurity: false
+  team: false
+  kits: false
+  report: false
+  announcement: true
+  fishing: false
+  clearlag: false
+  skills: false
+  quest: false
+  trader: false
+  boss: false
+  security: false
+  chat: false

@@ -1,0 +1,12 @@
+# VelioraLoginSecurity config
+# Logic detail akan dibuat pada tahap module LoginSecurity.
+
+enabled: false
+
+settings:
+  session-timeout-minutes: 30
+  max-login-attempts: 5
+
+messages:
+  prefix: '&8【&aVelioraLogin&8】'
+  disabled: '%prefix% &cModule login security sedang dimatikan.'

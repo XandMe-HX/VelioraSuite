@@ -1,0 +1,8 @@
+enabled: false
+
+settings:
+  manual-spawn: true
+  auto-spawn: false
+
+messages:
+  prefix: '&8【&aVelioraBoss&8】'

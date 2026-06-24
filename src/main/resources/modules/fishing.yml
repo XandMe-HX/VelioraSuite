@@ -1,0 +1,9 @@
+enabled: false
+
+settings:
+  use-vanilla-fishing: true
+  minigame-enabled: true
+  reward-economy-limit: 25.0
+
+messages:
+  prefix: '&8【&aVelioraFishing&8】'
