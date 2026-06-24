@@ -3,67 +3,165 @@
 # ==================================================
 # Module chat format dan proteksi chat ringan.
 #
+# Mode server Veliora Gardens saat ini:
+# - formatter-enabled: false
+# - essentials-mode: true
+# - protection-enabled: true
+#
+# Penjelasan mode:
+# Formatter:
+# - formatter-enabled true berarti VelioraChat yang mengatur tampilan chat publik.
+# - formatter-enabled false berarti VelioraChat tidak mengubah tampilan chat publik.
+# - Jika essentials-mode true, EssentialsChat/plugin chat lain tetap mengatur format chat.
+#
+# Chat cooldown:
+# - Jeda player mengirim pesan chat biasa.
+# - Lokasi setting: settings.cooldown.seconds
+#
+# Anti repeat:
+# - Mencegah player mengirim pesan yang sama berulang.
+# - Lokasi setting: settings.anti-repeat.max-repeat
+#
+# Anti caps:
+# - Merapikan atau memblokir pesan huruf kapital berlebihan.
+# - Lokasi setting: settings.anti-caps
+#
+# Word filter:
+# - Menyensor atau memblokir kata toxic.
+# - Lokasi setting: settings.word-filter
+# - Daftar kata toxic hanya ada di config, jangan ditampilkan ke player.
+#
+# Command spam:
+# - Cooldown untuk player yang spam command seperti /spawn, /home, /msg, /pay.
+# - Lokasi setting: settings.command-spam
+# - Command login/register default diabaikan agar player tetap bisa login.
+#
 # Catatan team tag:
 # Team tag tidak dipakai untuk chat publik lagi.
-# Jangan inject team tag ke EssentialsChat atau chat formatter.
 # Untuk menampilkan team di atas kepala player, gunakan TAB plugin
-# dengan PlaceholderAPI placeholder berikut:
-# %veliorasuite_team_tag%
-#
-# Contoh TAB/groups.yml:
-# owner:
-#   tabprefix: '&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
-#   tagprefix: '%veliorasuite_team_tag%&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
-#
-# warga:
-#   tabprefix: '&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
-#   tagprefix: '%veliorasuite_team_tag%&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
-#
-# Jika punya team:
-# 【Shadow】 【 OWNER 】 XandMe
-#
-# Jika tidak punya team:
-# 【 OWNER 】 XandMe
+# dengan PlaceholderAPI placeholder: %veliorasuite_team_tag%
 # ==================================================
 
 settings:
   enabled: true
   prefix: '&8[&bVelioraChat&8] '
 
-  # Default false agar VelioraChat tidak memaksa format chat publik.
-  # Aktifkan hanya jika ingin VelioraChat menggantikan chat formatter lain.
+  # true = VelioraChat format chat publik.
+  # false = VelioraChat tidak mengubah tampilan chat publik.
   formatter-enabled: false
-  essentials-mode: false
+
+  # true = format chat publik tetap diatur EssentialsChat/plugin chat lain.
+  essentials-mode: true
+
   use-placeholderapi: true
   team-tag-placeholder-enabled: true
+
+  # true = cooldown/filter tetap jalan walaupun formatter dimatikan.
   protection-enabled: true
 
   cooldown:
+    # Chat cooldown adalah jeda player mengirim pesan chat biasa.
     enabled: true
     seconds: 2
 
+  command-spam:
+    # Command spam cooldown adalah jeda player memakai command.
+    # Ini hanya berlaku untuk player, bukan console.
+    enabled: true
+    seconds: 2
+
+    # Jika true, semua command kena cooldown kecuali ignored-commands.
+    apply-to-all-commands: true
+
+    ignored-commands:
+      - '/login'
+      - '/register'
+      - '/l'
+      - '/reg'
+
+    # Cooldown khusus per command. Nama command ditulis tanpa slash.
+    # Jika command ada di sini, value ini dipakai menggantikan seconds default.
+    extra-cooldowns:
+      spawn: 5
+      home: 5
+      tpa: 3
+      msg: 1
+      r: 1
+      pay: 3
+
   anti-repeat:
+    # Anti repeat mencegah pesan yang sama dikirim berulang.
     enabled: true
     max-repeat: 2
 
   anti-caps:
+    # Anti caps merapikan atau memblokir pesan kapital berlebihan.
     enabled: true
     max-caps-percent: 70
     min-length: 8
     action: LOWERCASE
 
   word-filter:
+    # Word filter menyensor atau memblokir kata toxic.
     enabled: true
     action: REPLACE
     replacement: '***'
+    check-normalized: true
+    block-separated-letters: true
+    reduce-repeated-letters: true
+
+    # Kata dasar toxic. Jangan tampilkan daftar ini ke player.
+    # Bisa ditambah/dikurangi sesuai kebutuhan server.
     blocked-words:
       - 'contohbadword'
+      - 'anjing'
+      - 'anjg'
+      - 'ajg'
+      - 'asu'
+      - 'bangsat'
+      - 'goblok'
+      - 'tolol'
+      - 'bego'
+      - 'idiot'
+      - 'bodoh'
+      - 'kontol'
+      - 'kntl'
+      - 'memek'
+      - 'mmk'
+      - 'ngentot'
+      - 'ngntt'
+      - 'peler'
+      - 'pepek'
+      - 'babi'
+      - 'taik'
+      - 'tai'
+      - 'jancok'
+      - 'jancuk'
+      - 'kampret'
+      - 'fuck'
+      - 'fck'
+      - 'shit'
+      - 'bitch'
+      - 'btch'
+      - 'bastard'
+      - 'asshole'
+      - 'dick'
+      - 'pussy'
+      - 'cunt'
+      - 'motherfucker'
+      - 'whore'
+      - 'slut'
+      - 'dumbass'
+
+    # Pattern regex tambahan untuk plesetan yang susah dideteksi exact word.
+    blocked-patterns: []
 
 permissions:
   use: 'veliorasuite.chat.use'
   admin: 'veliorasuite.chat.admin'
   reload: 'veliorasuite.chat.reload'
   bypass-cooldown: 'veliorasuite.chat.bypasscooldown'
+  bypass-command-cooldown: 'veliorasuite.chat.bypasscommandcooldown'
   bypass-filter: 'veliorasuite.chat.bypassfilter'
 
 formats:
@@ -80,8 +178,12 @@ messages:
   help:
     - '&8&m--------------------------------'
     - '&b&lVelioraChat'
-    - '&f/vchat status &7- Cek status chat.'
+    - '&f/vchat status &7- Lihat status formatter dan protection.'
     - '&f/vchat reload &7- Reload config.'
+    - ''
+    - '&7Chat cooldown: &fsettings.cooldown.seconds'
+    - '&7Command cooldown: &fsettings.command-spam.seconds'
+    - '&7Word filter: &fsettings.word-filter.blocked-words'
     - '&8&m--------------------------------'
 
   status:
@@ -89,11 +191,17 @@ messages:
     - '&b&lVelioraChat Status'
     - '&7Formatter: &f%formatter%'
     - '&7Essentials Mode: &f%essentials_mode%'
-    - '&7PlaceholderAPI: &f%placeholderapi%'
     - '&7Protection: &f%protection%'
+    - '&7Chat Cooldown: &f%chat_cooldown% &7(%chat_cooldown_seconds%s)'
+    - '&7Command Cooldown: &f%command_cooldown% &7(%command_cooldown_seconds%s)'
+    - '&7Anti Repeat: &f%anti_repeat% &7(max %anti_repeat_max%)'
+    - '&7Anti Caps: &f%anti_caps%'
+    - '&7Word Filter: &f%word_filter% &7(%word_filter_action%)'
+    - '&7PlaceholderAPI: &f%placeholderapi%'
     - '&8&m--------------------------------'
 
   cooldown: '%prefix% &cTunggu &f%time%s &csebelum chat lagi.'
+  command-cooldown: '%prefix% &cTunggu &f%time%s &csebelum memakai command lagi.'
   repeat-blocked: '%prefix% &cJangan mengirim pesan yang sama berulang kali.'
   caps-fixed: '%prefix% &7Pesan caps kamu dirapikan otomatis.'
   caps-blocked: '%prefix% &cPesan caps tidak diperbolehkan.'
