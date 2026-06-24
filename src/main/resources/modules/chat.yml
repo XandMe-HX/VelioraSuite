@@ -1,0 +1,89 @@
+# ==================================================
+# VelioraChat Configuration
+# ==================================================
+# Module chat format dan proteksi chat ringan.
+#
+# Mode:
+# - formatter-enabled true = VelioraChat format chat publik.
+# - essentials-mode true = EssentialsChat yang format chat,
+#   VelioraChat hanya sediakan placeholder team tag/proteksi.
+#
+# Jika pakai EssentialsChat:
+# Masukkan placeholder ini ke format EssentialsChat jika support:
+# %veliorasuite_team_tag%
+#
+# Contoh:
+# format: '%veliorasuite_team_tag%{PREFIX}{DISPLAYNAME}&7: &f{MESSAGE}'
+#
+# Jika EssentialsChat tidak membaca placeholder PlaceholderAPI,
+# gunakan formatter VelioraChat saja.
+# ==================================================
+
+settings:
+  enabled: true
+  prefix: '&8[&bVelioraChat&8] '
+
+  formatter-enabled: true
+  essentials-mode: false
+  use-placeholderapi: true
+  team-tag-placeholder-enabled: true
+  protection-enabled: true
+
+  cooldown:
+    enabled: true
+    seconds: 2
+
+  anti-repeat:
+    enabled: true
+    max-repeat: 2
+
+  anti-caps:
+    enabled: true
+    max-caps-percent: 70
+    min-length: 8
+    action: LOWERCASE
+
+  word-filter:
+    enabled: true
+    action: REPLACE
+    replacement: '***'
+    blocked-words:
+      - 'contohbadword'
+
+permissions:
+  use: 'veliorasuite.chat.use'
+  admin: 'veliorasuite.chat.admin'
+  reload: 'veliorasuite.chat.reload'
+  bypass-cooldown: 'veliorasuite.chat.bypasscooldown'
+  bypass-filter: 'veliorasuite.chat.bypassfilter'
+
+formats:
+  public-chat: '%veliorateam_tag%&7%luckperms_prefix%&f%player%&7: &f%message%'
+  team-tag-empty: ''
+  luckperms-prefix-empty: ''
+
+messages:
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  reload-success: '%prefix% &aVelioraChat berhasil direload.'
+
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraChat'
+    - '&f/vchat status &7- Cek status chat.'
+    - '&f/vchat reload &7- Reload config.'
+    - '&8&m--------------------------------'
+
+  status:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraChat Status'
+    - '&7Formatter: &f%formatter%'
+    - '&7Essentials Mode: &f%essentials_mode%'
+    - '&7PlaceholderAPI: &f%placeholderapi%'
+    - '&7Protection: &f%protection%'
+    - '&8&m--------------------------------'
+
+  cooldown: '%prefix% &cTunggu &f%time%s &csebelum chat lagi.'
+  repeat-blocked: '%prefix% &cJangan mengirim pesan yang sama berulang kali.'
+  caps-fixed: '%prefix% &7Pesan caps kamu dirapikan otomatis.'
+  caps-blocked: '%prefix% &cPesan caps tidak diperbolehkan.'
+  word-blocked: '%prefix% &cPesan mengandung kata yang tidak diperbolehkan.'
