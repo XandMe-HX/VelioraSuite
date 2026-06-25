@@ -128,12 +128,10 @@ commands:
     usage: /risetpw <playername>
     aliases:
       - resetpw
-    permission: veliorasuite.loginsecurity.owner
 
   cpowner:
     description: Change a player's Veliora password as owner.
     usage: /cpowner <playername> <new>
-    permission: veliorasuite.loginsecurity.owner
 
   loginsecurity:
     description: Manage VelioraLoginSecurity.
