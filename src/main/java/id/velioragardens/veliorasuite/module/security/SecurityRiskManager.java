@@ -25,6 +25,7 @@ public final class SecurityRiskManager {
         if (!configManager.isRiskScoreEnabled() || player == null || configManager.hasBypass(player)) return 0;
         int risk = 0;
         if (uniqueNames >= configManager.getDifferentNamesAlertThreshold()) risk += 40;
+        if (uniqueNames >= configManager.getDifferentNamesKickThreshold()) risk += 30;
         if (invalidName) risk += 30;
         if (joinCount > configManager.getMaxJoinsPerIp()) risk += 20;
         if (rejoinCount >= configManager.getRejoinAlertThreshold()) risk += 5;
