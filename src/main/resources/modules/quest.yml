@@ -2,10 +2,17 @@ settings:
   enabled: true
   prefix: '&8[&aVelioraQuest&8] '
   require-skills-mana: true
+  debug-mana: false
   gui:
     enabled: true
     title: '&8Veliora Quest'
     size: 54
+  bossbar:
+    enabled: true
+    title: '&f%quest% &7- &a%progress%&7/&a%target% &8(&e%percent%%&8)'
+    color: GREEN
+    style: SEGMENTED_10
+    hide-when-complete: true
   progression:
     completions-per-level: 5
   rewards:
@@ -86,8 +93,8 @@ messages:
   reload-success: '%prefix% &aVelioraQuest berhasil direload.'
   quest-started: '%prefix% &aQuest &f%quest% &adimulai. Mana terpakai: &f%mana_cost%&a.'
   quest-progress: '%prefix% &eProgress &f%quest%&e: &f%progress%&7/&f%target%&e.'
-  quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quest claim %category%&a.'
-  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Mana&a.'
+  quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.'
+  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.'
   quest-level-up: '%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.'
   quest-not-active: '%prefix% &cQuest ini belum aktif.'
   quest-already-active: '%prefix% &cQuest ini sedang aktif.'
@@ -108,10 +115,10 @@ messages:
   help:
     - '&8&m--------------------------------'
     - '&a&lVelioraQuest'
-    - '&f/quest &7- Buka GUI quest.'
-    - '&f/quest progress &7- Cek progress quest.'
-    - '&f/quest start <category> &7- Mulai quest.'
-    - '&f/quest claim <category> &7- Claim reward.'
+    - '&f/quests &7- Buka GUI quest.'
+    - '&f/quests progress &7- Cek progress quest.'
+    - '&f/quests start <category> &7- Mulai quest.'
+    - '&f/quests claim <category> &7- Claim reward.'
     - '&8&m--------------------------------'
   status:
     - '&8&m--------------------------------'
