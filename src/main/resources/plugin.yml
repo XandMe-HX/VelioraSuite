@@ -21,263 +21,170 @@ commands:
   veliorasuite:
     description: Main command for VelioraSuite.
     usage: /veliorasuite
-    aliases:
-      - vsuite
-      - vs
+    aliases: [vsuite, vs]
     permission: veliorasuite.admin
-
   velioraguide:
     description: Open Veliora guide pages.
     usage: /velioraguide [page|reload]
-    aliases:
-      - vguide
+    aliases: [vguide]
     permission: veliorasuite.guide.use
-
   veliorarules:
     description: Open Veliora rules pages.
     usage: /veliorarules [page]
-    aliases:
-      - vrules
+    aliases: [vrules]
     permission: veliorasuite.guide.use
-
   velioraproduct:
     description: Open Veliora product pages.
     usage: /velioraproduct [page]
-    aliases:
-      - vproduct
+    aliases: [vproduct]
     permission: veliorasuite.guide.use
-
   veliorarank:
     description: Open Veliora rank shop guide.
     usage: /veliorarank [page]
-    aliases:
-      - vrank
+    aliases: [vrank]
     permission: veliorasuite.guide.use
-
   velioraannouncement:
     description: Manage Veliora automatic announcements.
     usage: /velioraannouncement <help|status|list|reload|send>
-    aliases:
-      - vannounce
-      - vann
-      - va
-
+    aliases: [vannounce, vann, va]
   kits:
     description: Open and claim Veliora kits.
     usage: /kits <help|open|list|claim|preview|buy|cooldown|reload>
-    aliases:
-      - veliorakits
-      - vkits
-
+    aliases: [veliorakits, vkits]
   report:
     description: Create a VelioraReport player or bug report.
     usage: /report <player|bug> <reason>
-    aliases:
-      - vreport
-
+    aliases: [vreport]
   reports:
     description: Manage VelioraReport reports.
     usage: /reports <list|view|close|reopen|reload>
-    aliases:
-      - vreports
-
+    aliases: [vreports]
   team:
     description: Manage VelioraTeam teams.
     usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|delete|info|reload>
-
   veliorachat:
     description: Manage VelioraChat.
     usage: /veliorachat <help|status|reload>
-    aliases:
-      - vchat
-      - vc
-
+    aliases: [vchat, vc]
+  vclearlag:
+    description: Manage VelioraClearLag.
+    usage: /vclearlag <help|status|reload|clear|tps|memory>
+    aliases: [vcl, clearlag, lagg]
+    permission: veliorasuite.clearlag.status
   register:
     description: Register your Veliora account.
     usage: /register <password> <password confirm>
-    aliases:
-      - reg
+    aliases: [reg]
     permission: veliorasuite.loginsecurity.use
-
   login:
     description: Login to your Veliora account.
     usage: /login <password>
-    aliases:
-      - l
+    aliases: [l]
     permission: veliorasuite.loginsecurity.use
-
   changepass:
     description: Change your Veliora password.
     usage: /changepass <old> <new>
-    aliases:
-      - changepassword
+    aliases: [changepassword]
     permission: veliorasuite.loginsecurity.use
-
   unregister:
     description: Unregister your Veliora account.
     usage: /unregister <password>
     permission: veliorasuite.loginsecurity.use
-
   logout:
     description: Logout from your Veliora account.
     usage: /logout
     permission: veliorasuite.loginsecurity.use
-
   risetpw:
     description: Reset a player's Veliora password.
     usage: /risetpw <playername>
-    aliases:
-      - resetpw
-
+    aliases: [resetpw]
   cpowner:
     description: Change a player's Veliora password as owner.
     usage: /cpowner <playername> <new>
-
   loginsecurity:
     description: Manage VelioraLoginSecurity.
     usage: /loginsecurity <help|reload|status>
-    aliases:
-      - vlogsec
-      - vlogin
+    aliases: [vlogsec, vlogin]
     permission: veliorasuite.loginsecurity.admin
 
 permissions:
   veliorasuite.admin:
-    description: Allows access to VelioraSuite admin command.
     default: op
-
   veliorasuite.bypass:
-    description: Allows bypassing VelioraSuite protections.
     default: op
-
   veliorasuite.guide.use:
-    description: Allows players to open Veliora guide pages.
     default: true
-
   veliorasuite.guide.admin:
-    description: Allows admins to reload VelioraGuide.
     default: op
-
   veliorasuite.announcement.admin:
-    description: Allows full access to VelioraAnnouncement.
     default: op
-
   veliorasuite.announcement.reload:
-    description: Allows reloading VelioraAnnouncement.
     default: op
-
   veliorasuite.announcement.send:
-    description: Allows sending manual announcements.
     default: op
-
   veliorasuite.announcement.status:
-    description: Allows viewing VelioraAnnouncement status and list.
     default: op
-
   veliorasuite.kits.use:
-    description: Allows players to use VelioraKits.
     default: true
-
   veliorasuite.kits.admin:
-    description: Allows full access to VelioraKits.
     default: op
-
   veliorasuite.kits.reload:
-    description: Allows reloading VelioraKits.
     default: op
-
   veliorasuite.kits.bypasscooldown:
-    description: Allows bypassing kit cooldown.
     default: op
-
   veliorasuite.kits.bypassprice:
-    description: Allows bypassing kit prices.
     default: op
-
   veliorasuite.report.use:
-    description: Allows players to create reports.
     default: true
-
   veliorasuite.report.staff:
-    description: Allows staff to view and manage reports.
     default: op
-
   veliorasuite.report.admin:
-    description: Allows full access to VelioraReport.
     default: op
-
   veliorasuite.report.reload:
-    description: Allows reloading VelioraReport.
     default: op
-
   veliorasuite.report.bypasscooldown:
-    description: Allows bypassing report cooldown.
     default: op
-
   veliorasuite.team.use:
-    description: Allows players to use VelioraTeam.
     default: true
-
   veliorasuite.team.admin:
-    description: Allows full access to VelioraTeam.
     default: op
-
   veliorasuite.team.reload:
-    description: Allows reloading VelioraTeam.
     default: op
-
   veliorasuite.team.setowner:
-    description: Allows changing team owner.
     default: op
-
   veliorasuite.team.delete:
-    description: Allows deleting teams.
     default: op
-
   veliorasuite.team.bypasscost:
-    description: Allows bypassing team create and upgrade costs.
     default: op
-
   veliorasuite.team.bypasslimit:
-    description: Allows bypassing team member limits.
     default: op
-
   veliorasuite.chat.use:
-    description: Allows using VelioraChat commands.
     default: true
-
   veliorasuite.chat.admin:
-    description: Allows full access to VelioraChat.
     default: op
-
   veliorasuite.chat.reload:
-    description: Allows reloading VelioraChat.
     default: op
-
   veliorasuite.chat.bypasscooldown:
-    description: Allows bypassing chat cooldown.
     default: op
-
   veliorasuite.chat.bypasscommandcooldown:
-    description: Allows bypassing command spam cooldown.
     default: op
-
   veliorasuite.chat.bypassfilter:
-    description: Allows bypassing chat filters.
     default: op
-
   veliorasuite.loginsecurity.use:
-    description: Allows players to use VelioraLoginSecurity commands.
     default: true
-
   veliorasuite.loginsecurity.admin:
-    description: Allows managing VelioraLoginSecurity.
     default: op
-
   veliorasuite.loginsecurity.owner:
-    description: Allows owner password reset/change commands.
     default: op
-
   veliorasuite.loginsecurity.bypass:
-    description: Allows bypassing login/register requirement.
+    default: op
+  veliorasuite.clearlag.admin:
+    default: op
+  veliorasuite.clearlag.reload:
+    default: op
+  veliorasuite.clearlag.clear:
+    default: op
+  veliorasuite.clearlag.status:
+    default: op
+  veliorasuite.clearlag.bypass:
     default: op
