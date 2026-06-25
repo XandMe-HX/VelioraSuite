@@ -15,12 +15,14 @@ public final class ManaActionBarTask {
     private final VelioraSuite plugin;
     private final SkillsConfigManager configManager;
     private final ManaManager manaManager;
+    private final SkillsPlaceholderManager placeholderManager;
     private BukkitTask task;
 
     public ManaActionBarTask(VelioraSuite plugin, SkillsConfigManager configManager, ManaManager manaManager) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.manaManager = manaManager;
+        this.placeholderManager = new SkillsPlaceholderManager(configManager, manaManager);
     }
 
     public void start() {
@@ -51,7 +53,8 @@ public final class ManaActionBarTask {
                 .replace("%player_ping%", String.valueOf(player.getPing()))
                 .replace("%veliorasuite_mana%", String.valueOf(data.getMana()))
                 .replace("%veliorasuite_mana_max%", String.valueOf(data.getMaxMana()))
-                .replace("%vault_eco_balance_formatted%", "N/A");
+                .replace("%veliorasuite_mana_bar%", placeholderManager.buildManaBar(data.getMana(), data.getMaxMana()))
+                .replace("%veliorasuite_mana_percent%", String.valueOf(manaPercent(data.getMana(), data.getMaxMana())));
 
         if (configManager.isPlaceholderApiEnabled() && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             try {
@@ -62,7 +65,16 @@ public final class ManaActionBarTask {
             }
         }
 
+        if (text.contains("%vault_eco_balance_formatted%")) {
+            text = text.replace("%vault_eco_balance_formatted%", "N/A");
+        }
+
         String colored = ChatColor.translateAlternateColorCodes('&', text);
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(colored));
+    }
+
+    private int manaPercent(int mana, int maxMana) {
+        if (maxMana <= 0) return 0;
+        return Math.max(0, Math.min(100, (int) Math.round((mana * 100.0D) / maxMana)));
     }
 }
