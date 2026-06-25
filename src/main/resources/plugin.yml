@@ -92,6 +92,57 @@ commands:
       - vchat
       - vc
 
+  register:
+    description: Register your Veliora account.
+    usage: /register <password> <password confirm>
+    aliases:
+      - reg
+    permission: veliorasuite.loginsecurity.use
+
+  login:
+    description: Login to your Veliora account.
+    usage: /login <password>
+    aliases:
+      - l
+    permission: veliorasuite.loginsecurity.use
+
+  changepass:
+    description: Change your Veliora password.
+    usage: /changepass <old> <new>
+    aliases:
+      - changepassword
+    permission: veliorasuite.loginsecurity.use
+
+  unregister:
+    description: Unregister your Veliora account.
+    usage: /unregister <password>
+    permission: veliorasuite.loginsecurity.use
+
+  logout:
+    description: Logout from your Veliora account.
+    usage: /logout
+    permission: veliorasuite.loginsecurity.use
+
+  risetpw:
+    description: Reset a player's Veliora password.
+    usage: /risetpw <playername>
+    aliases:
+      - resetpw
+    permission: veliorasuite.loginsecurity.owner
+
+  cpowner:
+    description: Change a player's Veliora password as owner.
+    usage: /cpowner <playername> <new>
+    permission: veliorasuite.loginsecurity.owner
+
+  loginsecurity:
+    description: Manage VelioraLoginSecurity.
+    usage: /loginsecurity <help|reload|status>
+    aliases:
+      - vlogsec
+      - vlogin
+    permission: veliorasuite.loginsecurity.admin
+
 permissions:
   veliorasuite.admin:
     description: Allows access to VelioraSuite admin command.
@@ -215,4 +266,20 @@ permissions:
 
   veliorasuite.chat.bypassfilter:
     description: Allows bypassing chat filters.
+    default: op
+
+  veliorasuite.loginsecurity.use:
+    description: Allows players to use VelioraLoginSecurity commands.
+    default: true
+
+  veliorasuite.loginsecurity.admin:
+    description: Allows managing VelioraLoginSecurity.
+    default: op
+
+  veliorasuite.loginsecurity.owner:
+    description: Allows owner password reset/change commands.
+    default: op
+
+  veliorasuite.loginsecurity.bypass:
+    description: Allows bypassing login/register requirement.
     default: op
