@@ -11,10 +11,15 @@ import id.velioragardens.veliorasuite.module.quest.listener.QuestFishingListener
 import id.velioragardens.veliorasuite.module.quest.listener.QuestKillListener;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class QuestModule implements VelioraModule {
 
     private final VelioraSuite plugin;
+    private final List<Listener> listeners = new ArrayList<>();
     private QuestManager manager;
     private QuestReminderTask reminderTask;
     private boolean enabled;
@@ -47,7 +52,8 @@ public final class QuestModule implements VelioraModule {
     @Override
     public void disable() {
         enabled = false;
-        HandlerList.unregisterAll(plugin);
+        for (Listener listener : listeners) HandlerList.unregisterAll(listener);
+        listeners.clear();
         if (reminderTask != null) reminderTask.stop();
         if (manager != null) manager.shutdown();
         registerDisabledCommand();
@@ -81,13 +87,15 @@ public final class QuestModule implements VelioraModule {
     }
 
     private void registerListeners() {
-        plugin.getServer().getPluginManager().registerEvents(manager.getGuiManager(), plugin);
-        plugin.getServer().getPluginManager().registerEvents(new QuestBlockListener(manager), plugin);
-        plugin.getServer().getPluginManager().registerEvents(new QuestFarmListener(manager), plugin);
-        plugin.getServer().getPluginManager().registerEvents(new QuestCookingListener(manager), plugin);
-        plugin.getServer().getPluginManager().registerEvents(new QuestKillListener(manager), plugin);
-        plugin.getServer().getPluginManager().registerEvents(new QuestFishingListener(manager), plugin);
-        plugin.getServer().getPluginManager().registerEvents(new QuestCommandTrackListener(manager), plugin);
+        listeners.clear();
+        listeners.add(manager.getGuiManager());
+        listeners.add(new QuestBlockListener(manager));
+        listeners.add(new QuestFarmListener(manager));
+        listeners.add(new QuestCookingListener(manager));
+        listeners.add(new QuestKillListener(manager));
+        listeners.add(new QuestFishingListener(manager));
+        listeners.add(new QuestCommandTrackListener(manager));
+        for (Listener listener : listeners) plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 
     private void registerDisabledCommand() {
