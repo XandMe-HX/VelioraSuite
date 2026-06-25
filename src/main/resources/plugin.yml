@@ -71,6 +71,11 @@ commands:
     usage: /vsecurity <help|status|alerts|reload>
     aliases: [vsec, security]
     permission: veliorasuite.security.admin
+  vskills:
+    description: Manage VelioraSkills.
+    usage: /vskills <help|status|reload|mana>
+    aliases: [vski, vmana, mana]
+    permission: veliorasuite.skills.use
   register:
     description: Register Veliora account.
     usage: /register <password> <password confirm>
@@ -185,4 +190,14 @@ permissions:
   veliorasuite.security.alerts:
     default: op
   veliorasuite.security.bypass:
+    default: op
+  veliorasuite.skills.use:
+    default: true
+  veliorasuite.skills.admin:
+    default: op
+  veliorasuite.skills.reload:
+    default: op
+  veliorasuite.skills.mana.admin:
+    default: op
+  veliorasuite.skills.bypass:
     default: op
