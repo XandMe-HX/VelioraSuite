@@ -2,6 +2,8 @@ package id.velioragardens.veliorasuite.module.chat;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
+import id.velioragardens.veliorasuite.module.quest.QuestModule;
+import id.velioragardens.veliorasuite.module.quest.QuestPlaceholderManager;
 import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import org.bukkit.Bukkit;
@@ -62,7 +64,9 @@ public final class ChatPlaceholderManager {
     public String getPlaceholder(OfflinePlayer player, String identifier) {
         if (identifier == null) return "";
         UUID uuid = player == null ? null : player.getUniqueId();
-        return switch (identifier.toLowerCase()) {
+        String lower = identifier.toLowerCase();
+        if (lower.startsWith("quest_")) return getQuestPlaceholder(player, lower);
+        return switch (lower) {
             case "team_name" -> getTeamName(uuid);
             case "team_tag" -> getTeamTag(uuid);
             case "player_name" -> player == null ? "" : player.getName();
@@ -77,6 +81,12 @@ public final class ChatPlaceholderManager {
         return skillsModule.getPlaceholderManager().getPlaceholder(player, identifier);
     }
 
+    private String getQuestPlaceholder(OfflinePlayer player, String identifier) {
+        QuestModule questModule = getQuestModule();
+        if (questModule == null || questModule.getQuestManager() == null) return "";
+        return new QuestPlaceholderManager(questModule.getQuestManager().getDataManager()).getPlaceholder(player, identifier);
+    }
+
     private TeamModule getTeamModule() {
         Optional<VelioraModule> module = plugin.getModuleManager().getModule("team");
         if (module.isEmpty() || !(module.get() instanceof TeamModule teamModule)) return null;
@@ -87,5 +97,11 @@ public final class ChatPlaceholderManager {
         Optional<VelioraModule> module = plugin.getModuleManager().getModule("skills");
         if (module.isEmpty() || !(module.get() instanceof SkillsModule skillsModule)) return null;
         return skillsModule;
+    }
+
+    private QuestModule getQuestModule() {
+        Optional<VelioraModule> module = plugin.getModuleManager().getModule("quest");
+        if (module.isEmpty() || !(module.get() instanceof QuestModule questModule)) return null;
+        return questModule;
     }
 }
