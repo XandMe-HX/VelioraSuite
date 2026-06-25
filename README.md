@@ -13,11 +13,12 @@ Tahap saat ini:
 - Core clean sudah dipisah ke manager.
 - VelioraGuide sudah aktif sebagai module.
 - VelioraAnnouncement sudah aktif sebagai module.
+- VelioraLoginSecurity sudah aktif sebagai module.
 - VelioraKits sudah aktif sebagai module.
 - VelioraReport sudah aktif sebagai module.
 - VelioraTeam sudah aktif sebagai module.
 - VelioraChat sudah aktif sebagai module.
-- Logic besar seperti Fishing, Trader, Boss, ClearLag, Security, Quest, dan LoginSecurity dikerjakan bertahap.
+- Logic besar seperti Fishing, Trader, Boss, ClearLag, Security, dan Quest dikerjakan bertahap.
 
 ## Target
 
@@ -78,6 +79,7 @@ plugins/VelioraSuite/
 ├── database/
 │   └── veliorasuite.db
 ├── data/
+│   └── loginsecurity.yml
 └── modules/
     ├── guide.yml
     ├── announcement.yml
@@ -134,6 +136,44 @@ File config:
 ```text
 plugins/VelioraSuite/modules/announcement.yml
 ```
+
+## VelioraLoginSecurity
+
+Command player:
+
+- `/register <password> <password confirm>`
+- `/login <password>`
+- `/changepass <old> <new>`
+- `/unregister <password>`
+- `/logout`
+
+Command owner:
+
+- `/risetpw <playername>`
+- `/resetpw <playername>`
+- `/cpowner <playername> <new>`
+
+Command admin/status:
+
+- `/vlogin help`
+- `/vlogin status`
+- `/vlogin reload`
+
+File config/data:
+
+```text
+plugins/VelioraSuite/modules/loginsecurity.yml
+plugins/VelioraSuite/data/loginsecurity.yml
+```
+
+Security notes:
+
+- Password tidak disimpan plain text.
+- Password di-hash memakai PBKDF2WithHmacSHA256.
+- Salt random disimpan bersama hash.
+- Hash/salt/password tidak ditampilkan ke chat atau log.
+- Default iterations minimal 120000.
+- Command owner memakai permission `veliorasuite.loginsecurity.owner`, OP, atau UUID di `settings.owner-uuids`.
 
 ## VelioraKits
 
