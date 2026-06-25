@@ -1,12 +1,152 @@
-# VelioraLoginSecurity config
-# Logic detail akan dibuat pada tahap module LoginSecurity.
-
-enabled: false
+# ==================================================
+# VelioraLoginSecurity Configuration
+# ==================================================
+# Module register/login/password untuk Veliora Gardens.
+#
+# Compatibility:
+# - Target server: Paper/Purpur 1.21.8 + Java 21.
+# - Java 21 recommended.
+# - Plugin tetap compile Java 21.
+#
+# Password tidak boleh disimpan plain text.
+# Semua password harus di-hash dengan PBKDF2.
+# Jangan tampilkan password/hash/salt ke chat atau console.
+#
+# Command:
+# /register <password> <password confirm>
+# /login <password>
+# /changepass <old> <new>
+# /unregister <password>
+# /logout
+#
+# Owner command:
+# /risetpw <playername>
+# /resetpw <playername>
+# /cpowner <playername> <new>
+# ==================================================
 
 settings:
-  session-timeout-minutes: 30
+  enabled: true
+  prefix: '&8[&bVelioraLogin&8] '
+
+  # Jika true, player wajib login/register.
+  require-login: true
+
+  # Minimal panjang password.
+  min-password-length: 5
+
+  # Maksimal panjang password.
+  max-password-length: 32
+
+  # Password hashing.
+  hashing:
+    algorithm: 'PBKDF2WithHmacSHA256'
+    iterations: 120000
+    key-length: 256
+    salt-length: 16
+
+  # Batas percobaan login salah.
   max-login-attempts: 5
 
+  # Lock sementara jika terlalu banyak gagal.
+  lock-seconds: 60
+
+  # Timeout login/register setelah join.
+  # Jika 0 berarti tidak kick otomatis.
+  auth-timeout-seconds: 120
+
+  # Jika true, player yang belum login tidak bisa bergerak.
+  block-movement-before-login: true
+
+  # Radius gerak kecil agar player tidak rubberband terlalu kasar.
+  allowed-move-distance-before-login: 0.2
+
+  # Jika true, player yang belum login tidak bisa chat.
+  block-chat-before-login: true
+
+  # Jika true, player yang belum login tidak bisa interact/drop/pickup/damage.
+  block-actions-before-login: true
+
+  # Command yang boleh dipakai sebelum login/register.
+  allowed-commands-before-login:
+    - '/login'
+    - '/l'
+    - '/register'
+    - '/reg'
+
+  # UUID owner server yang boleh pakai command reset password owner.
+  owner-uuids:
+    - 'isi-uuid-owner-di-sini'
+
+permissions:
+  use: 'veliorasuite.loginsecurity.use'
+  admin: 'veliorasuite.loginsecurity.admin'
+  owner: 'veliorasuite.loginsecurity.owner'
+  bypass: 'veliorasuite.loginsecurity.bypass'
+
 messages:
-  prefix: '&8【&aVelioraLogin&8】'
-  disabled: '%prefix% &cModule login security sedang dimatikan.'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  reload-success: '%prefix% &aVelioraLoginSecurity berhasil direload.'
+
+  need-register: '%prefix% &eSilakan daftar dengan &f/register <password> <password confirm>&e.'
+  need-login: '%prefix% &eSilakan login dengan &f/login <password>&e.'
+  already-registered: '%prefix% &cAkun kamu sudah terdaftar. Gunakan &f/login <password>&c.'
+  not-registered: '%prefix% &cAkun kamu belum terdaftar. Gunakan &f/register <password> <password confirm>&c.'
+  already-logged-in: '%prefix% &aKamu sudah login.'
+  not-logged-in: '%prefix% &cKamu belum login.'
+
+  register-usage: '%prefix% &cGunakan: &f/register <password> <password confirm>'
+  login-usage: '%prefix% &cGunakan: &f/login <password>'
+  changepass-usage: '%prefix% &cGunakan: &f/changepass <old> <new>'
+  unregister-usage: '%prefix% &cGunakan: &f/unregister <password>'
+  risetpw-usage: '%prefix% &cGunakan: &f/risetpw <playername>'
+  cpowner-usage: '%prefix% &cGunakan: &f/cpowner <playername> <new>'
+
+  password-not-match: '%prefix% &cPassword konfirmasi tidak sama.'
+  password-too-short: '%prefix% &cPassword terlalu pendek. Minimal &f%min% &ckarakter.'
+  password-too-long: '%prefix% &cPassword terlalu panjang. Maksimal &f%max% &ckarakter.'
+  wrong-password: '%prefix% &cPassword salah.'
+  account-locked: '%prefix% &cAkun sementara terkunci. Coba lagi dalam &f%time%s&c.'
+  login-success: '%prefix% &aLogin berhasil. Selamat bermain!'
+  register-success: '%prefix% &aRegistrasi berhasil. Selamat bermain!'
+  logout-success: '%prefix% &aKamu berhasil logout.'
+  changepass-success: '%prefix% &aPassword berhasil diganti.'
+  unregister-success: '%prefix% &aAkun login kamu berhasil dihapus.'
+  auth-required-command: '%prefix% &cLogin/register dulu sebelum memakai command.'
+  auth-required-chat: '%prefix% &cLogin/register dulu sebelum chat.'
+  auth-required-action: '%prefix% &cLogin/register dulu sebelum melakukan aksi.'
+  auth-timeout-kick: '&cKamu terlalu lama tidak login/register.'
+
+  owner-reset-success: '%prefix% &aPassword player &f%player% &aberhasil direset. Player harus register ulang.'
+  owner-changepass-success: '%prefix% &aPassword player &f%player% &aberhasil diubah.'
+  target-not-found: '%prefix% &cData player &f%player% &ctidak ditemukan.'
+
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraLoginSecurity'
+    - '&f/register <password> <confirm> &7- Daftar akun.'
+    - '&f/login <password> &7- Login akun.'
+    - '&f/changepass <old> <new> &7- Ganti password.'
+    - '&f/unregister <password> &7- Hapus akun login.'
+    - '&f/logout &7- Logout akun.'
+    - '&8&m--------------------------------'
+
+  help-owner:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraLoginSecurity Owner'
+    - '&f/risetpw <playername> &7- Reset password player.'
+    - '&f/cpowner <playername> <new> &7- Ubah password player.'
+    - '&8&m--------------------------------'
+
+  status:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraLoginSecurity Status'
+    - '&7Enabled: &f%enabled%'
+    - '&7Require Login: &f%require_login%'
+    - '&7Registered Accounts: &f%accounts%'
+    - '&7Active Sessions: &f%sessions%'
+    - '&7Max Attempts: &f%max_attempts%'
+    - '&7Lock Seconds: &f%lock_seconds%'
+    - '&7Hashing: &f%hashing%'
+    - '&8&m--------------------------------'
