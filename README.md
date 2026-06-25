@@ -22,16 +22,18 @@ Tahap saat ini:
 ## Target
 
 - Paper / Purpur 1.21.8
-- Java 21
+- Java 21 recommended
 - Maven
 - Package utama: `id.velioragardens.veliorasuite`
 
 ## Compatibility
 
+- Target server tetap **Paper/Purpur 1.21.8 + Java 21**.
 - Target compile VelioraSuite tetap **Java 21**.
 - `pom.xml` harus tetap memakai compiler release Java 21.
+- Jangan menaikkan source/target/release dari Java 21 tanpa keputusan khusus.
 - Java 21 adalah runtime utama yang direkomendasikan untuk server.
-- Java 25 mungkin bisa berjalan sebagai runtime, tetapi bukan target utama project.
+- Java 25 may work as runtime, tetapi bukan target utama project.
 - Jangan memakai API Java 25 atau fitur bahasa Java 25.
 - Plugin harus tetap compile Java 21 agar kompatibel dan stabil untuk Paper/Purpur 1.21.8.
 
