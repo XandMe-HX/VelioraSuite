@@ -4,7 +4,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -15,8 +14,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-
-import java.util.Map;
 
 public final class LoginSecurityListener implements Listener {
 
@@ -82,7 +79,6 @@ public final class LoginSecurityListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (event.getAction() == Action.PHYSICAL) return;
         if (manager.isAuthenticated(event.getPlayer()) || !manager.getConfigManager().isBlockActionsBeforeLogin()) return;
         event.setCancelled(true);
         event.getPlayer().sendMessage(manager.getConfigManager().color(manager.getConfigManager().getMessage("auth-required-action", "%prefix% &cLogin/register dulu sebelum melakukan aksi.")));
