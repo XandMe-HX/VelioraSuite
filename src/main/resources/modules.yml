@@ -6,7 +6,7 @@
 #
 # Catatan:
 # - core selalu aktif.
-# - guide, announcement, loginsecurity, kits, report, team, chat, dan clearlag sudah punya logic phase 1.
+# - guide, announcement, loginsecurity, kits, report, team, dan chat sudah punya logic phase 1.
 # - module lain masih skeleton dan akan dibuat bertahap.
 # =========================================================
 
@@ -19,7 +19,6 @@ modules:
   report: true
   announcement: true
   fishing: false
-  clearlag: true
   skills: false
   quest: false
   trader: false
