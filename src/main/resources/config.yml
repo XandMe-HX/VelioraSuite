@@ -36,6 +36,5 @@ modules:
   quest: false
   trader: false
   boss: false
-  clearlag: false
   security: false
   chat: false
