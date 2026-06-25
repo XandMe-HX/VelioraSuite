@@ -4,6 +4,8 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -34,9 +36,15 @@ public final class QuestConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&aVelioraQuest&8] "); }
     public boolean isRequireSkillsMana() { return bool("settings.require-skills-mana", true); }
+    public boolean isDebugMana() { return bool("settings.debug-mana", false); }
     public boolean isGuiEnabled() { return bool("settings.gui.enabled", true); }
     public String getGuiTitle() { return str("settings.gui.title", "&8Veliora Quest"); }
     public int getGuiSize() { int size = integer("settings.gui.size", 54); return size <= 0 ? 54 : Math.min(54, ((size + 8) / 9) * 9); }
+    public boolean isBossBarEnabled() { return bool("settings.bossbar.enabled", true); }
+    public String getBossBarTitle() { return str("settings.bossbar.title", "&f%quest% &7- &a%progress%&7/&a%target% &8(&e%percent%%&8)"); }
+    public BarColor getBossBarColor() { return bossBarColor(str("settings.bossbar.color", "GREEN")); }
+    public BarStyle getBossBarStyle() { return bossBarStyle(str("settings.bossbar.style", "SEGMENTED_10")); }
+    public boolean isBossBarHideWhenComplete() { return bool("settings.bossbar.hide-when-complete", true); }
     public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 5)); }
     public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", true); }
     public int getManaReward() { return Math.max(0, integer("settings.rewards.mana-reward", 1)); }
@@ -100,6 +108,8 @@ public final class QuestConfigManager {
     private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
     private boolean bool(String path, boolean fallback) { return config == null || !config.contains(path) ? fallback : config.getBoolean(path, fallback); }
     private int integer(String path, int fallback) { return config == null || !config.contains(path) ? fallback : config.getInt(path, fallback); }
+    private BarColor bossBarColor(String value) { try { return BarColor.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return BarColor.GREEN; } }
+    private BarStyle bossBarStyle(String value) { try { return BarStyle.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return BarStyle.SEGMENTED_10; } }
 
     private String fallbackDisplayName(QuestCategory category) {
         return switch (category) {
