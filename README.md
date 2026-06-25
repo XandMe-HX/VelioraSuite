@@ -4,22 +4,24 @@ VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
 Author / owner name yang dipakai di source, config, guide, command, dan dokumentasi: **XandMe**.
 
-## Status
+## Status Module
 
-Clean rebuild branch `clean-core`.
+Module aktif phase 1:
 
-Tahap saat ini:
+- VelioraGuide
+- VelioraAnnouncement
+- VelioraLoginSecurity
+- VelioraKits
+- VelioraReport
+- VelioraTeam
+- VelioraChat
+- VelioraSecurity
+- VelioraSkills
 
-- Core clean sudah dipisah ke manager.
-- VelioraGuide sudah aktif sebagai module.
-- VelioraAnnouncement sudah aktif sebagai module.
-- VelioraLoginSecurity sudah aktif sebagai module.
-- VelioraKits sudah aktif sebagai module.
-- VelioraReport sudah aktif sebagai module.
-- VelioraTeam sudah aktif sebagai module.
-- VelioraChat sudah aktif sebagai module.
+Catatan:
+
 - Clear lag memakai plugin external, bukan VelioraSuite.
-- Logic besar seperti Fishing, Trader, Boss, Security, dan Quest dikerjakan bertahap.
+- VelioraQuest belum dibuat di VelioraSkills. VelioraSkills hanya menyediakan mana system dan API internal.
 
 ## Target
 
@@ -27,76 +29,9 @@ Tahap saat ini:
 - Java 21 recommended
 - Maven
 - Package utama: `id.velioragardens.veliorasuite`
+- Target compile tetap Java 21.
 
-## Compatibility
-
-- Target server tetap **Paper/Purpur 1.21.8 + Java 21**.
-- Target compile VelioraSuite tetap **Java 21**.
-- `pom.xml` harus tetap memakai compiler release Java 21.
-- Jangan menaikkan source/target/release dari Java 21 tanpa keputusan khusus.
-- Java 21 adalah runtime utama yang direkomendasikan untuk server.
-- Java 25 may work as runtime, tetapi bukan target utama project.
-- Jangan memakai API Java 25 atau fitur bahasa Java 25.
-- Plugin harus tetap compile Java 21 agar kompatibel dan stabil untuk Paper/Purpur 1.21.8.
-
-## Struktur Core
-
-```text
-src/main/java/id/velioragardens/veliorasuite/
-├── VelioraSuite.java
-├── api/
-│   ├── VelioraModule.java
-│   └── PlannedModule.java
-├── command/
-│   ├── VelioraCommand.java
-│   └── DisabledCommand.java
-├── core/
-│   ├── ConfigManager.java
-│   ├── MessageManager.java
-│   ├── ModuleManager.java
-│   └── HookManager.java
-└── module/
-    ├── guide/
-    ├── announcement/
-    ├── loginsecurity/
-    ├── team/
-    ├── kits/
-    ├── report/
-    ├── chat/
-    ├── fishing/
-    ├── skills/
-    ├── quest/
-    ├── boss/
-    └── security/
-```
-
-## File Runtime
-
-```text
-plugins/VelioraSuite/
-├── config.yml
-├── messages.yml
-├── modules.yml
-├── database/
-│   └── veliorasuite.db
-├── data/
-│   └── loginsecurity.yml
-└── modules/
-    ├── guide.yml
-    ├── announcement.yml
-    ├── loginsecurity.yml
-    ├── team.yml
-    ├── kits.yml
-    ├── report.yml
-    ├── chat.yml
-    ├── fishing.yml
-    ├── skills.yml
-    ├── quest.yml
-    ├── boss.yml
-    └── security.yml
-```
-
-## Core Command
+## Command Core
 
 - `/vs`
 - `/vs reload`
@@ -104,164 +39,54 @@ plugins/VelioraSuite/
 - `/vs version`
 - `/vs debug`
 
-## VelioraGuide
+## VelioraSkills
+
+VelioraSkills mengatur mana player untuk Veliora Gardens.
+Mana ini disiapkan agar bisa dipakai oleh VelioraQuest nanti.
 
 Command:
 
-- `/vguide`
-- `/vguide <page>`
-- `/vrules`
-- `/vrules <page>`
-- `/vrank`
-- `/vrank <page>`
-- `/vproduct`
-- `/vproduct <page>`
-- `/vguide reload`
+- `/vskills help`
+- `/vskills status`
+- `/vskills reload`
+- `/vskills mana`
+- `/vskills mana <player>`
+- `/vskills mana set <player> <amount>`
+- `/vskills mana add <player> <amount>`
+- `/vskills mana remove <player> <amount>`
+- `/vskills mana reset <player>`
 
-File config:
+Alias:
 
-```text
-plugins/VelioraSuite/modules/guide.yml
-```
+- `/vski`
+- `/vmana`
+- `/mana`
 
-## VelioraAnnouncement
-
-Command:
-
-- `/vannounce status`
-- `/vannounce reload`
-- `/vannounce send <id>`
-
-File config:
-
-```text
-plugins/VelioraSuite/modules/announcement.yml
-```
-
-## VelioraLoginSecurity
-
-Command player:
-
-- `/register <password> <password confirm>`
-- `/login <password>`
-- `/changepass <old> <new>`
-- `/unregister <password>`
-- `/logout`
-
-Command owner:
-
-- `/risetpw <playername>`
-- `/resetpw <playername>`
-- `/cpowner <playername> <new>`
-
-Command admin/status:
-
-- `/vlogin help`
-- `/vlogin status`
-- `/vlogin reload`
+Tidak ada command `/skills`, supaya tidak bentrok dengan AuraSkills.
 
 File config/data:
 
 ```text
-plugins/VelioraSuite/modules/loginsecurity.yml
-plugins/VelioraSuite/data/loginsecurity.yml
+plugins/VelioraSuite/modules/skills.yml
+plugins/VelioraSuite/data/skills.yml
 ```
 
-Security notes:
-
-- Password tidak disimpan plain text.
-- Password di-hash memakai PBKDF2WithHmacSHA256.
-- Salt random disimpan bersama hash.
-- Hash/salt/password tidak ditampilkan ke chat atau log.
-- Default iterations minimal 120000.
-- Command owner memakai permission `veliorasuite.loginsecurity.owner`, OP, atau UUID di `settings.owner-uuids`.
-
-## VelioraKits
-
-Command:
-
-- `/kits`
-- `/kits list`
-- `/kits claim <kit>`
-- `/kits preview <kit>`
-- `/kits buy <kit>`
-- `/kits cooldown`
-- `/kits reload`
-
-File config:
+Mana default:
 
 ```text
-plugins/VelioraSuite/modules/kits.yml
+10/10 Mana
 ```
 
-## VelioraReport
-
-Command:
-
-- `/report <player> <alasan>`
-- `/report bug <alasan>`
-- `/reports list`
-- `/reports view <id>`
-- `/reports close <id> <catatan>`
-- `/reports reopen <id>`
-- `/reports reload`
-
-File config/data:
+Daily reset default:
 
 ```text
-plugins/VelioraSuite/modules/report.yml
-plugins/VelioraSuite/data/reports.yml
+00:00 waktu server
 ```
 
-## VelioraTeam
-
-Command:
-
-- `/team create <nama>`
-- `/team invite <player>`
-- `/team accept`
-- `/team leave`
-- `/team leave confirm`
-- `/team list`
-- `/team chat <pesan>`
-- `/team upgrade`
-- `/team setowner <team> <player>`
-- `/team delete <team>`
-- `/team info <team>`
-- `/team reload`
-
-Aturan nama team baru:
+Actionbar bisa menampilkan:
 
 ```text
-^[A-Z]{3,5}$
-```
-
-Nama team baru wajib huruf besar A-Z saja, minimal 3 huruf dan maksimal 5 huruf.
-Tidak boleh huruf kecil, angka, spasi, simbol, emoji, atau tanda `-`.
-Contoh valid: `SHDW`, `NOVA`, `VOID`, `SKY`, `TEAM`.
-Contoh tidak valid: `Shadow`, `shadow`, `SHADOW`, `SHDW1`, `SH-DW`, `SH DW`, `🔥ABC`.
-
-Catatan: team lama yang sudah ada tetap dibaca, tetapi create team baru wajib mengikuti aturan baru.
-
-File config/data:
-
-```text
-plugins/VelioraSuite/modules/team.yml
-plugins/VelioraSuite/data/teams.yml
-```
-
-## VelioraChat
-
-Command:
-
-- `/vchat help`
-- `/vchat status`
-- `/vchat reload`
-
-File config:
-
-```text
-plugins/VelioraSuite/modules/chat.yml
+health | money | ping | mana
 ```
 
 PlaceholderAPI identifier:
@@ -270,7 +95,28 @@ PlaceholderAPI identifier:
 veliorasuite
 ```
 
-Placeholder:
+Placeholder mana:
+
+```text
+%veliorasuite_mana%
+%veliorasuite_mana_max%
+%veliorasuite_mana_bar%
+%veliorasuite_mana_percent%
+```
+
+Contoh TAB belowname:
+
+```text
+%veliorasuite_mana% Mana
+```
+
+atau:
+
+```text
+&b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%
+```
+
+Placeholder lama tetap dipakai:
 
 ```text
 %veliorasuite_team_name%
@@ -283,51 +129,10 @@ Placeholder:
 Clear lag tidak ditangani oleh VelioraSuite.
 Server Veliora Gardens memakai plugin external khusus clear lag.
 
-## TAB Nametag Team Tag
-
-VelioraSuite tidak menyimpan team tag ke Essentials userdata dan tidak mengubah LuckPerms prefix player.
-Team tag disediakan lewat PlaceholderAPI supaya bisa dipakai oleh TAB plugin.
-
-Format default team tag:
-
-```text
-&f【&b&l%team%&f】&f 
-```
-
-Gunakan placeholder ini di depan `tagprefix` rank di `TAB/groups.yml`:
-
-```yaml
-owner:
-  tabprefix: '&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
-  tagprefix: '%veliorasuite_team_tag%&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
-
-warga:
-  tabprefix: '&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
-  tagprefix: '%veliorasuite_team_tag%&7&l【 &7&lᴡᴀʀɢᴀ &7&l】&f '
-```
-
-Hasil jika player punya team:
-
-```text
-【SHDW】 【 OWNER 】 XandMe
-```
-
-Hasil jika player tidak punya team:
-
-```text
-【 OWNER 】 XandMe
-```
-
-Test placeholder:
-
-```text
-/papi parse me %veliorasuite_team_tag%
-```
-
 ## Catatan Development
 
 Jangan langsung menumpuk semua logic di `VelioraSuite.java` atau `Module.java`.
 
-Setiap module besar nanti wajib dipisah menjadi manager, command, listener, data manager, model, dan class pendukung lain sesuai kebutuhan.
+Setiap module besar dipisah menjadi manager, command, listener/task, data manager, model, dan class pendukung lain sesuai kebutuhan.
 
-Jangan menaikkan target compile dari Java 21 tanpa alasan kuat. Semua module baru wajib tetap aman untuk Java 21 dan Paper/Purpur 1.21.8.
+Jangan menaikkan target compile dari Java 21 tanpa alasan kuat. Semua module baru wajib aman untuk Java 21 dan Paper/Purpur 1.21.8.
