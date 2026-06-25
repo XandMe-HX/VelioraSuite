@@ -6,6 +6,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -55,7 +56,7 @@ public final class ManaActionBarTask {
         if (configManager.isPlaceholderApiEnabled() && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             try {
                 Class<?> papi = Class.forName("me.clip.placeholderapi.PlaceholderAPI");
-                text = (String) papi.getMethod("setPlaceholders", Player.class, String.class).invoke(null, player, text);
+                text = (String) papi.getMethod("setPlaceholders", OfflinePlayer.class, String.class).invoke(null, player, text);
             } catch (Exception ignored) {
                 // PlaceholderAPI is optional.
             }
