@@ -4,6 +4,7 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
 import id.velioragardens.veliorasuite.command.DisabledCommand;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestBlockListener;
+import id.velioragardens.veliorasuite.module.quest.listener.QuestBossBarListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestCommandTrackListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestCookingListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestFarmListener;
@@ -76,9 +77,9 @@ public final class QuestModule implements VelioraModule {
     }
 
     private void registerCommand() {
-        PluginCommand command = plugin.getCommand("quest");
+        PluginCommand command = plugin.getCommand("quests");
         if (command == null) {
-            plugin.getLogger().warning("Command /quest tidak ditemukan di plugin.yml.");
+            plugin.getLogger().warning("Command /quests tidak ditemukan di plugin.yml.");
             return;
         }
         QuestCommand questCommand = new QuestCommand(manager);
@@ -95,11 +96,12 @@ public final class QuestModule implements VelioraModule {
         listeners.add(new QuestKillListener(manager));
         listeners.add(new QuestFishingListener(manager));
         listeners.add(new QuestCommandTrackListener(manager));
+        listeners.add(new QuestBossBarListener(manager));
         for (Listener listener : listeners) plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 
     private void registerDisabledCommand() {
-        PluginCommand command = plugin.getCommand("quest");
+        PluginCommand command = plugin.getCommand("quests");
         if (command == null) return;
         DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraQuest");
         command.setExecutor(disabledCommand);
