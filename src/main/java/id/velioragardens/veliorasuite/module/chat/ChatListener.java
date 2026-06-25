@@ -31,7 +31,7 @@ public final class ChatListener implements Listener {
         event.setMessage(result.message());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
         if (chatManager.shouldCancelCommand(event.getPlayer(), event.getMessage())) {
             event.setCancelled(true);
