@@ -66,6 +66,11 @@ commands:
     description: Manage VelioraChat.
     usage: /veliorachat <help|status|reload>
     aliases: [vchat, vc]
+  vsecurity:
+    description: Manage VelioraSecurity.
+    usage: /vsecurity <help|status|alerts|reload>
+    aliases: [vsec, security]
+    permission: veliorasuite.security.admin
   register:
     description: Register Veliora account.
     usage: /register <password> <password confirm>
@@ -172,4 +177,12 @@ permissions:
   veliorasuite.loginsecurity.owner:
     default: op
   veliorasuite.loginsecurity.bypass:
+    default: op
+  veliorasuite.security.admin:
+    default: op
+  veliorasuite.security.reload:
+    default: op
+  veliorasuite.security.alerts:
+    default: op
+  veliorasuite.security.bypass:
     default: op
