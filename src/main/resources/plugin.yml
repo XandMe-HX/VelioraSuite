@@ -76,6 +76,11 @@ commands:
     usage: /vskills <help|status|reload|mana>
     aliases: [vski, vmana, mana]
     permission: veliorasuite.skills.use
+  quest:
+    description: Open and manage VelioraQuest.
+    usage: /quest <gui|progress|start|claim|cancel|reload|status>
+    aliases: [q, quests, vquest]
+    permission: veliorasuite.quest.use
   register:
     description: Register Veliora account.
     usage: /register <password> <password confirm>
@@ -200,4 +205,14 @@ permissions:
   veliorasuite.skills.mana.admin:
     default: op
   veliorasuite.skills.bypass:
+    default: op
+  veliorasuite.quest.use:
+    default: true
+  veliorasuite.quest.admin:
+    default: op
+  veliorasuite.quest.reload:
+    default: op
+  veliorasuite.quest.bypassmana:
+    default: op
+  veliorasuite.quest.reset:
     default: op
