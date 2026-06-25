@@ -6,11 +6,9 @@ import org.bukkit.entity.Player;
 import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -21,7 +19,7 @@ public final class SecurityJoinProtectionManager {
     private final Map<String, Queue<Long>> joinsByIp = new HashMap<>();
     private final Map<String, Map<String, Long>> namesByIp = new HashMap<>();
     private final Map<String, Queue<Long>> rejoinsByIdentity = new HashMap<>();
-    private final Map<String, Long> temporaryBlocks = new HashMap<>();
+    private final Map<String, Long> temporaryHolds = new HashMap<>();
 
     public SecurityJoinProtectionManager(SecurityConfigManager configManager, SecurityRiskManager riskManager) {
         this.configManager = configManager;
@@ -33,8 +31,8 @@ public final class SecurityJoinProtectionManager {
         String ipHash = ipHash(player);
         long now = System.currentTimeMillis();
 
-        if (isTemporarilyBlocked(ipHash, now)) {
-            return new SecurityDecision(true, true, "JOIN_RISK", player.getName(), configManager.getRiskTemporaryBlockThreshold(), "Temporary block IP hash aktif", "TEMPORARY_DENY", "suspicious-join-kick", "%prefix% &cTerlalu banyak akun berbeda dari koneksi yang sama. Coba lagi sebentar.");
+        if (isTemporarilyHeld(ipHash, now)) {
+            return new SecurityDecision(true, true, "JOIN_RISK", player.getName(), configManager.getRiskTemporaryBlockThreshold(), "IP hash masih dalam cooldown", "TEMPORARY_DENY", "suspicious-join-kick", "%prefix% &cTerlalu banyak akun berbeda dari koneksi yang sama. Coba lagi sebentar.");
         }
 
         boolean invalidName = configManager.isNameProtectionEnabled() && !isValidName(player.getName());
@@ -50,8 +48,8 @@ public final class SecurityJoinProtectionManager {
         String action = riskManager.actionForRisk(risk);
 
         if (configManager.isIdentityProtectionEnabled() && configManager.isSameIpDifferentNamesEnabled()) {
-            if (uniqueNames >= configManager.getDifferentNamesKickThreshold() && configManager.isDifferentNamesKickAction()) {
-                temporaryBlocks.put(ipHash, now + (configManager.getDifferentNamesTemporaryBlockSeconds() * 1000L));
+            if (uniqueNames >= configManager.getDifferentNamesKickThreshold() && risk >= configManager.getRiskKickThreshold() && configManager.isDifferentNamesKickAction()) {
+                temporaryHolds.put(ipHash, now + (configManager.getDifferentNamesTemporaryBlockSeconds() * 1000L));
                 return new SecurityDecision(true, true, "JOIN_RISK", player.getName(), risk, "Banyak akun berbeda dari IP hash yang sama", action, "suspicious-join-kick", "%prefix% &cTerlalu banyak akun berbeda dari koneksi yang sama. Coba lagi sebentar.");
             }
             if (uniqueNames >= configManager.getDifferentNamesAlertThreshold() && configManager.isDifferentNamesAlertAction()) {
@@ -79,7 +77,7 @@ public final class SecurityJoinProtectionManager {
         joinsByIp.clear();
         namesByIp.clear();
         rejoinsByIdentity.clear();
-        temporaryBlocks.clear();
+        temporaryHolds.clear();
     }
 
     private boolean isValidName(String originalName) {
@@ -127,11 +125,11 @@ public final class SecurityJoinProtectionManager {
         while (!queue.isEmpty() && queue.peek() < min) queue.poll();
     }
 
-    private boolean isTemporarilyBlocked(String ipHash, long now) {
-        Long until = temporaryBlocks.get(ipHash);
+    private boolean isTemporarilyHeld(String ipHash, long now) {
+        Long until = temporaryHolds.get(ipHash);
         if (until == null) return false;
         if (until <= now) {
-            temporaryBlocks.remove(ipHash);
+            temporaryHolds.remove(ipHash);
             return false;
         }
         return true;
