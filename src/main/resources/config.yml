@@ -26,7 +26,7 @@ settings:
 
 modules:
   guide: true
-  login-security: false
+  login-security: true
   team: false
   kits: false
   report: false
