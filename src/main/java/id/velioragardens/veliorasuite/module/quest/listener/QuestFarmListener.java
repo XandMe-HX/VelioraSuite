@@ -3,7 +3,6 @@ package id.velioragardens.veliorasuite.module.quest.listener;
 import id.velioragardens.veliorasuite.module.quest.QuestManager;
 import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
 import org.bukkit.Material;
-import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -43,7 +42,7 @@ public final class QuestFarmListener implements Listener {
         if (!manager.getConfigManager().isCountHoeFarmland()) return;
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) return;
         ItemStack item = event.getItem();
-        if (item == null || !Tag.ITEMS_HOES.isTagged(item.getType())) return;
+        if (item == null || !item.getType().name().endsWith("_HOE")) return;
         Block block = event.getClickedBlock();
         if (FARMLAND_BASE.contains(block.getType())) {
             manager.addProgress(event.getPlayer(), QuestCategory.FARMER, 1);
