@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.security;
 
 import org.bukkit.entity.Player;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,7 +16,7 @@ public final class SecurityTabProtectionManager {
         this.commandProtectionManager = commandProtectionManager;
     }
 
-    public void filter(Player player, Set<String> commands) {
+    public void filter(Player player, Collection<String> commands) {
         if (player == null || commands == null) return;
         if (!configManager.isEnabled() || !configManager.isTabProtectionEnabled() || !configManager.isHideBlockedCommands()) return;
         if (configManager.hasBypass(player)) return;
