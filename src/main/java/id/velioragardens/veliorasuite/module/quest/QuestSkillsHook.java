@@ -25,6 +25,16 @@ public final class QuestSkillsHook {
         return api == null ? fallbackCost(level) : api.getQuestManaCost(level);
     }
 
+    public int getMana(Player player) {
+        SkillsApi api = api();
+        return api == null ? 0 : api.getMana(player);
+    }
+
+    public int getMaxMana(Player player) {
+        SkillsApi api = api();
+        return api == null ? 0 : api.getMaxMana(player);
+    }
+
     public boolean hasMana(Player player, int amount) {
         SkillsApi api = api();
         return api != null && api.hasMana(player, amount);
@@ -38,6 +48,11 @@ public final class QuestSkillsHook {
     public void giveMana(Player player, int amount, String reason) {
         SkillsApi api = api();
         if (api != null) api.giveMana(player, amount, reason);
+    }
+
+    public boolean addMaxMana(Player player, int amount, boolean fillToNewMax) {
+        SkillsApi api = api();
+        return api != null && api.addMaxMana(player, amount, fillToNewMax);
     }
 
     private SkillsApi api() {
