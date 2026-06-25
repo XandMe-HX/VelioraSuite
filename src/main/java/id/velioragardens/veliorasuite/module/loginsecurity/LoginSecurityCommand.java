@@ -33,6 +33,7 @@ public final class LoginSecurityCommand implements CommandExecutor, TabCompleter
                     return true;
                 }
                 manager.register(player, args[0], args[1]);
+                syncBlindness(player);
                 return true;
             }
             case "login" -> {
@@ -43,6 +44,7 @@ public final class LoginSecurityCommand implements CommandExecutor, TabCompleter
                     return true;
                 }
                 manager.login(player, args[0]);
+                syncBlindness(player);
                 return true;
             }
             case "changepass" -> {
@@ -63,12 +65,14 @@ public final class LoginSecurityCommand implements CommandExecutor, TabCompleter
                     return true;
                 }
                 manager.unregister(player, args[0]);
+                syncBlindness(player);
                 return true;
             }
             case "logout" -> {
                 Player player = requirePlayer(sender);
                 if (player == null) return true;
                 manager.logout(player);
+                syncBlindness(player);
                 return true;
             }
             case "risetpw" -> {
@@ -81,6 +85,7 @@ public final class LoginSecurityCommand implements CommandExecutor, TabCompleter
                     return true;
                 }
                 manager.ownerReset(sender, args[0]);
+                syncTargetBlindness(args[0]);
                 return true;
             }
             case "cpowner" -> {
@@ -93,6 +98,7 @@ public final class LoginSecurityCommand implements CommandExecutor, TabCompleter
                     return true;
                 }
                 manager.ownerChangePassword(sender, args[0], args[1]);
+                syncTargetBlindness(args[0]);
                 return true;
             }
             case "loginsecurity" -> {
@@ -154,6 +160,17 @@ public final class LoginSecurityCommand implements CommandExecutor, TabCompleter
             return null;
         }
         return player;
+    }
+
+    private void syncBlindness(Player player) {
+        LoginSecurityBlindnessManager.sync(player, manager);
+    }
+
+    private void syncTargetBlindness(String playerName) {
+        Player target = Bukkit.getPlayerExact(playerName);
+        if (target != null) {
+            LoginSecurityBlindnessManager.sync(target, manager);
+        }
     }
 
     private List<String> onlinePlayers() {
