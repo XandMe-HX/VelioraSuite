@@ -1,5 +1,7 @@
 package id.velioragardens.veliorasuite.module.loginsecurity;
 
+import id.velioragardens.veliorasuite.VelioraSuite;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,6 +17,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.Locale;
+
 public final class LoginSecurityListener implements Listener {
 
     private final LoginSecurityManager manager;
@@ -26,6 +30,7 @@ public final class LoginSecurityListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         manager.handleJoin(event.getPlayer());
+        LoginSecurityBlindnessManager.sync(event.getPlayer(), manager);
     }
 
     @EventHandler
@@ -70,8 +75,25 @@ public final class LoginSecurityListener implements Listener {
     @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
-        if (manager.isAuthenticated(player)) return;
-        if (manager.getConfigManager().isAllowedBeforeLogin(event.getMessage())) return;
+        String message = event.getMessage();
+
+        if (manager.isAuthenticated(player)) {
+            if (isAuthStateChangingCommand(message)) {
+                syncBlindnessNextTick(player);
+            }
+            return;
+        }
+
+        if (handlePreAuthShortcut(player, message)) {
+            event.setCancelled(true);
+            LoginSecurityBlindnessManager.sync(player, manager);
+            return;
+        }
+
+        if (manager.getConfigManager().isAllowedBeforeLogin(message)) {
+            syncBlindnessNextTick(player);
+            return;
+        }
 
         event.setCancelled(true);
         player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getMessage("auth-required-command", "%prefix% &cLogin/register dulu sebelum memakai command.")));
@@ -109,5 +131,45 @@ public final class LoginSecurityListener implements Listener {
         if (!(event.getDamager() instanceof Player player)) return;
         if (manager.isAuthenticated(player) || !manager.getConfigManager().isBlockActionsBeforeLogin()) return;
         event.setCancelled(true);
+    }
+
+    private boolean handlePreAuthShortcut(Player player, String commandLine) {
+        if (!manager.getConfigManager().isPreAuthShortcutsEnabled()) return false;
+        String[] args = manager.getConfigManager().getCommandArgs(commandLine);
+
+        if (manager.getConfigManager().isRegisterShortcut(commandLine)) {
+            if (args.length < 2) {
+                manager.sendUsage(player, "register-usage");
+            } else {
+                manager.register(player, args[0], args[1]);
+            }
+            return true;
+        }
+
+        if (manager.getConfigManager().isLoginShortcut(commandLine)) {
+            if (args.length < 1) {
+                manager.sendUsage(player, "login-usage");
+            } else {
+                manager.login(player, args[0]);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isAuthStateChangingCommand(String commandLine) {
+        String command = commandToken(commandLine);
+        return command.equals("/logout") || command.equals("/unregister");
+    }
+
+    private String commandToken(String commandLine) {
+        if (commandLine == null || commandLine.isBlank()) return "";
+        String command = commandLine.trim().split("\\s+")[0].toLowerCase(Locale.ROOT);
+        return command.startsWith("/") ? command : "/" + command;
+    }
+
+    private void syncBlindnessNextTick(Player player) {
+        Bukkit.getScheduler().runTask(VelioraSuite.getInstance(), () -> LoginSecurityBlindnessManager.sync(player, manager));
     }
 }
