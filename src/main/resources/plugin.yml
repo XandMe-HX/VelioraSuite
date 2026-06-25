@@ -76,10 +76,10 @@ commands:
     usage: /vskills <help|status|reload|mana>
     aliases: [vski, vmana, mana]
     permission: veliorasuite.skills.use
-  quest:
+  quests:
     description: Open and manage VelioraQuest.
-    usage: /quest <gui|progress|start|claim|cancel|reload|status>
-    aliases: [q, quests, vquest]
+    usage: /quests <gui|progress|start|claim|cancel|reload|status>
+    aliases: [q, vquest]
     permission: veliorasuite.quest.use
   register:
     description: Register Veliora account.
