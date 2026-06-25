@@ -18,7 +18,8 @@ Tahap saat ini:
 - VelioraReport sudah aktif sebagai module.
 - VelioraTeam sudah aktif sebagai module.
 - VelioraChat sudah aktif sebagai module.
-- Logic besar seperti Fishing, Trader, Boss, ClearLag, Security, dan Quest dikerjakan bertahap.
+- Clear lag memakai plugin external, bukan VelioraSuite.
+- Logic besar seperti Fishing, Trader, Boss, Security, dan Quest dikerjakan bertahap.
 
 ## Target
 
@@ -276,6 +277,11 @@ Placeholder:
 %veliorasuite_team_tag%
 %veliorasuite_player_name%
 ```
+
+## Clear Lag
+
+Clear lag tidak ditangani oleh VelioraSuite.
+Server Veliora Gardens memakai plugin external khusus clear lag.
 
 ## TAB Nametag Team Tag
 
