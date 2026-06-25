@@ -6,14 +6,14 @@
 #
 # Catatan:
 # - core selalu aktif.
-# - guide, announcement, kits, report, team, dan chat sudah punya logic phase 1.
+# - guide, announcement, kits, report, team, chat, dan loginsecurity sudah punya logic phase 1.
 # - module lain masih skeleton dan akan dibuat bertahap.
 # =========================================================
 
 modules:
   core: true
   guide: true
-  loginsecurity: false
+  loginsecurity: true
   team: true
   kits: true
   report: true
