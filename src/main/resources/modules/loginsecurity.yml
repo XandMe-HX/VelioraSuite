@@ -14,7 +14,10 @@
 #
 # Command:
 # /register <password> <password confirm>
+# /reg <password> <password confirm>
+# /r <password> <password confirm>  # pre-auth only, bukan alias global
 # /login <password>
+# /l <password>
 # /changepass <old> <new>
 # /unregister <password>
 # /logout
@@ -67,12 +70,31 @@ settings:
   # Jika true, player yang belum login tidak bisa interact/drop/pickup/damage.
   block-actions-before-login: true
 
+  # Efek blindness sebelum register/login.
+  # Effect akan dihapus setelah register/login sukses atau jika player bypass.
+  blind-before-login:
+    enabled: true
+    duration-ticks: 999999
+    amplifier: 0
+    particles: false
+    icon: false
+
   # Command yang boleh dipakai sebelum login/register.
   allowed-commands-before-login:
     - '/login'
     - '/l'
     - '/register'
     - '/reg'
+    - '/r'
+
+  # Shortcut yang hanya diambil LoginSecurity saat player belum authenticated.
+  # /r tidak didaftarkan sebagai alias global agar tidak mengganggu Essentials reply.
+  pre-auth-shortcuts:
+    enabled: true
+    register:
+      - '/r'
+    login:
+      - '/l'
 
   # UUID owner server yang boleh pakai command reset password owner.
   owner-uuids:
@@ -96,8 +118,8 @@ messages:
   already-logged-in: '%prefix% &aKamu sudah login.'
   not-logged-in: '%prefix% &cKamu belum login.'
 
-  register-usage: '%prefix% &cGunakan: &f/register <password> <password confirm>'
-  login-usage: '%prefix% &cGunakan: &f/login <password>'
+  register-usage: '%prefix% &cGunakan: &f/register <password> <password confirm> &7atau &f/r <password> <password confirm>'
+  login-usage: '%prefix% &cGunakan: &f/login <password> &7atau &f/l <password>'
   changepass-usage: '%prefix% &cGunakan: &f/changepass <old> <new>'
   unregister-usage: '%prefix% &cGunakan: &f/unregister <password>'
   risetpw-usage: '%prefix% &cGunakan: &f/risetpw <playername>'
@@ -126,7 +148,9 @@ messages:
     - '&8&m--------------------------------'
     - '&b&lVelioraLoginSecurity'
     - '&f/register <password> <confirm> &7- Daftar akun.'
+    - '&f/r <password> <confirm> &7- Shortcut daftar akun.'
     - '&f/login <password> &7- Login akun.'
+    - '&f/l <password> &7- Shortcut login akun.'
     - '&f/changepass <old> <new> &7- Ganti password.'
     - '&f/unregister <password> &7- Hapus akun login.'
     - '&f/logout &7- Logout akun.'
