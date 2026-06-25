@@ -32,7 +32,7 @@ modules:
   report: false
   announcement: true
   fishing: false
-  skills: false
+  skills: true
   quest: false
   trader: false
   boss: false
