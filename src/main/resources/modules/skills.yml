@@ -1,8 +1,83 @@
-enabled: false
-
 settings:
-  addon-mode: true
-  milestone-rewards: true
+  enabled: true
+  prefix: '&8[&bVelioraSkills&8] '
+
+  mana:
+    default-mana: 10
+    default-max-mana: 10
+    min-mana: 0
+    daily-reset:
+      enabled: true
+      reset-time: '00:00'
+      reset-on-join-if-missed: true
+    quest-cost:
+      enabled: true
+      tiers:
+        level-1-4: 1
+        level-5-9: 2
+        level-10-14: 3
+        level-15-plus: 4
+
+  actionbar:
+    enabled: true
+    interval-ticks: 20
+    format: '&c❤ %health% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%'
+    disabled-worlds: []
+
+  placeholderapi:
+    enabled: true
+    register-placeholders: true
+
+  mana-bar:
+    length: 10
+    filled-color: '&b'
+    empty-color: '&7'
+    symbol: '|'
+
+permissions:
+  use: 'veliorasuite.skills.use'
+  admin: 'veliorasuite.skills.admin'
+  reload: 'veliorasuite.skills.reload'
+  mana-admin: 'veliorasuite.skills.mana.admin'
+  bypass: 'veliorasuite.skills.bypass'
 
 messages:
-  prefix: '&8【&aVelioraSkills&8】'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  reload-success: '%prefix% &aVelioraSkills berhasil direload.'
+  mana-status: '%prefix% &bMana kamu: &f%mana%&7/&f%max_mana%'
+  mana-status-other: '%prefix% &bMana &f%player%&b: &f%mana%&7/&f%max_mana%'
+  mana-set: '%prefix% &aMana &f%player% &aberhasil di-set ke &f%mana%&7/&f%max_mana%&a.'
+  mana-add: '%prefix% &aBerhasil menambah &f%amount% &amana ke &f%player%&a.'
+  mana-remove: '%prefix% &aBerhasil mengurangi &f%amount% &amana dari &f%player%&a.'
+  mana-reset: '%prefix% &aMana &f%player% &aberhasil direset ke &f%mana%&7/&f%max_mana%&a.'
+  mana-not-enough: '%prefix% &cMana kamu tidak cukup. Tunggu reset harian untuk mengerjakan quest lagi.'
+  target-not-found: '%prefix% &cPlayer &f%player% &ctidak ditemukan.'
+  invalid-number: '%prefix% &cAngka tidak valid.'
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraSkills'
+    - '&f/vskills mana &7- Cek mana kamu.'
+    - '&f/vskills mana <player> &7- Cek mana player.'
+    - '&f/vskills status &7- Cek status module.'
+    - '&f/vskills reload &7- Reload config.'
+    - '&8&m--------------------------------'
+  help-admin:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraSkills Admin'
+    - '&f/vskills mana set <player> <amount> &7- Set mana player.'
+    - '&f/vskills mana add <player> <amount> &7- Tambah mana player.'
+    - '&f/vskills mana remove <player> <amount> &7- Kurangi mana player.'
+    - '&f/vskills mana reset <player> &7- Reset mana player.'
+    - '&8&m--------------------------------'
+  status:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraSkills Status'
+    - '&7Enabled: &f%enabled%'
+    - '&7Actionbar: &f%actionbar%'
+    - '&7PlaceholderAPI: &f%placeholderapi%'
+    - '&7Default Mana: &f%default_mana%'
+    - '&7Default Max Mana: &f%default_max_mana%'
+    - '&7Daily Reset: &f%daily_reset%'
+    - '&7Reset Time: &f%reset_time%'
+    - '&8&m--------------------------------'
