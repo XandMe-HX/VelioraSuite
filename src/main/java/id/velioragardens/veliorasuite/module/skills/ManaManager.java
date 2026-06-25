@@ -55,6 +55,20 @@ public final class ManaManager {
         return true;
     }
 
+    public boolean addMaxMana(Player player, int amount, boolean fillToNewMax) {
+        if (player == null || amount <= 0) return false;
+        PlayerManaData data = getData(player);
+        data.setMaxMana(data.getMaxMana() + amount);
+        if (fillToNewMax) {
+            data.setMana(data.getMaxMana());
+        } else {
+            clamp(data);
+        }
+        data.addTotalManaEarned(amount);
+        dataManager.save(data);
+        return true;
+    }
+
     public boolean setMana(Player player, int amount) {
         PlayerManaData data = getData(player);
         data.setMana(amount);
