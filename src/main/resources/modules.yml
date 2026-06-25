@@ -7,7 +7,7 @@ modules:
   report: true
   announcement: true
   fishing: false
-  skills: false
+  skills: true
   quest: false
   trader: false
   boss: false
