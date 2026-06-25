@@ -39,20 +39,20 @@ commands:
     aliases: [vproduct]
     permission: veliorasuite.guide.use
   veliorarank:
-    description: Open Veliora rank shop guide.
+    description: Open Veliora rank guide.
     usage: /veliorarank [page]
     aliases: [vrank]
     permission: veliorasuite.guide.use
   velioraannouncement:
-    description: Manage Veliora automatic announcements.
+    description: Manage Veliora announcements.
     usage: /velioraannouncement <help|status|list|reload|send>
     aliases: [vannounce, vann, va]
   kits:
-    description: Open and claim Veliora kits.
+    description: Open Veliora kits.
     usage: /kits <help|open|list|claim|preview|buy|cooldown|reload>
     aliases: [veliorakits, vkits]
   report:
-    description: Create a VelioraReport player or bug report.
+    description: Create a VelioraReport report.
     usage: /report <player|bug> <reason>
     aliases: [vreport]
   reports:
@@ -60,46 +60,41 @@ commands:
     usage: /reports <list|view|close|reopen|reload>
     aliases: [vreports]
   team:
-    description: Manage VelioraTeam teams.
+    description: Manage VelioraTeam.
     usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|delete|info|reload>
   veliorachat:
     description: Manage VelioraChat.
     usage: /veliorachat <help|status|reload>
     aliases: [vchat, vc]
-  vclearlag:
-    description: Manage VelioraClearLag.
-    usage: /vclearlag <help|status|reload|clear|tps|memory>
-    aliases: [vcl, clearlag, lagg]
-    permission: veliorasuite.clearlag.status
   register:
-    description: Register your Veliora account.
+    description: Register Veliora account.
     usage: /register <password> <password confirm>
     aliases: [reg]
     permission: veliorasuite.loginsecurity.use
   login:
-    description: Login to your Veliora account.
+    description: Login Veliora account.
     usage: /login <password>
     aliases: [l]
     permission: veliorasuite.loginsecurity.use
   changepass:
-    description: Change your Veliora password.
+    description: Change Veliora account key.
     usage: /changepass <old> <new>
     aliases: [changepassword]
     permission: veliorasuite.loginsecurity.use
   unregister:
-    description: Unregister your Veliora account.
+    description: Unregister Veliora account.
     usage: /unregister <password>
     permission: veliorasuite.loginsecurity.use
   logout:
-    description: Logout from your Veliora account.
+    description: Logout Veliora account.
     usage: /logout
     permission: veliorasuite.loginsecurity.use
   risetpw:
-    description: Reset a player's Veliora password.
+    description: Owner account reset command.
     usage: /risetpw <playername>
     aliases: [resetpw]
   cpowner:
-    description: Change a player's Veliora password as owner.
+    description: Owner account change command.
     usage: /cpowner <playername> <new>
   loginsecurity:
     description: Manage VelioraLoginSecurity.
@@ -177,14 +172,4 @@ permissions:
   veliorasuite.loginsecurity.owner:
     default: op
   veliorasuite.loginsecurity.bypass:
-    default: op
-  veliorasuite.clearlag.admin:
-    default: op
-  veliorasuite.clearlag.reload:
-    default: op
-  veliorasuite.clearlag.clear:
-    default: op
-  veliorasuite.clearlag.status:
-    default: op
-  veliorasuite.clearlag.bypass:
     default: op
