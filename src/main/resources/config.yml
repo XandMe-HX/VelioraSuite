@@ -33,7 +33,7 @@ modules:
   announcement: true
   fishing: false
   skills: true
-  quest: false
+  quest: true
   trader: false
   boss: false
   security: true
