@@ -45,6 +45,7 @@ public final class LoginSecurityModule implements VelioraModule {
             HandlerList.unregisterAll(listener);
             listener = null;
         }
+        LoginSecurityBlindnessManager.clearAll();
         if (manager != null) {
             manager.shutdown();
         }
