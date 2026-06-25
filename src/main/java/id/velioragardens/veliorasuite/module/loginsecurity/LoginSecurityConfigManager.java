@@ -46,9 +46,25 @@ public final class LoginSecurityConfigManager {
     public boolean isBlockChatBeforeLogin() { return getBoolean("settings.block-chat-before-login", true); }
     public boolean isBlockActionsBeforeLogin() { return getBoolean("settings.block-actions-before-login", true); }
 
+    public boolean isBlindBeforeLoginEnabled() { return getBoolean("settings.blind-before-login.enabled", true); }
+    public int getBlindDurationTicks() { return Math.max(20, getInt("settings.blind-before-login.duration-ticks", 999999)); }
+    public int getBlindAmplifier() { return Math.max(0, getInt("settings.blind-before-login.amplifier", 0)); }
+    public boolean isBlindParticles() { return getBoolean("settings.blind-before-login.particles", false); }
+    public boolean isBlindIcon() { return getBoolean("settings.blind-before-login.icon", false); }
+
+    public boolean isPreAuthShortcutsEnabled() { return getBoolean("settings.pre-auth-shortcuts.enabled", true); }
+    public List<String> getRegisterShortcuts() {
+        List<String> shortcuts = config == null ? List.of() : config.getStringList("settings.pre-auth-shortcuts.register");
+        return shortcuts.isEmpty() ? List.of("/r") : shortcuts;
+    }
+    public List<String> getLoginShortcuts() {
+        List<String> shortcuts = config == null ? List.of() : config.getStringList("settings.pre-auth-shortcuts.login");
+        return shortcuts.isEmpty() ? List.of("/l") : shortcuts;
+    }
+
     public List<String> getAllowedCommandsBeforeLogin() {
         List<String> commands = config == null ? List.of() : config.getStringList("settings.allowed-commands-before-login");
-        return commands.isEmpty() ? List.of("/login", "/l", "/register", "/reg") : commands;
+        return commands.isEmpty() ? List.of("/login", "/l", "/register", "/reg", "/r") : commands;
     }
 
     public List<String> getOwnerUuids() {
@@ -61,17 +77,42 @@ public final class LoginSecurityConfigManager {
     public String getBypassPermission() { return getString("permissions.bypass", "veliorasuite.loginsecurity.bypass"); }
 
     public boolean isAllowedBeforeLogin(String commandLine) {
-        if (commandLine == null || commandLine.isBlank()) return false;
-        String command = commandLine.trim().split("\\s+")[0].toLowerCase(Locale.ROOT);
-        if (!command.startsWith("/")) command = "/" + command;
+        String command = getCommandToken(commandLine);
+        if (command.isBlank()) return false;
 
         for (String allowed : getAllowedCommandsBeforeLogin()) {
-            if (allowed == null || allowed.isBlank()) continue;
-            String normalized = allowed.trim().toLowerCase(Locale.ROOT);
-            if (!normalized.startsWith("/")) normalized = "/" + normalized;
-            if (normalized.equals(command)) return true;
+            if (command.equals(normalizeCommandName(allowed))) return true;
         }
         return false;
+    }
+
+    public boolean isRegisterShortcut(String commandLine) {
+        if (!isPreAuthShortcutsEnabled()) return false;
+        String command = getCommandToken(commandLine);
+        if (command.isBlank()) return false;
+        for (String shortcut : getRegisterShortcuts()) {
+            if (command.equals(normalizeCommandName(shortcut))) return true;
+        }
+        return false;
+    }
+
+    public boolean isLoginShortcut(String commandLine) {
+        if (!isPreAuthShortcutsEnabled()) return false;
+        String command = getCommandToken(commandLine);
+        if (command.isBlank()) return false;
+        for (String shortcut : getLoginShortcuts()) {
+            if (command.equals(normalizeCommandName(shortcut))) return true;
+        }
+        return false;
+    }
+
+    public String[] getCommandArgs(String commandLine) {
+        if (commandLine == null || commandLine.isBlank()) return new String[0];
+        String[] split = commandLine.trim().split("\\s+");
+        if (split.length <= 1) return new String[0];
+        String[] args = new String[split.length - 1];
+        System.arraycopy(split, 1, args, 0, args.length);
+        return args;
     }
 
     public boolean hasUsePermission(CommandSender sender) {
@@ -116,6 +157,18 @@ public final class LoginSecurityConfigManager {
 
     public String color(String text) {
         return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text);
+    }
+
+    private String getCommandToken(String commandLine) {
+        if (commandLine == null || commandLine.isBlank()) return "";
+        return normalizeCommandName(commandLine.trim().split("\\s+")[0]);
+    }
+
+    private String normalizeCommandName(String command) {
+        if (command == null || command.isBlank()) return "";
+        String normalized = command.trim().toLowerCase(Locale.ROOT);
+        if (!normalized.startsWith("/")) normalized = "/" + normalized;
+        return normalized;
     }
 
     private String getString(String path, String fallback) {
