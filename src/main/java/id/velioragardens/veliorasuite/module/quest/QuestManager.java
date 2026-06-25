@@ -21,6 +21,7 @@ public final class QuestManager {
     private final QuestRewardManager rewardManager;
     private final QuestProgressManager progressManager;
     private final QuestStarterManager starterManager;
+    private final QuestBossBarManager bossBarManager;
     private QuestGuiManager guiManager;
 
     public QuestManager(VelioraSuite plugin) {
@@ -31,6 +32,7 @@ public final class QuestManager {
         this.rewardManager = new QuestRewardManager(plugin, configManager);
         this.progressManager = new QuestProgressManager(configManager, dataManager);
         this.starterManager = new QuestStarterManager(configManager, dataManager);
+        this.bossBarManager = new QuestBossBarManager(configManager);
     }
 
     public void load() {
@@ -45,6 +47,7 @@ public final class QuestManager {
     }
 
     public void shutdown() {
+        bossBarManager.hideAll();
         dataManager.flush();
     }
 
@@ -54,6 +57,7 @@ public final class QuestManager {
     public QuestStarterManager getStarterManager() { return starterManager; }
     public QuestGuiManager getGuiManager() { return guiManager; }
     public QuestSkillsHook getSkillsHook() { return skillsHook; }
+    public QuestBossBarManager getBossBarManager() { return bossBarManager; }
 
     public void openGui(Player player) {
         if (!configManager.isGuiEnabled()) {
@@ -77,7 +81,9 @@ public final class QuestManager {
         }
 
         int manaCost = skillsHook.getQuestManaCost(progress.getLevel());
-        if (!configManager.hasBypassMana(player)) {
+        boolean bypass = configManager.hasBypassMana(player);
+        int manaBefore = skillsHook.isAvailable() ? skillsHook.getMana(player) : 0;
+        if (!bypass) {
             if (configManager.isRequireSkillsMana() && !skillsHook.isAvailable()) {
                 send(player, "skills-not-found", "%prefix% &cMana system belum aktif. Hubungi staff.", Map.of());
                 return false;
@@ -91,12 +97,15 @@ public final class QuestManager {
                 return false;
             }
         }
+        int manaAfter = skillsHook.isAvailable() ? skillsHook.getMana(player) : 0;
+        logManaDebug(player, category, progress.getLevel(), manaBefore, manaCost, manaAfter, bypass);
 
         progress.setState(QuestState.ACTIVE);
         progress.setCurrentProgress(0);
         progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
         progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
         dataManager.save(data);
+        bossBarManager.showOrUpdate(player, category, progress);
         send(player, "quest-started", "%prefix% &aQuest &f%quest% &adimulai. Mana terpakai: &f%mana_cost%&a.", placeholders(category, progress, manaCost));
         return true;
     }
@@ -113,7 +122,7 @@ public final class QuestManager {
         int money = progress.getCurrentRewardMoney();
         rewardManager.depositMoney(player, money);
         if (configManager.isGiveManaOnComplete() && skillsHook.isAvailable()) {
-            skillsHook.giveMana(player, configManager.getManaReward(), "quest-complete:" + category.key());
+            skillsHook.addMaxMana(player, configManager.getManaReward(), true);
         }
 
         int newCompleted = progress.getCompletedCount() + 1;
@@ -125,8 +134,9 @@ public final class QuestManager {
         progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
         progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
         dataManager.save(data);
+        bossBarManager.hide(player);
 
-        send(player, "quest-claimed", "%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Mana&a.", placeholders(category, progress, skillsHook.getQuestManaCost(progress.getLevel()), money));
+        send(player, "quest-claimed", "%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.", placeholders(category, progress, skillsHook.getQuestManaCost(progress.getLevel()), money));
         if (levelUp) send(player, "quest-level-up", "%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.", placeholders(category, progress, 0));
         return true;
     }
@@ -142,14 +152,19 @@ public final class QuestManager {
         progress.setState(QuestState.NOT_STARTED);
         progress.setCurrentProgress(0);
         dataManager.save(data);
+        bossBarManager.hide(player);
         send(player, "quest-cancelled", "%prefix% &eQuest &f%quest% &edibatalkan. Mana yang sudah dipakai tidak dikembalikan.", placeholders(category, progress, 0));
     }
 
     public void addProgress(Player player, QuestCategory category, int amount) {
         boolean ready = progressManager.addProgress(player, category, amount);
         PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        if (progress.getState() == QuestState.ACTIVE) {
+            bossBarManager.showOrUpdate(player, category, progress);
+        }
         if (ready) {
-            send(player, "quest-ready-claim", "%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quest claim %category%&a.", placeholders(category, progress, 0));
+            if (configManager.isBossBarHideWhenComplete()) bossBarManager.hide(player);
+            send(player, "quest-ready-claim", "%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.", placeholders(category, progress, 0));
         }
     }
 
@@ -162,10 +177,10 @@ public final class QuestManager {
         sendLines(sender, configManager.messageList("help", List.of(
                 "&8&m--------------------------------",
                 "&a&lVelioraQuest",
-                "&f/quest &7- Buka GUI quest.",
-                "&f/quest progress &7- Cek progress quest.",
-                "&f/quest start <category> &7- Mulai quest.",
-                "&f/quest claim <category> &7- Claim reward.",
+                "&f/quests &7- Buka GUI quest.",
+                "&f/quests progress &7- Cek progress quest.",
+                "&f/quests start <category> &7- Mulai quest.",
+                "&f/quests claim <category> &7- Claim reward.",
                 "&8&m--------------------------------"
         )), Map.of());
     }
@@ -200,6 +215,17 @@ public final class QuestManager {
             return false;
         }
         return true;
+    }
+
+    private void logManaDebug(Player player, QuestCategory category, int level, int before, int cost, int after, boolean bypass) {
+        if (!configManager.isDebugMana()) return;
+        plugin.getLogger().info("VelioraQuest mana debug: player=" + player.getName()
+                + " category=" + category.key()
+                + " level=" + level
+                + " before=" + before
+                + " cost=" + cost
+                + " after=" + after
+                + " bypass=" + bypass);
     }
 
     private Map<String, String> placeholders(QuestCategory category, PlayerCategoryProgress progress, int manaCost) {
