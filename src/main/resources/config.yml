@@ -35,6 +35,6 @@ modules:
   skills: true
   quest: true
   trader: true
-  boss: false
+  boss: true
   security: true
   chat: false
