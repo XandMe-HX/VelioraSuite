@@ -3,11 +3,11 @@ package id.velioragardens.veliorasuite.module.boss;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.boss.model.BossDefinition;
 import id.velioragardens.veliorasuite.module.boss.model.BossRarity;
+import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -15,6 +15,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,6 +51,12 @@ public final class BossConfigManager {
     public boolean announceDespawn() { return bool("settings.spawn.announce-despawn", true); }
     public boolean allowMultiple() { return bool("settings.spawn.allow-multiple-active", false); }
     public boolean requireSpawnPoint() { return bool("settings.spawn.require-spawn-point", true); }
+    public List<Integer> warningTimesMinutes() { List<Integer> list = config == null ? List.of() : config.getIntegerList("settings.spawn.warning-times-minutes"); return list.isEmpty() ? List.of(5, 1) : list; }
+
+    public boolean spawnTitleEnabled() { return bool("effects.spawn.title-enabled", true); }
+    public String spawnTitle() { return str("effects.spawn.title", "&c%boss%"); }
+    public String spawnSubtitle() { return str("effects.spawn.subtitle", "&7Boss %rarity% muncul di &f%world%"); }
+    public int spawnParticleCount() { return Math.max(1, integer("effects.spawn.particle-count", 120)); }
 
     public boolean bossBarEnabled() { return bool("bossbar.enabled", true); }
     public String bossBarTitle() { return str("bossbar.title", "&c%boss% &7- &f%health%&7/&f%max_health% HP &8| &e%time%"); }
@@ -64,6 +71,17 @@ public final class BossConfigManager {
     public int maxMinions() { return Math.max(0, integer("skills.summon.max-minions", 8)); }
     public int minionsPerCast() { return Math.max(1, integer("skills.summon.minions-per-cast", 3)); }
     public List<String> minionTypes() { List<String> list = config.getStringList("skills.summon.types"); return list.isEmpty() ? List.of("ZOMBIE", "HUSK", "VINDICATOR", "DROWNED") : list; }
+    public List<BossSkillType> defaultSkills() { return parseSkills(config == null ? List.of() : config.getStringList("skills.default")); }
+
+    public boolean arenaEnabled() { return bool("arena.enabled", true); }
+    public double arenaRadius() { return Math.max(5.0D, number("arena.radius", 45.0D)); }
+    public double targetRadius() { return Math.max(5.0D, number("arena.target-radius", 45.0D)); }
+    public boolean leashToSpawn() { return bool("arena.leash-to-spawn", true); }
+    public boolean teleportBackIfFar() { return bool("arena.teleport-back-if-far", true); }
+    public double teleportBackDistance() { return Math.max(arenaRadius(), number("arena.teleport-back-distance", 55.0D)); }
+    public boolean teleportBackIfBelowSpawnY() { return bool("arena.teleport-back-if-below-spawn-y", true); }
+    public double belowYOffset() { return Math.max(1.0D, number("arena.below-y-offset", 12.0D)); }
+    public boolean removeMinionOutsideRadius() { return bool("arena.remove-minion-outside-radius", true); }
 
     public double minDamageToReward() { return number("rewards.min-damage-to-reward", 20.0D); }
     public int rewardMaterial(BossRarity rarity, String key) { return Math.max(0, config.getInt("rewards.materials." + rarity.name().toLowerCase(Locale.ROOT) + "." + key, 0)); }
@@ -78,6 +96,8 @@ public final class BossConfigManager {
     public boolean topDamageBonusEnabled() { return bool("rewards.top-damage-bonus.enabled", true); }
     public long topBonusMin(int rankIndex) { return clampMoney(integer("rewards.top-damage-bonus." + rankKey(rankIndex) + ".min", defaultTopMin(rankIndex))); }
     public long topBonusMax(int rankIndex) { return clampMoney(integer("rewards.top-damage-bonus." + rankKey(rankIndex) + ".max", defaultTopMax(rankIndex))); }
+    public boolean moneyTotalCapEnabled() { return bool("rewards.money-total-cap.enabled", true); }
+    public long moneyTotalCapMax() { return clampMoney(integer("rewards.money-total-cap.max-per-player", 30000)); }
 
     public boolean preventBlockDamage() { return bool("protection.prevent-block-damage", true); }
     public boolean allowBossDamageInProtectedRegion() { return bool("protection.allow-boss-damage-in-protected-region", true); }
@@ -87,6 +107,7 @@ public final class BossConfigManager {
 
     public String message(String key, String fallback) { return str("messages." + key, fallback).replace("%prefix%", prefix()); }
     public String color(String input) { return ChatColor.translateAlternateColorCodes('&', input == null ? "" : input); }
+    public String plain(String input) { return ChatColor.stripColor(color(input == null ? "" : input)); }
     public Sound sound(String path, String fallback) { try { return Sound.valueOf(str(path, fallback).toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Sound.ENTITY_EXPERIENCE_ORB_PICKUP; } }
     public Particle particle(String path, String fallback) { try { return Particle.valueOf(str(path, fallback).toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Particle.CLOUD; } }
 
@@ -111,6 +132,7 @@ public final class BossConfigManager {
                 continue;
             }
             BossRarity rarity = BossRarity.from(boss.getString("rarity", "COMMON"));
+            List<BossSkillType> skills = parseSkills(boss.getStringList("skills"));
             bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(
                     id.toLowerCase(Locale.ROOT),
                     type,
@@ -118,9 +140,20 @@ public final class BossConfigManager {
                     rarity,
                     clamp(boss.getDouble("health", 100.0D), 100.0D, 500.0D),
                     clamp(boss.getDouble("damage", 4.0D), 4.0D, 10.0D),
-                    Math.max(1.0D, boss.getDouble("scale", 3.0D))
+                    Math.max(1.0D, boss.getDouble("scale", 3.0D)),
+                    skills.isEmpty() ? defaultSkills() : skills
             ));
         }
+    }
+
+    private List<BossSkillType> parseSkills(List<String> raw) {
+        List<BossSkillType> skills = new ArrayList<>();
+        for (String value : raw) {
+            BossSkillType skill = BossSkillType.from(value);
+            if (skill != null && !skills.contains(skill)) skills.add(skill);
+        }
+        if (skills.isEmpty()) skills.addAll(List.of(BossSkillType.GROUND_SLAM, BossSkillType.SUMMON_MINIONS, BossSkillType.FIRE_BOMB, BossSkillType.PULL_AURA, BossSkillType.POISON_CLOUD, BossSkillType.RAGE_MODE));
+        return skills;
     }
 
     private boolean isAllowedBossType(EntityType type) {
