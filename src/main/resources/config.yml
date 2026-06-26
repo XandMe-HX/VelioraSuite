@@ -31,7 +31,7 @@ modules:
   kits: false
   report: false
   announcement: true
-  fishing: false
+  fishing: true
   skills: true
   quest: true
   trader: false
