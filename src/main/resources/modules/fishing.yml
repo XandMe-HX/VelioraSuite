@@ -1,9 +1,178 @@
-enabled: false
-
 settings:
-  use-vanilla-fishing: true
-  minigame-enabled: true
-  reward-economy-limit: 25.0
+  enabled: true
+  prefix: '&8[&bVelioraFishing&8] '
+
+  rarity-chance:
+    trash: 20.0
+    vanilla: 15.0
+    common: 55.0
+    ornamental: 7.0
+    rare: 2.5
+    legendary: 0.45
+    mitologi: 0.05
+
+  price:
+    trash:
+      min: 1
+      max: 5
+      max-final: 5
+    vanilla:
+      min: 50
+      max: 100
+      max-final: 100
+    common:
+      min: 100
+      max: 500
+      max-final: 500
+    ornamental:
+      min: 500
+      max: 2000
+      max-final: 2000
+    rare:
+      min: 2000
+      max: 10000
+      max-final: 10000
+    legendary:
+      min: 10000
+      max: 75000
+      max-final: 75000
+    mitologi:
+      min: 50000
+      max: 150000
+      max-final: 500000
+
+  minigame:
+    enabled: true
+    trigger-chance: 35.0
+    mode: SPAM_CLICK
+    click-cooldown-ms: 40
+    show-title: true
+    remove-vanilla-caught-entity: true
+    difficulty:
+      trash:
+        spam-needed: 3
+        seconds: 4.0
+      vanilla:
+        spam-needed: 4
+        seconds: 4.0
+      common:
+        spam-needed: 5
+        seconds: 4.0
+      ornamental:
+        spam-needed: 10
+        seconds: 5.0
+      rare:
+        spam-needed: 18
+        seconds: 6.0
+      legendary:
+        spam-needed: 35
+        seconds: 7.0
+      mitologi:
+        spam-needed: 55
+        seconds: 8.0
+
+  sell-gui:
+    enabled: true
+    title: '&8VelioraFishing Sell'
+    size: 54
+    allow-vanilla-fish: true
+
+  top:
+    limit: 5
+    gui-enabled: false
+
+  quest-integration:
+    enabled: true
+
+permissions:
+  use: 'veliorasuite.fishing.use'
+  admin: 'veliorasuite.fishing.admin'
+  reload: 'veliorasuite.fishing.reload'
+
+fish:
+  rotten_boot:
+    name: 'Sepatu Rusak'
+    rarity: TRASH
+    material: LEATHER_BOOTS
+    region: 'Sampah'
+    weight:
+      min: 0.1
+      max: 1.0
+  cod:
+    name: 'Cod'
+    rarity: VANILLA
+    material: COD
+    region: 'Vanilla'
+    weight:
+      min: 0.5
+      max: 4.0
+  tilapia:
+    name: 'Tilapia'
+    rarity: COMMON
+    material: COD
+    region: 'Sungai'
+    weight:
+      min: 1.0
+      max: 8.0
+  koi_veliora:
+    name: 'Koi Veliora'
+    rarity: ORNAMENTAL
+    material: TROPICAL_FISH
+    region: 'Kolam'
+    weight:
+      min: 0.3
+      max: 2.5
+  bluefin_tuna:
+    name: 'Bluefin Tuna'
+    rarity: RARE
+    material: SALMON
+    region: 'Laut'
+    weight:
+      min: 20.0
+      max: 180.0
+  arwana_super_red:
+    name: 'Arwana Super Red'
+    rarity: LEGENDARY
+    material: PLAYER_HEAD
+    region: 'Legenda'
+    weight:
+      min: 10.0
+      max: 60.0
+    head:
+      enabled: true
+      texture-base64: ''
+      fallback-material: TROPICAL_FISH
+  bahamut:
+    name: 'Bahamut'
+    rarity: MITOLOGI
+    material: PLAYER_HEAD
+    region: 'Mitologi'
+    weight:
+      min: 500.0
+      max: 2500.0
+    head:
+      enabled: true
+      texture-base64: ''
+      fallback-material: TROPICAL_FISH
 
 messages:
-  prefix: '&8【&aVelioraFishing&8】'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  reload-success: '%prefix% &aVelioraFishing berhasil direload.'
+  main-info: '%prefix% &bGunakan &f/fish sell &buntuk jual ikan, dan &f/fish top &buntuk leaderboard.'
+  catch-success: '%prefix% &aKamu mendapatkan %rarity_color%%fish% &7(&f%weight%&7) senilai &a%price%&7.'
+  minigame-start: '%prefix% &eTarikan kuat! Spam klik untuk menarik ikan!'
+  minigame-success: '%prefix% &aBerhasil menarik ikan!'
+  minigame-fail: '%prefix% &cIkan lepas.'
+  sell-empty: '%prefix% &eTidak ada ikan yang bisa dijual.'
+  sell-success: '%prefix% &aBerhasil menjual &f%amount% &aikan seharga &f%money%&a.'
+  top-header: '%prefix% &bTop Fishing'
+  top-empty: '%prefix% &eBelum ada data fishing.'
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraFishing'
+    - '&f/fish &7- Buka info fishing.'
+    - '&f/fish sell &7- Jual ikan.'
+    - '&f/fish top &7- Leaderboard fishing.'
+    - '&f/fish reload &7- Reload config.'
+    - '&8&m--------------------------------'
