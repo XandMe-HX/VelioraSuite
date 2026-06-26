@@ -83,8 +83,8 @@ public final class FishingDataManager {
         }
         result.sort(Comparator
                 .comparingInt(PlayerFishingStats::getTotalCatches).reversed()
-                .thenComparing((PlayerFishingStats stats) -> stats.getBestRarity().power(), Comparator.reverseOrder())
-                .thenComparing(PlayerFishingStats::getBestFishWeight, Comparator.reverseOrder()));
+                .thenComparing(Comparator.comparingInt((PlayerFishingStats stats) -> stats.getBestRarity().power()).reversed())
+                .thenComparing(Comparator.comparingDouble(PlayerFishingStats::getBestFishWeight).reversed()));
         return result.stream().limit(limit).toList();
     }
 
