@@ -5,7 +5,6 @@ import id.velioragardens.veliorasuite.module.fishing.model.FishDefinition;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.boss.BarColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class FishingConfigManager {
 
@@ -56,6 +56,9 @@ public final class FishingConfigManager {
     public boolean isQuestFishingProgressEnabled() { return bool("settings.quest-integration.enabled", true); }
 
     public String getUsePermission() { return str("permissions.use", "veliorasuite.fishing.use"); }
+    public String getSellPermission() { return str("permissions.sell", "veliorasuite.fishing.sell"); }
+    public String getBagPermission() { return str("permissions.bag", "veliorasuite.fishing.bag"); }
+    public String getTopPermission() { return str("permissions.top", "veliorasuite.fishing.top"); }
     public String getAdminPermission() { return str("permissions.admin", "veliorasuite.fishing.admin"); }
     public String getReloadPermission() { return str("permissions.reload", "veliorasuite.fishing.reload"); }
 
@@ -69,6 +72,7 @@ public final class FishingConfigManager {
     public int minPrice(FishRarity rarity) { return Math.max(0, integer("settings.price." + rarity.key() + ".min", fallbackMinPrice(rarity))); }
     public int maxPrice(FishRarity rarity) { return Math.max(minPrice(rarity), integer("settings.price." + rarity.key() + ".max", fallbackMaxPrice(rarity))); }
     public int maxFinalPrice(FishRarity rarity) { return Math.max(maxPrice(rarity), integer("settings.price." + rarity.key() + ".max-final", fallbackFinalMaxPrice(rarity))); }
+    public int randomPrice(FishRarity rarity) { int min = minPrice(rarity); int max = maxPrice(rarity); return max <= min ? min : ThreadLocalRandom.current().nextInt(min, max + 1); }
 
     public boolean isVanillaFish(Material material) {
         return Set.of(Material.COD, Material.SALMON, Material.TROPICAL_FISH, Material.PUFFERFISH).contains(material);
@@ -111,6 +115,7 @@ public final class FishingConfigManager {
                 Math.max(0.1D, section.getDouble("weight.max", fallbackMaxWeight(rarity))),
                 Math.max(0, section.getInt("price.min", minPrice(rarity))),
                 Math.max(0, section.getInt("price.max", maxPrice(rarity))),
+                section.getString("origin", "VelioraFishing"),
                 section.getString("region", "Veliora"),
                 section.getBoolean("head.enabled", rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI),
                 section.getString("head.texture-base64", ""),
@@ -119,17 +124,17 @@ public final class FishingConfigManager {
     }
 
     private void addFallbackFish() {
-        add("rotten_boot", "Sepatu Rusak", FishRarity.TRASH, Material.LEATHER_BOOTS, 0.1D, 1.0D, "Sampah");
-        add("cod", "Cod", FishRarity.VANILLA, Material.COD, 0.5D, 4.0D, "Vanilla");
-        add("tilapia", "Tilapia", FishRarity.COMMON, Material.COD, 1.0D, 8.0D, "Sungai");
-        add("koi", "Koi Veliora", FishRarity.ORNAMENTAL, Material.TROPICAL_FISH, 0.3D, 2.5D, "Kolam");
-        add("bluefin", "Bluefin Tuna", FishRarity.RARE, Material.SALMON, 20.0D, 180.0D, "Laut");
-        add("arwana_super_red", "Arwana Super Red", FishRarity.LEGENDARY, Material.PLAYER_HEAD, 10.0D, 60.0D, "Legenda");
-        add("bahamut", "Bahamut", FishRarity.MITOLOGI, Material.PLAYER_HEAD, 500.0D, 2500.0D, "Mitologi");
+        add("old_boot", "Old Boot", FishRarity.TRASH, Material.LEATHER_BOOTS, 0.1D, 1.0D, "VelioraFishing", "Sampah");
+        add("cod", "Cod", FishRarity.VANILLA, Material.COD, 0.5D, 4.0D, "Vanilla", "Ocean");
+        add("tilapia", "Tilapia", FishRarity.COMMON, Material.COD, 1.0D, 8.0D, "VelioraFishing", "Sungai");
+        add("koi", "Koi Veliora", FishRarity.ORNAMENTAL, Material.TROPICAL_FISH, 0.3D, 2.5D, "VelioraFishing", "Kolam");
+        add("bluefin", "Bluefin Tuna", FishRarity.RARE, Material.SALMON, 20.0D, 180.0D, "VelioraFishing", "Laut");
+        add("arwana_super_red", "Arwana Super Red", FishRarity.LEGENDARY, Material.PLAYER_HEAD, 10.0D, 60.0D, "VelioraFishing", "Legenda");
+        add("bahamut", "Bahamut", FishRarity.MITOLOGI, Material.PLAYER_HEAD, 500.0D, 2500.0D, "VelioraFishing", "Mitologi");
     }
 
-    private void add(String id, String name, FishRarity rarity, Material material, double minWeight, double maxWeight, String region) {
-        fishDefinitions.put(id, new FishDefinition(id, name, rarity, material, minWeight, maxWeight, minPrice(rarity), maxPrice(rarity), region, rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI, "", Material.TROPICAL_FISH));
+    private void add(String id, String name, FishRarity rarity, Material material, double minWeight, double maxWeight, String origin, String region) {
+        fishDefinitions.put(id, new FishDefinition(id, name, rarity, material, minWeight, maxWeight, minPrice(rarity), maxPrice(rarity), origin, region, rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI, "", Material.TROPICAL_FISH));
     }
 
     private int fallbackSpam(FishRarity rarity) {
