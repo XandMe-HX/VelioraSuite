@@ -41,7 +41,7 @@ public final class TraderPaymentManager {
     }
 
     private PaymentResult takeMoney(Player player, long amount) {
-        if (amount <= 0) return PaymentResult.success();
+        if (amount <= 0) return PaymentResult.ok();
         try {
             if (Bukkit.getPluginManager().getPlugin("Vault") == null) return PaymentResult.fail("vault");
             Class<?> economyClass = Class.forName("net.milkbowl.vault.economy.Economy");
@@ -54,7 +54,7 @@ public final class TraderPaymentManager {
             if (!enough) return PaymentResult.fail("money");
             Method withdraw = economy.getClass().getMethod("withdrawPlayer", OfflinePlayer.class, double.class);
             withdraw.invoke(economy, player, (double) amount);
-            return PaymentResult.success();
+            return PaymentResult.ok();
         } catch (Exception exception) {
             if (!vaultWarned) {
                 plugin.getLogger().warning("VelioraTrader: Vault economy tidak aktif/valid untuk transaksi money.");
@@ -68,7 +68,7 @@ public final class TraderPaymentManager {
         if (!plugin.getModuleManager().isModuleActive("fishing")) return PaymentResult.fail("fish-module");
         if (!hasFish(player, item)) return PaymentResult.fail("fish");
         for (TraderFishRequirement requirement : item.getFishRequirements()) removeFish(player, requirement);
-        return PaymentResult.success();
+        return PaymentResult.ok();
     }
 
     private boolean hasFish(Player player, TraderTradeItem item) {
@@ -138,7 +138,12 @@ public final class TraderPaymentManager {
     }
 
     public record PaymentResult(boolean success, String reason) {
-        public static PaymentResult success() { return new PaymentResult(true, ""); }
-        public static PaymentResult fail(String reason) { return new PaymentResult(false, reason); }
+        public static PaymentResult ok() {
+            return new PaymentResult(true, "");
+        }
+
+        public static PaymentResult fail(String reason) {
+            return new PaymentResult(false, reason);
+        }
     }
 }
