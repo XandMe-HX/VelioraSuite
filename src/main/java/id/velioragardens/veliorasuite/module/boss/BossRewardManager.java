@@ -44,31 +44,26 @@ public final class BossRewardManager {
             if (entry.damage() < config.minDamageToReward()) continue;
             Player player = Bukkit.getPlayer(entry.uuid());
             if (player == null) continue;
-            giveMainMoney(player, definition);
-            if (i < 3) {
-                giveTopBonus(player, i);
-                giveRareMaterial(player, definition, i);
+            long main = mainMoney(definition);
+            long bonus = i < 3 ? topBonus(i) : 0L;
+            long total = main + bonus;
+            if (config.moneyTotalCapEnabled()) total = Math.min(total, config.moneyTotalCapMax());
+            if (total > 0 && deposit(player, total)) {
+                player.sendMessage(config.color(config.message("reward-money-total", "%prefix% &aTotal reward uang boss kamu: &e%money%").replace("%money%", String.valueOf(total))));
             }
+            if (i < 3) giveRareMaterial(player, definition, i);
             player.sendMessage(config.color(config.message("reward-received", "%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.").replace("%damage%", String.format("%.1f", entry.damage()))));
         }
     }
 
-    private void giveMainMoney(Player player, BossDefinition definition) {
-        if (!config.bossMoneyEnabled(definition)) return;
-        long amount = randomMoney(config.bossMoneyMin(definition), config.bossMoneyMax(definition));
-        if (amount <= 0) return;
-        if (deposit(player, amount)) {
-            player.sendMessage(config.color(config.message("reward-money", "&aKamu mendapat reward uang boss: &e%money%").replace("%money%", String.valueOf(amount))));
-        }
+    private long mainMoney(BossDefinition definition) {
+        if (!config.bossMoneyEnabled(definition)) return 0L;
+        return randomMoney(config.bossMoneyMin(definition), config.bossMoneyMax(definition));
     }
 
-    private void giveTopBonus(Player player, int rankIndex) {
-        if (!config.topDamageBonusEnabled()) return;
-        long amount = randomMoney(config.topBonusMin(rankIndex), config.topBonusMax(rankIndex));
-        if (amount <= 0) return;
-        if (deposit(player, amount)) {
-            player.sendMessage(config.color(config.message("reward-top-money", "&aKamu mendapat bonus top damage: &e%money%").replace("%money%", String.valueOf(amount))));
-        }
+    private long topBonus(int rankIndex) {
+        if (!config.topDamageBonusEnabled()) return 0L;
+        return randomMoney(config.topBonusMin(rankIndex), config.topBonusMax(rankIndex));
     }
 
     private long randomMoney(long min, long max) {
