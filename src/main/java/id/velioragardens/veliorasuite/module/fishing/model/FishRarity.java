@@ -7,7 +7,7 @@ public enum FishRarity {
     VANILLA(1, "Vanilla", "&7"),
     COMMON(2, "Common", "&f"),
     ORNAMENTAL(3, "Ornamental", "&d"),
-    RARE(4, "Rare", "&9"),
+    EPIC(4, "Epic", "&9"),
     LEGENDARY(5, "Legendary", "&6"),
     MITOLOGI(6, "Mitologi", "&c");
 
@@ -28,6 +28,8 @@ public enum FishRarity {
 
     public static FishRarity fromKey(String input) {
         if (input == null) return COMMON;
-        try { return FishRarity.valueOf(input.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return COMMON; }
+        String normalized = input.trim().toUpperCase(Locale.ROOT);
+        if (normalized.equals("RARE")) return EPIC;
+        try { return FishRarity.valueOf(normalized); } catch (Exception ignored) { return COMMON; }
     }
 }
