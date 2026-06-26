@@ -14,26 +14,42 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public final class FishingCollectionGuiManager implements Listener {
 
     private final FishingManager manager;
+    private final Map<UUID, Integer> pages = new HashMap<>();
 
     public FishingCollectionGuiManager(FishingManager manager) {
         this.manager = manager;
     }
 
     public void open(Player player) {
+        open(player, pages.getOrDefault(player.getUniqueId(), 0));
+    }
+
+    private void open(Player player, int page) {
         int size = manager.getConfigManager().getCollectionSize();
-        Inventory inventory = Bukkit.createInventory(null, size, manager.getConfigManager().color(manager.getConfigManager().getCollectionTitle()));
+        int maxItems = Math.max(1, size - 9);
         List<FishDefinition> fish = new ArrayList<>(manager.getConfigManager().getFishDefinitions().values());
-        fish.sort(Comparator.comparing((FishDefinition definition) -> definition.rarity().power()).thenComparing(FishDefinition::name));
-        int maxItems = Math.max(0, size - 9);
-        for (int i = 0; i < fish.size() && i < maxItems; i++) {
-            inventory.setItem(i, collectionItem(player, fish.get(i)));
+        fish.sort(Comparator.comparingInt((FishDefinition definition) -> definition.rarity().power()).thenComparing(FishDefinition::name));
+        int maxPage = Math.max(0, (fish.size() - 1) / maxItems);
+        int safePage = Math.max(0, Math.min(page, maxPage));
+        pages.put(player.getUniqueId(), safePage);
+
+        Inventory inventory = Bukkit.createInventory(null, size, manager.getConfigManager().color(manager.getConfigManager().getCollectionTitle()));
+        int start = safePage * maxItems;
+        for (int i = 0; i < maxItems && start + i < fish.size(); i++) {
+            inventory.setItem(i, collectionItem(player, fish.get(start + i)));
         }
         inventory.setItem(size - 9, button(Material.ARROW, "&aBack", List.of("&7Kembali ke menu fishing.")));
+        inventory.setItem(size - 6, button(Material.PAPER, "&ePrevious Page", List.of("&7Halaman sebelumnya.")));
+        inventory.setItem(size - 5, button(Material.MAP, "&fPage " + (safePage + 1) + "/" + (maxPage + 1), List.of("&7Total ikan: &f" + fish.size())));
+        inventory.setItem(size - 4, button(Material.PAPER, "&eNext Page", List.of("&7Halaman berikutnya.")));
         player.openInventory(inventory);
     }
 
@@ -42,7 +58,11 @@ public final class FishingCollectionGuiManager implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getCollectionTitle()))) return;
         event.setCancelled(true);
-        if (event.getRawSlot() == manager.getConfigManager().getCollectionSize() - 9) manager.openMainGui(player);
+        int size = manager.getConfigManager().getCollectionSize();
+        int page = pages.getOrDefault(player.getUniqueId(), 0);
+        if (event.getRawSlot() == size - 9) manager.openMainGui(player);
+        else if (event.getRawSlot() == size - 6) open(player, page - 1);
+        else if (event.getRawSlot() == size - 4) open(player, page + 1);
     }
 
     private ItemStack collectionItem(Player player, FishDefinition definition) {
