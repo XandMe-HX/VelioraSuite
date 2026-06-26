@@ -35,7 +35,7 @@ public final class FishingMinigameManager implements Listener {
         if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH) return;
         Player player = event.getPlayer();
         removeCaught(event.getCaught());
-        FishGenerator.GeneratedFish generatedFish = manager.getGenerator().generate();
+        FishGenerator.GeneratedFish generatedFish = manager.getGenerator().generate(player);
         FishRarity rarity = generatedFish.fish().rarity();
         boolean skipMinigame = !manager.getConfigManager().isMinigameEnabled()
                 || !manager.getConfigManager().isMinigameEnabledForRarity(rarity)
