@@ -1,8 +1,173 @@
-enabled: false
-
 settings:
-  manual-spawn: true
-  auto-spawn: false
+  enabled: true
+  spawn:
+    enabled: true
+    interval-minutes: 30
+    despawn-minutes: 20
+    announce-spawn: true
+    announce-death: true
+    announce-despawn: true
+    allow-multiple-active: false
+    require-spawn-point: true
+
+rarity-chance:
+  common: 50.0
+  rare: 25.0
+  epic: 15.0
+  legendary: 8.0
+  mythic: 2.0
+
+bossbar:
+  enabled: true
+  title: '&c%boss% &7- &f%health%&7/&f%max_health% HP &8| &e%time%'
+  color-by-rarity: true
+  style: SEGMENTED_20
+bossbar-radius: 80
+
+bosses:
+  ancient_warden:
+    entity: WARDEN
+    display-name: '&9Ancient Warden'
+    rarity: EPIC
+    health: 500
+    damage: 8.0
+    scale: 3.5
+  namazu_earthshaker:
+    entity: RAVAGER
+    display-name: '&6Namazu Earthshaker'
+    rarity: LEGENDARY
+    health: 500
+    damage: 10.0
+    scale: 3.0
+  forest_guardian:
+    entity: IRON_GOLEM
+    display-name: '&aForest Guardian'
+    rarity: RARE
+    health: 300
+    damage: 6.0
+    scale: 3.0
+  abyss_brute:
+    entity: PIGLIN_BRUTE
+    display-name: '&5Abyss Brute'
+    rarity: EPIC
+    health: 400
+    damage: 8.0
+    scale: 3.5
+  infernal_butcher:
+    entity: VINDICATOR
+    display-name: '&cInfernal Butcher'
+    rarity: RARE
+    health: 250
+    damage: 6.0
+    scale: 3.0
+  soul_reaper:
+    entity: WITHER_SKELETON
+    display-name: '&8Soul Reaper'
+    rarity: LEGENDARY
+    health: 450
+    damage: 9.0
+    scale: 3.5
+  rotten_colossus:
+    entity: HUSK
+    display-name: '&2Rotten Colossus'
+    rarity: COMMON
+    health: 150
+    damage: 4.0
+    scale: 3.5
+  deep_drowned_king:
+    entity: DROWNED
+    display-name: '&3Deep Drowned King'
+    rarity: RARE
+    health: 300
+    damage: 6.0
+    scale: 3.0
+
+skills:
+  enabled: true
+  cooldown-seconds: 12
+  random-skill: true
+  damage:
+    ground-slam: 6.0
+    fire-bomb: 8.0
+  summon:
+    max-minions: 8
+    minions-per-cast: 3
+    types:
+      - ZOMBIE
+      - HUSK
+      - VINDICATOR
+      - DROWNED
+
+protection:
+  respect-worldguard: false
+  respect-redprotect: false
+  prevent-block-damage: true
+  allow-boss-damage-in-protected-region: true
+
+rewards:
+  min-damage-to-reward: 20.0
+  money:
+    common:
+      money-top1: 3000
+      money-top2: 2000
+      money-top3: 1000
+      participation-money: 300
+    rare:
+      money-top1: 5000
+      money-top2: 3000
+      money-top3: 1500
+      participation-money: 500
+    epic:
+      money-top1: 8000
+      money-top2: 5000
+      money-top3: 2500
+      participation-money: 800
+    legendary:
+      money-top1: 12000
+      money-top2: 8000
+      money-top3: 4000
+      participation-money: 1200
+    mythic:
+      money-top1: 20000
+      money-top2: 12000
+      money-top3: 6000
+      participation-money: 2000
+  materials:
+    common:
+      diamond: 0
+      ancient-debris: 0
+    rare:
+      diamond: 2
+      ancient-debris: 0
+    epic:
+      diamond: 5
+      ancient-debris: 1
+    legendary:
+      diamond: 10
+      ancient-debris: 3
+    mythic:
+      diamond: 10
+      ancient-debris: 5
+
+effects:
+  spawn:
+    sound: ENTITY_WARDEN_ROAR
+    particle: SOUL
+  death:
+    sound: UI_TOAST_CHALLENGE_COMPLETE
+    particle: TOTEM_OF_UNDYING
 
 messages:
-  prefix: '&8【&aVelioraBoss&8】'
+  prefix: '&8[&cVelioraBoss&8] '
+  boss-spawn: '%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!'
+  boss-death: '%prefix% &a%boss% berhasil dikalahkan!'
+  boss-despawn: '%prefix% &e%boss% menghilang.'
+  boss-next: '%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.'
+  boss-active: '%prefix% &cBoss aktif: &f%boss% &7di &f%world% %x% %y% %z%&7. HP: &f%health%/%max_health%'
+  spawn-set: '%prefix% &aSpawn boss &f%name% &aberhasil diset.'
+  reload-success: '%prefix% &aVelioraBoss berhasil direload.'
+  stop-success: '%prefix% &aBoss aktif berhasil dihentikan.'
+  no-active-boss: '%prefix% &eTidak ada boss aktif.'
+  no-spawn-point: '%prefix% &cBelum ada spawn point boss. Gunakan /boss set <nama>.'
+  top-damage-header: '&cTop Damage Boss:'
+  reward-received: '%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.'
