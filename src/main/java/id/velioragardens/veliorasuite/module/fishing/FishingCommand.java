@@ -30,18 +30,18 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "sell" -> {
-                if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
+                if (!hasSell(sender)) { manager.sendNoPermission(sender); return true; }
                 if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
                 manager.openSellGui(player);
                 return true;
             }
             case "top" -> {
-                if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
+                if (!hasTop(sender)) { manager.sendNoPermission(sender); return true; }
                 manager.sendTop(sender);
                 return true;
             }
             case "reload" -> {
-                if (!sender.hasPermission(manager.getConfigManager().getReloadPermission()) && !sender.hasPermission(manager.getConfigManager().getAdminPermission()) && !sender.isOp()) {
+                if (!hasReload(sender)) {
                     manager.sendNoPermission(sender);
                     return true;
                 }
@@ -59,13 +59,31 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length != 1) return new ArrayList<>();
-        List<String> options = new ArrayList<>(Arrays.asList("help", "sell", "top"));
-        if (sender.hasPermission(manager.getConfigManager().getReloadPermission()) || sender.hasPermission(manager.getConfigManager().getAdminPermission()) || sender.isOp()) options.add("reload");
+        List<String> options = new ArrayList<>(Arrays.asList("help"));
+        if (hasSell(sender)) options.add("sell");
+        if (hasTop(sender)) options.add("top");
+        if (hasReload(sender)) options.add("reload");
         return filter(options, args[0]);
     }
 
     private boolean hasUse(CommandSender sender) {
-        return sender.hasPermission(manager.getConfigManager().getUsePermission()) || sender.hasPermission(manager.getConfigManager().getAdminPermission()) || sender.isOp();
+        return sender.hasPermission(manager.getConfigManager().getUsePermission()) || hasAdmin(sender);
+    }
+
+    private boolean hasSell(CommandSender sender) {
+        return sender.hasPermission(manager.getConfigManager().getSellPermission()) || hasAdmin(sender);
+    }
+
+    private boolean hasTop(CommandSender sender) {
+        return sender.hasPermission(manager.getConfigManager().getTopPermission()) || hasAdmin(sender);
+    }
+
+    private boolean hasReload(CommandSender sender) {
+        return sender.hasPermission(manager.getConfigManager().getReloadPermission()) || hasAdmin(sender);
+    }
+
+    private boolean hasAdmin(CommandSender sender) {
+        return sender.hasPermission(manager.getConfigManager().getAdminPermission()) || sender.isOp();
     }
 
     private List<String> filter(List<String> options, String input) {
