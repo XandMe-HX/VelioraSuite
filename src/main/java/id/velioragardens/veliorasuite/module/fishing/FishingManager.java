@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.fishing;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
+import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import id.velioragardens.veliorasuite.module.fishing.model.PlayerFishingStats;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -122,7 +123,7 @@ public final class FishingManager {
                 continue;
             }
             if (configManager.isVanillaFishSellAllowed() && configManager.isVanillaFish(item.getType())) {
-                total += 50 * amount;
+                for (int i = 0; i < amount; i++) total += configManager.randomPrice(FishRarity.VANILLA);
                 sold += amount;
             }
         }
