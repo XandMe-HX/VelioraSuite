@@ -50,8 +50,9 @@ public final class FishItemFactory {
             meta.setLore(List.of(
                     configManager.color("&7Rarity: " + fish.rarity().color() + fish.rarity().displayName()),
                     configManager.color("&7Berat: &f" + formatWeight(fish.weight())),
-                    configManager.color("&7Harga: &a" + fish.price()),
-                    configManager.color("&7Region: &f" + fish.region())
+                    configManager.color("&7Origin: &f" + fish.origin()),
+                    configManager.color("&7Region: &f" + fish.region()),
+                    configManager.color("&7Harga: &a" + fish.price())
             ));
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(idKey, PersistentDataType.STRING, fish.id());
