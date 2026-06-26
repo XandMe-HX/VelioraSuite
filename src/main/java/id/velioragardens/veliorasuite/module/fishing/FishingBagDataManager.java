@@ -52,7 +52,7 @@ public final class FishingBagDataManager {
             int amount = data.getInt(path + ".amount", 0);
             if (amount > 0) result.add(new FishingBagEntry(key, fish, amount));
         }
-        result.sort(Comparator.comparing(entry -> entry.getFish().rarity().power(), Comparator.reverseOrder()));
+        result.sort(Comparator.comparingInt((FishingBagEntry entry) -> entry.getFish().rarity().power()).reversed());
         return result;
     }
 
