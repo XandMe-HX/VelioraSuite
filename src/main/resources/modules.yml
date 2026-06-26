@@ -6,7 +6,7 @@ modules:
   kits: true
   report: true
   announcement: true
-  fishing: false
+  fishing: true
   skills: true
   quest: true
   trader: false
