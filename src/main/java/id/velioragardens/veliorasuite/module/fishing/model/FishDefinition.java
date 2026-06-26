@@ -11,6 +11,7 @@ public record FishDefinition(
         double maxWeight,
         int minPrice,
         int maxPrice,
+        String origin,
         String region,
         boolean headEnabled,
         String headTextureBase64,
