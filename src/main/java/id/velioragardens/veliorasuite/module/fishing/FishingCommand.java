@@ -29,10 +29,22 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
         }
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "bag" -> {
+                if (!hasBag(sender)) { manager.sendNoPermission(sender); return true; }
+                if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
+                manager.openBagGui(player);
+                return true;
+            }
             case "sell" -> {
                 if (!hasSell(sender)) { manager.sendNoPermission(sender); return true; }
                 if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
                 manager.openSellGui(player);
+                return true;
+            }
+            case "collection" -> {
+                if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
+                if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
+                manager.openCollectionGui(player);
                 return true;
             }
             case "top" -> {
@@ -60,7 +72,9 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length != 1) return new ArrayList<>();
         List<String> options = new ArrayList<>(Arrays.asList("help"));
+        if (hasBag(sender)) options.add("bag");
         if (hasSell(sender)) options.add("sell");
+        if (hasUse(sender)) options.add("collection");
         if (hasTop(sender)) options.add("top");
         if (hasReload(sender)) options.add("reload");
         return filter(options, args[0]);
@@ -68,6 +82,10 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
 
     private boolean hasUse(CommandSender sender) {
         return sender.hasPermission(manager.getConfigManager().getUsePermission()) || hasAdmin(sender);
+    }
+
+    private boolean hasBag(CommandSender sender) {
+        return sender.hasPermission(manager.getConfigManager().getBagPermission()) || hasAdmin(sender);
     }
 
     private boolean hasSell(CommandSender sender) {

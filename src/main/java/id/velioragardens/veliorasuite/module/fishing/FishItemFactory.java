@@ -37,6 +37,12 @@ public final class FishItemFactory {
         this.regionKey = new NamespacedKey(plugin, "veliorafishing_region");
     }
 
+    public ItemStack create(CaughtFish fish) {
+        FishDefinition definition = configManager.getFishDefinition(fish.id());
+        if (definition == null) definition = fallbackDefinition(fish);
+        return create(definition, fish);
+    }
+
     public ItemStack create(FishDefinition definition, CaughtFish fish) {
         Material material = itemMaterial(definition);
         ItemStack item = new ItemStack(material == null ? Material.COD : material);
@@ -80,6 +86,17 @@ public final class FishItemFactory {
     public String formatWeight(double weight) {
         if (weight >= 1000.0D) return String.format("%.3f ton", weight / 1000.0D);
         return String.format("%.1f kg", weight);
+    }
+
+    private FishDefinition fallbackDefinition(CaughtFish fish) {
+        Material material = switch (fish.rarity()) {
+            case TRASH -> Material.LEATHER_BOOTS;
+            case VANILLA, COMMON -> Material.COD;
+            case ORNAMENTAL -> Material.TROPICAL_FISH;
+            case EPIC -> Material.SALMON;
+            case LEGENDARY, MITOLOGI -> Material.PLAYER_HEAD;
+        };
+        return new FishDefinition(fish.id(), fish.name(), fish.rarity(), material, fish.weight(), fish.weight(), fish.price(), fish.price(), fish.origin(), fish.region(), fish.rarity() == FishRarity.LEGENDARY || fish.rarity() == FishRarity.MITOLOGI, "", Material.TROPICAL_FISH);
     }
 
     private Material itemMaterial(FishDefinition definition) {

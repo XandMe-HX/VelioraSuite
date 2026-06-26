@@ -1,0 +1,282 @@
+settings:
+  enabled: true
+  prefix: '&8[&6VelioraTrader&8] '
+  spawn:
+    enabled: true
+    interval-minutes: 1440
+    active-minutes: 30
+    reminder-minutes: 10
+    random-from-config-locations: true
+    announce-spawn: true
+    announce-despawn: true
+    announce-purchase: true
+    max-random-attempts: 25
+    locations:
+      - world: world
+        x: 0
+        y: 80
+        z: 0
+      - world: world
+        x: 150
+        y: 72
+        z: -220
+  trade:
+    random-items-per-spawn: 5
+    stock-mode: GLOBAL
+    default-stock: 1
+    per-player-limit: 1
+
+debug:
+  spawn: false
+
+npc:
+  type: VILLAGER
+  name: '&6Veliora Trader'
+  silent: true
+  gravity: true
+  glowing: true
+  offset:
+    x: 0.5
+    y: 1.0
+    z: 0.5
+  optional-skin:
+    enabled: false
+
+companion:
+  enabled: true
+  type: LLAMA
+  frozen: true
+  name: '&eTrader Companion'
+  show-name: false
+  offset:
+    x: 3.0
+    y: 1.0
+    z: 0.5
+
+camp:
+  enabled: true
+  restore-on-despawn: true
+  blocks:
+    - offset: [-1, 0, 0]
+      material: BARREL
+    - offset: [1, 0, 0]
+      material: CHEST
+    - offset: [0, 0, 1]
+      material: CRAFTING_TABLE
+    - offset: [-1, 0, 1]
+      material: CAMPFIRE
+    - offset: [1, 1, 0]
+      material: LANTERN
+    - offset: [-2, 0, 1]
+      material: OAK_PLANKS
+    - offset: [-2, 1, 1]
+      material: OAK_SLAB
+    - offset: [0, 1, -1]
+      material: OAK_TRAPDOOR
+    - offset: [2, 0, 0]
+      material: COMPOSTER
+
+gui:
+  title: '&8Veliora Trader'
+  size: 27
+  trade-slots: [10, 11, 13, 15, 16]
+  close-slot: 26
+
+repair-block:
+  enabled: true
+  blocked-commands:
+    - repair
+    - fix
+    - erepair
+    - efix
+
+permissions:
+  use: 'veliorasuite.trader.use'
+  admin: 'veliorasuite.trader.admin'
+  reload: 'veliorasuite.trader.reload'
+
+trade-pool:
+  excalibur:
+    material: DIAMOND_SWORD
+    name: '&6Excalibur'
+    amount: 1
+    stock: 1
+    custom-damage: 20
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Pedang langka dari Veliora Trader.'
+      - '&7Damage target: &f20'
+    enchantments:
+      - DAMAGE_ALL:5
+      - FIRE_ASPECT:2
+      - LOOT_BONUS_MOBS:3
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 5000000
+      fish:
+        enabled: false
+        requirements: []
+  angel_of_death_bow:
+    material: BOW
+    name: '&5Angel of Death Bow'
+    amount: 1
+    stock: 1
+    custom-damage: 10
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Busur trader dengan projectile damage target 10.'
+    enchantments:
+      - ARROW_DAMAGE:5
+      - ARROW_FIRE:1
+      - ARROW_KNOCKBACK:2
+      - ARROW_INFINITE:1
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 5000000
+      fish:
+        enabled: false
+        requirements: []
+  trisula_poseidon:
+    material: TRIDENT
+    name: '&bTrisula Poseidon'
+    amount: 1
+    stock: 1
+    custom-damage: 10
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Trisula mitologi dengan damage target 10.'
+    enchantments:
+      - LOYALTY:3
+      - IMPALING:5
+      - CHANNELING:1
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 3000000
+      fish:
+        enabled: false
+        requirements: []
+  ryujin_no_tsuri:
+    material: FISHING_ROD
+    name: '&bRyujin no Tsuri'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 30
+    unrepairable: true
+    lore:
+      - '&7Fishing luck bonus: &f+30%'
+      - '&7Terhubung dengan VelioraFishing.'
+    enchantments:
+      - LUCK:3
+      - LURE:3
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 1000000
+      fish:
+        enabled: false
+        requirements: []
+  kapak_leviathan:
+    material: DIAMOND_AXE
+    name: '&cKapak Leviathan'
+    amount: 1
+    stock: 1
+    custom-damage: 10
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Kapak mitologi dengan damage target 10.'
+    enchantments:
+      - DAMAGE_ALL:5
+      - DIG_SPEED:5
+      - DURABILITY:3
+      - LOOT_BONUS_BLOCKS:3
+    payment:
+      type: MONEY
+      money: 2000000
+      fish:
+        enabled: false
+        requirements: []
+  golden_enchant_x32:
+    material: ENCHANTED_GOLDEN_APPLE
+    name: '&6Golden Enchant'
+    amount: 32
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Bundle golden enchant.'
+    enchantments: []
+    payment:
+      type: FISH
+      money: 0
+      fish:
+        enabled: true
+        requirements:
+          - fish-id: bahamut
+            rarity: MITOLOGI
+            amount: 1
+  totem_bundle_x20:
+    material: TOTEM_OF_UNDYING
+    name: '&eTotem Bundle'
+    amount: 20
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Bundle totem trader.'
+    enchantments: []
+    payment:
+      type: FISH
+      money: 0
+      fish:
+        enabled: true
+        requirements:
+          - fish-id: ''
+            rarity: LEGENDARY
+            amount: 1
+  diamond_pack_x64:
+    material: DIAMOND
+    name: '&bDiamond Pack'
+    amount: 64
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Paket diamond trader.'
+    enchantments: []
+    payment:
+      type: FISH
+      money: 0
+      fish:
+        enabled: true
+        requirements:
+          - fish-id: ''
+            rarity: EPIC
+            amount: 3
+
+messages:
+  force-spawn-success: '%prefix% &aTrader berhasil dispawn untuk test.'
+  trader-spawn: '%prefix% &6Veliora Trader muncul di &f%world% %x% %y% %z%&6.'
+  trader-despawn: '%prefix% &eVeliora Trader telah pergi.'
+  trader-active: '%prefix% &aTrader sedang aktif di &f%world% %x% %y% %z%&a. Hilang dalam &f%time%&a.'
+  trader-next: '%prefix% &eTrader belum muncul. Spawn berikutnya dalam &f%time%&e.'
+  trader-reminder: '%prefix% &6Veliora Trader masih ada di &f%world% %x% %y% %z%&6. Hilang dalam &f%time%&6.'
+  trader-purchase-money: '%prefix% &e%player% &aberhasil membeli &f%item% &adari Veliora Trader.'
+  trader-purchase-fish: '%prefix% &e%player% &aberhasil menukar ikan untuk &f%item%&a.'
+  buy-success-money: '%prefix% &aBerhasil membeli &f%item% &adengan harga &f%money%&a.'
+  buy-success-fish: '%prefix% &aBerhasil menukar ikan untuk &f%item%&a.'
+  not-enough-money: '%prefix% &cUang kamu tidak cukup.'
+  not-enough-fish: '%prefix% &cIkan yang dibutuhkan belum cukup.'
+  sold-out: '%prefix% &cItem ini sudah sold out.'
+  vault-missing: '%prefix% &cVault economy tidak aktif.'
+  reload-success: '%prefix% &aVelioraTrader berhasil direload.'

@@ -1,4 +1,4 @@
-package id.velioragardens.veliorasuite.module.fishing;
+package id.velioragardens.veliorasuite.module.trader;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
@@ -10,26 +10,24 @@ import org.bukkit.event.Listener;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class FishingModule implements VelioraModule {
+public final class TraderModule implements VelioraModule {
 
     private final VelioraSuite plugin;
     private final List<Listener> listeners = new ArrayList<>();
-    private FishingManager manager;
+    private TraderManager manager;
     private boolean enabled;
 
-    public FishingModule(VelioraSuite plugin) {
+    public TraderModule(VelioraSuite plugin) {
         this.plugin = plugin;
     }
 
     @Override
-    public String getName() {
-        return "fishing";
-    }
+    public String getName() { return "trader"; }
 
     @Override
     public void load() {
-        plugin.saveResourceIfNotExists("modules/fishing.yml");
-        manager = new FishingManager(plugin);
+        plugin.saveResourceIfNotExists("modules/trader.yml");
+        manager = new TraderManager(plugin);
         manager.load();
     }
 
@@ -38,6 +36,7 @@ public final class FishingModule implements VelioraModule {
         enabled = true;
         registerCommand();
         registerListeners();
+        manager.enable();
     }
 
     @Override
@@ -45,7 +44,7 @@ public final class FishingModule implements VelioraModule {
         enabled = false;
         for (Listener listener : listeners) HandlerList.unregisterAll(listener);
         listeners.clear();
-        if (manager != null) manager.shutdown();
+        if (manager != null) manager.disable();
         registerDisabledCommand();
     }
 
@@ -56,39 +55,34 @@ public final class FishingModule implements VelioraModule {
     }
 
     @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
+    public boolean isEnabled() { return enabled; }
 
-    public FishingManager getFishingManager() {
-        return manager;
-    }
+    public TraderManager getTraderManager() { return manager; }
 
     private void registerCommand() {
-        PluginCommand command = plugin.getCommand("fish");
+        PluginCommand command = plugin.getCommand("trader");
         if (command == null) {
-            plugin.getLogger().warning("Command /fish tidak ditemukan di plugin.yml.");
+            plugin.getLogger().warning("Command /trader tidak ditemukan di plugin.yml.");
             return;
         }
-        FishingCommand fishingCommand = new FishingCommand(manager);
-        command.setExecutor(fishingCommand);
-        command.setTabCompleter(fishingCommand);
+        TraderCommand traderCommand = new TraderCommand(manager, manager.getConfigManager());
+        command.setExecutor(traderCommand);
+        command.setTabCompleter(traderCommand);
     }
 
     private void registerListeners() {
         listeners.clear();
-        listeners.add(manager.getMainGuiManager());
-        listeners.add(manager.getMinigameManager());
-        listeners.add(manager.getSellGuiManager());
-        listeners.add(manager.getBagGuiManager());
-        listeners.add(manager.getCollectionGuiManager());
+        listeners.add(manager.getNpcManager());
+        listeners.add(manager.getGuiManager());
+        listeners.add(new TraderRepairBlocker(manager.getConfigManager(), manager.getItemFactory()));
+        listeners.add(new TraderCombatListener(manager.getItemFactory()));
         for (Listener listener : listeners) plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 
     private void registerDisabledCommand() {
-        PluginCommand command = plugin.getCommand("fish");
+        PluginCommand command = plugin.getCommand("trader");
         if (command == null) return;
-        DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraFishing");
+        DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraTrader");
         command.setExecutor(disabledCommand);
         command.setTabCompleter(disabledCommand);
     }
