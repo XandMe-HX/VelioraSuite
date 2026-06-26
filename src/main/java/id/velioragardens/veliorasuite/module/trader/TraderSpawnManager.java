@@ -7,7 +7,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
@@ -24,6 +23,7 @@ public final class TraderSpawnManager {
     private final Random random = new Random();
     private BukkitTask task;
     private long nextSpawnAt;
+    private long nextReminderAt;
 
     public TraderSpawnManager(VelioraSuite plugin, TraderConfigManager configManager, TraderDataManager dataManager, TraderManager traderManager) {
         this.plugin = plugin;
@@ -37,7 +37,7 @@ public final class TraderSpawnManager {
         long fallback = System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L;
         nextSpawnAt = dataManager.getNextSpawnAt(fallback);
         dataManager.saveNextSpawnAt(nextSpawnAt);
-        task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L * 30L);
+        task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L * 5L);
     }
 
     public void stop() {
@@ -46,49 +46,78 @@ public final class TraderSpawnManager {
     }
 
     public void reload() {
-        nextSpawnAt = System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L;
-        dataManager.saveNextSpawnAt(nextSpawnAt);
+        scheduleNextFromNow();
     }
 
     public long getNextSpawnAt() {
         return nextSpawnAt;
     }
 
-    private void tick() {
-        if (!configManager.isEnabled() || !configManager.isSpawnEnabled()) return;
-        long now = System.currentTimeMillis();
-        if (traderManager.isActive()) {
-            if (now >= traderManager.getDespawnAt()) traderManager.despawn(true);
-            return;
-        }
-        if (now >= nextSpawnAt) {
-            Location location = findSpawnLocation();
-            if (location != null) traderManager.spawn(location);
-            nextSpawnAt = System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L;
-            dataManager.saveNextSpawnAt(nextSpawnAt);
-        }
+    public void scheduleNextFromNow() {
+        nextSpawnAt = System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L;
+        dataManager.saveNextSpawnAt(nextSpawnAt);
     }
 
-    private Location findSpawnLocation() {
+    public void resetReminderClock() {
+        nextReminderAt = System.currentTimeMillis() + configManager.getReminderMinutes() * 60_000L;
+    }
+
+    public Location findSpawnLocation() {
         List<Location> candidates = new ArrayList<>();
         if (configManager.isRandomFromConfigLocations() && !configManager.getLocations().isEmpty()) {
             List<TraderLocation> locations = new ArrayList<>(configManager.getLocations());
             Collections.shuffle(locations);
             for (TraderLocation traderLocation : locations) {
-                Location location = traderLocation.toLocation();
-                if (isSafe(location)) return location;
+                Location location = prepareSpawnLocation(traderLocation.toLocation());
+                if (location != null) return location;
             }
         }
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
             Location location = randomNear(player);
             if (location != null) candidates.add(location);
         }
         Collections.shuffle(candidates);
-        for (Location candidate : candidates) if (isSafe(candidate)) return candidate;
+        for (Location candidate : candidates) {
+            Location location = prepareSpawnLocation(candidate);
+            if (location != null) return location;
+        }
         return null;
     }
 
-    private Location randomNear(Player player) {
+    public Location prepareSpawnLocation(Location input) {
+        if (input == null || input.getWorld() == null) return null;
+        Location base = input.getBlock().getLocation();
+        base.getChunk().load(true);
+        if (isSafe(base)) return base;
+        World world = base.getWorld();
+        Block highest = world.getHighestBlockAt(base.getBlockX(), base.getBlockZ());
+        Location highestLocation = highest.getLocation();
+        highestLocation.getChunk().load(true);
+        if (isSafe(highestLocation)) return highestLocation;
+        return null;
+    }
+
+    private void tick() {
+        if (!configManager.isEnabled() || !configManager.isSpawnEnabled()) return;
+        long now = System.currentTimeMillis();
+        if (traderManager.isActive()) {
+            if (now >= traderManager.getDespawnAt()) {
+                traderManager.despawn(true);
+                return;
+            }
+            if (nextReminderAt > 0L && now >= nextReminderAt) {
+                traderManager.broadcastReminder();
+                resetReminderClock();
+            }
+            return;
+        }
+        if (now >= nextSpawnAt) {
+            Location location = findSpawnLocation();
+            if (!traderManager.spawn(location)) scheduleNextFromNow();
+        }
+    }
+
+    private Location randomNear(org.bukkit.entity.Player player) {
         if (player == null || player.getWorld() == null) return null;
         World world = player.getWorld();
         for (int i = 0; i < configManager.getMaxRandomAttempts(); i++) {
@@ -111,6 +140,8 @@ public final class TraderSpawnManager {
         Material groundType = ground.getType();
         if (!groundType.isSolid()) return false;
         if (groundType == Material.LAVA || groundType == Material.WATER) return false;
-        return feet.isEmpty() && head.isEmpty();
+        if (!feet.isPassable() || !head.isPassable()) return false;
+        Block below = ground.getRelative(0, -1, 0);
+        return below.getY() <= ground.getY() && !below.isLiquid();
     }
 }
