@@ -52,7 +52,7 @@ public final class TraderManager {
 
     public void disable() {
         spawnManager.stop();
-        despawn(false);
+        cleanupActiveTrader(true);
         dataManager.flushAll();
     }
 
@@ -99,7 +99,7 @@ public final class TraderManager {
     }
 
     public boolean forceSpawn(CommandSender sender) {
-        if (isActive()) despawn(false);
+        cleanupActiveTrader(true);
         Location location = spawnManager.findSpawnLocation();
         boolean spawned = spawn(location);
         if (spawned) send(sender, "force-spawn-success", "%prefix% &aTrader berhasil dispawn untuk test.", Map.of());
@@ -107,15 +107,18 @@ public final class TraderManager {
         return spawned;
     }
 
+    public boolean riset(CommandSender sender) {
+        cleanupActiveTrader(true);
+        Location location = spawnManager.findSpawnLocation();
+        boolean spawned = spawn(location);
+        if (spawned) send(sender, "riset-success", "%prefix% &aTrader berhasil diriset, camp lama dibersihkan, dan trader baru dispawn.", Map.of());
+        else send(sender, "riset-failed", "%prefix% &cGagal riset trader. Cek console.", Map.of());
+        return spawned;
+    }
+
     public void despawn(boolean announce) {
         boolean wasActive = isActive();
-        npcManager.remove();
-        campManager.restore();
-        activeItems.clear();
-        activeLocation = null;
-        despawnAt = 0L;
-        purchaseManager.resetForNewTrader();
-        dataManager.clearActive();
+        cleanupActiveTrader(true);
         spawnManager.scheduleNextFromNow();
         if (wasActive && announce && configManager.isAnnounceDespawn()) Bukkit.broadcastMessage(configManager.color(configManager.message("trader-despawn", "%prefix% &eVeliora Trader telah pergi.")));
     }
@@ -173,9 +176,19 @@ public final class TraderManager {
 
     private void cleanupPersistedActiveState() {
         if (!dataManager.hasActive() && dataManager.loadCampBackup().isEmpty()) return;
-        campManager.restore();
-        dataManager.clearActive();
+        cleanupActiveTrader(true);
         dataManager.saveNextSpawnAt(System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L);
+    }
+
+    private void cleanupActiveTrader(boolean restoreBlocks) {
+        Location cleanupLocation = activeLocation != null ? activeLocation : dataManager.getActiveLocation();
+        npcManager.removeNear(cleanupLocation);
+        if (restoreBlocks) campManager.restore();
+        activeItems.clear();
+        activeLocation = null;
+        despawnAt = 0L;
+        purchaseManager.resetForNewTrader();
+        dataManager.clearActive();
     }
 
     private List<TraderTradeItem> selectRandomItems() {
