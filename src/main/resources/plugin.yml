@@ -90,7 +90,7 @@ commands:
     permission: veliorasuite.fishing.use
   trader:
     description: Show VelioraTrader status.
-    usage: /trader
+    usage: /trader [reload|spawn]
     aliases:
       - vtrader
       - vtrade
