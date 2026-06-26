@@ -97,7 +97,7 @@ commands:
     permission: veliorasuite.trader.use
   boss:
     description: Manage VelioraBoss.
-    usage: /boss <set|spawn|stop|reload>
+    usage: /boss <set|spawn|stop|reload|list|info|top>
     aliases:
       - vboss
     permission: veliorasuite.boss.use
