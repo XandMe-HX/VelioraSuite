@@ -15,8 +15,10 @@ import org.bukkit.entity.EntityType;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public final class TraderConfigManager {
 
@@ -60,7 +62,7 @@ public final class TraderConfigManager {
     public boolean isNpcGlowing() { return bool("npc.glowing", true); }
     public double getNpcOffsetX() { return number("npc.offset.x", 0.5D); }
     public double getNpcOffsetY() { return number("npc.offset.y", 1.0D); }
-    public double getNpcOffsetZ() { return number("npc.offset.z", 0.5D); }
+    public double getNpcOffsetZ() { return number("npc.offset.z", 1.5D); }
 
     public boolean isCompanionEnabled() { return bool("companion.enabled", true); }
     public EntityType getCompanionType() { return entityType(str("companion.type", "LLAMA"), EntityType.LLAMA); }
@@ -69,10 +71,26 @@ public final class TraderConfigManager {
     public boolean isCompanionNameVisible() { return bool("companion.show-name", false); }
     public double getCompanionOffsetX() { return number("companion.offset.x", 3.0D); }
     public double getCompanionOffsetY() { return number("companion.offset.y", 1.0D); }
-    public double getCompanionOffsetZ() { return number("companion.offset.z", 0.5D); }
+    public double getCompanionOffsetZ() { return number("companion.offset.z", 1.5D); }
 
     public boolean isCampEnabled() { return bool("camp.enabled", true); }
     public boolean isRestoreOnDespawn() { return bool("camp.restore-on-despawn", true); }
+    public boolean isCampSkipNpcSpace() { return bool("camp.skip-npc-space", true); }
+    public boolean isProtectSolidBlocks() { return bool("camp.protect-solid-blocks", true); }
+    public String getCampTemplate() { return str("camp.template", "ADVENTURER_TENT"); }
+    public Set<Material> getAllowReplaceMaterials() {
+        Set<Material> materials = new HashSet<>();
+        List<String> raw = config == null ? List.of() : config.getStringList("camp.allow-replace");
+        if (raw.isEmpty()) raw = List.of("AIR", "CAVE_AIR", "VOID_AIR", "GRASS", "TALL_GRASS", "SHORT_GRASS", "FERN", "LARGE_FERN", "SNOW");
+        for (String name : raw) {
+            Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT));
+            if (material != null) materials.add(material);
+        }
+        materials.add(Material.AIR);
+        materials.add(Material.CAVE_AIR);
+        materials.add(Material.VOID_AIR);
+        return materials;
+    }
 
     public String getGuiTitle() { return str("gui.title", "&8Veliora Trader"); }
     public int getGuiSize() { return inventorySize(integer("gui.size", 27)); }
@@ -125,14 +143,20 @@ public final class TraderConfigManager {
                 campBlocks.add(new TraderCampBlock(x, y, z, material));
             }
         }
-        if (campBlocks.isEmpty()) {
-            campBlocks.add(new TraderCampBlock(-1, 0, 0, Material.BARREL));
-            campBlocks.add(new TraderCampBlock(1, 0, 0, Material.CHEST));
-            campBlocks.add(new TraderCampBlock(0, 0, 1, Material.CRAFTING_TABLE));
-            campBlocks.add(new TraderCampBlock(-1, 0, 1, Material.CAMPFIRE));
-            campBlocks.add(new TraderCampBlock(1, 1, 0, Material.LANTERN));
-        }
+        if (campBlocks.isEmpty()) addFallbackCampTemplate();
     }
+
+    private void addFallbackCampTemplate() {
+        addCamp(-2, 0, -1, Material.OAK_PLANKS); addCamp(-1, 0, -1, Material.OAK_PLANKS); addCamp(0, 0, -1, Material.OAK_PLANKS); addCamp(1, 0, -1, Material.OAK_PLANKS);
+        addCamp(-2, 0, 0, Material.OAK_SLAB); addCamp(-1, 0, 0, Material.OAK_SLAB); addCamp(0, 0, 0, Material.OAK_SLAB); addCamp(1, 0, 0, Material.OAK_SLAB);
+        addCamp(-2, 1, 0, Material.BARREL); addCamp(-1, 1, 0, Material.CHEST); addCamp(0, 1, 0, Material.CRAFTING_TABLE); addCamp(1, 1, 0, Material.COMPOSTER); addCamp(2, 1, 0, Material.BARREL);
+        addCamp(-3, 0, 1, Material.CAMPFIRE); addCamp(2, 1, 1, Material.OAK_FENCE); addCamp(2, 2, 1, Material.LANTERN);
+        addCamp(-2, 1, -2, Material.WHITE_WOOL); addCamp(-1, 2, -2, Material.WHITE_WOOL); addCamp(0, 2, -2, Material.WHITE_WOOL); addCamp(1, 1, -2, Material.WHITE_WOOL);
+        addCamp(-2, 1, -3, Material.WHITE_WOOL); addCamp(-1, 2, -3, Material.WHITE_WOOL); addCamp(0, 2, -3, Material.WHITE_WOOL); addCamp(1, 1, -3, Material.WHITE_WOOL);
+        addCamp(-1, 1, -2, Material.BROWN_CARPET); addCamp(0, 1, -2, Material.BROWN_CARPET); addCamp(-1, 1, -3, Material.BROWN_CARPET); addCamp(0, 1, -3, Material.BROWN_CARPET);
+    }
+
+    private void addCamp(int x, int y, int z, Material material) { campBlocks.add(new TraderCampBlock(x, y, z, material)); }
 
     private void loadTradePool() {
         tradePool.clear();
