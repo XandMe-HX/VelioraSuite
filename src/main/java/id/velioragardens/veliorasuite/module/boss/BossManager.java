@@ -15,7 +15,6 @@ import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -37,6 +36,7 @@ public final class BossManager implements Listener {
     private final BossBarManager bossBarManager;
     private final BossRewardManager rewardManager;
     private final BossSkillManager skillManager;
+    private final BossQuestHook questHook;
     private final Random random = new Random();
     private final NamespacedKey bossIdKey;
     private final NamespacedKey bossNameKey;
@@ -57,6 +57,7 @@ public final class BossManager implements Listener {
         this.bossBarManager = new BossBarManager(config);
         this.rewardManager = new BossRewardManager(plugin, config);
         this.skillManager = new BossSkillManager(plugin, config, this);
+        this.questHook = new BossQuestHook(plugin);
         this.bossIdKey = new NamespacedKey(plugin, "velioraboss_id");
         this.bossNameKey = new NamespacedKey(plugin, "velioraboss_name");
         this.bossRarityKey = new NamespacedKey(plugin, "velioraboss_rarity");
@@ -155,6 +156,12 @@ public final class BossManager implements Listener {
         if (config.announceDeath()) Bukkit.broadcastMessage(config.color(config.message("boss-death", "%prefix% &a%boss% berhasil dikalahkan!").replace("%boss%", config.color(activeDefinition.displayName()))));
         death.getWorld().playSound(death, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
         rewardManager.distribute(activeDefinition, death, damageTracker);
+        for (BossDamageTracker.Entry entry : damageTracker.top()) {
+            if (entry.damage() >= config.minDamageToReward()) {
+                Player player = Bukkit.getPlayer(entry.uuid());
+                if (player != null) questHook.addMonsterHunterProgress(player);
+            }
+        }
         data.addKill(activeDefinition.id());
         clearRuntime();
         nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
@@ -187,7 +194,7 @@ public final class BossManager implements Listener {
         if (definition == null || location == null || location.getWorld() == null) return false;
         if (isActive() && !config.allowMultiple()) return false;
         location.getChunk().load(true);
-        Entity entity = location.getWorld().spawnEntity(location, definition.entityType(), CreatureSpawnEvent.SpawnReason.CUSTOM);
+        Entity entity = location.getWorld().spawnEntity(location, definition.entityType());
         if (!(entity instanceof LivingEntity living)) {
             entity.remove();
             return false;
@@ -198,7 +205,7 @@ public final class BossManager implements Listener {
         despawnAt = System.currentTimeMillis() + config.despawnMinutes() * 60_000L;
         living.addScoreboardTag("velioraboss_boss");
         living.getPersistentDataContainer().set(bossIdKey, PersistentDataType.STRING, definition.id());
-        living.getPersistentDataContainer().set(bossNameKey, PersistentDataType.STRING, ChatColorStrip.strip(config.color(definition.displayName())));
+        living.getPersistentDataContainer().set(bossNameKey, PersistentDataType.STRING, org.bukkit.ChatColor.stripColor(config.color(definition.displayName())));
         living.getPersistentDataContainer().set(bossRarityKey, PersistentDataType.STRING, definition.rarity().name());
         living.setCustomName(config.color(definition.displayName()));
         living.setCustomNameVisible(true);
@@ -290,9 +297,5 @@ public final class BossManager implements Listener {
     private String timeLeft(long target) {
         long seconds = Math.max(0L, (target - System.currentTimeMillis()) / 1000L);
         return (seconds / 60L) + "m " + (seconds % 60L) + "s";
-    }
-
-    private static final class ChatColorStrip {
-        private static String strip(String input) { return org.bukkit.ChatColor.stripColor(input == null ? "" : input); }
     }
 }
