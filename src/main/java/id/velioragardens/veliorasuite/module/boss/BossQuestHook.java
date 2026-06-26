@@ -1,7 +1,12 @@
 package id.velioragardens.veliorasuite.module.boss;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.api.VelioraModule;
+import id.velioragardens.veliorasuite.module.quest.QuestModule;
+import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
 import org.bukkit.entity.Player;
+
+import java.util.Optional;
 
 public final class BossQuestHook {
 
@@ -12,11 +17,9 @@ public final class BossQuestHook {
     }
 
     public void addMonsterHunterProgress(Player player) {
-        if (player == null || !plugin.getModuleManager().isModuleActive("quest")) return;
-        try {
-            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "questadmin progress " + player.getName() + " monster_hunter 1");
-        } catch (Exception ignored) {
-            // Soft hook only: VelioraBoss must keep running even if VelioraQuest has no admin API/command.
-        }
+        if (player == null || plugin.getModuleManager() == null || !plugin.getModuleManager().isModuleActive("quest")) return;
+        Optional<VelioraModule> module = plugin.getModuleManager().getModule("quest");
+        if (module.isEmpty() || !(module.get() instanceof QuestModule questModule) || questModule.getQuestManager() == null) return;
+        questModule.getQuestManager().addProgress(player, QuestCategory.MONSTER_HUNTER, 1);
     }
 }
