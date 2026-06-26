@@ -78,14 +78,20 @@ public final class KitsManager {
     }
 
     public void sendList(CommandSender sender) {
-        sender.sendMessage(configManager.color("&8&m--------------------------------"));
-        sender.sendMessage(configManager.color("&b&lVelioraKits List"));
+        sender.sendMessage(configManager.color(configManager.getMessage("list-header", "&8&m--------------------------------")));
+        sender.sendMessage(configManager.color(configManager.getMessage("list-title", "&b&lVelioraKits List")));
 
-        for (Kit kit : configManager.getEnabledKits()) {
-            sender.sendMessage(configManager.color("&7- &f" + kit.getId() + " &8- " + kit.getDisplayName()));
+        List<Kit> enabledKits = configManager.getEnabledKits();
+        if (enabledKits.isEmpty()) {
+            sender.sendMessage(configManager.color(configManager.getMessage("list-empty", "%prefix% &cTidak ada kit aktif.")));
+        } else {
+            String format = configManager.getMessage("list-format", "&7- &f%kit_display% &8(&7%kit_id%&8) &7Cooldown: &f%cooldown%");
+            for (Kit kit : enabledKits) {
+                sender.sendMessage(configManager.color(applyPlaceholders(format, getKitPlaceholders(kit))));
+            }
         }
 
-        sender.sendMessage(configManager.color("&8&m--------------------------------"));
+        sender.sendMessage(configManager.color(configManager.getMessage("list-footer", "&8&m--------------------------------")));
     }
 
     public void sendCooldowns(Player player) {
@@ -97,7 +103,7 @@ public final class KitsManager {
             long remaining = cooldownManager.getRemainingMillis(player.getUniqueId(), kit);
             if (remaining > 0) {
                 any = true;
-                player.sendMessage(configManager.color("&7- &f" + kit.getId() + " &8: &c" + cooldownManager.formatTime(remaining)));
+                player.sendMessage(configManager.color("&7- &f" + getKitDisplayName(kit) + " &8(&7" + kit.getId() + "&8) &8: &c" + cooldownManager.formatTime(remaining)));
             }
         }
 
@@ -222,15 +228,8 @@ public final class KitsManager {
     }
 
     public String applyKitPlaceholders(String text, Player player, Kit kit) {
-        String premiumPermission = getPremiumPermission(kit);
         String time = cooldownManager.formatTime(cooldownManager.getRemainingMillis(player.getUniqueId(), kit));
-        return applyPlaceholders(text, Map.of(
-                "%kit%", kit.getId(),
-                "%display_name%", kit.getDisplayName(),
-                "%price%", formatPrice(kit.getPrice()),
-                "%time%", time,
-                "%premium_permission%", premiumPermission
-        ));
+        return applyPlaceholders(text, getKitPlaceholders(kit, time));
     }
 
     public List<String> getKitIds() {
@@ -323,6 +322,43 @@ public final class KitsManager {
         }
 
         return purchaseManager.withdraw(player, kit.getPrice());
+    }
+
+    private Map<String, String> getKitPlaceholders(Kit kit) {
+        return getKitPlaceholders(kit, cooldownManager.formatTime(kit.getCooldownMillis()));
+    }
+
+    private Map<String, String> getKitPlaceholders(Kit kit, String cooldown) {
+        return Map.of(
+                "%kit%", kit.getId(),
+                "%kit_id%", kit.getId(),
+                "%kit_display%", getKitDisplayName(kit),
+                "%display_name%", getKitDisplayName(kit),
+                "%cooldown%", cooldown,
+                "%price%", formatPrice(kit.getPrice()),
+                "%premium_level%", String.valueOf(kit.getPremiumLevel()),
+                "%premium_permission%", getPremiumPermission(kit)
+        );
+    }
+
+    private String getKitDisplayName(Kit kit) {
+        String displayName = kit.getDisplayName();
+        if (displayName == null || displayName.isBlank() || displayName.equalsIgnoreCase(kit.getId())) {
+            return prettifyKitId(kit.getId());
+        }
+        return displayName;
+    }
+
+    private String prettifyKitId(String id) {
+        if (id == null || id.isBlank()) {
+            return "Kit";
+        }
+
+        String spaced = id.replace('_', ' ').replace('-', ' ').replaceAll("(?<=\\D)(?=\\d)", " ").trim();
+        if (spaced.isEmpty()) {
+            return "Kit";
+        }
+        return spaced.substring(0, 1).toUpperCase(Locale.ROOT) + spaced.substring(1).toLowerCase(Locale.ROOT);
     }
 
     private void send(CommandSender sender, String path, String fallback, Map<String, String> placeholders) {

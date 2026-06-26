@@ -20,7 +20,8 @@ public final class ConfigManager {
             "skills",
             "quest",
             "boss",
-            "security"
+            "security",
+            "chat"
     );
 
     private final VelioraSuite plugin;

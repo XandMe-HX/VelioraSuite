@@ -21,96 +21,217 @@ commands:
   veliorasuite:
     description: Main command for VelioraSuite.
     usage: /veliorasuite
-    aliases:
-      - vsuite
-      - vs
+    aliases: [vsuite, vs]
     permission: veliorasuite.admin
-
   velioraguide:
     description: Open Veliora guide pages.
     usage: /velioraguide [page|reload]
-    aliases:
-      - vguide
+    aliases: [vguide]
     permission: veliorasuite.guide.use
-
   veliorarules:
     description: Open Veliora rules pages.
     usage: /veliorarules [page]
-    aliases:
-      - vrules
+    aliases: [vrules]
     permission: veliorasuite.guide.use
-
   velioraproduct:
     description: Open Veliora product pages.
     usage: /velioraproduct [page]
-    aliases:
-      - vproduct
+    aliases: [vproduct]
     permission: veliorasuite.guide.use
-
+  veliorarank:
+    description: Open Veliora rank guide.
+    usage: /veliorarank [page]
+    aliases: [vrank]
+    permission: veliorasuite.guide.use
   velioraannouncement:
-    description: Manage Veliora automatic announcements.
+    description: Manage Veliora announcements.
     usage: /velioraannouncement <help|status|list|reload|send>
-    aliases:
-      - vannounce
-      - vann
-      - va
-
+    aliases: [vannounce, vann, va]
   kits:
-    description: Open and claim Veliora kits.
+    description: Open Veliora kits.
     usage: /kits <help|open|list|claim|preview|buy|cooldown|reload>
+    aliases: [veliorakits, vkits]
+  report:
+    description: Create a VelioraReport report.
+    usage: /report <player|bug> <reason>
+    aliases: [vreport]
+  reports:
+    description: Manage VelioraReport reports.
+    usage: /reports <list|view|close|reopen|reload>
+    aliases: [vreports]
+  team:
+    description: Manage VelioraTeam.
+    usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|delete|info|reload>
+  veliorachat:
+    description: Manage VelioraChat.
+    usage: /veliorachat <help|status|reload>
+    aliases: [vchat, vc]
+  vsecurity:
+    description: Manage VelioraSecurity.
+    usage: /vsecurity <help|status|alerts|reload>
+    aliases: [vsec, security]
+    permission: veliorasuite.security.admin
+  vskills:
+    description: Manage VelioraSkills.
+    usage: /vskills <help|status|reload|mana>
+    aliases: [vski, vmana, mana]
+    permission: veliorasuite.skills.use
+  quests:
+    description: Open and manage VelioraQuest.
+    usage: /quests <gui|progress|start|claim|cancel|reload|status>
+    aliases: [q, vquest]
+    permission: veliorasuite.quest.use
+  fish:
+    description: Open and manage VelioraFishing.
+    usage: /fish <help|sell|top|reload>
     aliases:
-      - veliorakits
-      - vkits
+      - vfish
+      - vfishing
+    permission: veliorasuite.fishing.use
+  register:
+    description: Register Veliora account.
+    usage: /register <password> <password confirm>
+    aliases: [reg]
+    permission: veliorasuite.loginsecurity.use
+  login:
+    description: Login Veliora account.
+    usage: /login <password>
+    aliases: [l]
+    permission: veliorasuite.loginsecurity.use
+  changepass:
+    description: Change Veliora account key.
+    usage: /changepass <old> <new>
+    aliases: [changepassword]
+    permission: veliorasuite.loginsecurity.use
+  unregister:
+    description: Unregister Veliora account.
+    usage: /unregister <password>
+    permission: veliorasuite.loginsecurity.use
+  logout:
+    description: Logout Veliora account.
+    usage: /logout
+    permission: veliorasuite.loginsecurity.use
+  risetpw:
+    description: Owner account reset command.
+    usage: /risetpw <playername>
+    aliases: [resetpw]
+  cpowner:
+    description: Owner account change command.
+    usage: /cpowner <playername> <new>
+  loginsecurity:
+    description: Manage VelioraLoginSecurity.
+    usage: /loginsecurity <help|reload|status>
+    aliases: [vlogsec, vlogin]
+    permission: veliorasuite.loginsecurity.admin
 
 permissions:
   veliorasuite.admin:
-    description: Allows access to VelioraSuite admin command.
     default: op
-
   veliorasuite.bypass:
-    description: Allows bypassing VelioraSuite protections.
     default: op
-
   veliorasuite.guide.use:
-    description: Allows players to open Veliora guide pages.
     default: true
-
   veliorasuite.guide.admin:
-    description: Allows admins to reload VelioraGuide.
     default: op
-
   veliorasuite.announcement.admin:
-    description: Allows full access to VelioraAnnouncement.
     default: op
-
   veliorasuite.announcement.reload:
-    description: Allows reloading VelioraAnnouncement.
     default: op
-
   veliorasuite.announcement.send:
-    description: Allows sending manual announcements.
     default: op
-
   veliorasuite.announcement.status:
-    description: Allows viewing VelioraAnnouncement status and list.
     default: op
-
   veliorasuite.kits.use:
-    description: Allows players to use VelioraKits.
     default: true
-
   veliorasuite.kits.admin:
-    description: Allows full access to VelioraKits.
     default: op
-
   veliorasuite.kits.reload:
-    description: Allows reloading VelioraKits.
     default: op
-
   veliorasuite.kits.bypasscooldown:
-    description: Allows bypassing kit cooldown.
     default: op
-
   veliorasuite.kits.bypassprice:
-    description: Allows bypassing kit prices.
+    default: op
+  veliorasuite.report.use:
+    default: true
+  veliorasuite.report.staff:
+    default: op
+  veliorasuite.report.admin:
+    default: op
+  veliorasuite.report.reload:
+    default: op
+  veliorasuite.report.bypasscooldown:
+    default: op
+  veliorasuite.team.use:
+    default: true
+  veliorasuite.team.admin:
+    default: op
+  veliorasuite.team.reload:
+    default: op
+  veliorasuite.team.setowner:
+    default: op
+  veliorasuite.team.delete:
+    default: op
+  veliorasuite.team.bypasscost:
+    default: op
+  veliorasuite.team.bypasslimit:
+    default: op
+  veliorasuite.chat.use:
+    default: true
+  veliorasuite.chat.admin:
+    default: op
+  veliorasuite.chat.reload:
+    default: op
+  veliorasuite.chat.bypasscooldown:
+    default: op
+  veliorasuite.chat.bypasscommandcooldown:
+    default: op
+  veliorasuite.chat.bypassfilter:
+    default: op
+  veliorasuite.loginsecurity.use:
+    default: true
+  veliorasuite.loginsecurity.admin:
+    default: op
+  veliorasuite.loginsecurity.owner:
+    default: op
+  veliorasuite.loginsecurity.bypass:
+    default: op
+  veliorasuite.security.admin:
+    default: op
+  veliorasuite.security.reload:
+    default: op
+  veliorasuite.security.alerts:
+    default: op
+  veliorasuite.security.bypass:
+    default: op
+  veliorasuite.skills.use:
+    default: true
+  veliorasuite.skills.admin:
+    default: op
+  veliorasuite.skills.reload:
+    default: op
+  veliorasuite.skills.mana.admin:
+    default: op
+  veliorasuite.skills.bypass:
+    default: op
+  veliorasuite.quest.use:
+    default: true
+  veliorasuite.quest.admin:
+    default: op
+  veliorasuite.quest.reload:
+    default: op
+  veliorasuite.quest.bypassmana:
+    default: op
+  veliorasuite.quest.reset:
+    default: op
+  veliorasuite.fishing.use:
+    default: true
+  veliorasuite.fishing.sell:
+    default: true
+  veliorasuite.fishing.bag:
+    default: true
+  veliorasuite.fishing.top:
+    default: true
+  veliorasuite.fishing.admin:
+    default: op
+  veliorasuite.fishing.reload:
     default: op

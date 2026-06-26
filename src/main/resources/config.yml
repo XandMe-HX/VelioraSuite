@@ -3,14 +3,21 @@
 # =========================================================
 # Ini adalah config utama VelioraSuite.
 #
+# Compatibility:
+# - Target server: Paper/Purpur 1.21.8 + Java 21.
+# - Java 21 recommended untuk runtime server.
+# - Java 25 may work as runtime, tapi bukan target utama.
+# - Plugin harus tetap compile Java 21 agar kompatibel dan stabil.
+# - Jangan pakai API Java 25 atau fitur bahasa Java 25.
+#
 # Cara pakai:
 # - Ubah enabled menjadi true/false untuk menyalakan atau mematikan module.
 # - Setelah edit config, jalankan /vs reload.
 # - Kalau ada perubahan besar, lebih aman restart server.
 #
 # Catatan:
-# - VelioraGuide dan VelioraAnnouncement sudah aktif.
-# - Module lain seperti kits, team, fishing, boss, dll akan ditambah satu-satu.
+# - Status module utama bisa dilihat di modules.yml.
+# - Config detail module ada di folder modules/.
 # =========================================================
 
 settings:
@@ -19,16 +26,15 @@ settings:
 
 modules:
   guide: true
-  login-security: false
+  login-security: true
   team: false
   kits: false
   report: false
   announcement: true
-  fishing: false
-  skills: false
-  quest: false
+  fishing: true
+  skills: true
+  quest: true
   trader: false
   boss: false
-  clearlag: false
-  security: false
+  security: true
   chat: false

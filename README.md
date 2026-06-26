@@ -4,80 +4,34 @@ VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
 Author / owner name yang dipakai di source, config, guide, command, dan dokumentasi: **XandMe**.
 
-## Status
+## Status Module
 
-Clean rebuild branch `clean-core`.
+Module aktif phase 1:
 
-Tahap saat ini:
+- VelioraGuide
+- VelioraAnnouncement
+- VelioraLoginSecurity
+- VelioraKits
+- VelioraReport
+- VelioraTeam
+- VelioraChat
+- VelioraSecurity
+- VelioraSkills
 
-- Core clean sudah dipisah ke manager.
-- VelioraGuide sudah aktif sebagai module.
-- VelioraAnnouncement sudah aktif sebagai module.
-- Module lain sudah mulai dibuat sebagai skeleton/planned module.
-- Logic besar seperti Fishing, Trader, Boss, ClearLag, Chat, Security, Quest, dan LoginSecurity dikerjakan bertahap.
+Catatan:
+
+- Clear lag memakai plugin external, bukan VelioraSuite.
+- VelioraQuest belum dibuat di VelioraSkills. VelioraSkills hanya menyediakan mana system dan API internal.
 
 ## Target
 
 - Paper / Purpur 1.21.8
-- Java 21
+- Java 21 recommended
 - Maven
 - Package utama: `id.velioragardens.veliorasuite`
+- Target compile tetap Java 21.
 
-## Struktur Core
-
-```text
-src/main/java/id/velioragardens/veliorasuite/
-├── VelioraSuite.java
-├── api/
-│   ├── VelioraModule.java
-│   └── PlannedModule.java
-├── command/
-│   ├── VelioraCommand.java
-│   └── DisabledCommand.java
-├── core/
-│   ├── ConfigManager.java
-│   ├── MessageManager.java
-│   ├── ModuleManager.java
-│   └── HookManager.java
-└── module/
-    ├── guide/
-    ├── announcement/
-    ├── loginsecurity/
-    ├── team/
-    ├── kits/
-    ├── report/
-    ├── fishing/
-    ├── skills/
-    ├── quest/
-    ├── boss/
-    └── security/
-```
-
-## File Runtime
-
-```text
-plugins/VelioraSuite/
-├── config.yml
-├── messages.yml
-├── modules.yml
-├── database/
-│   └── veliorasuite.db
-├── data/
-└── modules/
-    ├── guide.yml
-    ├── announcement.yml
-    ├── loginsecurity.yml
-    ├── team.yml
-    ├── kits.yml
-    ├── report.yml
-    ├── fishing.yml
-    ├── skills.yml
-    ├── quest.yml
-    ├── boss.yml
-    └── security.yml
-```
-
-## Core Command
+## Command Core
 
 - `/vs`
 - `/vs reload`
@@ -85,40 +39,100 @@ plugins/VelioraSuite/
 - `/vs version`
 - `/vs debug`
 
-## VelioraGuide
+## VelioraSkills
+
+VelioraSkills mengatur mana player untuk Veliora Gardens.
+Mana ini disiapkan agar bisa dipakai oleh VelioraQuest nanti.
 
 Command:
 
-- `/vguide`
-- `/vguide <page>`
-- `/vrules`
-- `/vrules <page>`
-- `/vproduct`
-- `/vproduct <page>`
-- `/vguide reload`
+- `/vskills help`
+- `/vskills status`
+- `/vskills reload`
+- `/vskills mana`
+- `/vskills mana <player>`
+- `/vskills mana set <player> <amount>`
+- `/vskills mana add <player> <amount>`
+- `/vskills mana remove <player> <amount>`
+- `/vskills mana reset <player>`
 
-File config:
+Alias:
 
-```text
-plugins/VelioraSuite/modules/guide.yml
-```
+- `/vski`
+- `/vmana`
+- `/mana`
 
-## VelioraAnnouncement
+Tidak ada command `/skills`, supaya tidak bentrok dengan AuraSkills.
 
-Command:
-
-- `/vannounce status`
-- `/vannounce reload`
-- `/vannounce send <id>`
-
-File config:
+File config/data:
 
 ```text
-plugins/VelioraSuite/modules/announcement.yml
+plugins/VelioraSuite/modules/skills.yml
+plugins/VelioraSuite/data/skills.yml
 ```
+
+Mana default:
+
+```text
+10/10 Mana
+```
+
+Daily reset default:
+
+```text
+00:00 waktu server
+```
+
+Actionbar bisa menampilkan:
+
+```text
+health | money | ping | mana
+```
+
+PlaceholderAPI identifier:
+
+```text
+veliorasuite
+```
+
+Placeholder mana:
+
+```text
+%veliorasuite_mana%
+%veliorasuite_mana_max%
+%veliorasuite_mana_bar%
+%veliorasuite_mana_percent%
+```
+
+Contoh TAB belowname:
+
+```text
+%veliorasuite_mana% Mana
+```
+
+atau:
+
+```text
+&b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%
+```
+
+Placeholder lama tetap dipakai:
+
+```text
+%veliorasuite_team_name%
+%veliorasuite_team_tag%
+%veliorasuite_player_name%
+```
+
+## Clear Lag
+
+Clear lag tidak ditangani oleh VelioraSuite.
+Server Veliora Gardens memakai plugin external khusus clear lag.
 
 ## Catatan Development
 
 Jangan langsung menumpuk semua logic di `VelioraSuite.java` atau `Module.java`.
 
-Setiap module besar nanti wajib dipisah menjadi manager, command, listener, data manager, model, dan class pendukung lain sesuai kebutuhan.
+Setiap module besar dipisah menjadi manager, command, listener/task, data manager, model, dan class pendukung lain sesuai kebutuhan.
+
+Jangan menaikkan target compile dari Java 21 tanpa alasan kuat. Semua module baru wajib aman untuk Java 21 dan Paper/Purpur 1.21.8.

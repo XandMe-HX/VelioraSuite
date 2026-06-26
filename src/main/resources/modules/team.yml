@@ -1,12 +1,180 @@
-# VelioraTeam config
-# Logic detail akan dibuat pada tahap module Team.
-
-enabled: false
+# ==================================================
+# VelioraTeam Configuration
+# ==================================================
+# File ini mengatur sistem team player Veliora Gardens.
+# Semua harga, limit member, permission, format team tag,
+# pesan, dan data tampilan bisa diubah dari sini.
+#
+# Setelah mengubah file ini, jalankan:
+# - /team reload
+# atau
+# - /vs reload
+# ==================================================
 
 settings:
-  max-members: 8
-  allow-team-chat: true
+  # Mengaktifkan atau mematikan module team.
+  enabled: true
+
+  # Prefix default untuk pesan command.
+  prefix: '&8[&bVelioraTeam&8] '
+
+  # Biaya membuat team.
+  create-cost: 250000
+
+  # Kapasitas awal member saat team dibuat.
+  default-max-members: 5
+
+  # Biaya upgrade team.
+  upgrade-cost: 500000
+
+  # Tambahan slot setelah upgrade.
+  upgrade-add-members: 5
+
+  # Maksimal total member per team.
+  max-members: 10
+
+  # Jika true, owner bisa upgrade team.
+  upgrade-enabled: true
+
+  # Timeout invite dalam detik.
+  invite-timeout-seconds: 60
+
+  # Timeout konfirmasi owner leave dalam detik.
+  owner-leave-confirm-timeout-seconds: 30
+
+  # Aturan nama team baru:
+  # - Hanya huruf besar A-Z.
+  # - Tidak boleh huruf kecil, angka, spasi, simbol, emoji, atau tanda -.
+  # - Minimal 3 huruf, maksimal 5 huruf.
+  # - Contoh valid: SHDW, NOVA, VOID, SKY, TEAM.
+  # - Contoh tidak valid: Shadow, shadow, SHADOW, SHDW1, SH-DW, SH DW, 🔥ABC.
+  #
+  # Catatan: team lama yang sudah ada tetap dibaca, tapi create team baru wajib ikut aturan ini.
+  min-team-name-length: 3
+  max-team-name-length: 5
+  team-name-regex: '^[A-Z]{3,5}$'
+
+  # Nama team yang tidak boleh dipakai.
+  blocked-names:
+    - 'ADMIN'
+    - 'OWNER'
+    - 'STAFF'
+    - 'MOD'
+
+  # Jika true, admin bisa setowner ke player yang belum member team.
+  allow-setowner-non-member: true
+
+  # Tag team langsung dari VelioraTeam listener.
+  # enabled hanya untuk direct chat listener lama.
+  # Default false agar tag tidak dobel di chat.
+  # Untuk TAB nametag/belowname, tetap pakai PlaceholderAPI:
+  # %veliorasuite_team_tag%
+  #
+  # Contoh TAB tagprefix:
+  # tagprefix: '%veliorasuite_team_tag%&6&l【 &6&lᴏᴡɴᴇʀ &6&l】&f '
+  #
+  # Jika player punya team SHDW:
+  # %veliorasuite_team_tag% -> &f【&b&lSHDW&f】&f 
+  # Jika player tidak punya team:
+  # %veliorasuite_team_tag% -> kosong
+  chat-tag:
+    enabled: false
+    format: '&f【&b&l%team%&f】&f '
+    max-team-name-length-in-chat: 5
+
+commands:
+  main: '/team'
+  examples:
+    - '/team help'
+    - '/team create SHDW'
+    - '/team invite Steve'
+    - '/team accept'
+    - '/team leave'
+    - '/team leave confirm'
+    - '/team list'
+    - '/team chat halo semua'
+    - '/team upgrade'
+    - '/team setowner SHDW Steve'
+    - '/team delete SHDW'
+    - '/team info SHDW'
+    - '/team reload'
+
+permissions:
+  use: 'veliorasuite.team.use'
+  admin: 'veliorasuite.team.admin'
+  reload: 'veliorasuite.team.reload'
+  setowner: 'veliorasuite.team.setowner'
+  delete: 'veliorasuite.team.delete'
+  bypass-cost: 'veliorasuite.team.bypasscost'
+  bypass-limit: 'veliorasuite.team.bypasslimit'
+
+formats:
+  # Format fallback lama. Placeholder TAB tetap mengambil settings.chat-tag.format.
+  chat-tag: '&f【&b&l%team%&f】&f '
+  team-chat: '&8[&bTeam Chat&8] &f%player%&7: &f%message%'
+
+  list-header:
+    - '&8&m--------------------------------'
+    - '&b&lDaftar Team'
+
+  list-format: '&7- &b%team% &8| &7Owner: &f%owner% &8| &7Member: &f%members%&7/&f%max_members% &8| &7Upgrade: &f%upgraded%'
+
+  list-footer:
+    - '&8&m--------------------------------'
 
 messages:
-  prefix: '&8【&aVelioraTeam&8】'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
   disabled: '%prefix% &cModule team sedang dimatikan.'
+  invalid-usage: '%prefix% &cGunakan: &f/team help'
+  economy-not-found: '%prefix% &cEconomy/Vault tidak tersedia.'
+  not-enough-money-create: '%prefix% &cUang kamu kurang untuk membuat team. Butuh &f$%cost%&c.'
+  not-enough-money-upgrade: '%prefix% &cUang kamu kurang untuk upgrade team. Butuh &f$%cost%&c.'
+  create-success: '%prefix% &aTeam &f%team% &aberhasil dibuat. Biaya: &f$%cost%&a.'
+  already-in-team: '%prefix% &cKamu sudah punya team.'
+  not-in-team: '%prefix% &cKamu belum punya team.'
+  team-not-found: '%prefix% &cTeam &f%team% &ctidak ditemukan.'
+  team-name-exists: '%prefix% &cNama team &f%team% &csudah dipakai.'
+  team-name-invalid: '%prefix% &cNama team tidak valid. Gunakan huruf besar A-Z saja, tanpa angka/simbol/emoji. Contoh: &fSHDW'
+  team-name-too-short: '%prefix% &cNama team terlalu pendek. Minimal &f%min% &churuf.'
+  team-name-too-long: '%prefix% &cNama team terlalu panjang. Maksimal &f%max% &churuf.'
+  blocked-name: '%prefix% &cNama team ini tidak boleh dipakai.'
+  only-owner: '%prefix% &cHanya owner team yang bisa melakukan ini.'
+  target-not-found: '%prefix% &cPlayer &f%player% &ctidak ditemukan.'
+  target-already-in-team: '%prefix% &cPlayer itu sudah punya team.'
+  target-not-member: '%prefix% &cPlayer itu bukan member team.'
+  team-full: '%prefix% &cTeam sudah penuh.'
+  invite-sent: '%prefix% &aInvite team dikirim ke &f%player%&a.'
+  invite-received: '%prefix% &aKamu diundang ke team &f%team%&a. Ketik &f/team accept &auntuk bergabung.'
+  invite-expired: '%prefix% &cInvite team sudah expired.'
+  no-invite: '%prefix% &cKamu tidak punya invite team.'
+  accept-success: '%prefix% &aKamu bergabung ke team &f%team%&a.'
+  member-joined: '%prefix% &f%player% &abergabung ke team.'
+  leave-success: '%prefix% &aKamu keluar dari team &f%team%&a.'
+  owner-leave-confirm: '%prefix% &cKamu adalah owner. Jika keluar, team akan dihapus. Ketik &f/team leave confirm &cdalam &f%time%s &cuntuk lanjut.'
+  owner-leave-cancelled: '%prefix% &cKonfirmasi keluar owner sudah expired.'
+  team-disbanded: '%prefix% &cTeam &f%team% &ctelah dihapus karena owner keluar.'
+  upgrade-success: '%prefix% &aTeam berhasil diupgrade. Maksimal member sekarang &f%max_members%&a.'
+  already-upgraded: '%prefix% &cTeam kamu sudah mencapai upgrade maksimal.'
+  setowner-success: '%prefix% &aOwner team &f%team% &aberhasil dipindahkan ke &f%player%&a.'
+  setowner-received: '%prefix% &aKamu sekarang menjadi owner team &f%team%&a.'
+  team-deleted: '%prefix% &aTeam &f%team% &aberhasil dihapus.'
+  team-info: '%prefix% &b%team% &7Owner: &f%owner% &7Member: &f%members%/%max_members% &7Upgrade: &f%upgraded%'
+  reload-success: '%prefix% &aVelioraTeam berhasil direload.'
+
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraTeam'
+    - '&f/team create <nama> &7- Membuat team.'
+    - '&7  Nama team wajib huruf besar A-Z, 3-5 huruf. Contoh: &fSHDW'
+    - '&f/team invite <player> &7- Invite player.'
+    - '&f/team accept &7- Terima invite.'
+    - '&f/team leave &7- Keluar dari team.'
+    - '&f/team list &7- Lihat daftar team.'
+    - '&f/team chat <pesan> &7- Chat khusus team.'
+    - '&f/team upgrade &7- Upgrade kapasitas team.'
+    - '&f/team setowner <team> <player> &7- Pindah owner team. Admin only.'
+    - '&f/team delete <team> &7- Hapus team. Admin only.'
+    - '&f/team info <team> &7- Lihat detail team. Admin only.'
+    - '&f/team reload &7- Reload config.'
+    - '&8&m--------------------------------'

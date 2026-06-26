@@ -33,6 +33,7 @@ public final class GuideModule implements VelioraModule {
         registerGuideCommand("velioraguide", "guide");
         registerGuideCommand("veliorarules", "rules");
         registerGuideCommand("velioraproduct", "product");
+        registerGuideCommand("veliorarank", "rank");
     }
 
     @Override
@@ -41,6 +42,7 @@ public final class GuideModule implements VelioraModule {
         registerDisabledCommand("velioraguide");
         registerDisabledCommand("veliorarules");
         registerDisabledCommand("velioraproduct");
+        registerDisabledCommand("veliorarank");
     }
 
     @Override

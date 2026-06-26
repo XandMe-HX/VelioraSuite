@@ -7,6 +7,7 @@ import id.velioragardens.veliorasuite.core.MessageManager;
 import id.velioragardens.veliorasuite.core.ModuleManager;
 import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
+import id.velioragardens.veliorasuite.module.chat.ChatModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import id.velioragardens.veliorasuite.module.guide.GuideModule;
 import id.velioragardens.veliorasuite.module.kits.KitsModule;
@@ -80,6 +81,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new TeamModule(this));
         moduleManager.register(new KitsModule(this));
         moduleManager.register(new ReportModule(this));
+        moduleManager.register(new ChatModule(this));
         moduleManager.register(new FishingModule(this));
         moduleManager.register(new SkillsModule(this));
         moduleManager.register(new QuestModule(this));

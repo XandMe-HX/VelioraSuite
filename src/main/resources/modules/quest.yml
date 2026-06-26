@@ -1,8 +1,131 @@
-enabled: false
-
 settings:
-  auto-start-new-player-quest: true
-  store-progress-in-sqlite: true
+  enabled: true
+  prefix: '&8[&aVelioraQuest&8] '
+  require-skills-mana: true
+  debug-mana: false
+  gui:
+    enabled: true
+    title: '&8Veliora Quest'
+    size: 54
+  bossbar:
+    enabled: true
+    title: '&f%quest% &7- &a%progress%&7/&a%target% &8(&e%percent%%&8)'
+    color: GREEN
+    style: SEGMENTED_10
+    hide-when-complete: true
+  progression:
+    completions-per-level: 5
+  rewards:
+    give-mana-on-complete: true
+    mana-reward: 1
+    base-money: 5000
+    money-increase-per-tier: 5000
+  starter:
+    enabled: true
+    reminder-enabled: true
+    reminder-interval-seconds: 600
+    claim-land-commands: ['/claim', '/lands claim', '/land claim', '/claimland']
+    set-home-commands: ['/sethome', '/home set']
+    starter-kit-commands: ['/kits claim starter', '/kit starter', '/kits starter']
+
+categories:
+  woodcutting:
+    enabled: true
+    display-name: '&aWoodcutting'
+    icon: OAK_LOG
+    base-target: 32
+    target-increase-per-level: 16
+    materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
+  mining:
+    enabled: true
+    display-name: '&7Mining'
+    icon: IRON_PICKAXE
+    base-target: 64
+    target-increase-per-level: 32
+    materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE, ANCIENT_DEBRIS]
+  farmer:
+    enabled: true
+    display-name: '&eFarmer'
+    icon: WHEAT
+    base-target: 32
+    target-increase-per-level: 16
+    harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, SUGAR_CANE, MELON, PUMPKIN, COCOA, NETHER_WART]
+    plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
+    count-hoe-farmland: true
+  chef:
+    enabled: true
+    display-name: '&6Chef'
+    icon: COOKED_BEEF
+    base-target: 16
+    target-increase-per-level: 8
+    cooked-items: [COOKED_BEEF, COOKED_CHICKEN, COOKED_MUTTON, COOKED_PORKCHOP, COOKED_COD, COOKED_SALMON, BAKED_POTATO, DRIED_KELP]
+  monster_hunter:
+    enabled: true
+    display-name: '&cMonster Hunter'
+    icon: IRON_SWORD
+    base-target: 10
+    target-increase-per-level: 5
+    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER]
+  animal_hunter:
+    enabled: true
+    display-name: '&fAnimal Hunter'
+    icon: COOKED_CHICKEN
+    base-target: 10
+    target-increase-per-level: 5
+    entities: [COW, SHEEP, CHICKEN, PIG, RABBIT, COD, SALMON]
+  fishing:
+    enabled: true
+    display-name: '&bFishing'
+    icon: FISHING_ROD
+    base-target: 8
+    target-increase-per-level: 4
+
+permissions:
+  use: 'veliorasuite.quest.use'
+  admin: 'veliorasuite.quest.admin'
+  reload: 'veliorasuite.quest.reload'
+  bypass-mana: 'veliorasuite.quest.bypassmana'
+  reset: 'veliorasuite.quest.reset'
 
 messages:
-  prefix: '&8【&aVelioraQuest&8】'
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  reload-success: '%prefix% &aVelioraQuest berhasil direload.'
+  quest-started: '%prefix% &aQuest &f%quest% &adimulai. Mana terpakai: &f%mana_cost%&a.'
+  quest-progress: '%prefix% &eProgress &f%quest%&e: &f%progress%&7/&f%target%&e.'
+  quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.'
+  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.'
+  quest-level-up: '%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.'
+  quest-not-active: '%prefix% &cQuest ini belum aktif.'
+  quest-already-active: '%prefix% &cQuest ini sedang aktif.'
+  quest-not-ready: '%prefix% &cQuest ini belum selesai.'
+  quest-disabled: '%prefix% &cQuest ini sedang dinonaktifkan.'
+  mana-not-enough: '%prefix% &cMana kamu tidak cukup. Butuh &f%mana_cost% &cMana untuk mulai quest ini.'
+  skills-not-found: '%prefix% &cMana system belum aktif. Hubungi staff.'
+  vault-not-found: '%prefix% &eVault economy belum aktif, reward money dilewati.'
+  quest-cancelled: '%prefix% &eQuest &f%quest% &edibatalkan. Mana yang sudah dipakai tidak dikembalikan.'
+  starter-reminder:
+    - '&8&m--------------------------------'
+    - '&a&lStarter Quest'
+    - '&7Selesaikan tugas awal agar aman bermain:'
+    - '&fClaim Land: &e%claim_land%'
+    - '&fSet Home: &e%set_home%'
+    - '&fAmbil Kit Starter: &e%starter_kit%'
+    - '&8&m--------------------------------'
+  help:
+    - '&8&m--------------------------------'
+    - '&a&lVelioraQuest'
+    - '&f/quests &7- Buka GUI quest.'
+    - '&f/quests progress &7- Cek progress quest.'
+    - '&f/quests start <category> &7- Mulai quest.'
+    - '&f/quests claim <category> &7- Claim reward.'
+    - '&8&m--------------------------------'
+  status:
+    - '&8&m--------------------------------'
+    - '&a&lVelioraQuest Status'
+    - '&7Enabled: &f%enabled%'
+    - '&7Skills Mana: &f%skills_mana%'
+    - '&7Vault: &f%vault%'
+    - '&7Categories: &f%categories%'
+    - '&7Players Data: &f%players%'
+    - '&8&m--------------------------------'

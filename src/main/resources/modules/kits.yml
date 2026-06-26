@@ -163,6 +163,11 @@ messages:
   usage-buy: '%prefix% &cGunakan: &f/kits buy <kit>'
   no-cooldown: '%prefix% &aTidak ada kit yang sedang cooldown.'
   preview-title: '&8Preview: %kit%'
+  list-header: '&8&m--------------------------------'
+  list-title: '&b&lVelioraKits List'
+  list-format: '&7- &f%kit_display% &8(&7%kit_id%&8) &7Cooldown: &f%cooldown%'
+  list-empty: '%prefix% &cTidak ada kit aktif.'
+  list-footer: '&8&m--------------------------------'
 
   help:
     - '&8&m--------------------------------'
@@ -248,7 +253,7 @@ kits:
 
   premium1:
     enabled: true
-    display-name: '&bPremium Kit I'
+    display-name: '&bPremium 1'
     description:
       - '&7Kit premium level 1.'
       - '&7Butuh permission premium.'
@@ -265,7 +270,7 @@ kits:
     gui:
       slot: 12
       material: ENDER_CHEST
-      name: '&bPremium Kit I'
+      name: '&bPremium 1'
       lore:
         - '&7Kit premium level 1.'
         - '&7Harga: &a$5000'
@@ -293,7 +298,7 @@ kits:
 
   premium2:
     enabled: true
-    display-name: '&dPremium Kit II'
+    display-name: '&dPremium 2'
     description:
       - '&7Kit premium level 2.'
 
@@ -309,7 +314,7 @@ kits:
     gui:
       slot: 14
       material: DIAMOND
-      name: '&dPremium Kit II'
+      name: '&dPremium 2'
       lore:
         - '&7Kit premium level 2.'
         - '&7Harga: &a$10000'
