@@ -22,9 +22,13 @@ public final class FishingMainGuiManager implements Listener {
 
     public void open(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 27, manager.getConfigManager().color("&8VelioraFishing"));
-        inventory.setItem(11, item(Material.BARREL, "&bJual Ikan", List.of("&7Klik untuk membuka sell GUI.", "&f/fish sell")));
-        inventory.setItem(15, item(Material.OAK_SIGN, "&eTop Fishing", List.of("&7Klik untuk melihat leaderboard.", "&f/fish top")));
-        inventory.setItem(13, item(Material.FISHING_ROD, "&aVelioraFishing", List.of("&7Custom fishing, minigame,", "&7sell GUI, dan leaderboard.")));
+        inventory.setItem(10, item(Material.CHEST, "&bFish Bag", List.of("&7Buka tas ikan virtual.", "&f/fish bag")));
+        inventory.setItem(11, item(Material.BARREL, "&aSell Fish", List.of("&7Buka GUI jual ikan.", "&f/fish sell")));
+        inventory.setItem(13, item(Material.FISHING_ROD, "&aVelioraFishing", List.of("&7Custom fishing, minigame,", "&7bag, collection, sell, dan top.")));
+        inventory.setItem(15, item(Material.BOOK, "&dFish Collection", List.of("&7Lihat ikan yang sudah kamu temukan.", "&f/fish collection")));
+        inventory.setItem(16, item(Material.OAK_SIGN, "&eFish Top", List.of("&7Lihat leaderboard gabungan.", "&f/fish top")));
+        inventory.setItem(22, item(Material.PLAYER_HEAD, "&fFishing Stats", List.of("&7Gunakan &f/fish top &7untuk data ranking.")));
+        inventory.setItem(26, item(Material.BARRIER, "&cClose", List.of("&7Tutup menu.")));
         player.openInventory(inventory);
     }
 
@@ -33,12 +37,16 @@ public final class FishingMainGuiManager implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8VelioraFishing"))) return;
         event.setCancelled(true);
-        if (event.getRawSlot() == 11) {
-            player.closeInventory();
-            manager.openSellGui(player);
-        } else if (event.getRawSlot() == 15) {
-            player.closeInventory();
-            manager.sendTop(player);
+        switch (event.getRawSlot()) {
+            case 10 -> manager.openBagGui(player);
+            case 11 -> manager.openSellGui(player);
+            case 15 -> manager.openCollectionGui(player);
+            case 16, 22 -> {
+                player.closeInventory();
+                manager.sendTop(player);
+            }
+            case 26 -> player.closeInventory();
+            default -> { }
         }
     }
 
