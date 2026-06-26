@@ -27,9 +27,9 @@ public final class QuestGuiManager implements Listener {
         SLOTS.put(21, QuestCategory.MINING);
         SLOTS.put(23, QuestCategory.FARMER);
         SLOTS.put(25, QuestCategory.CHEF);
-        SLOTS.put(39, QuestCategory.MONSTER_HUNTER);
-        SLOTS.put(41, QuestCategory.ANIMAL_HUNTER);
-        SLOTS.put(43, QuestCategory.FISHING);
+        SLOTS.put(40, QuestCategory.MONSTER_HUNTER);
+        SLOTS.put(42, QuestCategory.ANIMAL_HUNTER);
+        SLOTS.put(44, QuestCategory.FISHING);
     }
 
     private final QuestManager manager;
