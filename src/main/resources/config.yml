@@ -34,7 +34,7 @@ modules:
   fishing: true
   skills: true
   quest: true
-  trader: false
+  trader: true
   boss: false
   security: true
   chat: false
