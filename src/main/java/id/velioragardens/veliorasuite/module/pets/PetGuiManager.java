@@ -18,6 +18,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,19 +87,22 @@ public final class PetGuiManager implements Listener {
         player.openInventory(inventory);
         List<PetDefinition> pets = new ArrayList<>(config.pets().values());
         if (pets.isEmpty()) return;
-        final int[] ticks = {0};
-        plugin.getServer().getScheduler().runTaskTimer(plugin, task -> {
-            if (!player.isOnline()) { task.cancel(); return; }
-            PetDefinition random = pets.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pets.size()));
-            inventory.setItem(13, item(random.icon(), random.displayName(), List.of("&7Rolling..."), null, null));
-            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4F, 1.6F);
-            ticks[0]++;
-            if (ticks[0] >= 20) {
-                task.cancel();
-                finish.run();
-                player.closeInventory();
+        new BukkitRunnable() {
+            private int ticks;
+            @Override
+            public void run() {
+                if (!player.isOnline()) { cancel(); return; }
+                PetDefinition random = pets.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pets.size()));
+                inventory.setItem(13, item(random.icon(), random.displayName(), List.of("&7Rolling..."), null, null));
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4F, 1.6F);
+                ticks++;
+                if (ticks >= 20) {
+                    cancel();
+                    finish.run();
+                    player.closeInventory();
+                }
             }
-        }, 0L, 2L);
+        }.runTaskTimer(plugin, 0L, 2L);
     }
 
     public void openList(Player player) {
