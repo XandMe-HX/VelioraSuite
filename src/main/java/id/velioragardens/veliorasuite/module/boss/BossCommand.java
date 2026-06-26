@@ -37,7 +37,23 @@ public final class BossCommand implements CommandExecutor, TabCompleter {
             case "spawn" -> {
                 if (!has(sender, "veliorasuite.boss.spawn")) { noPerm(sender); return true; }
                 if (args.length < 2) { sender.sendMessage("/boss spawn <boss>"); return true; }
-                manager.spawnById(join(args, 1), sender);
+                manager.spawnByName(joinSpace(args, 1), sender);
+                return true;
+            }
+            case "list" -> {
+                if (!sender.hasPermission("veliorasuite.boss.use") && !sender.isOp()) { noPerm(sender); return true; }
+                manager.sendBossList(sender);
+                return true;
+            }
+            case "info" -> {
+                if (!sender.hasPermission("veliorasuite.boss.use") && !sender.isOp()) { noPerm(sender); return true; }
+                if (args.length < 2) { sender.sendMessage("/boss info <boss>"); return true; }
+                manager.sendBossInfo(sender, joinSpace(args, 1));
+                return true;
+            }
+            case "top" -> {
+                if (!sender.hasPermission("veliorasuite.boss.use") && !sender.isOp()) { noPerm(sender); return true; }
+                manager.sendTop(sender);
                 return true;
             }
             case "stop" -> {
@@ -63,10 +79,10 @@ public final class BossCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> result = new ArrayList<>();
         if (args.length == 1) {
-            for (String option : List.of("set", "spawn", "stop", "reload")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
+            for (String option : List.of("set", "spawn", "stop", "reload", "list", "info", "top")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
             return result;
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("spawn")) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("spawn") || args[0].equalsIgnoreCase("info"))) {
             String lower = args[1].toLowerCase(Locale.ROOT);
             for (String id : manager.config().bosses().keySet()) if (id.startsWith(lower)) result.add(id);
         }
@@ -81,11 +97,11 @@ public final class BossCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(manager.config().color(manager.config().prefix() + "&cKamu tidak punya izin."));
     }
 
-    private String join(String[] args, int start) {
+    private String joinSpace(String[] args, int start) {
         StringBuilder builder = new StringBuilder();
         for (int i = start; i < args.length; i++) {
-            if (builder.length() > 0) builder.append('_');
-            builder.append(args[i].toLowerCase(Locale.ROOT).replace(" ", "_"));
+            if (builder.length() > 0) builder.append(' ');
+            builder.append(args[i]);
         }
         return builder.toString();
     }
