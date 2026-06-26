@@ -83,7 +83,7 @@ commands:
     permission: veliorasuite.quest.use
   fish:
     description: Open and manage VelioraFishing.
-    usage: /fish <help|sell|top|reload>
+    usage: /fish <help|bag|sell|collection|top|reload>
     aliases:
       - vfish
       - vfishing
