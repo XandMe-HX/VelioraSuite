@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.trader;
 import id.velioragardens.veliorasuite.module.trader.model.TraderCampBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 
@@ -31,7 +32,7 @@ public final class TraderCampManager {
         Map<String, String> persisted = new LinkedHashMap<>();
         for (TraderCampBlock campBlock : configManager.getCampBlocks()) {
             Block block = origin.getWorld().getBlockAt(origin.getBlockX() + campBlock.offsetX(), origin.getBlockY() + campBlock.offsetY(), origin.getBlockZ() + campBlock.offsetZ());
-            if (isNpcBodyBlock(origin, block)) {
+            if (shouldSkip(origin, block, campBlock.material())) {
                 skippedBlocks++;
                 continue;
             }
@@ -42,7 +43,7 @@ public final class TraderCampManager {
             placedBlocks++;
         }
         dataManager.saveCampBackup(persisted);
-        if (configManager.isDebugSpawn()) Bukkit.getLogger().info("VelioraTrader debug: camp placed=" + placedBlocks + ", skipped=" + skippedBlocks);
+        if (configManager.isDebugSpawn()) Bukkit.getLogger().info("VelioraTrader debug: camp template=" + configManager.getCampTemplate() + ", placed=" + placedBlocks + ", skipped=" + skippedBlocks);
     }
 
     public void restore() {
@@ -53,9 +54,7 @@ public final class TraderCampManager {
         }
         if (originalBlocks.isEmpty()) {
             for (Map.Entry<String, String> entry : dataManager.loadCampBackup().entrySet()) {
-                try {
-                    originalBlocks.put(entry.getKey(), Bukkit.createBlockData(entry.getValue()));
-                } catch (Exception ignored) { }
+                try { originalBlocks.put(entry.getKey(), Bukkit.createBlockData(entry.getValue())); } catch (Exception ignored) { }
             }
         }
         for (Map.Entry<String, BlockData> entry : originalBlocks.entrySet()) {
@@ -74,11 +73,28 @@ public final class TraderCampManager {
     public int getPlacedBlocks() { return placedBlocks; }
     public int getSkippedBlocks() { return skippedBlocks; }
 
-    private boolean isNpcBodyBlock(Location origin, Block block) {
-        int npcX = (int) Math.floor(origin.getX() + configManager.getNpcOffsetX());
-        int npcFeetY = (int) Math.floor(origin.getY() + configManager.getNpcOffsetY());
-        int npcZ = (int) Math.floor(origin.getZ() + configManager.getNpcOffsetZ());
-        return block.getX() == npcX && block.getZ() == npcZ && (block.getY() == npcFeetY || block.getY() == npcFeetY + 1);
+    private boolean shouldSkip(Location origin, Block block, Material newMaterial) {
+        if (configManager.isCampSkipNpcSpace() && (isBodyBlock(origin, block, configManager.getNpcOffsetX(), configManager.getNpcOffsetY(), configManager.getNpcOffsetZ())
+                || isBodyBlock(origin, block, configManager.getCompanionOffsetX(), configManager.getCompanionOffsetY(), configManager.getCompanionOffsetZ()))) {
+            if (configManager.isDebugSpawn()) Bukkit.getLogger().info("VelioraTrader debug: skip camp block at " + key(block) + " because entity body space");
+            return true;
+        }
+        if (configManager.isProtectSolidBlocks() && !configManager.getAllowReplaceMaterials().contains(block.getType())) {
+            if (configManager.isDebugSpawn()) Bukkit.getLogger().info("VelioraTrader debug: skip camp block at " + key(block) + " old=" + block.getType() + " new=" + newMaterial);
+            return true;
+        }
+        if (newMaterial.name().endsWith("CARPET") && !block.getRelative(0, -1, 0).getType().isSolid()) {
+            if (configManager.isDebugSpawn()) Bukkit.getLogger().info("VelioraTrader debug: skip carpet without support at " + key(block));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isBodyBlock(Location origin, Block block, double offsetX, double offsetY, double offsetZ) {
+        int entityX = (int) Math.floor(origin.getX() + offsetX);
+        int entityFeetY = (int) Math.floor(origin.getY() + offsetY);
+        int entityZ = (int) Math.floor(origin.getZ() + offsetZ);
+        return block.getX() == entityX && block.getZ() == entityZ && (block.getY() == entityFeetY || block.getY() == entityFeetY + 1 || block.getY() == entityFeetY - 1);
     }
 
     private String key(Block block) {
