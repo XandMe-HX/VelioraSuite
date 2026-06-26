@@ -47,9 +47,7 @@ public final class TraderManager {
         dataManager.load();
     }
 
-    public void enable() {
-        spawnManager.start();
-    }
+    public void enable() { spawnManager.start(); }
 
     public void disable() {
         spawnManager.stop();
@@ -66,6 +64,7 @@ public final class TraderManager {
     public Location getActiveLocation() { return activeLocation; }
     public long getDespawnAt() { return despawnAt; }
     public List<TraderTradeItem> getActiveItems() { return Collections.unmodifiableList(activeItems); }
+    public TraderConfigManager getConfigManager() { return configManager; }
     public TraderPurchaseManager getPurchaseManager() { return purchaseManager; }
     public TraderNpcManager getNpcManager() { return npcManager; }
     public TraderGuiManager getGuiManager() { return guiManager; }
@@ -133,20 +132,12 @@ public final class TraderManager {
     }
 
     public void sendStatus(CommandSender sender) {
-        if (isActive()) {
-            send(sender, "trader-active", "%prefix% &aTrader sedang aktif di &f%world% %x% %y% %z%&a. Despawn dalam &f%time%&a.", placeholders(activeLocation, timeLeft(despawnAt)));
-        } else {
-            send(sender, "trader-next", "%prefix% &eTrader belum muncul. Spawn berikutnya dalam &f%time%&e.", Map.of("%time%", timeLeft(spawnManager.getNextSpawnAt())));
-        }
+        if (isActive()) send(sender, "trader-active", "%prefix% &aTrader sedang aktif di &f%world% %x% %y% %z%&a. Despawn dalam &f%time%&a.", placeholders(activeLocation, timeLeft(despawnAt)));
+        else send(sender, "trader-next", "%prefix% &eTrader belum muncul. Spawn berikutnya dalam &f%time%&e.", Map.of("%time%", timeLeft(spawnManager.getNextSpawnAt())));
     }
 
-    public void sendReloadSuccess(CommandSender sender) {
-        send(sender, "reload-success", "%prefix% &aVelioraTrader berhasil direload.", Map.of());
-    }
-
-    public void sendNoPermission(CommandSender sender) {
-        sender.sendMessage(configManager.color(configManager.getPrefix() + "&cKamu tidak punya izin."));
-    }
+    public void sendReloadSuccess(CommandSender sender) { send(sender, "reload-success", "%prefix% &aVelioraTrader berhasil direload.", Map.of()); }
+    public void sendNoPermission(CommandSender sender) { sender.sendMessage(configManager.color(configManager.getPrefix() + "&cKamu tidak punya izin.")); }
 
     private void broadcast(String path, String fallback) {
         if (activeLocation == null) return;
@@ -154,13 +145,7 @@ public final class TraderManager {
     }
 
     private Map<String, String> placeholders(Location location, String time) {
-        return Map.of(
-                "%world%", location.getWorld() == null ? "world" : location.getWorld().getName(),
-                "%x%", String.valueOf(location.getBlockX()),
-                "%y%", String.valueOf(location.getBlockY()),
-                "%z%", String.valueOf(location.getBlockZ()),
-                "%time%", time
-        );
+        return Map.of("%world%", location.getWorld() == null ? "world" : location.getWorld().getName(), "%x%", String.valueOf(location.getBlockX()), "%y%", String.valueOf(location.getBlockY()), "%z%", String.valueOf(location.getBlockZ()), "%time%", time);
     }
 
     private void send(CommandSender sender, String path, String fallback, Map<String, String> placeholders) {
@@ -179,8 +164,6 @@ public final class TraderManager {
 
     private String timeLeft(long target) {
         long seconds = Math.max(0L, (target - System.currentTimeMillis()) / 1000L);
-        long minutes = seconds / 60L;
-        long remainingSeconds = seconds % 60L;
-        return minutes + "m " + remainingSeconds + "s";
+        return (seconds / 60L) + "m " + (seconds % 60L) + "s";
     }
 }
