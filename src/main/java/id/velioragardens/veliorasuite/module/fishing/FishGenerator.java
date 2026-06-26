@@ -30,7 +30,7 @@ public final class FishGenerator {
         double weight = randomDouble(definition.minWeight(), definition.maxWeight());
         int basePrice = randomInt(definition.minPrice(), definition.maxPrice());
         int price = finalPrice(definition.rarity(), definition.minWeight(), definition.maxWeight(), weight, basePrice);
-        CaughtFish caughtFish = new CaughtFish(definition.id(), definition.name(), definition.rarity(), round(weight), price, "FISHING", definition.region());
+        CaughtFish caughtFish = new CaughtFish(definition.id(), definition.name(), definition.rarity(), round(weight), price, definition.origin(), definition.region());
         return new GeneratedFish(definition, caughtFish);
     }
 
