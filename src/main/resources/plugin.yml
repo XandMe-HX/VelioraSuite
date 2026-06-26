@@ -95,6 +95,12 @@ commands:
       - vtrader
       - vtrade
     permission: veliorasuite.trader.use
+  boss:
+    description: Manage VelioraBoss.
+    usage: /boss <set|spawn|stop|reload>
+    aliases:
+      - vboss
+    permission: veliorasuite.boss.use
   register:
     description: Register Veliora account.
     usage: /register <password> <password confirm>
@@ -247,4 +253,16 @@ permissions:
   veliorasuite.trader.admin:
     default: op
   veliorasuite.trader.reload:
+    default: op
+  veliorasuite.boss.use:
+    default: true
+  veliorasuite.boss.admin:
+    default: op
+  veliorasuite.boss.reload:
+    default: op
+  veliorasuite.boss.spawn:
+    default: op
+  veliorasuite.boss.set:
+    default: op
+  veliorasuite.boss.stop:
     default: op
