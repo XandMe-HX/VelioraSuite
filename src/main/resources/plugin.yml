@@ -84,6 +84,9 @@ commands:
   fish:
     description: Open and manage VelioraFishing.
     usage: /fish <help|sell|top|reload>
+    aliases:
+      - vfish
+      - vfishing
     permission: veliorasuite.fishing.use
   register:
     description: Register Veliora account.
@@ -221,6 +224,12 @@ permissions:
   veliorasuite.quest.reset:
     default: op
   veliorasuite.fishing.use:
+    default: true
+  veliorasuite.fishing.sell:
+    default: true
+  veliorasuite.fishing.bag:
+    default: true
+  veliorasuite.fishing.top:
     default: true
   veliorasuite.fishing.admin:
     default: op
