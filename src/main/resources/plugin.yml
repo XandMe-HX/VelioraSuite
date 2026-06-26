@@ -81,6 +81,10 @@ commands:
     usage: /quests <gui|progress|start|claim|cancel|reload|status>
     aliases: [q, vquest]
     permission: veliorasuite.quest.use
+  fish:
+    description: Open and manage VelioraFishing.
+    usage: /fish <help|sell|top|reload>
+    permission: veliorasuite.fishing.use
   register:
     description: Register Veliora account.
     usage: /register <password> <password confirm>
@@ -215,4 +219,10 @@ permissions:
   veliorasuite.quest.bypassmana:
     default: op
   veliorasuite.quest.reset:
+    default: op
+  veliorasuite.fishing.use:
+    default: true
+  veliorasuite.fishing.admin:
+    default: op
+  veliorasuite.fishing.reload:
     default: op
