@@ -7,11 +7,11 @@ import id.velioragardens.veliorasuite.module.trader.model.TraderLocation;
 import id.velioragardens.veliorasuite.module.trader.model.TraderPaymentType;
 import id.velioragardens.veliorasuite.module.trader.model.TraderTradeItem;
 import org.bukkit.ChatColor;
-import org.bukkit.EntityType;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.EntityType;
 
 import java.io.File;
 import java.util.ArrayList;
