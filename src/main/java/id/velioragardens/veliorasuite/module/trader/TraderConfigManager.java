@@ -42,21 +42,34 @@ public final class TraderConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&6VelioraTrader&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
-    public int getIntervalMinutes() { return Math.max(1, integer("settings.spawn.interval-minutes", 120)); }
+    public int getIntervalMinutes() { return Math.max(1, integer("settings.spawn.interval-minutes", 1440)); }
     public int getActiveMinutes() { return Math.max(1, integer("settings.spawn.active-minutes", 30)); }
+    public int getReminderMinutes() { return Math.max(1, integer("settings.spawn.reminder-minutes", 10)); }
     public boolean isRandomFromConfigLocations() { return bool("settings.spawn.random-from-config-locations", true); }
     public boolean isAnnounceSpawn() { return bool("settings.spawn.announce-spawn", true); }
     public boolean isAnnounceDespawn() { return bool("settings.spawn.announce-despawn", true); }
+    public boolean isAnnouncePurchase() { return bool("settings.spawn.announce-purchase", true); }
     public int getMaxRandomAttempts() { return Math.max(1, integer("settings.spawn.max-random-attempts", 25)); }
 
-    public EntityType getNpcType() { return entityType(str("npc.type", "WANDERING_TRADER"), EntityType.WANDERING_TRADER); }
+    public boolean isDebugSpawn() { return bool("debug.spawn", false); }
+
+    public EntityType getNpcType() { return entityType(str("npc.type", "VILLAGER"), EntityType.VILLAGER); }
     public String getNpcName() { return str("npc.name", "&6Veliora Trader"); }
     public boolean isNpcSilent() { return bool("npc.silent", true); }
     public boolean isNpcGravity() { return bool("npc.gravity", true); }
+    public boolean isNpcGlowing() { return bool("npc.glowing", true); }
+    public double getNpcOffsetX() { return number("npc.offset.x", 0.5D); }
+    public double getNpcOffsetY() { return number("npc.offset.y", 1.0D); }
+    public double getNpcOffsetZ() { return number("npc.offset.z", 0.5D); }
 
     public boolean isCompanionEnabled() { return bool("companion.enabled", true); }
     public EntityType getCompanionType() { return entityType(str("companion.type", "LLAMA"), EntityType.LLAMA); }
     public boolean isCompanionFrozen() { return bool("companion.frozen", true); }
+    public String getCompanionName() { return str("companion.name", "&eTrader Companion"); }
+    public boolean isCompanionNameVisible() { return bool("companion.show-name", false); }
+    public double getCompanionOffsetX() { return number("companion.offset.x", 3.0D); }
+    public double getCompanionOffsetY() { return number("companion.offset.y", 1.0D); }
+    public double getCompanionOffsetZ() { return number("companion.offset.z", 0.5D); }
 
     public boolean isCampEnabled() { return bool("camp.enabled", true); }
     public boolean isRestoreOnDespawn() { return bool("camp.restore-on-despawn", true); }
@@ -113,10 +126,10 @@ public final class TraderConfigManager {
             }
         }
         if (campBlocks.isEmpty()) {
-            campBlocks.add(new TraderCampBlock(0, 0, 0, Material.BARREL));
+            campBlocks.add(new TraderCampBlock(-1, 0, 0, Material.BARREL));
             campBlocks.add(new TraderCampBlock(1, 0, 0, Material.CHEST));
             campBlocks.add(new TraderCampBlock(0, 0, 1, Material.CRAFTING_TABLE));
-            campBlocks.add(new TraderCampBlock(-1, 0, 0, Material.CAMPFIRE));
+            campBlocks.add(new TraderCampBlock(-1, 0, 1, Material.CAMPFIRE));
             campBlocks.add(new TraderCampBlock(1, 1, 0, Material.LANTERN));
         }
     }
@@ -165,6 +178,7 @@ public final class TraderConfigManager {
     private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
     private boolean bool(String path, boolean fallback) { return config == null || !config.contains(path) ? fallback : config.getBoolean(path, fallback); }
     private int integer(String path, int fallback) { return config == null || !config.contains(path) ? fallback : config.getInt(path, fallback); }
+    private double number(String path, double fallback) { return config == null || !config.contains(path) ? fallback : config.getDouble(path, fallback); }
     private double doubleValue(Object value, double fallback) { return value instanceof Number number ? number.doubleValue() : fallback; }
     private int intValue(Object value, int fallback) { return value instanceof Number number ? number.intValue() : fallback; }
 }
