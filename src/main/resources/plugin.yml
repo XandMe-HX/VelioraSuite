@@ -88,6 +88,13 @@ commands:
       - vfish
       - vfishing
     permission: veliorasuite.fishing.use
+  trader:
+    description: Show VelioraTrader status.
+    usage: /trader
+    aliases:
+      - vtrader
+      - vtrade
+    permission: veliorasuite.trader.use
   register:
     description: Register Veliora account.
     usage: /register <password> <password confirm>
@@ -234,4 +241,10 @@ permissions:
   veliorasuite.fishing.admin:
     default: op
   veliorasuite.fishing.reload:
+    default: op
+  veliorasuite.trader.use:
+    default: true
+  veliorasuite.trader.admin:
+    default: op
+  veliorasuite.trader.reload:
     default: op
