@@ -32,6 +32,11 @@ bosses:
     health: 500
     damage: 8.0
     scale: 3.5
+    rewards:
+      money:
+        enabled: true
+        min: 10000
+        max: 30000
   namazu_earthshaker:
     entity: RAVAGER
     display-name: '&6Namazu Earthshaker'
@@ -39,6 +44,11 @@ bosses:
     health: 500
     damage: 10.0
     scale: 3.0
+    rewards:
+      money:
+        enabled: true
+        min: 12000
+        max: 30000
   forest_guardian:
     entity: IRON_GOLEM
     display-name: '&aForest Guardian'
@@ -46,6 +56,11 @@ bosses:
     health: 300
     damage: 6.0
     scale: 3.0
+    rewards:
+      money:
+        enabled: true
+        min: 3000
+        max: 12000
   abyss_brute:
     entity: PIGLIN_BRUTE
     display-name: '&5Abyss Brute'
@@ -53,6 +68,11 @@ bosses:
     health: 400
     damage: 8.0
     scale: 3.5
+    rewards:
+      money:
+        enabled: true
+        min: 8000
+        max: 25000
   infernal_butcher:
     entity: VINDICATOR
     display-name: '&cInfernal Butcher'
@@ -60,6 +80,11 @@ bosses:
     health: 250
     damage: 6.0
     scale: 3.0
+    rewards:
+      money:
+        enabled: true
+        min: 3000
+        max: 10000
   soul_reaper:
     entity: WITHER_SKELETON
     display-name: '&8Soul Reaper'
@@ -67,6 +92,11 @@ bosses:
     health: 450
     damage: 9.0
     scale: 3.5
+    rewards:
+      money:
+        enabled: true
+        min: 12000
+        max: 30000
   rotten_colossus:
     entity: HUSK
     display-name: '&2Rotten Colossus'
@@ -74,6 +104,11 @@ bosses:
     health: 150
     damage: 4.0
     scale: 3.5
+    rewards:
+      money:
+        enabled: true
+        min: 1000
+        max: 5000
   deep_drowned_king:
     entity: DROWNED
     display-name: '&3Deep Drowned King'
@@ -81,6 +116,11 @@ bosses:
     health: 300
     damage: 6.0
     scale: 3.0
+    rewards:
+      money:
+        enabled: true
+        min: 3000
+        max: 12000
 
 skills:
   enabled: true
@@ -105,33 +145,32 @@ protection:
   allow-boss-damage-in-protected-region: true
 
 rewards:
+  # Player harus memberi minimal damage ini agar dapat reward.
   min-damage-to-reward: 20.0
-  money:
-    common:
-      money-top1: 3000
-      money-top2: 2000
-      money-top3: 1000
-      participation-money: 300
-    rare:
-      money-top1: 5000
-      money-top2: 3000
-      money-top3: 1500
-      participation-money: 500
-    epic:
-      money-top1: 8000
-      money-top2: 5000
-      money-top3: 2500
-      participation-money: 800
-    legendary:
-      money-top1: 12000
-      money-top2: 8000
-      money-top3: 4000
-      participation-money: 1200
-    mythic:
-      money-top1: 20000
-      money-top2: 12000
-      money-top3: 6000
-      participation-money: 2000
+
+  # Uang utama untuk semua player yang memenuhi minimal damage.
+  # Bisa dioverride per boss di bosses.<boss-id>.rewards.money.
+  # Batas aman default: 1.000 - 30.000.
+  default-money:
+    enabled: true
+    min: 1000
+    max: 30000
+
+  # Bonus uang tambahan untuk top damage 1/2/3.
+  # Bonus ini ditambahkan di atas reward uang utama.
+  top-damage-bonus:
+    enabled: true
+    first:
+      min: 5000
+      max: 30000
+    second:
+      min: 3000
+      max: 15000
+    third:
+      min: 1000
+      max: 8000
+
+  # Item rare tetap kecil agar economy tidak inflasi.
   materials:
     common:
       diamond: 0
@@ -148,6 +187,21 @@ rewards:
     mythic:
       diamond: 10
       ancient-debris: 5
+
+  # Contoh override per boss:
+  # bosses:
+  #   ancient_warden:
+  #     rewards:
+  #       money:
+  #         enabled: true
+  #         min: 10000
+  #         max: 30000
+  #   stone_brute:
+  #     rewards:
+  #       money:
+  #         enabled: true
+  #         min: 1000
+  #         max: 5000
 
 effects:
   spawn:
@@ -171,3 +225,6 @@ messages:
   no-spawn-point: '%prefix% &cBelum ada spawn point boss. Gunakan /boss set <nama>.'
   top-damage-header: '&cTop Damage Boss:'
   reward-received: '%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.'
+  reward-money: '%prefix% &aKamu mendapat reward uang boss: &e%money%'
+  reward-top-money: '%prefix% &aKamu mendapat bonus top damage: &e%money%'
+  reward-no-economy: '%prefix% &cEconomy tidak tersedia, reward uang dilewati.'
