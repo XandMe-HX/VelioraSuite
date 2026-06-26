@@ -20,6 +20,7 @@ public final class FishingManager {
     private final FishItemFactory itemFactory;
     private final FishingEconomyHook economyHook;
     private final FishingQuestHook questHook;
+    private FishingMainGuiManager mainGuiManager;
     private FishingSellGuiManager sellGuiManager;
     private FishingMinigameManager minigameManager;
 
@@ -36,6 +37,7 @@ public final class FishingManager {
     public void load() {
         configManager.load();
         dataManager.load();
+        mainGuiManager = new FishingMainGuiManager(this);
         sellGuiManager = new FishingSellGuiManager(this);
         minigameManager = new FishingMinigameManager(plugin, this);
     }
@@ -53,6 +55,7 @@ public final class FishingManager {
     public FishingDataManager getDataManager() { return dataManager; }
     public FishGenerator getGenerator() { return generator; }
     public FishItemFactory getItemFactory() { return itemFactory; }
+    public FishingMainGuiManager getMainGuiManager() { return mainGuiManager; }
     public FishingSellGuiManager getSellGuiManager() { return sellGuiManager; }
     public FishingMinigameManager getMinigameManager() { return minigameManager; }
 
@@ -67,7 +70,7 @@ public final class FishingManager {
     }
 
     public void openMainGui(Player player) {
-        send(player, "main-info", "%prefix% &bGunakan &f/fish sell &buntuk jual ikan, dan &f/fish top &buntuk leaderboard.", Map.of());
+        mainGuiManager.open(player);
     }
 
     public void openSellGui(Player player) {
