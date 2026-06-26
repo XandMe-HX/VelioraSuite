@@ -3,8 +3,6 @@ package id.velioragardens.veliorasuite.module.trader;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.WanderingTrader;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -33,7 +31,6 @@ public final class TraderNpcManager implements Listener {
         Location npcLocation = location.clone().add(0.5D, 1.0D, 0.5D);
         traderEntity = location.getWorld().spawnEntity(npcLocation, configManager.getNpcType());
         if (traderEntity instanceof LivingEntity living) freeze(living, configManager.isNpcGravity());
-        if (traderEntity instanceof WanderingTrader wanderingTrader) wanderingTrader.setCanDrinkPotion(false);
         traderEntity.setCustomName(configManager.color(configManager.getNpcName()));
         traderEntity.setCustomNameVisible(true);
         traderEntities.add(traderEntity.getUniqueId());
