@@ -1,6 +1,8 @@
 package id.velioragardens.veliorasuite.module.boss;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.module.boss.model.BossDefinition;
+import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -27,6 +29,7 @@ public final class BossSkillManager {
     private final BossManager manager;
     private final Random random = new Random();
     private BukkitTask task;
+    private BossDefinition definition;
     private boolean rageMode;
 
     public BossSkillManager(VelioraSuite plugin, BossConfigManager config, BossManager manager) {
@@ -35,8 +38,9 @@ public final class BossSkillManager {
         this.manager = manager;
     }
 
-    public void start() {
+    public void start(BossDefinition definition) {
         stop();
+        this.definition = definition;
         rageMode = false;
         if (!config.skillsEnabled()) return;
         task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::castRandomSkill, 20L * config.skillCooldownSeconds(), 20L * config.skillCooldownSeconds());
@@ -45,28 +49,32 @@ public final class BossSkillManager {
     public void stop() {
         if (task != null) task.cancel();
         task = null;
+        definition = null;
         rageMode = false;
     }
 
     public void cleanupMinions() {
-        LivingEntity boss = manager.getActiveBoss();
-        Location center = boss == null ? manager.getLastKnownLocation() : boss.getLocation();
+        Location center = manager.getArenaCenter();
+        if (center == null || center.getWorld() == null) center = manager.getLastKnownLocation();
         if (center == null || center.getWorld() == null) return;
-        for (Entity entity : center.getWorld().getNearbyEntities(center, 96, 64, 96)) {
-            if (entity.getScoreboardTags().contains("velioraboss_minion")) entity.remove();
-        }
+        for (Entity entity : center.getWorld().getNearbyEntities(center, 96, 64, 96)) if (entity.getScoreboardTags().contains("velioraboss_minion")) entity.remove();
     }
 
     private void castRandomSkill() {
         LivingEntity boss = manager.getActiveBoss();
-        if (boss == null || boss.isDead()) return;
-        maybeRage(boss);
-        switch (random.nextInt(5)) {
-            case 0 -> groundSlam(boss);
-            case 1 -> summonMinions(boss);
-            case 2 -> fireBomb(boss);
-            case 3 -> pullAura(boss);
-            default -> poisonCloud(boss);
+        if (boss == null || boss.isDead() || definition == null) return;
+        if (definition.skills().contains(BossSkillType.RAGE_MODE)) maybeRage(boss);
+        List<BossSkillType> usable = new ArrayList<>();
+        for (BossSkillType skill : definition.skills()) if (skill != BossSkillType.RAGE_MODE) usable.add(skill);
+        if (usable.isEmpty()) return;
+        BossSkillType skill = usable.get(random.nextInt(usable.size()));
+        switch (skill) {
+            case GROUND_SLAM -> groundSlam(boss);
+            case SUMMON_MINIONS -> summonMinions(boss);
+            case FIRE_BOMB -> fireBomb(boss);
+            case PULL_AURA -> pullAura(boss);
+            case POISON_CLOUD -> poisonCloud(boss);
+            case RAGE_MODE -> maybeRage(boss);
         }
     }
 
@@ -108,7 +116,8 @@ public final class BossSkillManager {
     }
 
     private void fireBomb(LivingEntity boss) {
-        Location target = boss.getLocation().clone().add(random.nextInt(9) - 4, 0, random.nextInt(9) - 4);
+        List<Player> targets = nearbyPlayers(boss.getLocation(), config.targetRadius());
+        Location target = targets.isEmpty() ? boss.getLocation().clone().add(random.nextInt(9) - 4, 0, random.nextInt(9) - 4) : targets.get(random.nextInt(targets.size())).getLocation();
         target.getWorld().spawnParticle(Particle.FLAME, target, 40, 1.5D, 0.4D, 1.5D, 0.05D);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             target.getWorld().createExplosion(target, 2.0F, false, false, boss);
@@ -149,7 +158,7 @@ public final class BossSkillManager {
     }
 
     private Player targetNear(Location location) {
-        List<Player> players = nearbyPlayers(location, 24.0D);
+        List<Player> players = nearbyPlayers(location, config.targetRadius());
         return players.isEmpty() ? null : players.get(random.nextInt(players.size()));
     }
 
@@ -157,7 +166,7 @@ public final class BossSkillManager {
         List<Player> players = new ArrayList<>();
         if (location == null || location.getWorld() == null) return players;
         double squared = radius * radius;
-        for (Player player : location.getWorld().getPlayers()) if (player.getLocation().distanceSquared(location) <= squared) players.add(player);
+        for (Player player : location.getWorld().getPlayers()) if (player.getLocation().distanceSquared(location) <= squared && manager.isPlayerInsideArena(player)) players.add(player);
         return players;
     }
 }
