@@ -3,6 +3,8 @@ package id.velioragardens.veliorasuite.module.fishing;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishDefinition;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import id.velioragardens.veliorasuite.module.trader.TraderFishingHook;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +22,11 @@ public final class FishGenerator {
     }
 
     public GeneratedFish generate() {
-        FishRarity rarity = rollRarity();
+        return generate(null);
+    }
+
+    public GeneratedFish generate(Player player) {
+        FishRarity rarity = rollRarity(player);
         List<FishDefinition> candidates = new ArrayList<>();
         for (FishDefinition definition : configManager.getFishDefinitions().values()) {
             if (definition.rarity() == rarity) candidates.add(definition);
@@ -34,17 +40,28 @@ public final class FishGenerator {
         return new GeneratedFish(definition, caughtFish);
     }
 
-    private FishRarity rollRarity() {
+    private FishRarity rollRarity(Player player) {
+        int luckBonus = TraderFishingHook.getFishingLuckBonus(player);
         double total = 0.0D;
-        for (double chance : configManager.getRarityChances().values()) total += Math.max(0.0D, chance);
+        for (Map.Entry<FishRarity, Double> entry : configManager.getRarityChances().entrySet()) total += adjustedChance(entry.getKey(), entry.getValue(), luckBonus);
         if (total <= 0.0D) return FishRarity.COMMON;
         double roll = random.nextDouble() * total;
         double current = 0.0D;
         for (Map.Entry<FishRarity, Double> entry : configManager.getRarityChances().entrySet()) {
-            current += Math.max(0.0D, entry.getValue());
+            current += adjustedChance(entry.getKey(), entry.getValue(), luckBonus);
             if (roll <= current) return entry.getKey();
         }
         return FishRarity.COMMON;
+    }
+
+    private double adjustedChance(FishRarity rarity, double baseChance, int luckBonus) {
+        double chance = Math.max(0.0D, baseChance);
+        if (luckBonus <= 0) return chance;
+        double bonus = Math.min(30.0D, luckBonus) / 100.0D;
+        if (rarity == FishRarity.TRASH || rarity == FishRarity.VANILLA || rarity == FishRarity.COMMON) return Math.max(0.01D, chance * (1.0D - (bonus * 0.5D)));
+        double multiplier = 1.0D + bonus;
+        if (rarity == FishRarity.MITOLOGI) multiplier = 1.0D + (bonus * 0.35D);
+        return chance * multiplier;
     }
 
     private int finalPrice(FishRarity rarity, double minWeight, double maxWeight, double weight, int basePrice) {
