@@ -90,7 +90,7 @@ public final class TraderConfigManager {
         List<?> raw = config == null ? List.of() : config.getList("settings.spawn.locations", List.of());
         for (Object object : raw) {
             if (object instanceof java.util.Map<?, ?> map) {
-                String world = String.valueOf(map.getOrDefault("world", "world"));
+                String world = String.valueOf(mapValue(map, "world", "world"));
                 double x = doubleValue(map.get("x"), 0.0D);
                 double y = doubleValue(map.get("y"), 80.0D);
                 double z = doubleValue(map.get("z"), 0.0D);
@@ -108,7 +108,7 @@ public final class TraderConfigManager {
                 int x = offset.size() > 0 ? intValue(offset.get(0), 0) : 0;
                 int y = offset.size() > 1 ? intValue(offset.get(1), 0) : 0;
                 int z = offset.size() > 2 ? intValue(offset.get(2), 0) : 0;
-                Material material = material(String.valueOf(map.getOrDefault("material", "BARREL")), Material.BARREL);
+                Material material = material(String.valueOf(mapValue(map, "material", "BARREL")), Material.BARREL);
                 campBlocks.add(new TraderCampBlock(x, y, z, material));
             }
         }
@@ -134,8 +134,8 @@ public final class TraderConfigManager {
             for (Object object : item.getList("payment.fish.requirements", List.of())) {
                 if (object instanceof java.util.Map<?, ?> map) {
                     fish.add(new TraderFishRequirement(
-                            String.valueOf(map.getOrDefault("fish-id", "")),
-                            String.valueOf(map.getOrDefault("rarity", "")),
+                            String.valueOf(mapValue(map, "fish-id", "")),
+                            String.valueOf(mapValue(map, "rarity", "")),
                             intValue(map.get("amount"), 1)
                     ));
                 }
@@ -158,6 +158,7 @@ public final class TraderConfigManager {
         }
     }
 
+    private Object mapValue(java.util.Map<?, ?> map, String key, Object fallback) { Object value = map.get(key); return value == null ? fallback : value; }
     private EntityType entityType(String name, EntityType fallback) { try { return EntityType.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
     private Material material(String name, Material fallback) { Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
     private int inventorySize(int size) { return size <= 0 ? 27 : Math.min(54, ((size + 8) / 9) * 9); }
