@@ -130,7 +130,7 @@ public final class PetManager implements Listener {
         }
         if (!economy.isReady()) { player.sendMessage(config.color(config.message("vault-missing", "%prefix% &cEconomy tidak aktif."))); return false; }
         if (!economy.take(player, definition.price())) { player.sendMessage(config.color(config.message("not-enough-money", "%prefix% &cUang kamu tidak cukup."))); return false; }
-        givePet(player, definition.id(), false);
+        givePet(player, definition.id(), true);
         player.sendMessage(config.color(config.message("pet-bought", "%prefix% &aKamu membeli pet &f%pet%&a.").replace("%pet%", config.color(definition.displayName()))));
         if (config.autoSummonNewPet()) summon(player, definition.id());
         return true;
@@ -154,9 +154,6 @@ public final class PetManager implements Listener {
             player.sendMessage(config.color(config.message("already-owned", "%prefix% &eKamu sudah punya pet ini.")));
         } else {
             givePet(player, result.id(), false);
-            player.sendMessage(config.color(config.message("gacha-result", "%prefix% &aKamu mendapatkan pet &f%pet% &7(%rarity%&7)&a!")
-                    .replace("%pet%", config.color(result.displayName()))
-                    .replace("%rarity%", result.rarity().name())));
             if (config.autoSummonNewPet()) summon(player, result.id());
         }
     }
@@ -352,7 +349,10 @@ public final class PetManager implements Listener {
             if (event.getEntity() instanceof Player || event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true);
             return;
         }
-        if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) return;
+        if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) {
+            if (event.getDamager() instanceof Player) event.setCancelled(true);
+            return;
+        }
         if (event.getDamager() instanceof Player player && event.getEntity() instanceof LivingEntity target) setTarget(player, target);
         if (event.getEntity() instanceof Player player && event.getDamager() instanceof LivingEntity attacker) setTarget(player, attacker);
     }
