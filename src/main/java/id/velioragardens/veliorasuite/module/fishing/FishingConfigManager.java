@@ -5,6 +5,8 @@ import id.velioragardens.veliorasuite.module.fishing.model.FishDefinition;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -41,19 +43,42 @@ public final class FishingConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&bVelioraFishing&8] "); }
     public boolean isMinigameEnabled() { return bool("settings.minigame.enabled", true); }
-    public double getMinigameTriggerChance() { return number("settings.minigame.trigger-chance", 35.0D); }
+    public double getMinigameTriggerChance() { return number("settings.minigame.trigger-chance", 100.0D); }
     public int getClickCooldownMs() { return Math.max(0, integer("settings.minigame.click-cooldown-ms", 40)); }
     public boolean isMinigameShowTitle() { return bool("settings.minigame.show-title", true); }
     public boolean isRemoveVanillaCaughtEntity() { return bool("settings.minigame.remove-vanilla-caught-entity", true); }
-    public int getSpamNeeded(FishRarity rarity) { return Math.max(1, integer("settings.minigame.difficulty." + rarity.key() + ".spam-needed", fallbackSpam(rarity))); }
-    public double getMinigameSeconds(FishRarity rarity) { return Math.max(1.0D, number("settings.minigame.difficulty." + rarity.key() + ".seconds", fallbackSeconds(rarity))); }
+    public boolean isMinigameEnabledForRarity(FishRarity rarity) { return bool(rarityPath("settings.minigame.difficulty", rarity, ".enabled"), rarity != FishRarity.TRASH); }
+    public int getSpamNeeded(FishRarity rarity) { return Math.max(0, integer(rarityPath("settings.minigame.difficulty", rarity, ".spam-needed"), fallbackSpam(rarity))); }
+    public double getMinigameSeconds(FishRarity rarity) { return Math.max(0.0D, number(rarityPath("settings.minigame.difficulty", rarity, ".seconds"), fallbackSeconds(rarity))); }
     public boolean isSellGuiEnabled() { return bool("settings.sell-gui.enabled", true); }
     public String getSellGuiTitle() { return str("settings.sell-gui.title", "&8VelioraFishing Sell"); }
-    public int getSellGuiSize() { int size = integer("settings.sell-gui.size", 54); return size <= 0 ? 54 : Math.min(54, ((size + 8) / 9) * 9); }
+    public int getSellGuiSize() { return inventorySize(integer("settings.sell-gui.size", 54)); }
     public boolean isVanillaFishSellAllowed() { return bool("settings.sell-gui.allow-vanilla-fish", true); }
     public boolean isTopGuiEnabled() { return bool("settings.top.gui-enabled", false); }
     public int getTopLimit() { return Math.max(1, integer("settings.top.limit", 5)); }
     public boolean isQuestFishingProgressEnabled() { return bool("settings.quest-integration.enabled", true); }
+
+    public boolean isBagEnabled() { return bool("settings.bag.enabled", true); }
+    public String getBagTitle() { return str("settings.bag.title", "&8Fish Bag"); }
+    public int getBagSize() { return inventorySize(integer("settings.bag.size", 54)); }
+    public boolean isBagAutoStoreEnabled() { return bool("settings.bag.auto-store.enabled", false); }
+    public Set<FishRarity> getBagAutoStoreRarities() {
+        List<String> raw = config == null ? List.of() : config.getStringList("settings.bag.auto-store.rarities");
+        if (raw.isEmpty()) raw = List.of("ORNAMENTAL", "EPIC", "LEGENDARY", "MITOLOGI");
+        Set<FishRarity> result = java.util.EnumSet.noneOf(FishRarity.class);
+        for (String value : raw) result.add(FishRarity.fromKey(value));
+        return result;
+    }
+
+    public String getCollectionTitle() { return str("settings.collection.title", "&8Fish Collection"); }
+    public int getCollectionSize() { return inventorySize(integer("settings.collection.size", 54)); }
+
+    public boolean isEffectEnabled(FishRarity rarity) { return bool(rarityPath("effects", rarity, ".enabled"), rarity.power() >= FishRarity.ORNAMENTAL.power()); }
+    public Sound getEffectSound(FishRarity rarity) { return sound(str(rarityPath("effects", rarity, ".sound"), fallbackSound(rarity).name()), fallbackSound(rarity)); }
+    public Particle getEffectParticle(FishRarity rarity) { return particle(str(rarityPath("effects", rarity, ".particle"), fallbackParticle(rarity).name()), fallbackParticle(rarity)); }
+    public int getEffectAmount(FishRarity rarity) { return Math.max(0, integer(rarityPath("effects", rarity, ".amount"), fallbackParticleAmount(rarity))); }
+    public boolean isEffectBroadcast(FishRarity rarity) { return bool(rarityPath("effects", rarity, ".broadcast"), rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI); }
+    public boolean isVisualLightning(FishRarity rarity) { return bool(rarityPath("effects", rarity, ".visual-lightning"), rarity == FishRarity.MITOLOGI); }
 
     public String getUsePermission() { return str("permissions.use", "veliorasuite.fishing.use"); }
     public String getSellPermission() { return str("permissions.sell", "veliorasuite.fishing.sell"); }
@@ -67,11 +92,12 @@ public final class FishingConfigManager {
     public String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }
 
     public Map<String, FishDefinition> getFishDefinitions() { return fishDefinitions; }
+    public FishDefinition getFishDefinition(String id) { return id == null ? null : fishDefinitions.get(id.toLowerCase(Locale.ROOT)); }
     public Map<FishRarity, Double> getRarityChances() { return rarityChances; }
 
-    public int minPrice(FishRarity rarity) { return Math.max(0, integer("settings.price." + rarity.key() + ".min", fallbackMinPrice(rarity))); }
-    public int maxPrice(FishRarity rarity) { return Math.max(minPrice(rarity), integer("settings.price." + rarity.key() + ".max", fallbackMaxPrice(rarity))); }
-    public int maxFinalPrice(FishRarity rarity) { return Math.max(maxPrice(rarity), integer("settings.price." + rarity.key() + ".max-final", fallbackFinalMaxPrice(rarity))); }
+    public int minPrice(FishRarity rarity) { return Math.max(0, integer(rarityPath("settings.price", rarity, ".min"), fallbackMinPrice(rarity))); }
+    public int maxPrice(FishRarity rarity) { return Math.max(minPrice(rarity), integer(rarityPath("settings.price", rarity, ".max"), fallbackMaxPrice(rarity))); }
+    public int maxFinalPrice(FishRarity rarity) { return Math.max(maxPrice(rarity), integer(rarityPath("settings.price", rarity, ".max-final"), fallbackFinalMaxPrice(rarity))); }
     public int randomPrice(FishRarity rarity) { int min = minPrice(rarity); int max = maxPrice(rarity); return max <= min ? min : ThreadLocalRandom.current().nextInt(min, max + 1); }
 
     public boolean isVanillaFish(Material material) {
@@ -83,9 +109,9 @@ public final class FishingConfigManager {
         rarityChances.put(FishRarity.TRASH, number("settings.rarity-chance.trash", 20.0D));
         rarityChances.put(FishRarity.VANILLA, number("settings.rarity-chance.vanilla", 15.0D));
         rarityChances.put(FishRarity.COMMON, number("settings.rarity-chance.common", 55.0D));
-        rarityChances.put(FishRarity.ORNAMENTAL, number("settings.rarity-chance.ornamental", 7.0D));
-        rarityChances.put(FishRarity.RARE, number("settings.rarity-chance.rare", 2.5D));
-        rarityChances.put(FishRarity.LEGENDARY, number("settings.rarity-chance.legendary", 0.45D));
+        rarityChances.put(FishRarity.ORNAMENTAL, number("settings.rarity-chance.ornamental", 3.0D));
+        rarityChances.put(FishRarity.EPIC, number(rarityPath("settings.rarity-chance", FishRarity.EPIC, ""), 2.5D));
+        rarityChances.put(FishRarity.LEGENDARY, number("settings.rarity-chance.legendary", 0.20D));
         rarityChances.put(FishRarity.MITOLOGI, number("settings.rarity-chance.mitologi", 0.05D));
     }
 
@@ -128,7 +154,7 @@ public final class FishingConfigManager {
         add("cod", "Cod", FishRarity.VANILLA, Material.COD, 0.5D, 4.0D, "Vanilla", "Ocean");
         add("tilapia", "Tilapia", FishRarity.COMMON, Material.COD, 1.0D, 8.0D, "VelioraFishing", "Sungai");
         add("koi", "Koi Veliora", FishRarity.ORNAMENTAL, Material.TROPICAL_FISH, 0.3D, 2.5D, "VelioraFishing", "Kolam");
-        add("bluefin", "Bluefin Tuna", FishRarity.RARE, Material.SALMON, 20.0D, 180.0D, "VelioraFishing", "Laut");
+        add("bluefin", "Bluefin Tuna", FishRarity.EPIC, Material.SALMON, 20.0D, 180.0D, "VelioraFishing", "Laut");
         add("arwana_super_red", "Arwana Super Red", FishRarity.LEGENDARY, Material.PLAYER_HEAD, 10.0D, 60.0D, "VelioraFishing", "Legenda");
         add("bahamut", "Bahamut", FishRarity.MITOLOGI, Material.PLAYER_HEAD, 500.0D, 2500.0D, "VelioraFishing", "Mitologi");
     }
@@ -139,33 +165,47 @@ public final class FishingConfigManager {
 
     private int fallbackSpam(FishRarity rarity) {
         return switch (rarity) {
-            case TRASH -> 3;
-            case VANILLA -> 4;
-            case COMMON -> 5;
-            case ORNAMENTAL -> 10;
-            case RARE -> 18;
-            case LEGENDARY -> 35;
-            case MITOLOGI -> 55;
+            case TRASH -> 0;
+            case VANILLA -> 5;
+            case COMMON -> 10;
+            case ORNAMENTAL -> 20;
+            case EPIC -> 25;
+            case LEGENDARY -> 50;
+            case MITOLOGI -> 100;
         };
     }
 
     private double fallbackSeconds(FishRarity rarity) {
         return switch (rarity) {
-            case TRASH, VANILLA, COMMON -> 4.0D;
-            case ORNAMENTAL -> 5.0D;
-            case RARE -> 6.0D;
-            case LEGENDARY -> 7.0D;
-            case MITOLOGI -> 8.0D;
+            case TRASH -> 0.0D;
+            case VANILLA -> 5.0D;
+            case COMMON, ORNAMENTAL, EPIC -> 10.0D;
+            case LEGENDARY -> 25.0D;
+            case MITOLOGI -> 30.0D;
         };
     }
 
-    private int fallbackMinPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 50; case COMMON -> 100; case ORNAMENTAL -> 500; case RARE -> 2000; case LEGENDARY -> 10000; case MITOLOGI -> 50000; }; }
-    private int fallbackMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 5; case VANILLA -> 100; case COMMON -> 500; case ORNAMENTAL -> 2000; case RARE -> 10000; case LEGENDARY -> 75000; case MITOLOGI -> 150000; }; }
-    private int fallbackFinalMaxPrice(FishRarity rarity) { return switch (rarity) { case LEGENDARY -> 75000; case MITOLOGI -> 500000; default -> fallbackMaxPrice(rarity); }; }
-    private double fallbackMinWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.1D; case VANILLA -> 0.5D; case COMMON -> 1.0D; case ORNAMENTAL -> 0.2D; case RARE -> 10.0D; case LEGENDARY -> 10.0D; case MITOLOGI -> 100.0D; }; }
-    private double fallbackMaxWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 1.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 3.0D; case RARE -> 200.0D; case LEGENDARY -> 1000.0D; case MITOLOGI -> 2500.0D; }; }
-    private Material fallbackMaterial(FishRarity rarity) { return switch (rarity) { case TRASH -> Material.LEATHER_BOOTS; case VANILLA, COMMON -> Material.COD; case ORNAMENTAL -> Material.TROPICAL_FISH; case RARE -> Material.SALMON; case LEGENDARY, MITOLOGI -> Material.PLAYER_HEAD; }; }
+    private int fallbackMinPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 10; case COMMON -> 50; case ORNAMENTAL -> 100; case EPIC -> 500; case LEGENDARY -> 10000; case MITOLOGI -> 50000; }; }
+    private int fallbackMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 50; case COMMON -> 100; case ORNAMENTAL -> 500; case EPIC -> 1000; case LEGENDARY -> 50000; case MITOLOGI -> 150000; }; }
+    private int fallbackFinalMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 50; case COMMON -> 100; case ORNAMENTAL -> 500; case EPIC -> 1000; case LEGENDARY -> 50000; case MITOLOGI -> 500000; }; }
+    private double fallbackMinWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.1D; case VANILLA -> 0.5D; case COMMON -> 1.0D; case ORNAMENTAL -> 0.2D; case EPIC -> 10.0D; case LEGENDARY -> 10.0D; case MITOLOGI -> 100.0D; }; }
+    private double fallbackMaxWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 1.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 3.0D; case EPIC -> 200.0D; case LEGENDARY -> 1000.0D; case MITOLOGI -> 2500.0D; }; }
+    private Material fallbackMaterial(FishRarity rarity) { return switch (rarity) { case TRASH -> Material.LEATHER_BOOTS; case VANILLA, COMMON -> Material.COD; case ORNAMENTAL -> Material.TROPICAL_FISH; case EPIC -> Material.SALMON; case LEGENDARY, MITOLOGI -> Material.PLAYER_HEAD; }; }
+    private Sound fallbackSound(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; case EPIC -> Sound.ENTITY_PLAYER_LEVELUP; case LEGENDARY -> Sound.UI_TOAST_CHALLENGE_COMPLETE; case MITOLOGI -> Sound.ENTITY_ENDER_DRAGON_GROWL; default -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; }; }
+    private Particle fallbackParticle(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Particle.HAPPY_VILLAGER; case EPIC -> Particle.ENCHANT; case LEGENDARY -> Particle.TOTEM_OF_UNDYING; case MITOLOGI -> Particle.DRAGON_BREATH; default -> Particle.HAPPY_VILLAGER; }; }
+    private int fallbackParticleAmount(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> 10; case EPIC -> 20; case LEGENDARY -> 35; case MITOLOGI -> 60; default -> 0; }; }
     private Material material(String name, Material fallback) { Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
+    private Sound sound(String name, Sound fallback) { try { return Sound.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
+    private Particle particle(String name, Particle fallback) { try { return Particle.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
+    private int inventorySize(int size) { return size <= 0 ? 54 : Math.min(54, ((size + 8) / 9) * 9); }
+    private String rarityPath(String base, FishRarity rarity, String suffix) {
+        String primary = base + "." + rarity.key() + suffix;
+        if (rarity == FishRarity.EPIC && config != null) {
+            String legacy = base + ".rare" + suffix;
+            if (!config.contains(primary) && config.contains(legacy)) return legacy;
+        }
+        return primary;
+    }
     private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
     private boolean bool(String path, boolean fallback) { return config == null || !config.contains(path) ? fallback : config.getBoolean(path, fallback); }
     private int integer(String path, int fallback) { return config == null || !config.contains(path) ? fallback : config.getInt(path, fallback); }
