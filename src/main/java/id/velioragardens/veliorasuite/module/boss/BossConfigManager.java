@@ -66,8 +66,18 @@ public final class BossConfigManager {
     public List<String> minionTypes() { List<String> list = config.getStringList("skills.summon.types"); return list.isEmpty() ? List.of("ZOMBIE", "HUSK", "VINDICATOR", "DROWNED") : list; }
 
     public double minDamageToReward() { return number("rewards.min-damage-to-reward", 20.0D); }
-    public long rewardMoney(BossRarity rarity, String key) { return Math.max(0L, config.getLong("rewards.money." + rarity.name().toLowerCase(Locale.ROOT) + "." + key, 0L)); }
     public int rewardMaterial(BossRarity rarity, String key) { return Math.max(0, config.getInt("rewards.materials." + rarity.name().toLowerCase(Locale.ROOT) + "." + key, 0)); }
+
+    public boolean defaultMoneyEnabled() { return bool("rewards.default-money.enabled", true); }
+    public long defaultMoneyMin() { return clampMoney(integer("rewards.default-money.min", 1000)); }
+    public long defaultMoneyMax() { return clampMoney(integer("rewards.default-money.max", 30000)); }
+    public boolean bossMoneyEnabled(BossDefinition definition) { return bool("bosses." + definition.id() + ".rewards.money.enabled", defaultMoneyEnabled()); }
+    public long bossMoneyMin(BossDefinition definition) { return clampMoney(integer("bosses." + definition.id() + ".rewards.money.min", (int) defaultMoneyMin())); }
+    public long bossMoneyMax(BossDefinition definition) { return clampMoney(integer("bosses." + definition.id() + ".rewards.money.max", (int) defaultMoneyMax())); }
+
+    public boolean topDamageBonusEnabled() { return bool("rewards.top-damage-bonus.enabled", true); }
+    public long topBonusMin(int rankIndex) { return clampMoney(integer("rewards.top-damage-bonus." + rankKey(rankIndex) + ".min", defaultTopMin(rankIndex))); }
+    public long topBonusMax(int rankIndex) { return clampMoney(integer("rewards.top-damage-bonus." + rankKey(rankIndex) + ".max", defaultTopMax(rankIndex))); }
 
     public boolean preventBlockDamage() { return bool("protection.prevent-block-damage", true); }
     public boolean allowBossDamageInProtectedRegion() { return bool("protection.allow-boss-damage-in-protected-region", true); }
@@ -124,8 +134,11 @@ public final class BossConfigManager {
         return switch (rarity) { case COMMON -> 50.0D; case RARE -> 25.0D; case EPIC -> 15.0D; case LEGENDARY -> 8.0D; case MYTHIC -> 2.0D; };
     }
 
+    private String rankKey(int rankIndex) { return rankIndex == 0 ? "first" : rankIndex == 1 ? "second" : "third"; }
+    private int defaultTopMin(int rankIndex) { return rankIndex == 0 ? 5000 : rankIndex == 1 ? 3000 : 1000; }
+    private int defaultTopMax(int rankIndex) { return rankIndex == 0 ? 30000 : rankIndex == 1 ? 15000 : 8000; }
+    private long clampMoney(long value) { return Math.max(0L, Math.min(30_000L, value)); }
     private BarStyle barStyle(String raw) { try { return BarStyle.valueOf(raw.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return BarStyle.SEGMENTED_20; } }
-    private BarColor barColor(String raw) { try { return BarColor.valueOf(raw.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return BarColor.RED; } }
     private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
     private boolean bool(String path, boolean fallback) { return config == null || !config.contains(path) ? fallback : config.getBoolean(path, fallback); }
     private int integer(String path, int fallback) { return config == null || !config.contains(path) ? fallback : config.getInt(path, fallback); }
