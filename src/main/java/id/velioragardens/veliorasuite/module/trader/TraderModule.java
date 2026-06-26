@@ -65,7 +65,7 @@ public final class TraderModule implements VelioraModule {
             plugin.getLogger().warning("Command /trader tidak ditemukan di plugin.yml.");
             return;
         }
-        TraderCommand traderCommand = new TraderCommand(manager, managerConfig());
+        TraderCommand traderCommand = new TraderCommand(manager, manager.getConfigManager());
         command.setExecutor(traderCommand);
         command.setTabCompleter(traderCommand);
     }
@@ -74,19 +74,9 @@ public final class TraderModule implements VelioraModule {
         listeners.clear();
         listeners.add(manager.getNpcManager());
         listeners.add(manager.getGuiManager());
-        listeners.add(new TraderRepairBlocker(managerConfig(), manager.getItemFactory()));
+        listeners.add(new TraderRepairBlocker(manager.getConfigManager(), manager.getItemFactory()));
         listeners.add(new TraderCombatListener(manager.getItemFactory()));
         for (Listener listener : listeners) plugin.getServer().getPluginManager().registerEvents(listener, plugin);
-    }
-
-    private TraderConfigManager managerConfig() {
-        try {
-            java.lang.reflect.Field field = TraderManager.class.getDeclaredField("configManager");
-            field.setAccessible(true);
-            return (TraderConfigManager) field.get(manager);
-        } catch (Exception exception) {
-            throw new IllegalStateException("VelioraTrader config manager tidak tersedia", exception);
-        }
     }
 
     private void registerDisabledCommand() {
