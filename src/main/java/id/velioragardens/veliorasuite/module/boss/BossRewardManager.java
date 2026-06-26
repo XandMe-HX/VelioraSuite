@@ -12,11 +12,13 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Random;
 
 public final class BossRewardManager {
 
     private final VelioraSuite plugin;
     private final BossConfigManager config;
+    private final Random random = new Random();
     private boolean vaultWarned;
 
     public BossRewardManager(VelioraSuite plugin, BossConfigManager config) {
@@ -42,18 +44,38 @@ public final class BossRewardManager {
             if (entry.damage() < config.minDamageToReward()) continue;
             Player player = Bukkit.getPlayer(entry.uuid());
             if (player == null) continue;
-            long money = moneyFor(definition, i);
-            if (money > 0) deposit(player, money);
-            if (i < 3) giveRareMaterial(player, definition, i);
+            giveMainMoney(player, definition);
+            if (i < 3) {
+                giveTopBonus(player, i);
+                giveRareMaterial(player, definition, i);
+            }
             player.sendMessage(config.color(config.message("reward-received", "%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.").replace("%damage%", String.format("%.1f", entry.damage()))));
         }
     }
 
-    private long moneyFor(BossDefinition definition, int rankIndex) {
-        if (rankIndex == 0) return config.rewardMoney(definition.rarity(), "money-top1");
-        if (rankIndex == 1) return config.rewardMoney(definition.rarity(), "money-top2");
-        if (rankIndex == 2) return config.rewardMoney(definition.rarity(), "money-top3");
-        return config.rewardMoney(definition.rarity(), "participation-money");
+    private void giveMainMoney(Player player, BossDefinition definition) {
+        if (!config.bossMoneyEnabled(definition)) return;
+        long amount = randomMoney(config.bossMoneyMin(definition), config.bossMoneyMax(definition));
+        if (amount <= 0) return;
+        if (deposit(player, amount)) {
+            player.sendMessage(config.color(config.message("reward-money", "&aKamu mendapat reward uang boss: &e%money%").replace("%money%", String.valueOf(amount))));
+        }
+    }
+
+    private void giveTopBonus(Player player, int rankIndex) {
+        if (!config.topDamageBonusEnabled()) return;
+        long amount = randomMoney(config.topBonusMin(rankIndex), config.topBonusMax(rankIndex));
+        if (amount <= 0) return;
+        if (deposit(player, amount)) {
+            player.sendMessage(config.color(config.message("reward-top-money", "&aKamu mendapat bonus top damage: &e%money%").replace("%money%", String.valueOf(amount))));
+        }
+    }
+
+    private long randomMoney(long min, long max) {
+        long safeMin = Math.max(0L, Math.min(min, max));
+        long safeMax = Math.max(safeMin, Math.max(min, max));
+        if (safeMax <= safeMin) return safeMin;
+        return safeMin + (long) Math.floor(random.nextDouble() * (safeMax - safeMin + 1));
     }
 
     private void giveRareMaterial(Player player, BossDefinition definition, int rankIndex) {
@@ -67,22 +89,25 @@ public final class BossRewardManager {
         if (debris > 0) player.getInventory().addItem(new ItemStack(Material.ANCIENT_DEBRIS, debris)).values().forEach(left -> player.getWorld().dropItemNaturally(player.getLocation(), left));
     }
 
-    private void deposit(Player player, long amount) {
+    private boolean deposit(Player player, long amount) {
         try {
-            if (Bukkit.getPluginManager().getPlugin("Vault") == null) { warnVault(); return; }
+            if (Bukkit.getPluginManager().getPlugin("Vault") == null) { warnVault(player); return false; }
             Class<?> economyClass = Class.forName("net.milkbowl.vault.economy.Economy");
             @SuppressWarnings({"rawtypes", "unchecked"})
             RegisteredServiceProvider<?> registration = Bukkit.getServicesManager().getRegistration((Class) economyClass);
-            if (registration == null) { warnVault(); return; }
+            if (registration == null) { warnVault(player); return false; }
             Object economy = registration.getProvider();
             Method deposit = economy.getClass().getMethod("depositPlayer", OfflinePlayer.class, double.class);
             deposit.invoke(economy, player, (double) amount);
+            return true;
         } catch (Exception exception) {
-            warnVault();
+            warnVault(player);
+            return false;
         }
     }
 
-    private void warnVault() {
+    private void warnVault(Player player) {
+        if (player != null) player.sendMessage(config.color(config.message("reward-no-economy", "&cEconomy tidak tersedia, reward uang dilewati.")));
         if (vaultWarned) return;
         vaultWarned = true;
         plugin.getLogger().warning("VelioraBoss: Vault economy tidak aktif, reward money di-skip.");
