@@ -38,6 +38,14 @@ public final class TraderCommand implements CommandExecutor, TabCompleter {
             manager.forceSpawn(sender);
             return true;
         }
+        if (args.length > 0 && (args[0].equalsIgnoreCase("riset") || args[0].equalsIgnoreCase("reset"))) {
+            if (!hasAdmin(sender)) {
+                manager.sendNoPermission(sender);
+                return true;
+            }
+            manager.riset(sender);
+            return true;
+        }
         if (!sender.hasPermission(configManager.getUsePermission()) && !sender.hasPermission(configManager.getAdminPermission()) && !sender.isOp()) {
             manager.sendNoPermission(sender);
             return true;
@@ -52,8 +60,9 @@ public final class TraderCommand implements CommandExecutor, TabCompleter {
         if (!hasAdmin(sender)) return new ArrayList<>();
         String lower = args[0].toLowerCase(Locale.ROOT);
         List<String> options = new ArrayList<>();
-        if ("reload".startsWith(lower)) options.add("reload");
         if ("spawn".startsWith(lower)) options.add("spawn");
+        if ("riset".startsWith(lower)) options.add("riset");
+        if ("reload".startsWith(lower)) options.add("reload");
         return options;
     }
 
