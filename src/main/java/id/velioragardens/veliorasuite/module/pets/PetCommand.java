@@ -60,8 +60,13 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
             }
             case "rename" -> {
                 if (!has(player, "veliorasuite.pets.rename")) { noPerm(player); return true; }
-                if (args.length < 2) { player.sendMessage("/pet rename <nama>"); return true; }
-                manager.rename(player, join(args, 1));
+                if (args.length < 3) { player.sendMessage("/pet rename <pet|active> <nama>"); return true; }
+                manager.rename(player, args[1].toLowerCase(Locale.ROOT), join(args, 2));
+            }
+            case "feed" -> {
+                if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
+                if (args.length < 2) { player.sendMessage("/pet feed <pet|active>"); return true; }
+                manager.feed(player, args[1].toLowerCase(Locale.ROOT));
             }
             case "reload" -> {
                 if (!has(player, "veliorasuite.pets.reload") && !has(player, "veliorasuite.pets.admin")) { noPerm(player); return true; }
@@ -91,12 +96,13 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> result = new ArrayList<>();
         if (args.length == 1) {
-            for (String option : List.of("shop", "gacha", "list", "summon", "dismiss", "storage", "rename", "reload", "give", "remove")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
+            for (String option : List.of("shop", "gacha", "list", "summon", "dismiss", "storage", "rename", "feed", "reload", "give", "remove")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
             return result;
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("summon")) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("summon") || args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("feed"))) {
             if (sender instanceof Player player) {
                 String lower = args[1].toLowerCase(Locale.ROOT);
+                if ("active".startsWith(lower)) result.add("active");
                 for (String id : manager.playerData(player.getUniqueId()).owned().keySet()) if (id.startsWith(lower)) result.add(id);
             }
             return result;
