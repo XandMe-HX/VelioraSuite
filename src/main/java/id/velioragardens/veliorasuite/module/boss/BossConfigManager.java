@@ -83,6 +83,21 @@ public final class BossConfigManager {
     public double belowYOffset() { return Math.max(1.0D, number("arena.below-y-offset", 12.0D)); }
     public boolean removeMinionOutsideRadius() { return bool("arena.remove-minion-outside-radius", true); }
 
+    public boolean targetingEnabled() { return bool("targeting.enabled", true); }
+    public boolean targetingIncludeSurvival() { return bool("targeting.include-survival", true); }
+    public boolean targetingIncludeAdventure() { return bool("targeting.include-adventure", true); }
+    public boolean targetingIncludeCreative() { return bool("targeting.include-creative", true); }
+    public boolean targetingIncludeSpectator() { return bool("targeting.include-spectator", false); }
+    public double targetingRadiusHorizontal() { return Math.max(1.0D, number("targeting.target-radius-horizontal", 64.0D)); }
+    public double targetingRadiusVertical() { return Math.max(1.0D, number("targeting.target-radius-vertical", 32.0D)); }
+    public int retargetIntervalSeconds() { return Math.max(1, integer("targeting.retarget-interval-seconds", 3)); }
+    public boolean forceTargetNearest() { return bool("targeting.force-target-nearest", true); }
+    public boolean ignoreLineOfSight() { return bool("targeting.ignore-line-of-sight", true); }
+    public boolean targetPlayersAbove() { return bool("targeting.target-players-above", true); }
+    public boolean targetPlayersBelow() { return bool("targeting.target-players-below", true); }
+    public boolean noTargetTeleportBack() { return bool("targeting.no-target-teleport-back", false); }
+    public boolean debugTargeting() { return bool("debug.targeting", false); }
+
     public double minDamageToReward() { return number("rewards.min-damage-to-reward", 20.0D); }
     public int rewardMaterial(BossRarity rarity, String key) { return Math.max(0, config.getInt("rewards.materials." + rarity.name().toLowerCase(Locale.ROOT) + "." + key, 0)); }
 
