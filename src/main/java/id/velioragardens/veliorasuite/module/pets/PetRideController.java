@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.pets;
 
 import id.velioragardens.veliorasuite.module.pets.model.OwnedPet;
 import id.velioragardens.veliorasuite.module.pets.model.PetDefinition;
+import id.velioragardens.veliorasuite.module.pets.model.PlayerPetData;
 import id.velioragardens.veliorasuite.module.pets.model.VelioraPet;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -11,6 +12,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+
+import java.util.Locale;
 
 public final class PetRideController implements Listener {
     private final PetManager manager;
@@ -25,11 +28,17 @@ public final class PetRideController implements Listener {
     public void onCommand(PlayerCommandPreprocessEvent event) {
         String[] args = event.getMessage().substring(1).split(" ");
         if (args.length < 2) return;
-        String root = args[0].toLowerCase();
+        String root = args[0].toLowerCase(Locale.ROOT);
         if (!root.equals("pet") && !root.equals("pets") && !root.equals("vpet") && !root.equals("vpets")) return;
-        if (!args[1].equalsIgnoreCase("ride")) return;
-        event.setCancelled(true);
-        startRide(event.getPlayer());
+        if (args[1].equalsIgnoreCase("ride")) {
+            event.setCancelled(true);
+            startRide(event.getPlayer());
+            return;
+        }
+        if (args[1].equalsIgnoreCase("info")) {
+            event.setCancelled(true);
+            sendInfo(event.getPlayer(), args.length >= 3 ? args[2].toLowerCase(Locale.ROOT) : "active");
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -63,5 +72,33 @@ public final class PetRideController implements Listener {
         LivingEntity entity = active.entity();
         if (!entity.getPassengers().contains(player)) entity.addPassenger(player);
         player.sendMessage(config.color(config.message("pet-ride-start", "%prefix% &aKamu menaiki &f%pet%&a.").replace("%pet%", owned.name())));
+    }
+
+    private void sendInfo(Player player, String target) {
+        PlayerPetData data = manager.playerData(player.getUniqueId());
+        OwnedPet owned;
+        if (target == null || target.equalsIgnoreCase("active")) {
+            VelioraPet active = manager.activePet(player.getUniqueId());
+            owned = active == null ? null : data.get(active.petId());
+        } else {
+            owned = data.get(target.toLowerCase(Locale.ROOT));
+        }
+        if (owned == null) {
+            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet &f%pet%&c.").replace("%pet%", target)));
+            return;
+        }
+        PetDefinition definition = config.pets().get(owned.id());
+        if (definition == null) return;
+        boolean active = manager.activePet(player.getUniqueId()) != null && manager.activePet(player.getUniqueId()).petId().equalsIgnoreCase(owned.id());
+        boolean adult = owned.level() >= definition.adultLevel();
+        player.sendMessage(config.color(config.message("pet-info-header", "%prefix% &dInfo Pet: &f%pet%").replace("%pet%", owned.name())));
+        player.sendMessage(config.color("&7ID: &f" + owned.id()));
+        player.sendMessage(config.color("&7Rarity: &f" + definition.rarity().name()));
+        player.sendMessage(config.color("&7Level/EXP: &f" + owned.level() + " / " + owned.exp()));
+        player.sendMessage(config.color("&7Food: &f" + definition.foodMaterial().name() + " (+" + definition.feedExp() + " EXP)"));
+        player.sendMessage(config.color("&7Rideable: &f" + (definition.rideable() ? "Yes" : "No")));
+        player.sendMessage(config.color("&7Adult Level: &f" + definition.adultLevel()));
+        player.sendMessage(config.color("&7Status Dewasa: &f" + (adult ? "Dewasa" : "Belum dewasa")));
+        player.sendMessage(config.color("&7Active: &f" + (active ? "yes" : "no")));
     }
 }
