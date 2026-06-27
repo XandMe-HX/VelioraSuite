@@ -13,6 +13,7 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,13 +21,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
@@ -67,10 +71,7 @@ public final class PetManager implements Listener {
         this.levelKey = new NamespacedKey(plugin, "veliorapets_level");
     }
 
-    public void load() {
-        config.load();
-        data.load();
-    }
+    public void load() { config.load(); data.load(); }
 
     public void start(PetGuiManager guiManager) {
         this.guiManager = guiManager;
@@ -96,10 +97,8 @@ public final class PetManager implements Listener {
 
     public PetConfigManager config() { return config; }
     public PetDataManager data() { return data; }
-    public PetGuiManager gui() { return guiManager; }
     public PlayerPetData playerData(UUID uuid) { return data.get(uuid); }
     public VelioraPet activePet(UUID uuid) { return activePets.get(uuid); }
-    public boolean hasActivePet(UUID uuid) { return activePets.containsKey(uuid); }
 
     public void openMain(Player player) { guiManager.openMain(player); }
     public void openShop(Player player) { guiManager.openShop(player); }
@@ -111,7 +110,7 @@ public final class PetManager implements Listener {
         PlayerPetData pdata = data.get(player.getUniqueId());
         String petId = active != null ? active.petId() : pdata.lastPet();
         if (petId == null || (!config.allowStorageWithoutActive() && active == null)) {
-            player.sendMessage(config.color(config.message("pet-storage-open", "%prefix% &cTidak ada pet aktif untuk membuka storage.")));
+            player.sendMessage(config.color(config.message("no-active-pet", "%prefix% &cTidak ada pet aktif.")));
             return;
         }
         PetDefinition definition = config.pets().get(petId.toLowerCase(Locale.ROOT));
@@ -131,7 +130,9 @@ public final class PetManager implements Listener {
         if (!economy.isReady()) { player.sendMessage(config.color(config.message("vault-missing", "%prefix% &cEconomy tidak aktif."))); return false; }
         if (!economy.take(player, definition.price())) { player.sendMessage(config.color(config.message("not-enough-money", "%prefix% &cUang kamu tidak cukup."))); return false; }
         givePet(player, definition.id(), true);
-        player.sendMessage(config.color(config.message("pet-bought", "%prefix% &aKamu membeli pet &f%pet%&a.").replace("%pet%", config.color(definition.displayName()))));
+        player.sendMessage(config.color(config.message("pet-bought", "%prefix% &aKamu membeli pet &f%pet% &adengan harga &e%money%&a.")
+                .replace("%pet%", config.color(definition.displayName()))
+                .replace("%money%", config.formatMoney(definition.price()))));
         if (config.autoSummonNewPet()) summon(player, definition.id());
         return true;
     }
@@ -149,9 +150,12 @@ public final class PetManager implements Listener {
         PlayerPetData pdata = data.get(player.getUniqueId());
         if (pdata.owns(result.id())) {
             OwnedPet owned = pdata.get(result.id());
-            if (owned != null) owned.addExp(config.duplicateExp(), config.maxLevel());
+            if (owned != null) {
+                boolean leveled = owned.addExp(config.duplicateExp(), config.maxLevel());
+                if (leveled) updateActiveScale(player, owned.id());
+            }
             data.save(player.getUniqueId());
-            player.sendMessage(config.color(config.message("already-owned", "%prefix% &eKamu sudah punya pet ini.")));
+            player.sendMessage(config.color(config.message("already-owned", "%prefix% &eKamu sudah punya pet ini. EXP pet ditambah.")));
         } else {
             givePet(player, result.id(), false);
             if (config.autoSummonNewPet()) summon(player, result.id());
@@ -164,7 +168,9 @@ public final class PetManager implements Listener {
         PlayerPetData pdata = data.get(player.getUniqueId());
         if (!pdata.owns(definition.id())) pdata.add(new OwnedPet(definition.id(), 1, 0, config.plain(definition.displayName())));
         data.save(player.getUniqueId());
-        if (!silent) player.sendMessage(config.color(config.message("gacha-result", "%prefix% &aKamu mendapatkan pet &f%pet% &7(%rarity%&7)&a!").replace("%pet%", config.color(definition.displayName())).replace("%rarity%", definition.rarity().name())));
+        if (!silent) player.sendMessage(config.color(config.message("gacha-result", "%prefix% &aKamu mendapatkan pet &f%pet% &7(%rarity%&7)&a!")
+                .replace("%pet%", config.color(definition.displayName()))
+                .replace("%rarity%", definition.rarity().name())));
         return true;
     }
 
@@ -208,15 +214,40 @@ public final class PetManager implements Listener {
         if (message) player.sendMessage(config.color(config.message("pet-dismissed", "%prefix% &ePet kamu disimpan.")));
     }
 
-    public void rename(Player player, String name) {
-        VelioraPet active = activePets.get(player.getUniqueId());
-        if (active == null) return;
-        OwnedPet owned = data.get(player.getUniqueId()).get(active.petId());
-        if (owned == null) return;
+    public void rename(Player player, String target, String name) {
+        OwnedPet owned = resolveOwned(player, target);
+        if (owned == null) {
+            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet itu.")));
+            return;
+        }
         owned.name(name);
-        active.entity().setCustomName(config.color(name));
+        VelioraPet active = activePets.get(player.getUniqueId());
+        if (active != null && active.petId().equalsIgnoreCase(owned.id())) active.entity().setCustomName(config.color(name));
         data.save(player.getUniqueId());
         player.sendMessage(config.color(config.message("pet-renamed", "%prefix% &aNama pet diubah menjadi &f%name%&a.").replace("%name%", name)));
+    }
+
+    public void feed(Player player, String target) {
+        OwnedPet owned = resolveOwned(player, target);
+        if (owned == null) {
+            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet itu.")));
+            return;
+        }
+        PetDefinition definition = config.pets().get(owned.id());
+        if (definition == null) return;
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        if (hand == null || hand.getType() != definition.foodMaterial()) {
+            player.sendMessage(config.color(config.message("pet-feed-wrong-food", "%prefix% &cPet ini butuh makanan: &f%food%")
+                    .replace("%food%", definition.foodMaterial().name())));
+            return;
+        }
+        hand.setAmount(hand.getAmount() - 1);
+        boolean leveled = owned.addExp(definition.feedExp(), config.maxLevel());
+        data.save(player.getUniqueId());
+        if (leveled) updateActiveScale(player, owned.id());
+        player.sendMessage(config.color(config.message("pet-fed", "%prefix% &aPet &f%pet% &adiberi makan. EXP +&f%exp%&a.")
+                .replace("%pet%", owned.name())
+                .replace("%exp%", String.valueOf(definition.feedExp()))));
     }
 
     public void saveStorage(Player player, String petId, Inventory inventory) {
@@ -242,13 +273,14 @@ public final class PetManager implements Listener {
         entity.setCustomNameVisible(true);
         entity.setRemoveWhenFarAway(false);
         entity.setPersistent(false);
-        entity.setAI(false);
+        entity.setAI(!definition.flyingPet());
         entity.setCollidable(false);
         entity.setCanPickupItems(false);
         entity.setGlowing(config.glowEnabled());
+        if (entity instanceof Mob mob) mob.setTarget(null);
         tryBaby(entity);
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
-        scaleHelper.apply(entity, definition.scale());
+        scaleHelper.apply(entity, scaleFor(definition, owned.level()));
         return entity;
     }
 
@@ -259,7 +291,8 @@ public final class PetManager implements Listener {
             VelioraPet pet = activePets.get(uuid);
             if (owner == null || !owner.isOnline()) { if (pet != null && !pet.entity().isDead()) pet.entity().remove(); activePets.remove(uuid); continue; }
             if (pet == null || pet.entity().isDead()) { activePets.remove(uuid); continue; }
-            follow(owner, pet.entity());
+            PetDefinition definition = config.pets().get(pet.petId());
+            follow(owner, pet, definition);
             attackIfPossible(owner, pet, now);
         }
     }
@@ -273,16 +306,19 @@ public final class PetManager implements Listener {
         }
     }
 
-    private void follow(Player owner, LivingEntity pet) {
+    private void follow(Player owner, VelioraPet active, PetDefinition definition) {
+        LivingEntity pet = active.entity();
         Location ownerLocation = owner.getLocation();
+        if (pet instanceof Mob mob) mob.setTarget(null);
         if (!pet.getWorld().equals(owner.getWorld()) || pet.getLocation().distanceSquared(ownerLocation) > 144.0D) {
             pet.teleport(ownerLocation.clone().add(1.0D, 0.0D, 1.0D));
             return;
         }
         double distance = pet.getLocation().distanceSquared(ownerLocation);
         if (distance > 9.0D) {
-            Vector velocity = ownerLocation.toVector().subtract(pet.getLocation().toVector()).normalize().multiply(0.35D);
-            pet.setVelocity(velocity);
+            Location destination = ownerLocation.clone().add(-1.2D, 0.0D, -1.2D);
+            boolean pathing = definition != null && !definition.flyingPet() && config.usePathfinderFollow() && moveWithPathfinder(pet, destination);
+            if (!pathing) moveWithVelocity(pet, destination, definition != null && definition.flyingPet() ? 0.28D : 0.35D);
         }
     }
 
@@ -291,10 +327,11 @@ public final class PetManager implements Listener {
         Entity target = Bukkit.getEntity(pet.targetUuid());
         if (!(target instanceof LivingEntity living) || living.isDead() || !isAllowedTarget(living)) { pet.targetUuid(null); return; }
         if (!living.getWorld().equals(pet.entity().getWorld())) { pet.targetUuid(null); return; }
-        if (pet.entity().getLocation().distanceSquared(living.getLocation()) > 64.0D) { follow(owner, pet.entity()); return; }
+        if (pet.entity().getLocation().distanceSquared(living.getLocation()) > 64.0D) { follow(owner, pet, config.pets().get(pet.petId())); return; }
         if (pet.entity().getLocation().distanceSquared(living.getLocation()) > config.attackRange() * config.attackRange()) {
-            Vector velocity = living.getLocation().toVector().subtract(pet.entity().getLocation().toVector()).normalize().multiply(0.45D);
-            pet.entity().setVelocity(velocity);
+            PetDefinition definition = config.pets().get(pet.petId());
+            boolean pathing = definition != null && !definition.flyingPet() && config.usePathfinderFollow() && moveWithPathfinder(pet.entity(), living.getLocation());
+            if (!pathing) moveWithVelocity(pet.entity(), living.getLocation(), definition != null && definition.flyingPet() ? 0.32D : 0.45D);
             return;
         }
         if (now - pet.lastAttackMillis() < config.attackCooldownSeconds() * 1000L) return;
@@ -304,7 +341,35 @@ public final class PetManager implements Listener {
         pet.entity().getWorld().playSound(pet.entity().getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5F, 1.4F);
         pet.lastAttackMillis(now);
         OwnedPet owned = data.get(owner.getUniqueId()).get(pet.petId());
-        if (owned != null) { owned.addExp(2, config.maxLevel()); data.save(owner.getUniqueId()); }
+        if (owned != null) {
+            boolean leveled = owned.addExp(2, config.maxLevel());
+            data.save(owner.getUniqueId());
+            if (leveled) updateActiveScale(owner, owned.id());
+        }
+    }
+
+    private boolean moveWithPathfinder(LivingEntity pet, Location destination) {
+        try {
+            Method getPathfinder = pet.getClass().getMethod("getPathfinder");
+            Object pathfinder = getPathfinder.invoke(pet);
+            try {
+                Method moveTo = pathfinder.getClass().getMethod("moveTo", Location.class, double.class);
+                moveTo.invoke(pathfinder, destination, 1.15D);
+                return true;
+            } catch (NoSuchMethodException ignored) {
+                Method moveTo = pathfinder.getClass().getMethod("moveTo", Location.class);
+                moveTo.invoke(pathfinder, destination);
+                return true;
+            }
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void moveWithVelocity(LivingEntity pet, Location destination, double speed) {
+        Vector velocity = destination.toVector().subtract(pet.getLocation().toVector());
+        if (velocity.lengthSquared() <= 0.01D) return;
+        pet.setVelocity(velocity.normalize().multiply(speed));
     }
 
     private boolean isAllowedTarget(LivingEntity target) {
@@ -331,6 +396,30 @@ public final class PetManager implements Listener {
             if (roll <= current) return entry.getKey();
         }
         return PetRarity.COMMON;
+    }
+
+    private OwnedPet resolveOwned(Player player, String target) {
+        PlayerPetData pdata = data.get(player.getUniqueId());
+        if (target == null || target.equalsIgnoreCase("active")) {
+            VelioraPet active = activePets.get(player.getUniqueId());
+            return active == null ? null : pdata.get(active.petId());
+        }
+        return pdata.get(target.toLowerCase(Locale.ROOT));
+    }
+
+    private void updateActiveScale(Player player, String petId) {
+        VelioraPet active = activePets.get(player.getUniqueId());
+        if (active == null || !active.petId().equalsIgnoreCase(petId)) return;
+        OwnedPet owned = data.get(player.getUniqueId()).get(petId);
+        PetDefinition definition = config.pets().get(petId);
+        if (owned == null || definition == null) return;
+        active.entity().getPersistentDataContainer().set(levelKey, PersistentDataType.INTEGER, owned.level());
+        scaleHelper.apply(active.entity(), scaleFor(definition, owned.level()));
+    }
+
+    private double scaleFor(PetDefinition definition, int level) {
+        double bonus = Math.min(config.maxScaleBonus(), Math.max(0, level - 1) * config.scalePerLevel());
+        return definition.scale() + bonus;
     }
 
     @EventHandler
@@ -378,6 +467,26 @@ public final class PetManager implements Listener {
         data.save(uuid);
         Player player = Bukkit.getPlayer(uuid);
         if (player != null) player.sendMessage(config.color(config.message("pet-dead", "%prefix% &cPet kamu mati. Bisa dipanggil lagi dalam &f%time%&c.").replace("%time%", timeLeft(pdata.cooldownUntil()))));
+    }
+
+    @EventHandler
+    public void onPotion(EntityPotionEffectEvent event) {
+        if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) return;
+        if (event.getNewEffect() == null) return;
+        PotionEffectType type = event.getNewEffect().getType();
+        if (!"DARKNESS".equals(type.getName()) && !"BLINDNESS".equals(type.getName())) return;
+        for (VelioraPet pet : activePets.values()) {
+            if (!pet.entity().getWorld().equals(event.getEntity().getWorld())) continue;
+            if (pet.entity().getLocation().distanceSquared(event.getEntity().getLocation()) <= 144.0D && pet.entity().getType().name().contains("WARDEN")) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onProjectile(ProjectileLaunchEvent event) {
+        if (event.getEntity().getShooter() instanceof Entity shooter && shooter.getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true);
     }
 
     @EventHandler
