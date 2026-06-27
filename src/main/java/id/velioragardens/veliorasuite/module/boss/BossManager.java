@@ -41,6 +41,7 @@ public final class BossManager implements Listener {
     private final BossBarManager bossBarManager;
     private final BossRewardManager rewardManager;
     private final BossSkillManager skillManager;
+    private final BossTargetManager targetManager;
     private final BossQuestHook questHook;
     private final Random random = new Random();
     private final Set<Integer> sentWarnings = new HashSet<>();
@@ -55,6 +56,7 @@ public final class BossManager implements Listener {
     private Location arenaCenter;
     private long nextSpawnAt;
     private long despawnAt;
+    private long lastRetargetAt;
 
     public BossManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -63,6 +65,7 @@ public final class BossManager implements Listener {
         this.scaleHelper = new BossScaleHelper(plugin);
         this.bossBarManager = new BossBarManager(config);
         this.rewardManager = new BossRewardManager(plugin, config);
+        this.targetManager = new BossTargetManager(plugin, config);
         this.skillManager = new BossSkillManager(plugin, config, this);
         this.questHook = new BossQuestHook(plugin);
         this.bossIdKey = new NamespacedKey(plugin, "velioraboss_id");
@@ -80,7 +83,7 @@ public final class BossManager implements Listener {
     public void start() {
         stopScheduler();
         cleanupTaggedEntities();
-        schedulerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L * 5L);
+        schedulerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
     }
 
     public void shutdown() {
@@ -93,6 +96,7 @@ public final class BossManager implements Listener {
         config.load();
         data.load();
         sentWarnings.clear();
+        lastRetargetAt = 0L;
     }
 
     public BossConfigManager config() { return config; }
@@ -219,6 +223,7 @@ public final class BossManager implements Listener {
             if (player != null) {
                 damageTracker.add(player, event.getFinalDamage());
                 data.addDamage(player, event.getFinalDamage());
+                if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
             }
             return;
         }
@@ -285,6 +290,7 @@ public final class BossManager implements Listener {
         lastKnownLocation = location.clone();
         arenaCenter = location.clone();
         despawnAt = System.currentTimeMillis() + config.despawnMinutes() * 60_000L;
+        lastRetargetAt = 0L;
         sentWarnings.clear();
         living.addScoreboardTag("velioraboss_boss");
         living.getPersistentDataContainer().set(bossIdKey, PersistentDataType.STRING, definition.id());
@@ -296,7 +302,7 @@ public final class BossManager implements Listener {
         living.setPersistent(true);
         scaleHelper.setMaxHealth(living, definition.health());
         scaleHelper.apply(living, definition.scale());
-        if (living instanceof Mob mob) mob.setTarget(nearestPlayer(location));
+        if (living instanceof Mob mob) mob.setTarget(findBestTarget(location));
         bossBarManager.create(definition);
         damageTracker.clear();
         skillManager.start(definition);
@@ -314,35 +320,62 @@ public final class BossManager implements Listener {
 
     public boolean isPlayerInsideArena(Player player) {
         if (!config.arenaEnabled() || arenaCenter == null || player == null || player.getWorld() == null || !player.getWorld().equals(arenaCenter.getWorld())) return true;
-        return player.getLocation().distanceSquared(arenaCenter) <= config.targetRadius() * config.targetRadius();
+        return horizontalDistance(arenaCenter, player.getLocation()) <= config.arenaRadius() + 6.0D;
+    }
+
+    public Player findBestTarget(Location center) {
+        return targetManager.findBestTarget(center == null ? (activeBoss == null ? arenaCenter : activeBoss.getLocation()) : center, arenaCenter);
+    }
+
+    public List<Player> nearbyTargetPlayers(Location center, double horizontalRadius) {
+        return targetManager.validPlayers(center, arenaCenter, horizontalRadius);
     }
 
     private void enforceArena() {
-        if (!config.arenaEnabled() || activeBoss == null || activeBoss.isDead() || arenaCenter == null) return;
+        if (activeBoss == null || activeBoss.isDead() || arenaCenter == null) return;
         Location current = activeBoss.getLocation();
-        boolean far = config.teleportBackIfFar() && current.getWorld().equals(arenaCenter.getWorld()) && current.distanceSquared(arenaCenter) > config.teleportBackDistance() * config.teleportBackDistance();
-        boolean below = config.teleportBackIfBelowSpawnY() && current.getY() < arenaCenter.getY() - config.belowYOffset();
+        boolean far = config.arenaEnabled() && config.teleportBackIfFar() && current.getWorld().equals(arenaCenter.getWorld()) && horizontalDistance(current, arenaCenter) > config.teleportBackDistance();
+        boolean below = config.arenaEnabled() && config.teleportBackIfBelowSpawnY() && current.getY() < arenaCenter.getY() - config.belowYOffset();
         boolean stuck = !current.getBlock().isPassable() || !current.getBlock().getRelative(0, 1, 0).isPassable();
         if (far || below || stuck) teleportBossBack();
-        if (activeBoss instanceof Mob mob && (mob.getTarget() == null || !(mob.getTarget() instanceof Player player) || !isPlayerInsideArena(player))) mob.setTarget(nearestPlayer(arenaCenter));
+        retarget(false);
         cleanupMinionsByArena();
     }
 
+    private void retarget(boolean force) {
+        if (!config.targetingEnabled() || !(activeBoss instanceof Mob mob)) return;
+        long now = System.currentTimeMillis();
+        if (!force && now - lastRetargetAt < config.retargetIntervalSeconds() * 1000L) return;
+        lastRetargetAt = now;
+        Player current = mob.getTarget() instanceof Player player ? player : null;
+        if (!force && !config.forceTargetNearest() && targetManager.isValidCurrentTarget(current, activeBoss.getLocation(), arenaCenter)) return;
+        if (!force && current != null && targetManager.isValidCurrentTarget(current, activeBoss.getLocation(), arenaCenter) && !config.forceTargetNearest()) return;
+        Player target = findBestTarget(activeBoss.getLocation());
+        if (target != null) {
+            mob.setTarget(target);
+            return;
+        }
+        mob.setTarget(null);
+        if (config.noTargetTeleportBack() && arenaCenter != null && activeBoss.getLocation().distanceSquared(arenaCenter) > 4.0D) teleportBossBack();
+    }
+
     private void teleportBossBack() {
+        if (activeBoss == null || arenaCenter == null) return;
         activeBoss.teleport(arenaCenter);
         arenaCenter.getWorld().spawnParticle(Particle.PORTAL, arenaCenter, 60, 1.5D, 1.0D, 1.5D, 0.1D);
         arenaCenter.getWorld().playSound(arenaCenter, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.8F);
-        String message = config.color(config.message("boss-return-arena", "%prefix% &e%boss% kembali ke arena!").replace("%boss%", config.color(activeDefinition.displayName())));
-        for (Player player : arenaCenter.getWorld().getPlayers()) if (player.getLocation().distanceSquared(arenaCenter) <= config.arenaRadius() * config.arenaRadius()) player.sendMessage(message);
+        String message = config.color(config.message("boss-return-arena", "%prefix% &e%boss% kembali ke arena!").replace("%boss%", activeDefinition == null ? "Boss" : config.color(activeDefinition.displayName())));
+        for (Player player : arenaCenter.getWorld().getPlayers()) if (horizontalDistance(player.getLocation(), arenaCenter) <= config.arenaRadius()) player.sendMessage(message);
+        retarget(true);
     }
 
     private void cleanupMinionsByArena() {
         if (arenaCenter == null || arenaCenter.getWorld() == null) return;
         for (Entity entity : arenaCenter.getWorld().getNearbyEntities(arenaCenter, 96, 64, 96)) {
             if (!entity.getScoreboardTags().contains("velioraboss_minion")) continue;
-            boolean outside = !entity.getWorld().equals(arenaCenter.getWorld()) || entity.getLocation().distanceSquared(arenaCenter) > config.arenaRadius() * config.arenaRadius();
+            boolean outside = !entity.getWorld().equals(arenaCenter.getWorld()) || horizontalDistance(entity.getLocation(), arenaCenter) > config.arenaRadius();
             if (outside && config.removeMinionOutsideRadius()) entity.remove();
-            else if (entity instanceof Mob mob && (mob.getTarget() == null || !(mob.getTarget() instanceof Player player) || !isPlayerInsideArena(player))) mob.setTarget(nearestPlayer(arenaCenter));
+            else if (entity instanceof Mob mob && (mob.getTarget() == null || !(mob.getTarget() instanceof Player player) || !targetManager.isValidCurrentTarget(player, entity.getLocation(), arenaCenter))) mob.setTarget(findBestTarget(entity.getLocation()));
         }
     }
 
@@ -396,18 +429,6 @@ public final class BossManager implements Listener {
         return location;
     }
 
-    private Player nearestPlayer(Location location) {
-        if (location == null || location.getWorld() == null) return null;
-        Player nearest = null;
-        double distance = Double.MAX_VALUE;
-        for (Player player : location.getWorld().getPlayers()) {
-            if (!isPlayerInsideArena(player)) continue;
-            double check = player.getLocation().distanceSquared(location);
-            if (check < distance) { distance = check; nearest = player; }
-        }
-        return nearest;
-    }
-
     private void infoLine(CommandSender sender, String key, String value) {
         sender.sendMessage(config.color(config.message("boss-info-line", "&7%key%: &f%value%").replace("%key%", key).replace("%value%", value)));
     }
@@ -433,6 +454,7 @@ public final class BossManager implements Listener {
         activeDefinition = null;
         arenaCenter = null;
         despawnAt = 0L;
+        lastRetargetAt = 0L;
     }
 
     private void cleanupTaggedEntities() {
@@ -446,6 +468,12 @@ public final class BossManager implements Listener {
     private void scheduleNextSpawn() {
         nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
         sentWarnings.clear();
+    }
+
+    private double horizontalDistance(Location a, Location b) {
+        double dx = a.getX() - b.getX();
+        double dz = a.getZ() - b.getZ();
+        return Math.sqrt(dx * dx + dz * dz);
     }
 
     private String normalizeId(String input) { return input.trim().toLowerCase(Locale.ROOT).replace(' ', '_'); }
