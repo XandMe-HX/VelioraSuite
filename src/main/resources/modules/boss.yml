@@ -38,6 +38,24 @@ arena:
   below-y-offset: 12
   remove-minion-outside-radius: true
 
+targeting:
+  enabled: true
+  include-survival: true
+  include-adventure: true
+  include-creative: true
+  include-spectator: false
+  target-radius-horizontal: 64
+  target-radius-vertical: 32
+  retarget-interval-seconds: 3
+  force-target-nearest: true
+  ignore-line-of-sight: true
+  target-players-above: true
+  target-players-below: true
+  no-target-teleport-back: false
+
+debug:
+  targeting: false
+
 bosses:
   ancient_warden:
     entity: WARDEN
