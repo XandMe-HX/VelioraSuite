@@ -43,10 +43,10 @@ public final class PetGuiManager implements Listener {
         inventory.setItem(10, item(Material.NAME_TAG, "&dActive Pet", List.of("&7Lihat dan kelola pet aktif."), "list", null));
         inventory.setItem(11, item(Material.CHEST, "&ePet List", List.of("&7Lihat pet yang kamu miliki."), "list", null));
         inventory.setItem(12, item(Material.EMERALD, "&aPet Shop", List.of("&7Beli pet langsung."), "shop", null));
-        inventory.setItem(13, item(Material.ENDER_CHEST, "&bPet Gacha", List.of("&7Harga: &f" + config.gachaPrice()), "gacha", null));
+        inventory.setItem(13, item(Material.ENDER_CHEST, "&bPet Gacha", List.of("&7Harga: &f" + config.formatMoney(config.gachaPrice())), "gacha", null));
         inventory.setItem(14, item(Material.BARREL, "&6Pet Storage", List.of("&7Buka storage pet aktif."), "storage", null));
         inventory.setItem(15, item(Material.LEAD, "&cDismiss Pet", List.of("&7Simpan pet aktif."), "dismiss", null));
-        inventory.setItem(16, item(Material.PAPER, "&fRename", List.of("&7Gunakan: &f/pet rename <nama>"), null, null));
+        inventory.setItem(16, item(Material.PAPER, "&fRename / Feed", List.of("&7/pet rename <pet|active> <nama>", "&7/pet feed <pet|active>"), null, null));
         player.openInventory(inventory);
     }
 
@@ -58,7 +58,8 @@ public final class PetGuiManager implements Listener {
             if (slot >= 54) break;
             List<String> lore = new ArrayList<>();
             lore.add("&7Rarity: " + pet.rarity().color() + pet.rarity().name());
-            lore.add("&7Harga: &f" + pet.price());
+            lore.add("&7Harga: &f" + config.formatMoney(pet.price()));
+            lore.add("&7Food: &f" + pet.foodMaterial().name() + " &8(+" + pet.feedExp() + " EXP)");
             lore.add("&7Damage: &f" + pet.damage());
             lore.add("&7Storage: &f" + pet.storageSize());
             lore.add(pdata.owns(pet.id()) ? "&eSudah dimiliki." : "&aKlik untuk beli.");
@@ -71,14 +72,14 @@ public final class PetGuiManager implements Listener {
         PetDefinition pet = config.pets().get(petId);
         if (pet == null) return;
         Inventory inventory = menu(27, "&8Confirm Pet Buy", "confirm", petId);
-        inventory.setItem(11, item(Material.LIME_WOOL, "&aBeli " + pet.displayName(), List.of("&7Harga: &f" + pet.price()), "buy", petId));
+        inventory.setItem(11, item(Material.LIME_WOOL, "&aBeli " + pet.displayName(), List.of("&7Harga: &f" + config.formatMoney(pet.price())), "buy", petId));
         inventory.setItem(15, item(Material.RED_WOOL, "&cBatal", List.of("&7Kembali ke shop."), "shop", null));
         player.openInventory(inventory);
     }
 
     public void openGacha(Player player) {
         Inventory inventory = menu(27, "&8Pet Gacha", "gacha", null);
-        inventory.setItem(13, item(Material.ENDER_CHEST, "&bMulai Gacha", List.of("&7Harga: &f" + config.gachaPrice(), "&7Animasi ringan, tidak lag."), "gacha_start", null));
+        inventory.setItem(13, item(Material.ENDER_CHEST, "&bMulai Gacha", List.of("&7Harga: &f" + config.formatMoney(config.gachaPrice()), "&7Animasi ringan, tidak lag."), "gacha_start", null));
         player.openInventory(inventory);
     }
 
@@ -112,7 +113,7 @@ public final class PetGuiManager implements Listener {
         for (OwnedPet owned : pdata.owned().values()) {
             PetDefinition pet = config.pets().get(owned.id());
             if (pet == null || slot >= 54) continue;
-            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), List.of("&7Level: &f" + owned.level(), "&7EXP: &f" + owned.exp(), "&aKlik untuk summon."), "summon", pet.id()));
+            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), List.of("&7Level: &f" + owned.level(), "&7EXP: &f" + owned.exp(), "&7Food: &f" + pet.foodMaterial().name(), "&aKlik untuk summon."), "summon", pet.id()));
         }
         if (slot == 0) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli di shop atau gacha dulu."), null, null));
         player.openInventory(inventory);
