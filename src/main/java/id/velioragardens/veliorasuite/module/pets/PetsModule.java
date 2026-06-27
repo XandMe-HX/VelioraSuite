@@ -5,11 +5,14 @@ import id.velioragardens.veliorasuite.api.VelioraModule;
 import id.velioragardens.veliorasuite.command.DisabledCommand;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.HandlerList;
+import org.bukkit.scheduler.BukkitTask;
 
 public final class PetsModule implements VelioraModule {
     private final VelioraSuite plugin;
     private PetManager manager;
     private PetGuiManager guiManager;
+    private PetSafetyListener safetyListener;
+    private BukkitTask flyingFollowTask;
     private boolean enabled;
 
     public PetsModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -22,6 +25,7 @@ public final class PetsModule implements VelioraModule {
         manager = new PetManager(plugin);
         manager.load();
         guiManager = new PetGuiManager(plugin, manager, manager.config());
+        safetyListener = new PetSafetyListener();
     }
 
     @Override
@@ -30,14 +34,19 @@ public final class PetsModule implements VelioraModule {
         registerCommand();
         plugin.getServer().getPluginManager().registerEvents(manager, plugin);
         plugin.getServer().getPluginManager().registerEvents(guiManager, plugin);
+        plugin.getServer().getPluginManager().registerEvents(safetyListener, plugin);
         manager.start(guiManager);
+        flyingFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetFlyingFollowTask(plugin, manager.config()), 5L, 5L);
     }
 
     @Override
     public void disable() {
         enabled = false;
+        if (flyingFollowTask != null) flyingFollowTask.cancel();
+        flyingFollowTask = null;
         HandlerList.unregisterAll(manager);
         HandlerList.unregisterAll(guiManager);
+        HandlerList.unregisterAll(safetyListener);
         if (manager != null) manager.shutdown();
         registerDisabledCommand();
     }

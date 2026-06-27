@@ -103,7 +103,7 @@ commands:
     permission: veliorasuite.boss.use
   pet:
     description: Open and manage VelioraPets.
-    usage: /pet <shop|gacha|list|summon|dismiss|storage|rename|feed|reload|give|remove>
+    usage: /pet <shop|gacha|list|info|summon|dismiss|storage|rename|feed|reload|give|remove>
     aliases:
       - pets
       - vpet
