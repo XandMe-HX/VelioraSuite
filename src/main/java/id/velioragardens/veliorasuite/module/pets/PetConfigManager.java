@@ -51,9 +51,26 @@ public final class PetConfigManager {
     public boolean autoSummonLastPet() { return bool("settings.auto-summon-last-pet", false); }
     public int deathCooldownMinutes() { return Math.max(0, integer("settings.death-cooldown-minutes", 15)); }
     public boolean usePathfinderFollow() { return bool("settings.follow.use-pathfinder", true); }
+    public boolean allowFlyingPets() { return bool("settings.allow-flying-pets", false); }
     public boolean flyingSafeMode() { return bool("settings.flying-safe-mode.enabled", true); }
     public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", false); }
     public int storageSize(PetRarity rarity) { return Math.max(9, integer("storage.size." + rarity.name().toLowerCase(Locale.ROOT), defaultStorage(rarity))); }
+
+    public boolean ridingEnabled() { return bool("riding.enabled", true); }
+    public boolean ridingRequireAdult() { return bool("riding.require-adult", true); }
+    public int defaultAdultLevel() { return Math.max(1, integer("riding.default-adult-level", 10)); }
+    public boolean allowRideActiveOnly() { return bool("riding.allow-ride-active-only", true); }
+    public boolean dismountOnDismiss() { return bool("riding.dismount-on-dismiss", true); }
+    public double rideSpeed() { return Math.max(0.05D, number("riding.speed", 0.32D)); }
+    public double rideJumpY() { return Math.max(0.0D, number("riding.jump-y", 0.42D)); }
+    public boolean rideableRarity(PetRarity rarity) { return bool("riding.rideable-rarities." + rarity.name().toLowerCase(Locale.ROOT), true); }
+
+    public boolean silentPets() { return bool("sounds.silent-pets", true); }
+    public boolean playCustomSummonSound() { return bool("sounds.play-custom-summon-sound", true); }
+    public Sound summonSound() { return sound("sounds.summon-sound", "ENTITY_EXPERIENCE_ORB_PICKUP"); }
+    public Sound feedSound() { return sound("sounds.feed-sound", "ENTITY_GENERIC_EAT"); }
+    public float soundVolume() { return (float) Math.max(0.0D, number("sounds.volume", 0.25D)); }
+    public float soundPitch() { return (float) Math.max(0.1D, number("sounds.pitch", 1.2D)); }
 
     public double scalePerLevel() { return Math.max(0.0D, number("leveling.scale-per-level", 0.003D)); }
     public double maxScaleBonus() { return Math.max(0.0D, number("leveling.max-scale-bonus", 0.15D)); }
@@ -92,6 +109,10 @@ public final class PetConfigManager {
             String path = "pets." + id;
             EntityType type = entityType(config.getString(path + ".entity", "WOLF"));
             boolean flyingPet = isFlyingPet(type);
+            if (flyingPet && !allowFlyingPets()) {
+                plugin.getLogger().warning("VelioraPets: skip flying pet karena settings.allow-flying-pets false: " + type + " for " + id);
+                continue;
+            }
             if (flyingPet && !flyingSafeMode()) {
                 plugin.getLogger().warning("VelioraPets: skip flying pet entity karena flying-safe-mode false: " + type + " for " + id);
                 continue;
@@ -113,7 +134,9 @@ public final class PetConfigManager {
                     storageSize(rarity),
                     food,
                     Math.max(1, config.getInt(path + ".food.exp", defaultFeedExp(rarity))),
-                    flyingPet
+                    flyingPet,
+                    config.getBoolean(path + ".rideable", defaultRideable(type)),
+                    Math.max(1, config.getInt(path + ".adult-level", defaultAdultLevel()))
             ));
         }
     }
@@ -121,6 +144,13 @@ public final class PetConfigManager {
     private boolean isFlyingPet(EntityType type) {
         return switch (type) {
             case PHANTOM, GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER, BEE, ALLAY, BAT, PARROT -> true;
+            default -> false;
+        };
+    }
+
+    private boolean defaultRideable(EntityType type) {
+        return switch (type) {
+            case COW, SHEEP, PIG, GOAT, CAMEL, HORSE, DONKEY, MULE, LLAMA, TRADER_LLAMA, PANDA, IRON_GOLEM, RAVAGER, WARDEN, HOGLIN, ZOGLIN -> true;
             default -> false;
         };
     }
