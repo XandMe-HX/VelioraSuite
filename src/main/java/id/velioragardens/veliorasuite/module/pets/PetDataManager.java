@@ -42,13 +42,15 @@ public final class PetDataManager {
         String path = "players." + uuid;
         data.set(path + ".active-pet", player.activePet());
         data.set(path + ".last-pet", player.lastPet());
-        data.set(path + ".cooldown-until", player.cooldownUntil());
+        data.set(path + ".cooldown-until", null);
         data.set(path + ".owned", null);
         for (OwnedPet pet : player.owned().values()) {
             String petPath = path + ".owned." + pet.id().toLowerCase(Locale.ROOT);
             data.set(petPath + ".level", pet.level());
             data.set(petPath + ".exp", pet.exp());
             data.set(petPath + ".name", pet.name());
+            data.set(petPath + ".cooldown-until", pet.cooldownUntil());
+            data.set(petPath + ".last-fed", pet.lastFed());
         }
         saveFile();
     }
@@ -76,12 +78,21 @@ public final class PetDataManager {
         String path = "players." + uuid;
         player.activePet(data.getString(path + ".active-pet", null));
         player.lastPet(data.getString(path + ".last-pet", null));
-        player.cooldownUntil(data.getLong(path + ".cooldown-until", 0L));
+        long oldGlobalCooldown = data.getLong(path + ".cooldown-until", 0L);
         ConfigurationSection owned = data.getConfigurationSection(path + ".owned");
         if (owned != null) {
             for (String id : owned.getKeys(false)) {
                 String petPath = path + ".owned." + id;
-                player.add(new OwnedPet(id.toLowerCase(Locale.ROOT), data.getInt(petPath + ".level", 1), data.getInt(petPath + ".exp", 0), data.getString(petPath + ".name", id)));
+                long cooldown = data.contains(petPath + ".cooldown-until") ? data.getLong(petPath + ".cooldown-until", 0L) : oldGlobalCooldown;
+                long lastFed = data.getLong(petPath + ".last-fed", System.currentTimeMillis());
+                player.add(new OwnedPet(
+                        id.toLowerCase(Locale.ROOT),
+                        data.getInt(petPath + ".level", 1),
+                        data.getInt(petPath + ".exp", 0),
+                        data.getString(petPath + ".name", id),
+                        cooldown,
+                        lastFed
+                ));
             }
         }
         return player;
