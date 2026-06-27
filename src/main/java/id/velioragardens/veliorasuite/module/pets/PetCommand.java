@@ -42,7 +42,7 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
             case "storage" -> { if (!has(player, "veliorasuite.pets.storage")) { noPerm(player); return true; } manager.openStorage(player); }
             case "rename" -> { if (!has(player, "veliorasuite.pets.rename")) { noPerm(player); return true; } if (args.length < 3) { player.sendMessage("/pet rename <pet|active> <nama>"); return true; } manager.rename(player, args[1].toLowerCase(Locale.ROOT), join(args, 2)); }
             case "feed" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } if (args.length < 2) { player.sendMessage("/pet feed <pet|active>"); return true; } manager.feed(player, args[1].toLowerCase(Locale.ROOT)); }
-            case "ride" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } player.performCommand("pet ride active"); }
+            case "ride" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } return true; }
             case "reload" -> { if (!has(player, "veliorasuite.pets.reload") && !has(player, "veliorasuite.pets.admin")) { noPerm(player); return true; } manager.reload(); player.sendMessage(config.color(config.message("reload-success", "%prefix% &aVelioraPets berhasil direload."))); }
             case "give" -> {
                 if (!has(player, "veliorasuite.pets.give") && !has(player, "veliorasuite.pets.admin")) { noPerm(player); return true; }
