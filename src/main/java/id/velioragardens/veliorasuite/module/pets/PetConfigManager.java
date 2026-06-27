@@ -14,6 +14,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -24,8 +26,14 @@ public final class PetConfigManager {
     private FileConfiguration config;
     private final Map<String, PetDefinition> pets = new LinkedHashMap<>();
     private final Map<PetRarity, Double> chances = new EnumMap<>(PetRarity.class);
+    private final DecimalFormat moneyFormat;
 
-    public PetConfigManager(VelioraSuite plugin) { this.plugin = plugin; }
+    public PetConfigManager(VelioraSuite plugin) {
+        this.plugin = plugin;
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+        symbols.setGroupingSeparator('.');
+        this.moneyFormat = new DecimalFormat("#,###", symbols);
+    }
 
     public void load() {
         plugin.saveResourceIfNotExists("modules/pets.yml");
@@ -42,8 +50,13 @@ public final class PetConfigManager {
     public boolean autoSummonNewPet() { return bool("settings.auto-summon-new-pet", false); }
     public boolean autoSummonLastPet() { return bool("settings.auto-summon-last-pet", false); }
     public int deathCooldownMinutes() { return Math.max(0, integer("settings.death-cooldown-minutes", 15)); }
+    public boolean usePathfinderFollow() { return bool("settings.follow.use-pathfinder", true); }
+    public boolean flyingSafeMode() { return bool("settings.flying-safe-mode.enabled", true); }
     public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", false); }
     public int storageSize(PetRarity rarity) { return Math.max(9, integer("storage.size." + rarity.name().toLowerCase(Locale.ROOT), defaultStorage(rarity))); }
+
+    public double scalePerLevel() { return Math.max(0.0D, number("leveling.scale-per-level", 0.003D)); }
+    public double maxScaleBonus() { return Math.max(0.0D, number("leveling.max-scale-bonus", 0.15D)); }
 
     public boolean combatEnabled() { return bool("combat.enabled", true); }
     public double attackRange() { return Math.max(1.0D, number("combat.attack-range", 3.0D)); }
@@ -63,6 +76,7 @@ public final class PetConfigManager {
     public String message(String key, String fallback) { return str("messages." + key, fallback).replace("%prefix%", prefix()); }
     public String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }
     public String plain(String text) { return ChatColor.stripColor(color(text == null ? "" : text)); }
+    public String formatMoney(long amount) { return moneyFormat.format(Math.max(0L, amount)); }
     public Sound sound(String path, String fallback) { try { return Sound.valueOf(str(path, fallback).toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Sound.UI_BUTTON_CLICK; } }
 
     private void loadChances() {
@@ -77,30 +91,36 @@ public final class PetConfigManager {
         for (String id : section.getKeys(false)) {
             String path = "pets." + id;
             EntityType type = entityType(config.getString(path + ".entity", "WOLF"));
-            if (isSkippedFlying(type)) {
-                plugin.getLogger().warning("VelioraPets: skip flying/unsafe pet entity " + type + " for " + id);
+            boolean flyingPet = isFlyingPet(type);
+            if (flyingPet && !flyingSafeMode()) {
+                plugin.getLogger().warning("VelioraPets: skip flying pet entity karena flying-safe-mode false: " + type + " for " + id);
                 continue;
             }
             PetRarity rarity = PetRarity.from(config.getString(path + ".rarity", "COMMON"));
+            PetSkillType skillType = PetSkillType.from(config.getString(path + ".skill.type", "NONE"));
+            Material food = material(config.getString(path + ".food.material", defaultFood(rarity).name()), defaultFood(rarity));
             pets.put(id.toLowerCase(Locale.ROOT), new PetDefinition(
                     id.toLowerCase(Locale.ROOT),
                     config.getString(path + ".display-name", id),
                     type,
                     material(config.getString(path + ".icon", "BONE"), Material.BONE),
                     rarity,
-                    PetSkillType.from(config.getString(path + ".skill.type", "NONE")),
-                    Math.min(maxSkillBonus(PetSkillType.from(config.getString(path + ".skill.type", "NONE"))), Math.max(0.0D, config.getDouble(path + ".skill.bonus", 0.0D))),
+                    skillType,
+                    Math.min(maxSkillBonus(skillType), Math.max(0.0D, config.getDouble(path + ".skill.bonus", 0.0D))),
                     Math.max(0.5D, config.getDouble(path + ".damage", defaultDamage(rarity))),
                     Math.max(0.1D, config.getDouble(path + ".scale", 0.5D)),
                     Math.max(0L, config.getLong(path + ".price", defaultPrice(rarity))),
-                    storageSize(rarity)
+                    storageSize(rarity),
+                    food,
+                    Math.max(1, config.getInt(path + ".food.exp", defaultFeedExp(rarity))),
+                    flyingPet
             ));
         }
     }
 
-    private boolean isSkippedFlying(EntityType type) {
+    private boolean isFlyingPet(EntityType type) {
         return switch (type) {
-            case PHANTOM, GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER -> true;
+            case PHANTOM, GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER, BEE, ALLAY, BAT, PARROT -> true;
             default -> false;
         };
     }
@@ -113,6 +133,8 @@ public final class PetConfigManager {
     private long defaultPrice(PetRarity rarity) { return switch (rarity) { case COMMON -> 100000L; case RARE -> 200000L; case EPIC -> 400000L; case LEGENDARY -> 700000L; case MYTHIC -> 1000000L; }; }
     private double defaultDamage(PetRarity rarity) { return switch (rarity) { case COMMON -> 1.0D; case RARE -> 1.5D; case EPIC -> 2.0D; case LEGENDARY -> 2.5D; case MYTHIC -> 3.0D; }; }
     private int defaultStorage(PetRarity rarity) { return switch (rarity) { case COMMON, RARE -> 9; case EPIC, LEGENDARY -> 18; case MYTHIC -> 27; }; }
+    private int defaultFeedExp(PetRarity rarity) { return switch (rarity) { case COMMON -> 20; case RARE -> 25; case EPIC -> 35; case LEGENDARY -> 45; case MYTHIC -> 60; }; }
+    private Material defaultFood(PetRarity rarity) { return switch (rarity) { case COMMON -> Material.APPLE; case RARE -> Material.COOKED_CHICKEN; case EPIC -> Material.GOLDEN_CARROT; case LEGENDARY -> Material.GOLDEN_APPLE; case MYTHIC -> Material.ENCHANTED_GOLDEN_APPLE; }; }
     private Material material(String raw, Material fallback) { Material material = Material.matchMaterial(raw == null ? "" : raw.toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
     private EntityType entityType(String raw) { try { return EntityType.valueOf(raw.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return EntityType.WOLF; } }
     private Particle particle(String path, String fallback) { try { return Particle.valueOf(str(path, fallback).toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Particle.HAPPY_VILLAGER; } }
