@@ -15,6 +15,7 @@ public final class PetsModule implements VelioraModule {
     private PetRideController rideController;
     private BukkitTask flyingFollowTask;
     private BukkitTask rideTask;
+    private BukkitTask quietTask;
     private boolean enabled;
 
     public PetsModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -42,6 +43,7 @@ public final class PetsModule implements VelioraModule {
         manager.start(guiManager);
         flyingFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetFlyingFollowTask(plugin, manager.config()), 5L, 5L);
         rideTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetRideTask(manager.config()), 2L, 2L);
+        quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager.config()), 20L, 40L);
     }
 
     @Override
@@ -49,8 +51,10 @@ public final class PetsModule implements VelioraModule {
         enabled = false;
         if (flyingFollowTask != null) flyingFollowTask.cancel();
         if (rideTask != null) rideTask.cancel();
+        if (quietTask != null) quietTask.cancel();
         flyingFollowTask = null;
         rideTask = null;
+        quietTask = null;
         HandlerList.unregisterAll(manager);
         HandlerList.unregisterAll(guiManager);
         HandlerList.unregisterAll(safetyListener);
