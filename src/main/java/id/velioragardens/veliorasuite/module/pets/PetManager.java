@@ -21,16 +21,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
@@ -99,7 +96,6 @@ public final class PetManager implements Listener {
     public PetDataManager data() { return data; }
     public PlayerPetData playerData(UUID uuid) { return data.get(uuid); }
     public VelioraPet activePet(UUID uuid) { return activePets.get(uuid); }
-
     public void openMain(Player player) { guiManager.openMain(player); }
     public void openShop(Player player) { guiManager.openShop(player); }
     public void openGacha(Player player) { guiManager.openGacha(player); }
@@ -133,6 +129,7 @@ public final class PetManager implements Listener {
         player.sendMessage(config.color(config.message("pet-bought", "%prefix% &aKamu membeli pet &f%pet% &adengan harga &e%money%&a.")
                 .replace("%pet%", config.color(definition.displayName()))
                 .replace("%money%", config.formatMoney(definition.price()))));
+        sendFoodHint(player, definition);
         if (config.autoSummonNewPet()) summon(player, definition.id());
         return true;
     }
@@ -158,6 +155,7 @@ public final class PetManager implements Listener {
             player.sendMessage(config.color(config.message("already-owned", "%prefix% &eKamu sudah punya pet ini. EXP pet ditambah.")));
         } else {
             givePet(player, result.id(), false);
+            sendFoodHint(player, result);
             if (config.autoSummonNewPet()) summon(player, result.id());
         }
     }
@@ -166,7 +164,7 @@ public final class PetManager implements Listener {
         PetDefinition definition = config.pets().get(petId.toLowerCase(Locale.ROOT));
         if (definition == null) return false;
         PlayerPetData pdata = data.get(player.getUniqueId());
-        if (!pdata.owns(definition.id())) pdata.add(new OwnedPet(definition.id(), 1, 0, config.plain(definition.displayName())));
+        if (!pdata.owns(definition.id())) pdata.add(new OwnedPet(definition.id(), 1, 0, config.plain(definition.displayName()), 0L, System.currentTimeMillis()));
         data.save(player.getUniqueId());
         if (!silent) player.sendMessage(config.color(config.message("gacha-result", "%prefix% &aKamu mendapatkan pet &f%pet% &7(%rarity%&7)&a!")
                 .replace("%pet%", config.color(definition.displayName()))
@@ -184,22 +182,32 @@ public final class PetManager implements Listener {
     }
 
     public boolean summon(Player player, String petId) {
-        PetDefinition definition = config.pets().get(petId.toLowerCase(Locale.ROOT));
+        String id = petId == null ? "" : petId.toLowerCase(Locale.ROOT);
+        PetDefinition definition = config.pets().get(id);
+        if (definition == null) {
+            player.sendMessage(config.color(config.message("pet-not-found", "%prefix% &cPet &f%pet% &ctidak ditemukan.").replace("%pet%", id)));
+            return false;
+        }
         PlayerPetData pdata = data.get(player.getUniqueId());
-        if (definition == null || !pdata.owns(definition.id())) return false;
-        long now = System.currentTimeMillis();
-        if (pdata.cooldownUntil() > now) {
-            player.sendMessage(config.color(config.message("pet-cooldown", "%prefix% &cPet masih cooldown: &f%time%").replace("%time%", timeLeft(pdata.cooldownUntil()))));
+        OwnedPet owned = pdata.get(definition.id());
+        if (owned == null) {
+            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet &f%pet%&c.").replace("%pet%", definition.id())));
+            return false;
+        }
+        if (owned.cooldownUntil() > System.currentTimeMillis()) {
+            player.sendMessage(config.color(config.message("pet-cooldown", "%prefix% &cPet &f%pet% &cmasih cooldown: &f%time%")
+                    .replace("%pet%", owned.name())
+                    .replace("%time%", timeLeft(owned.cooldownUntil()))));
             return false;
         }
         dismiss(player, false);
-        LivingEntity entity = spawnEntity(player, definition, pdata.get(definition.id()));
-        VelioraPet runtime = new VelioraPet(player.getUniqueId(), definition.id(), entity);
-        activePets.put(player.getUniqueId(), runtime);
+        LivingEntity entity = spawnEntity(player, definition, owned);
+        activePets.put(player.getUniqueId(), new VelioraPet(player.getUniqueId(), definition.id(), entity));
         pdata.activePet(definition.id());
         pdata.lastPet(definition.id());
         data.save(player.getUniqueId());
-        player.sendMessage(config.color(config.message("pet-summoned", "%prefix% &aPet &f%pet% &adipanggil.").replace("%pet%", config.color(pdata.get(definition.id()).name()))));
+        player.sendMessage(config.color(config.message("pet-summoned", "%prefix% &aPet &f%pet% &adipanggil.").replace("%pet%", config.color(owned.name()))));
+        sendFoodHint(player, definition);
         return true;
     }
 
@@ -217,7 +225,7 @@ public final class PetManager implements Listener {
     public void rename(Player player, String target, String name) {
         OwnedPet owned = resolveOwned(player, target);
         if (owned == null) {
-            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet itu.")));
+            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet &f%pet%&c.").replace("%pet%", target)));
             return;
         }
         owned.name(name);
@@ -230,18 +238,18 @@ public final class PetManager implements Listener {
     public void feed(Player player, String target) {
         OwnedPet owned = resolveOwned(player, target);
         if (owned == null) {
-            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet itu.")));
+            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet &f%pet%&c.").replace("%pet%", target)));
             return;
         }
         PetDefinition definition = config.pets().get(owned.id());
         if (definition == null) return;
         ItemStack hand = player.getInventory().getItemInMainHand();
         if (hand == null || hand.getType() != definition.foodMaterial()) {
-            player.sendMessage(config.color(config.message("pet-feed-wrong-food", "%prefix% &cPet ini butuh makanan: &f%food%")
-                    .replace("%food%", definition.foodMaterial().name())));
+            player.sendMessage(config.color(config.message("pet-feed-wrong-food", "%prefix% &cPet ini butuh makanan: &f%food%").replace("%food%", definition.foodMaterial().name())));
             return;
         }
-        hand.setAmount(hand.getAmount() - 1);
+        hand.setAmount(Math.max(0, hand.getAmount() - 1));
+        owned.lastFed(System.currentTimeMillis());
         boolean leveled = owned.addExp(definition.feedExp(), config.maxLevel());
         data.save(player.getUniqueId());
         if (leveled) updateActiveScale(player, owned.id());
@@ -250,9 +258,26 @@ public final class PetManager implements Listener {
                 .replace("%exp%", String.valueOf(definition.feedExp()))));
     }
 
-    public void saveStorage(Player player, String petId, Inventory inventory) {
-        data.saveStorage(player.getUniqueId(), petId, inventory.getContents());
+    public void sendInfo(Player player, String target) {
+        OwnedPet owned = resolveOwned(player, target);
+        if (owned == null) {
+            player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet &f%pet%&c.").replace("%pet%", target)));
+            return;
+        }
+        PetDefinition definition = config.pets().get(owned.id());
+        if (definition == null) return;
+        boolean active = activePets.containsKey(player.getUniqueId()) && activePets.get(player.getUniqueId()).petId().equalsIgnoreCase(owned.id());
+        player.sendMessage(config.color(config.message("pet-info-header", "%prefix% &dInfo Pet: &f%pet%").replace("%pet%", owned.name())));
+        player.sendMessage(config.color("&7ID: &f" + owned.id()));
+        player.sendMessage(config.color("&7Rarity: &f" + definition.rarity().name()));
+        player.sendMessage(config.color("&7Level/EXP: &f" + owned.level() + " / " + owned.exp()));
+        player.sendMessage(config.color("&7Food: &f" + definition.foodMaterial().name() + " (+" + definition.feedExp() + " EXP)"));
+        player.sendMessage(config.color("&7Active: &f" + (active ? "yes" : "no")));
+        player.sendMessage(config.color("&7Last fed: &f" + timeSince(owned.lastFed()) + " ago"));
+        if (owned.cooldownUntil() > System.currentTimeMillis()) player.sendMessage(config.color("&7Cooldown: &c" + timeLeft(owned.cooldownUntil())));
     }
+
+    public void saveStorage(Player player, String petId, Inventory inventory) { data.saveStorage(player.getUniqueId(), petId, inventory.getContents()); }
 
     public void setTarget(Player player, LivingEntity target) {
         if (!isAllowedTarget(target)) return;
@@ -314,8 +339,7 @@ public final class PetManager implements Listener {
             pet.teleport(ownerLocation.clone().add(1.0D, 0.0D, 1.0D));
             return;
         }
-        double distance = pet.getLocation().distanceSquared(ownerLocation);
-        if (distance > 9.0D) {
+        if (pet.getLocation().distanceSquared(ownerLocation) > 9.0D) {
             Location destination = ownerLocation.clone().add(-1.2D, 0.0D, -1.2D);
             boolean pathing = definition != null && !definition.flyingPet() && config.usePathfinderFollow() && moveWithPathfinder(pet, destination);
             if (!pathing) moveWithVelocity(pet, destination, definition != null && definition.flyingPet() ? 0.28D : 0.35D);
@@ -336,8 +360,8 @@ public final class PetManager implements Listener {
         }
         if (now - pet.lastAttackMillis() < config.attackCooldownSeconds() * 1000L) return;
         PetDefinition definition = config.pets().get(pet.petId());
-        double damage = definition == null ? 1.0D : definition.damage() * config.petDamageMultiplier();
-        living.damage(damage, owner);
+        double amount = definition == null ? 1.0D : definition.damage() * config.petDamageMultiplier();
+        living.damage(amount, owner);
         pet.entity().getWorld().playSound(pet.entity().getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5F, 1.4F);
         pet.lastAttackMillis(now);
         OwnedPet owned = data.get(owner.getUniqueId()).get(pet.petId());
@@ -352,15 +376,9 @@ public final class PetManager implements Listener {
         try {
             Method getPathfinder = pet.getClass().getMethod("getPathfinder");
             Object pathfinder = getPathfinder.invoke(pet);
-            try {
-                Method moveTo = pathfinder.getClass().getMethod("moveTo", Location.class, double.class);
-                moveTo.invoke(pathfinder, destination, 1.15D);
-                return true;
-            } catch (NoSuchMethodException ignored) {
-                Method moveTo = pathfinder.getClass().getMethod("moveTo", Location.class);
-                moveTo.invoke(pathfinder, destination);
-                return true;
-            }
+            Method moveTo = pathfinder.getClass().getMethod("moveTo", Location.class, double.class);
+            moveTo.invoke(pathfinder, destination, 1.15D);
+            return true;
         } catch (Exception ignored) {
             return false;
         }
@@ -422,15 +440,12 @@ public final class PetManager implements Listener {
         return definition.scale() + bonus;
     }
 
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) { dismiss(event.getPlayer(), false); }
-
-    @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        if (!config.autoSummonLastPet()) return;
-        String last = data.get(event.getPlayer().getUniqueId()).lastPet();
-        if (last != null) plugin.getServer().getScheduler().runTaskLater(plugin, () -> summon(event.getPlayer(), last), 20L);
+    private void sendFoodHint(Player player, PetDefinition definition) {
+        player.sendMessage(config.color(config.message("pet-food-info", "%prefix% &7Makanan pet ini: &f%food%").replace("%food%", definition.foodMaterial().name())));
     }
+
+    @EventHandler public void onQuit(PlayerQuitEvent event) { dismiss(event.getPlayer(), false); }
+    @EventHandler public void onJoin(PlayerJoinEvent event) { if (config.autoSummonLastPet()) { String last = data.get(event.getPlayer().getUniqueId()).lastPet(); if (last != null) plugin.getServer().getScheduler().runTaskLater(plugin, () -> summon(event.getPlayer(), last), 20L); } }
 
     @EventHandler(ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
@@ -446,59 +461,35 @@ public final class PetManager implements Listener {
         if (event.getEntity() instanceof Player player && event.getDamager() instanceof LivingEntity attacker) setTarget(player, attacker);
     }
 
-    @EventHandler
-    public void onTarget(EntityTargetLivingEntityEvent event) {
-        if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true);
-        if (event.getTarget() != null && event.getTarget().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true);
-    }
+    @EventHandler public void onTarget(EntityTargetLivingEntityEvent event) { if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true); if (event.getTarget() != null && event.getTarget().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true); }
 
     @EventHandler
-    public void onPetDeath(EntityDeathEvent event) {
+    public void onPetEntityRemoved(EntityDeathEvent event) {
         if (!event.getEntity().getScoreboardTags().contains("veliorapets_pet")) return;
         event.getDrops().clear();
         event.setDroppedExp(0);
         String ownerRaw = event.getEntity().getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
-        if (ownerRaw == null) return;
+        String petId = event.getEntity().getPersistentDataContainer().get(petIdKey, PersistentDataType.STRING);
+        if (ownerRaw == null || petId == null) return;
         UUID uuid = UUID.fromString(ownerRaw);
         activePets.remove(uuid);
         PlayerPetData pdata = data.get(uuid);
         pdata.activePet(null);
-        pdata.cooldownUntil(System.currentTimeMillis() + config.deathCooldownMinutes() * 60_000L);
+        OwnedPet owned = pdata.get(petId);
+        long until = System.currentTimeMillis() + config.deathCooldownMinutes() * 60_000L;
+        if (owned != null) owned.cooldownUntil(until);
+        pdata.cooldownUntil(0L);
         data.save(uuid);
         Player player = Bukkit.getPlayer(uuid);
-        if (player != null) player.sendMessage(config.color(config.message("pet-dead", "%prefix% &cPet kamu mati. Bisa dipanggil lagi dalam &f%time%&c.").replace("%time%", timeLeft(pdata.cooldownUntil()))));
+        if (player != null) player.sendMessage(config.color(config.message("pet-dead", "%prefix% &cPet kamu mati. Bisa dipanggil lagi dalam &f%time%&c.").replace("%time%", timeLeft(until))));
     }
 
-    @EventHandler
-    public void onPotion(EntityPotionEffectEvent event) {
-        if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) return;
-        if (event.getNewEffect() == null) return;
-        PotionEffectType type = event.getNewEffect().getType();
-        if (!"DARKNESS".equals(type.getName()) && !"BLINDNESS".equals(type.getName())) return;
-        for (VelioraPet pet : activePets.values()) {
-            if (!pet.entity().getWorld().equals(event.getEntity().getWorld())) continue;
-            if (pet.entity().getLocation().distanceSquared(event.getEntity().getLocation()) <= 144.0D && pet.entity().getType().name().contains("WARDEN")) {
-                event.setCancelled(true);
-                return;
-            }
-        }
-    }
+    @EventHandler public void onExplode(EntityExplodeEvent event) { if (event.getEntity() != null && event.getEntity().getScoreboardTags().contains("veliorapets_pet")) { event.blockList().clear(); event.setCancelled(true); } }
+    @EventHandler public void onPrime(ExplosionPrimeEvent event) { if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true); }
 
-    @EventHandler
-    public void onProjectile(ProjectileLaunchEvent event) {
-        if (event.getEntity().getShooter() instanceof Entity shooter && shooter.getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true);
-    }
-
-    @EventHandler
-    public void onExplode(EntityExplodeEvent event) { if (event.getEntity() != null && event.getEntity().getScoreboardTags().contains("veliorapets_pet")) { event.blockList().clear(); event.setCancelled(true); } }
-    @EventHandler
-    public void onPrime(ExplosionPrimeEvent event) { if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true); }
-
-    private void cleanupAllEntities() {
-        for (org.bukkit.World world : Bukkit.getWorlds()) for (Entity entity : world.getEntities()) if (entity.getScoreboardTags().contains("veliorapets_pet")) entity.remove();
-    }
-
+    private void cleanupAllEntities() { for (org.bukkit.World world : Bukkit.getWorlds()) for (Entity entity : world.getEntities()) if (entity.getScoreboardTags().contains("veliorapets_pet")) entity.remove(); }
     private void stopTasks() { if (followTask != null) followTask.cancel(); if (cosmeticTask != null) cosmeticTask.cancel(); followTask = null; cosmeticTask = null; }
     private void tryBaby(LivingEntity entity) { try { Method method = entity.getClass().getMethod("setBaby", boolean.class); method.invoke(entity, true); } catch (Exception ignored) { try { Method method = entity.getClass().getMethod("setBaby"); method.invoke(entity); } catch (Exception ignored2) { } } }
     private String timeLeft(long target) { long seconds = Math.max(0L, (target - System.currentTimeMillis()) / 1000L); return (seconds / 60L) + "m " + (seconds % 60L) + "s"; }
+    private String timeSince(long past) { long seconds = Math.max(0L, (System.currentTimeMillis() - past) / 1000L); return (seconds / 60L) + "m " + (seconds % 60L) + "s"; }
 }
