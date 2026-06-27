@@ -17,6 +17,8 @@ public record PetDefinition(
         int storageSize,
         Material foodMaterial,
         int feedExp,
-        boolean flyingPet
+        boolean flyingPet,
+        boolean rideable,
+        int adultLevel
 ) {
 }

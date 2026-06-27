@@ -5,6 +5,7 @@ settings:
   auto-summon-new-pet: false
   auto-summon-last-pet: false
   death-cooldown-minutes: 15
+  allow-flying-pets: false
   follow:
     use-pathfinder: true
   flying-safe-mode:
@@ -15,6 +16,31 @@ settings:
     direct-buy:
       min-price: 100000
       max-price: 1000000
+
+riding:
+  enabled: true
+  require-adult: true
+  default-adult-level: 10
+  allow-ride-active-only: true
+  dismount-on-dismiss: true
+  speed: 0.32
+  jump-y: 0.42
+  prevent-ride-in-combat: false
+  rideable-rarities:
+    common: true
+    rare: true
+    epic: true
+    legendary: true
+    mythic: true
+
+sounds:
+  quiet-pets: true
+  silent-pets: true
+  play-custom-summon-sound: true
+  summon-sound: ENTITY_EXPERIENCE_ORB_PICKUP
+  feed-sound: ENTITY_GENERIC_EAT
+  volume: 0.25
+  pitch: 1.2
 
 leveling:
   scale-per-level: 0.003
@@ -53,64 +79,76 @@ cosmetic:
   aura-particle: HAPPY_VILLAGER
 
 pets:
-  baby_zombie:
-    display-name: '&fBaby Zombie'
-    entity: ZOMBIE
-    icon: ROTTEN_FLESH
+  cow:
+    display-name: '&fCow'
+    entity: COW
+    icon: WHEAT
     rarity: COMMON
     damage: 1.0
-    scale: 0.50
-    price: 100000
-    food: { material: ROTTEN_FLESH, exp: 20 }
+    scale: 0.75
+    price: 150000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 20 }
     skill: { type: NONE, bonus: 0.0 }
-  baby_husk:
-    display-name: '&fBaby Husk'
-    entity: HUSK
-    icon: SAND
-    rarity: COMMON
-    damage: 1.0
-    scale: 0.50
-    price: 100000
-    food: { material: ROTTEN_FLESH, exp: 20 }
-    skill: { type: NONE, bonus: 0.0 }
-  baby_slime:
-    display-name: '&fBaby Slime'
-    entity: SLIME
-    icon: SLIME_BALL
-    rarity: COMMON
-    damage: 1.0
-    scale: 0.45
-    price: 100000
-    food: { material: SLIME_BALL, exp: 20 }
-    skill: { type: NONE, bonus: 0.0 }
-  baby_wolf:
-    display-name: '&fBaby Wolf'
-    entity: WOLF
-    icon: BONE
-    rarity: COMMON
-    damage: 1.0
-    scale: 0.50
-    price: 100000
-    food: { material: BONE, exp: 20 }
-    skill: { type: NONE, bonus: 0.0 }
-  baby_cat:
-    display-name: '&fBaby Cat'
-    entity: CAT
-    icon: COD
-    rarity: COMMON
-    damage: 1.0
-    scale: 0.50
-    price: 100000
-    food: { material: COD, exp: 20 }
-    skill: { type: NONE, bonus: 0.0 }
-  rabbit:
-    display-name: '&fRabbit'
-    entity: RABBIT
-    icon: RABBIT_FOOT
+  baby_cow:
+    display-name: '&fBaby Cow'
+    entity: COW
+    icon: MILK_BUCKET
     rarity: COMMON
     damage: 1.0
     scale: 0.55
     price: 100000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  sheep:
+    display-name: '&fSheep'
+    entity: SHEEP
+    icon: WHITE_WOOL
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.75
+    price: 150000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_sheep:
+    display-name: '&fBaby Sheep'
+    entity: SHEEP
+    icon: WHITE_WOOL
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  pig:
+    display-name: '&fPig'
+    entity: PIG
+    icon: CARROT
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.75
+    price: 150000
+    rideable: true
+    adult-level: 10
+    food: { material: CARROT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_pig:
+    display-name: '&fBaby Pig'
+    entity: PIG
+    icon: CARROT
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    rideable: true
+    adult-level: 10
     food: { material: CARROT, exp: 20 }
     skill: { type: NONE, bonus: 0.0 }
   chicken:
@@ -121,7 +159,21 @@ pets:
     damage: 1.0
     scale: 0.55
     price: 100000
+    rideable: false
+    adult-level: 10
     food: { material: WHEAT_SEEDS, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  rabbit:
+    display-name: '&fRabbit'
+    entity: RABBIT
+    icon: RABBIT_FOOT
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    rideable: false
+    adult-level: 10
+    food: { material: CARROT, exp: 20 }
     skill: { type: NONE, bonus: 0.0 }
   turtle:
     display-name: '&fTurtle'
@@ -129,38 +181,22 @@ pets:
     icon: TURTLE_SCUTE
     rarity: COMMON
     damage: 1.0
-    scale: 0.55
-    price: 100000
+    scale: 0.60
+    price: 120000
+    rideable: false
+    adult-level: 10
     food: { material: SEAGRASS, exp: 20 }
     skill: { type: NONE, bonus: 0.0 }
-  baby_pig:
-    display-name: '&fBaby Pig'
-    entity: PIG
-    icon: CARROT
+  goat:
+    display-name: '&fGoat'
+    entity: GOAT
+    icon: GOAT_HORN
     rarity: COMMON
     damage: 1.0
-    scale: 0.55
-    price: 100000
-    food: { material: CARROT, exp: 20 }
-    skill: { type: NONE, bonus: 0.0 }
-  baby_sheep:
-    display-name: '&fBaby Sheep'
-    entity: SHEEP
-    icon: WHITE_WOOL
-    rarity: COMMON
-    damage: 1.0
-    scale: 0.55
-    price: 100000
-    food: { material: WHEAT, exp: 20 }
-    skill: { type: NONE, bonus: 0.0 }
-  baby_cow:
-    display-name: '&fBaby Cow'
-    entity: COW
-    icon: WHEAT
-    rarity: COMMON
-    damage: 1.0
-    scale: 0.55
-    price: 100000
+    scale: 0.75
+    price: 150000
+    rideable: true
+    adult-level: 10
     food: { material: WHEAT, exp: 20 }
     skill: { type: NONE, bonus: 0.0 }
   baby_goat:
@@ -171,38 +207,117 @@ pets:
     damage: 1.0
     scale: 0.55
     price: 100000
+    rideable: true
+    adult-level: 10
     food: { material: WHEAT, exp: 20 }
     skill: { type: NONE, bonus: 0.0 }
-  armadillo:
-    display-name: '&fArmadillo'
-    entity: ARMADILLO
-    icon: ARMADILLO_SCUTE
+  camel:
+    display-name: '&fCamel'
+    entity: CAMEL
+    icon: SADDLE
+    rarity: RARE
+    damage: 1.5
+    scale: 0.75
+    price: 250000
+    rideable: true
+    adult-level: 10
+    food: { material: CACTUS, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  baby_camel:
+    display-name: '&fBaby Camel'
+    entity: CAMEL
+    icon: CACTUS
     rarity: COMMON
     damage: 1.0
     scale: 0.55
-    price: 100000
-    food: { material: SPIDER_EYE, exp: 20 }
+    price: 150000
+    rideable: true
+    adult-level: 10
+    food: { material: CACTUS, exp: 20 }
     skill: { type: NONE, bonus: 0.0 }
-
-  fox_spirit:
-    display-name: '&bFox Spirit'
+  horse:
+    display-name: '&bHorse'
+    entity: HORSE
+    icon: SADDLE
+    rarity: RARE
+    damage: 1.5
+    scale: 0.75
+    price: 250000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  donkey:
+    display-name: '&bDonkey'
+    entity: DONKEY
+    icon: CHEST
+    rarity: RARE
+    damage: 1.5
+    scale: 0.75
+    price: 250000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mule:
+    display-name: '&bMule'
+    entity: MULE
+    icon: CHEST
+    rarity: RARE
+    damage: 1.5
+    scale: 0.75
+    price: 250000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  llama:
+    display-name: '&bLlama'
+    entity: LLAMA
+    icon: WHITE_CARPET
+    rarity: RARE
+    damage: 1.5
+    scale: 0.75
+    price: 250000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  trader_llama:
+    display-name: '&bTrader Llama'
+    entity: TRADER_LLAMA
+    icon: BLUE_CARPET
+    rarity: RARE
+    damage: 1.5
+    scale: 0.75
+    price: 280000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  fox:
+    display-name: '&bFox'
     entity: FOX
     icon: SWEET_BERRIES
     rarity: RARE
     damage: 1.5
-    scale: 0.55
+    scale: 0.60
     price: 200000
+    rideable: false
+    adult-level: 10
     food: { material: SWEET_BERRIES, exp: 25 }
     skill: { type: PET_DAMAGE, bonus: 0.01 }
-  mini_golem:
-    display-name: '&bMini Golem'
-    entity: IRON_GOLEM
-    icon: IRON_INGOT
+  panda:
+    display-name: '&bPanda'
+    entity: PANDA
+    icon: BAMBOO
     rarity: RARE
     damage: 1.5
-    scale: 0.45
-    price: 250000
-    food: { material: IRON_INGOT, exp: 25 }
+    scale: 0.65
+    price: 200000
+    rideable: true
+    adult-level: 10
+    food: { material: BAMBOO, exp: 25 }
     skill: { type: PET_DAMAGE, bonus: 0.01 }
   baby_panda:
     display-name: '&bBaby Panda'
@@ -212,27 +327,237 @@ pets:
     damage: 1.5
     scale: 0.50
     price: 200000
+    rideable: true
+    adult-level: 10
     food: { material: BAMBOO, exp: 25 }
     skill: { type: PET_DAMAGE, bonus: 0.01 }
-  baby_axolotl:
-    display-name: '&bBaby Axolotl'
-    entity: AXOLOTL
-    icon: TROPICAL_FISH
-    rarity: RARE
-    damage: 1.5
+  cat:
+    display-name: '&fCat'
+    entity: CAT
+    icon: COD
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 120000
+    rideable: false
+    adult-level: 10
+    food: { material: COD, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  wolf:
+    display-name: '&fWolf'
+    entity: WOLF
+    icon: BONE
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.60
+    price: 120000
+    rideable: false
+    adult-level: 10
+    food: { material: BONE, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_wolf:
+    display-name: '&fBaby Wolf'
+    entity: WOLF
+    icon: BONE
+    rarity: COMMON
+    damage: 1.0
     scale: 0.50
-    price: 200000
-    food: { material: TROPICAL_FISH, exp: 25 }
-    skill: { type: PET_DAMAGE, bonus: 0.01 }
-  baby_frog:
-    display-name: '&bBaby Frog'
+    price: 100000
+    rideable: false
+    adult-level: 10
+    food: { material: BONE, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  frog:
+    display-name: '&fFrog'
     entity: FROG
     icon: SLIME_BALL
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 120000
+    rideable: false
+    adult-level: 10
+    food: { material: SLIME_BALL, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  axolotl:
+    display-name: '&fAxolotl'
+    entity: AXOLOTL
+    icon: TROPICAL_FISH
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 120000
+    rideable: false
+    adult-level: 10
+    food: { material: TROPICAL_FISH, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  armadillo:
+    display-name: '&fArmadillo'
+    entity: ARMADILLO
+    icon: ARMADILLO_SCUTE
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 120000
+    rideable: false
+    adult-level: 10
+    food: { material: SPIDER_EYE, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  sniffer:
+    display-name: '&bSniffer'
+    entity: SNIFFER
+    icon: TORCHFLOWER_SEEDS
+    rarity: RARE
+    damage: 1.5
+    scale: 0.65
+    price: 300000
+    rideable: true
+    adult-level: 10
+    food: { material: TORCHFLOWER_SEEDS, exp: 25 }
+    skill: { type: FISHING_LUCK, bonus: 0.01 }
+  mooshroom:
+    display-name: '&bMooshroom'
+    entity: MOOSHROOM
+    icon: RED_MUSHROOM
+    rarity: RARE
+    damage: 1.5
+    scale: 0.75
+    price: 250000
+    rideable: true
+    adult-level: 10
+    food: { material: WHEAT, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mini_iron_golem:
+    display-name: '&dMini Iron Golem'
+    entity: IRON_GOLEM
+    icon: IRON_INGOT
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.45
+    price: 450000
+    rideable: true
+    adult-level: 15
+    food: { material: IRON_INGOT, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_snow_golem_no_snow:
+    display-name: '&bMini Snow Golem'
+    entity: SNOW_GOLEM
+    icon: SNOWBALL
+    rarity: RARE
+    damage: 1.5
+    scale: 0.55
+    price: 220000
+    rideable: false
+    adult-level: 10
+    food: { material: SNOWBALL, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  baby_zombie:
+    display-name: '&fBaby Zombie'
+    entity: ZOMBIE
+    icon: ROTTEN_FLESH
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.50
+    price: 100000
+    rideable: false
+    adult-level: 10
+    food: { material: ROTTEN_FLESH, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_husk:
+    display-name: '&fBaby Husk'
+    entity: HUSK
+    icon: SAND
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.50
+    price: 100000
+    rideable: false
+    adult-level: 10
+    food: { material: ROTTEN_FLESH, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  mini_zombie_villager:
+    display-name: '&bMini Zombie Villager'
+    entity: ZOMBIE_VILLAGER
+    icon: EMERALD
     rarity: RARE
     damage: 1.5
     scale: 0.50
-    price: 200000
-    food: { material: SLIME_BALL, exp: 25 }
+    price: 220000
+    rideable: false
+    adult-level: 10
+    food: { material: ROTTEN_FLESH, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  baby_slime:
+    display-name: '&fBaby Slime'
+    entity: SLIME
+    icon: SLIME_BALL
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.45
+    price: 100000
+    rideable: false
+    adult-level: 10
+    food: { material: SLIME_BALL, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  mini_magma_cube:
+    display-name: '&bMini Magma Cube'
+    entity: MAGMA_CUBE
+    icon: MAGMA_CREAM
+    rarity: RARE
+    damage: 1.5
+    scale: 0.45
+    price: 220000
+    rideable: false
+    adult-level: 10
+    food: { material: MAGMA_CREAM, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mini_skeleton:
+    display-name: '&bMini Skeleton'
+    entity: SKELETON
+    icon: BONE
+    rarity: RARE
+    damage: 1.5
+    scale: 0.55
+    price: 220000
+    rideable: false
+    adult-level: 10
+    food: { material: BONE, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mini_stray:
+    display-name: '&bMini Stray'
+    entity: STRAY
+    icon: TIPPED_ARROW
+    rarity: RARE
+    damage: 1.5
+    scale: 0.55
+    price: 230000
+    rideable: false
+    adult-level: 10
+    food: { material: BONE, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mini_bogged:
+    display-name: '&bMini Bogged'
+    entity: BOGGED
+    icon: MOSS_BLOCK
+    rarity: RARE
+    damage: 1.5
+    scale: 0.55
+    price: 230000
+    rideable: false
+    adult-level: 10
+    food: { material: BONE, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mini_drowned:
+    display-name: '&bMini Drowned'
+    entity: DROWNED
+    icon: TRIDENT
+    rarity: RARE
+    damage: 1.5
+    scale: 0.55
+    price: 230000
+    rideable: false
+    adult-level: 10
+    food: { material: ROTTEN_FLESH, exp: 25 }
     skill: { type: PET_DAMAGE, bonus: 0.01 }
   mini_spider:
     display-name: '&bMini Spider'
@@ -242,69 +567,22 @@ pets:
     damage: 1.5
     scale: 0.45
     price: 220000
+    rideable: false
+    adult-level: 10
     food: { material: SPIDER_EYE, exp: 25 }
     skill: { type: PET_DAMAGE, bonus: 0.01 }
-  snow_guardian:
-    display-name: '&bSnow Guardian'
-    entity: SNOW_GOLEM
-    icon: SNOWBALL
+  mini_cave_spider:
+    display-name: '&bMini Cave Spider'
+    entity: CAVE_SPIDER
+    icon: SPIDER_EYE
     rarity: RARE
     damage: 1.5
-    scale: 0.55
-    price: 220000
-    food: { material: SNOWBALL, exp: 25 }
+    scale: 0.45
+    price: 230000
+    rideable: false
+    adult-level: 10
+    food: { material: SPIDER_EYE, exp: 25 }
     skill: { type: PET_DAMAGE, bonus: 0.01 }
-  bat_sprite:
-    display-name: '&bBat Sprite'
-    entity: BAT
-    icon: ECHO_SHARD
-    rarity: RARE
-    damage: 1.2
-    scale: 0.45
-    price: 250000
-    food: { material: GLOW_BERRIES, exp: 25 }
-    skill: { type: FISHING_LUCK, bonus: 0.01 }
-  parrot_scout:
-    display-name: '&bParrot Scout'
-    entity: PARROT
-    icon: FEATHER
-    rarity: RARE
-    damage: 1.2
-    scale: 0.50
-    price: 250000
-    food: { material: WHEAT_SEEDS, exp: 25 }
-    skill: { type: FISHING_LUCK, bonus: 0.01 }
-
-  shadow_wolf:
-    display-name: '&dShadow Wolf'
-    entity: WOLF
-    icon: BLACK_WOOL
-    rarity: EPIC
-    damage: 2.0
-    scale: 0.55
-    price: 400000
-    food: { material: COOKED_BEEF, exp: 35 }
-    skill: { type: PET_DAMAGE, bonus: 0.02 }
-  crystal_bee:
-    display-name: '&dCrystal Bee'
-    entity: BEE
-    icon: AMETHYST_SHARD
-    rarity: EPIC
-    damage: 2.0
-    scale: 0.45
-    price: 400000
-    food: { material: HONEY_BOTTLE, exp: 35 }
-    skill: { type: FISHING_LUCK, bonus: 0.01 }
-  baby_ravager:
-    display-name: '&dBaby Ravager'
-    entity: RAVAGER
-    icon: SADDLE
-    rarity: EPIC
-    damage: 2.0
-    scale: 0.40
-    price: 450000
-    food: { material: HAY_BLOCK, exp: 35 }
-    skill: { type: PET_DAMAGE, bonus: 0.02 }
   mini_enderman:
     display-name: '&dMini Enderman'
     entity: ENDERMAN
@@ -313,69 +591,22 @@ pets:
     damage: 2.0
     scale: 0.45
     price: 450000
+    rideable: false
+    adult-level: 10
     food: { material: CHORUS_FRUIT, exp: 35 }
     skill: { type: FISHING_LUCK, bonus: 0.01 }
-  cave_golem:
-    display-name: '&dCave Golem'
-    entity: IRON_GOLEM
-    icon: DEEPSLATE
+  mini_creeper_safe:
+    display-name: '&dMini Creeper'
+    entity: CREEPER
+    icon: GUNPOWDER
     rarity: EPIC
     damage: 2.0
-    scale: 0.45
+    scale: 0.50
     price: 450000
-    food: { material: COPPER_INGOT, exp: 35 }
+    rideable: false
+    adult-level: 10
+    food: { material: GUNPOWDER, exp: 35 }
     skill: { type: PET_DAMAGE, bonus: 0.02 }
-  allay_wisp:
-    display-name: '&dAllay Wisp'
-    entity: ALLAY
-    icon: AMETHYST_SHARD
-    rarity: EPIC
-    damage: 1.8
-    scale: 0.45
-    price: 450000
-    food: { material: COOKIE, exp: 35 }
-    skill: { type: FISHING_LUCK, bonus: 0.01 }
-  blaze_core_safe:
-    display-name: '&dBlaze Core'
-    entity: BLAZE
-    icon: BLAZE_ROD
-    rarity: EPIC
-    damage: 2.0
-    scale: 0.45
-    price: 500000
-    food: { material: BLAZE_POWDER, exp: 35 }
-    skill: { type: PET_DAMAGE, bonus: 0.02 }
-
-  mini_warden:
-    display-name: '&6Mini Warden'
-    entity: WARDEN
-    icon: SCULK_CATALYST
-    rarity: LEGENDARY
-    damage: 2.5
-    scale: 0.35
-    price: 700000
-    food: { material: ECHO_SHARD, exp: 45 }
-    skill: { type: FISHING_LUCK, bonus: 0.02 }
-  soul_reaper:
-    display-name: '&6Soul Reaper'
-    entity: WITHER_SKELETON
-    icon: WITHER_SKELETON_SKULL
-    rarity: LEGENDARY
-    damage: 2.5
-    scale: 0.55
-    price: 700000
-    food: { material: BONE, exp: 45 }
-    skill: { type: PET_DAMAGE, bonus: 0.03 }
-  mini_piglin_brute:
-    display-name: '&6Mini Piglin Brute'
-    entity: PIGLIN_BRUTE
-    icon: GOLDEN_AXE
-    rarity: LEGENDARY
-    damage: 2.5
-    scale: 0.55
-    price: 700000
-    food: { material: GOLD_INGOT, exp: 45 }
-    skill: { type: PET_DAMAGE, bonus: 0.03 }
   mini_guardian:
     display-name: '&6Mini Guardian'
     entity: GUARDIAN
@@ -384,109 +615,130 @@ pets:
     damage: 2.5
     scale: 0.45
     price: 700000
+    rideable: false
+    adult-level: 10
     food: { material: PRISMARINE_SHARD, exp: 45 }
     skill: { type: FISHING_LUCK, bonus: 0.02 }
-  mini_wither_skeleton:
-    display-name: '&6Mini Wither Skeleton'
-    entity: WITHER_SKELETON
-    icon: COAL
+  mini_pillager:
+    display-name: '&dMini Pillager'
+    entity: PILLAGER
+    icon: CROSSBOW
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.55
+    price: 450000
+    rideable: false
+    adult-level: 10
+    food: { material: BREAD, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_vindicator:
+    display-name: '&dMini Vindicator'
+    entity: VINDICATOR
+    icon: IRON_AXE
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.55
+    price: 450000
+    rideable: false
+    adult-level: 10
+    food: { material: BREAD, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_evoker:
+    display-name: '&6Mini Evoker'
+    entity: EVOKER
+    icon: TOTEM_OF_UNDYING
     rarity: LEGENDARY
     damage: 2.5
     scale: 0.55
     price: 700000
-    food: { material: COAL, exp: 45 }
+    rideable: false
+    adult-level: 10
+    food: { material: BREAD, exp: 45 }
     skill: { type: PET_DAMAGE, bonus: 0.03 }
-  crystal_golem:
-    display-name: '&6Crystal Golem'
-    entity: IRON_GOLEM
-    icon: AMETHYST_BLOCK
+  mini_ravager:
+    display-name: '&dMini Ravager'
+    entity: RAVAGER
+    icon: SADDLE
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.40
+    price: 450000
+    rideable: true
+    adult-level: 15
+    food: { material: HAY_BLOCK, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_warden:
+    display-name: '&6Mini Warden'
+    entity: WARDEN
+    icon: SCULK_CATALYST
     rarity: LEGENDARY
     damage: 2.5
-    scale: 0.45
-    price: 750000
-    food: { material: AMETHYST_SHARD, exp: 45 }
-    skill: { type: PET_DAMAGE, bonus: 0.03 }
-  phantom_shadow_safe:
-    display-name: '&6Phantom Shadow'
-    entity: PHANTOM
-    icon: PHANTOM_MEMBRANE
-    rarity: LEGENDARY
-    damage: 2.2
     scale: 0.35
-    price: 800000
-    food: { material: PHANTOM_MEMBRANE, exp: 45 }
+    price: 700000
+    rideable: true
+    adult-level: 15
+    food: { material: ECHO_SHARD, exp: 45 }
     skill: { type: FISHING_LUCK, bonus: 0.02 }
-  vex_lantern_safe:
-    display-name: '&6Vex Lantern'
-    entity: VEX
-    icon: SOUL_LANTERN
+  mini_piglin:
+    display-name: '&dMini Piglin'
+    entity: PIGLIN
+    icon: GOLD_INGOT
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.55
+    price: 450000
+    rideable: false
+    adult-level: 10
+    food: { material: GOLD_INGOT, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_piglin_brute:
+    display-name: '&6Mini Piglin Brute'
+    entity: PIGLIN_BRUTE
+    icon: GOLDEN_AXE
     rarity: LEGENDARY
-    damage: 2.2
-    scale: 0.35
-    price: 800000
-    food: { material: SOUL_TORCH, exp: 45 }
+    damage: 2.5
+    scale: 0.55
+    price: 700000
+    rideable: false
+    adult-level: 10
+    food: { material: GOLD_INGOT, exp: 45 }
     skill: { type: PET_DAMAGE, bonus: 0.03 }
-
-  astral_warden:
-    display-name: '&cAstral Warden'
-    entity: WARDEN
-    icon: ECHO_SHARD
-    rarity: MYTHIC
-    damage: 3.0
-    scale: 0.35
-    price: 1000000
-    food: { material: ECHO_SHARD, exp: 60 }
-    skill: { type: PET_DAMAGE, bonus: 0.05 }
-  ancient_golem:
-    display-name: '&cAncient Golem'
-    entity: IRON_GOLEM
-    icon: ANCIENT_DEBRIS
-    rarity: MYTHIC
-    damage: 3.0
-    scale: 0.45
-    price: 1000000
-    food: { material: ANCIENT_DEBRIS, exp: 60 }
-    skill: { type: QUEST_MONEY, bonus: 0.02 }
-  dragonling:
-    display-name: '&cDragonling'
-    entity: WOLF
-    icon: DRAGON_BREATH
-    rarity: MYTHIC
-    damage: 3.0
+  mini_zoglin:
+    display-name: '&dMini Zoglin'
+    entity: ZOGLIN
+    icon: CRIMSON_FUNGUS
+    rarity: EPIC
+    damage: 2.0
     scale: 0.50
-    price: 1000000
-    food: { material: DRAGON_BREATH, exp: 60 }
-    skill: { type: PET_DAMAGE, bonus: 0.05 }
-  soul_guardian:
-    display-name: '&cSoul Guardian'
-    entity: WARDEN
-    icon: SOUL_LANTERN
-    rarity: MYTHIC
-    damage: 3.0
-    scale: 0.35
-    price: 1000000
-    food: { material: ECHO_SHARD, exp: 60 }
-    skill: { type: QUEST_MONEY, bonus: 0.02 }
-  astral_allay:
-    display-name: '&cAstral Allay'
-    entity: ALLAY
-    icon: NETHER_STAR
-    rarity: MYTHIC
-    damage: 2.6
-    scale: 0.45
-    price: 1000000
-    food: { material: GOLDEN_APPLE, exp: 60 }
-    skill: { type: QUEST_MONEY, bonus: 0.02 }
-  abyss_phantom_safe:
-    display-name: '&cAbyss Phantom'
-    entity: PHANTOM
-    icon: ECHO_SHARD
-    rarity: MYTHIC
-    damage: 2.8
-    scale: 0.35
-    price: 1000000
-    food: { material: PHANTOM_MEMBRANE, exp: 60 }
-    skill: { type: PET_DAMAGE, bonus: 0.05 }
+    price: 500000
+    rideable: true
+    adult-level: 15
+    food: { material: CRIMSON_FUNGUS, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_hoglin:
+    display-name: '&dMini Hoglin'
+    entity: HOGLIN
+    icon: WARPED_FUNGUS
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.50
+    price: 500000
+    rideable: true
+    adult-level: 15
+    food: { material: WARPED_FUNGUS, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_breeze:
+    display-name: '&dMini Breeze'
+    entity: BREEZE
+    icon: BREEZE_ROD
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.50
+    price: 500000
+    rideable: false
+    adult-level: 10
+    food: { material: WIND_CHARGE, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
 
 messages:
   prefix: '&8[&dVelioraPets&8] '
@@ -500,11 +752,21 @@ messages:
   pet-summoned: '%prefix% &aPet &f%pet% &adipanggil.'
   pet-dismissed: '%prefix% &ePet kamu disimpan.'
   pet-dead: '%prefix% &cPet kamu mati. Bisa dipanggil lagi dalam &f%time%&c.'
-  pet-cooldown: '%prefix% &cPet masih cooldown: &f%time%'
+  pet-cooldown: '%prefix% &cPet &f%pet% &cmasih cooldown: &f%time%'
   pet-storage-open: '%prefix% &aMembuka storage pet.'
   pet-renamed: '%prefix% &aNama pet diubah menjadi &f%name%&a.'
   pet-fed: '%prefix% &aPet &f%pet% &adiberi makan. EXP +&f%exp%&a.'
   pet-feed-wrong-food: '%prefix% &cPet ini butuh makanan: &f%food%'
-  pet-not-owned: '%prefix% &cKamu belum punya pet itu.'
+  pet-not-found: '%prefix% &cPet &f%pet% &ctidak ditemukan.'
+  pet-not-owned: '%prefix% &cKamu belum punya pet &f%pet%&c.'
+  pet-summon-usage: '%prefix% &eGunakan: &f/pet summon <pet>'
+  pet-disabled-flying: '%prefix% &cPet &f%pet% &csedang dinonaktifkan karena flying pets dimatikan.'
   no-active-pet: '%prefix% &cTidak ada pet aktif.'
+  pet-food-info: '%prefix% &7Makanan pet ini: &f%food%'
+  pet-info-header: '%prefix% &dInfo Pet: &f%pet%'
+  pet-ride-not-active: '%prefix% &cTidak ada pet aktif untuk ditunggangi.'
+  pet-ride-not-rideable: '%prefix% &cPet ini tidak bisa ditunggangi.'
+  pet-ride-not-adult: '%prefix% &cPet ini belum dewasa. Minimal level: &f%level%'
+  pet-ride-start: '%prefix% &aKamu menaiki &f%pet%&a.'
+  pet-ride-stop: '%prefix% &eKamu turun dari &f%pet%&e.'
   reload-success: '%prefix% &aVelioraPets berhasil direload.'
