@@ -19,11 +19,13 @@ public final class OwnedPet {
     public String name() { return name; }
     public void name(String name) { if (name != null && !name.isBlank()) this.name = name; }
 
-    public void addExp(int amount, int maxLevel) {
+    public boolean addExp(int amount, int maxLevel) {
+        int oldLevel = level;
         exp += Math.max(0, amount);
         while (exp >= level * 100 && level < maxLevel) {
             exp -= level * 100;
             level++;
         }
+        return level > oldLevel;
     }
 }
