@@ -45,9 +45,13 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
                 if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
                 manager.openList(player);
             }
+            case "info" -> {
+                if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
+                manager.sendInfo(player, args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "active");
+            }
             case "summon" -> {
                 if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
-                if (args.length < 2) { player.sendMessage("/pet summon <pet>"); return true; }
+                if (args.length < 2) { player.sendMessage(config.color(config.message("pet-summon-usage", "%prefix% &eGunakan: &f/pet summon <pet>"))); return true; }
                 manager.summon(player, args[1].toLowerCase(Locale.ROOT));
             }
             case "dismiss" -> {
@@ -96,10 +100,10 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> result = new ArrayList<>();
         if (args.length == 1) {
-            for (String option : List.of("shop", "gacha", "list", "summon", "dismiss", "storage", "rename", "feed", "reload", "give", "remove")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
+            for (String option : List.of("shop", "gacha", "list", "info", "summon", "dismiss", "storage", "rename", "feed", "reload", "give", "remove")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
             return result;
         }
-        if (args.length == 2 && (args[0].equalsIgnoreCase("summon") || args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("feed"))) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("summon") || args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("feed") || args[0].equalsIgnoreCase("info"))) {
             if (sender instanceof Player player) {
                 String lower = args[1].toLowerCase(Locale.ROOT);
                 if ("active".startsWith(lower)) result.add("active");
