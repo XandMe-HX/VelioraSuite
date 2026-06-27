@@ -205,6 +205,7 @@ public final class PetConfigManager {
     }
 
     private boolean isFlyingPet(EntityType type) {
+        // Jangan pakai EntityType.HAPPY_GHAST di sini agar tetap aman di API yang belum punya enum itu.
         return type != null && switch (type) {
             case PHANTOM, GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER, BEE, ALLAY, BAT, PARROT -> true;
             default -> false;
