@@ -25,7 +25,7 @@ public final class PetSafetyListener implements Listener {
     public void onPetHazard(EntityDamageEvent event) {
         if (!isPet(event.getEntity())) return;
         switch (event.getCause()) {
-            case FIRE, FIRE_TICK, LAVA, HOT_FLOOR, DROWNING, FREEZE, FALL -> {
+            case FIRE, FIRE_TICK, LAVA, HOT_FLOOR, DROWNING, FREEZE, FALL, DRYOUT, SUFFOCATION -> {
                 event.setCancelled(true);
                 event.getEntity().setFireTicks(0);
             }
