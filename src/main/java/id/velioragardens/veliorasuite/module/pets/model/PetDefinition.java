@@ -14,6 +14,9 @@ public record PetDefinition(
         double damage,
         double scale,
         long price,
-        int storageSize
+        int storageSize,
+        Material foodMaterial,
+        int feedExp,
+        boolean flyingPet
 ) {
 }
