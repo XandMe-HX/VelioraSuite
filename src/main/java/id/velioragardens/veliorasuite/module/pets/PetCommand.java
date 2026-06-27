@@ -33,50 +33,17 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
-            case "shop" -> {
-                if (!has(player, "veliorasuite.pets.shop")) { noPerm(player); return true; }
-                manager.openShop(player);
-            }
-            case "gacha" -> {
-                if (!has(player, "veliorasuite.pets.gacha")) { noPerm(player); return true; }
-                manager.openGacha(player);
-            }
-            case "list" -> {
-                if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
-                manager.openList(player);
-            }
-            case "info" -> {
-                if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
-                manager.sendInfo(player, args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "active");
-            }
-            case "summon" -> {
-                if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
-                if (args.length < 2) { player.sendMessage(config.color(config.message("pet-summon-usage", "%prefix% &eGunakan: &f/pet summon <pet>"))); return true; }
-                manager.summon(player, args[1].toLowerCase(Locale.ROOT));
-            }
-            case "dismiss" -> {
-                if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
-                manager.dismiss(player, true);
-            }
-            case "storage" -> {
-                if (!has(player, "veliorasuite.pets.storage")) { noPerm(player); return true; }
-                manager.openStorage(player);
-            }
-            case "rename" -> {
-                if (!has(player, "veliorasuite.pets.rename")) { noPerm(player); return true; }
-                if (args.length < 3) { player.sendMessage("/pet rename <pet|active> <nama>"); return true; }
-                manager.rename(player, args[1].toLowerCase(Locale.ROOT), join(args, 2));
-            }
-            case "feed" -> {
-                if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; }
-                if (args.length < 2) { player.sendMessage("/pet feed <pet|active>"); return true; }
-                manager.feed(player, args[1].toLowerCase(Locale.ROOT));
-            }
-            case "reload" -> {
-                if (!has(player, "veliorasuite.pets.reload") && !has(player, "veliorasuite.pets.admin")) { noPerm(player); return true; }
-                manager.reload();
-                player.sendMessage(config.color(config.message("reload-success", "%prefix% &aVelioraPets berhasil direload.")));
-            }
+            case "shop" -> { if (!has(player, "veliorasuite.pets.shop")) { noPerm(player); return true; } manager.openShop(player); }
+            case "gacha" -> { if (!has(player, "veliorasuite.pets.gacha")) { noPerm(player); return true; } manager.openGacha(player); }
+            case "list" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } manager.openList(player); }
+            case "info" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } manager.sendInfo(player, args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "active"); }
+            case "summon" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } if (args.length < 2) { player.sendMessage(config.color(config.message("pet-summon-usage", "%prefix% &eGunakan: &f/pet summon <pet>"))); return true; } manager.summon(player, args[1].toLowerCase(Locale.ROOT)); }
+            case "dismiss" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } manager.dismiss(player, true); }
+            case "storage" -> { if (!has(player, "veliorasuite.pets.storage")) { noPerm(player); return true; } manager.openStorage(player); }
+            case "rename" -> { if (!has(player, "veliorasuite.pets.rename")) { noPerm(player); return true; } if (args.length < 3) { player.sendMessage("/pet rename <pet|active> <nama>"); return true; } manager.rename(player, args[1].toLowerCase(Locale.ROOT), join(args, 2)); }
+            case "feed" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } if (args.length < 2) { player.sendMessage("/pet feed <pet|active>"); return true; } manager.feed(player, args[1].toLowerCase(Locale.ROOT)); }
+            case "ride" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } player.performCommand("pet ride active"); }
+            case "reload" -> { if (!has(player, "veliorasuite.pets.reload") && !has(player, "veliorasuite.pets.admin")) { noPerm(player); return true; } manager.reload(); player.sendMessage(config.color(config.message("reload-success", "%prefix% &aVelioraPets berhasil direload."))); }
             case "give" -> {
                 if (!has(player, "veliorasuite.pets.give") && !has(player, "veliorasuite.pets.admin")) { noPerm(player); return true; }
                 if (args.length < 3) { player.sendMessage("/pet give <player> <pet>"); return true; }
@@ -100,10 +67,10 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> result = new ArrayList<>();
         if (args.length == 1) {
-            for (String option : List.of("shop", "gacha", "list", "info", "summon", "dismiss", "storage", "rename", "feed", "reload", "give", "remove")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
+            for (String option : List.of("shop", "gacha", "list", "info", "summon", "dismiss", "storage", "rename", "feed", "ride", "reload", "give", "remove")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
             return result;
         }
-        if (args.length == 2 && (args[0].equalsIgnoreCase("summon") || args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("feed") || args[0].equalsIgnoreCase("info"))) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("summon") || args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("feed") || args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("ride"))) {
             if (sender instanceof Player player) {
                 String lower = args[1].toLowerCase(Locale.ROOT);
                 if ("active".startsWith(lower)) result.add("active");
