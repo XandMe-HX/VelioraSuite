@@ -116,7 +116,7 @@ public final class BossSkillManager {
     }
 
     private void fireBomb(LivingEntity boss) {
-        List<Player> targets = nearbyPlayers(boss.getLocation(), config.targetRadius());
+        List<Player> targets = nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal());
         Location target = targets.isEmpty() ? boss.getLocation().clone().add(random.nextInt(9) - 4, 0, random.nextInt(9) - 4) : targets.get(random.nextInt(targets.size())).getLocation();
         target.getWorld().spawnParticle(Particle.FLAME, target, 40, 1.5D, 0.4D, 1.5D, 0.05D);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -158,15 +158,11 @@ public final class BossSkillManager {
     }
 
     private Player targetNear(Location location) {
-        List<Player> players = nearbyPlayers(location, config.targetRadius());
-        return players.isEmpty() ? null : players.get(random.nextInt(players.size()));
+        return manager.findBestTarget(location);
     }
 
-    private List<Player> nearbyPlayers(Location location, double radius) {
-        List<Player> players = new ArrayList<>();
-        if (location == null || location.getWorld() == null) return players;
-        double squared = radius * radius;
-        for (Player player : location.getWorld().getPlayers()) if (player.getLocation().distanceSquared(location) <= squared && manager.isPlayerInsideArena(player)) players.add(player);
-        return players;
+    private List<Player> nearbyPlayers(Location location, double horizontalRadius) {
+        if (location == null || location.getWorld() == null) return List.of();
+        return manager.nearbyTargetPlayers(location, horizontalRadius);
     }
 }
