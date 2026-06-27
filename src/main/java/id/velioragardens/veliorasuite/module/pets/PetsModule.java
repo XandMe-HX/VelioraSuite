@@ -10,6 +10,7 @@ public final class PetsModule implements VelioraModule {
     private final VelioraSuite plugin;
     private PetManager manager;
     private PetGuiManager guiManager;
+    private PetSafetyListener safetyListener;
     private boolean enabled;
 
     public PetsModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -22,6 +23,7 @@ public final class PetsModule implements VelioraModule {
         manager = new PetManager(plugin);
         manager.load();
         guiManager = new PetGuiManager(plugin, manager, manager.config());
+        safetyListener = new PetSafetyListener();
     }
 
     @Override
@@ -30,6 +32,7 @@ public final class PetsModule implements VelioraModule {
         registerCommand();
         plugin.getServer().getPluginManager().registerEvents(manager, plugin);
         plugin.getServer().getPluginManager().registerEvents(guiManager, plugin);
+        plugin.getServer().getPluginManager().registerEvents(safetyListener, plugin);
         manager.start(guiManager);
     }
 
@@ -38,6 +41,7 @@ public final class PetsModule implements VelioraModule {
         enabled = false;
         HandlerList.unregisterAll(manager);
         HandlerList.unregisterAll(guiManager);
+        HandlerList.unregisterAll(safetyListener);
         if (manager != null) manager.shutdown();
         registerDisabledCommand();
     }
