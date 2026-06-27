@@ -97,10 +97,18 @@ commands:
     permission: veliorasuite.trader.use
   boss:
     description: Manage VelioraBoss.
-    usage: /boss <set|spawn|stop|reload>
+    usage: /boss <set|spawn|stop|reload|list|info|top>
     aliases:
       - vboss
     permission: veliorasuite.boss.use
+  pet:
+    description: Open and manage VelioraPets.
+    usage: /pet <shop|gacha|list|summon|dismiss|storage|rename|feed|reload|give|remove>
+    aliases:
+      - pets
+      - vpet
+      - vpets
+    permission: veliorasuite.pets.use
   register:
     description: Register Veliora account.
     usage: /register <password> <password confirm>
@@ -265,4 +273,22 @@ permissions:
   veliorasuite.boss.set:
     default: op
   veliorasuite.boss.stop:
+    default: op
+  veliorasuite.pets.use:
+    default: true
+  veliorasuite.pets.shop:
+    default: true
+  veliorasuite.pets.gacha:
+    default: true
+  veliorasuite.pets.storage:
+    default: true
+  veliorasuite.pets.rename:
+    default: true
+  veliorasuite.pets.admin:
+    default: op
+  veliorasuite.pets.reload:
+    default: op
+  veliorasuite.pets.give:
+    default: op
+  veliorasuite.pets.remove:
     default: op

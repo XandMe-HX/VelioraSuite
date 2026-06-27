@@ -5,11 +5,16 @@ import id.velioragardens.veliorasuite.module.boss.model.BossSpawnPoint;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class BossDataManager {
 
@@ -50,8 +55,47 @@ public final class BossDataManager {
     public Map<String, BossSpawnPoint> spawnPoints() { return spawnPoints; }
 
     public void addKill(String bossId) {
+        stats.set("total-kills", stats.getInt("total-kills", 0) + 1);
         stats.set("kills." + bossId, stats.getInt("kills." + bossId, 0) + 1);
         saveStats();
+    }
+
+    public int totalKills() { return stats.getInt("total-kills", 0); }
+
+    public Map<String, Integer> bossKills() {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        ConfigurationSection section = stats.getConfigurationSection("kills");
+        if (section == null) return map;
+        for (String key : section.getKeys(false)) map.put(key, section.getInt(key, 0));
+        return map;
+    }
+
+    public void addDamage(Player player, double damage) {
+        if (player == null || damage <= 0.0D) return;
+        String path = "players." + player.getUniqueId();
+        stats.set(path + ".name", player.getName());
+        stats.set(path + ".total-damage", stats.getDouble(path + ".total-damage", 0.0D) + damage);
+        saveStats();
+    }
+
+    public void addParticipation(Player player) {
+        if (player == null) return;
+        String path = "players." + player.getUniqueId();
+        stats.set(path + ".name", player.getName());
+        stats.set(path + ".participation-kills", stats.getInt(path + ".participation-kills", 0) + 1);
+        saveStats();
+    }
+
+    public List<PlayerDamageStat> topDamage(int limit) {
+        List<PlayerDamageStat> list = new ArrayList<>();
+        ConfigurationSection section = stats.getConfigurationSection("players");
+        if (section == null) return list;
+        for (String key : section.getKeys(false)) {
+            String path = "players." + key;
+            list.add(new PlayerDamageStat(key, stats.getString(path + ".name", key.substring(0, Math.min(8, key.length()))), stats.getDouble(path + ".total-damage", 0.0D), stats.getInt(path + ".participation-kills", 0)));
+        }
+        list.sort(Comparator.comparingDouble(PlayerDamageStat::damage).reversed());
+        return list.subList(0, Math.min(limit, list.size()));
     }
 
     private void loadSpawnPoints() {
@@ -75,4 +119,6 @@ public final class BossDataManager {
     private void saveSpawns() { try { spawns.save(spawnsFile); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan boss-spawns.yml"); } }
     private void saveStats() { try { stats.save(statsFile); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan boss-stats.yml"); } }
     private void create(File file) { if (!file.exists()) try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat " + file.getName()); } }
+
+    public record PlayerDamageStat(String uuid, String name, double damage, int participationKills) {}
 }

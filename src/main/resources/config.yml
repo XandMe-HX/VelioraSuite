@@ -36,5 +36,6 @@ modules:
   quest: true
   trader: true
   boss: true
+  pets: true
   security: true
   chat: false

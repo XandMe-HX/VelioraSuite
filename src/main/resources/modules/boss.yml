@@ -9,6 +9,9 @@ settings:
     announce-despawn: true
     allow-multiple-active: false
     require-spawn-point: true
+    warning-times-minutes:
+      - 5
+      - 1
 
 rarity-chance:
   common: 50.0
@@ -24,6 +27,35 @@ bossbar:
   style: SEGMENTED_20
 bossbar-radius: 80
 
+arena:
+  enabled: true
+  radius: 45
+  target-radius: 45
+  leash-to-spawn: true
+  teleport-back-if-far: true
+  teleport-back-distance: 55
+  teleport-back-if-below-spawn-y: true
+  below-y-offset: 12
+  remove-minion-outside-radius: true
+
+targeting:
+  enabled: true
+  include-survival: true
+  include-adventure: true
+  include-creative: true
+  include-spectator: false
+  target-radius-horizontal: 64
+  target-radius-vertical: 32
+  retarget-interval-seconds: 3
+  force-target-nearest: true
+  ignore-line-of-sight: true
+  target-players-above: true
+  target-players-below: true
+  no-target-teleport-back: false
+
+debug:
+  targeting: false
+
 bosses:
   ancient_warden:
     entity: WARDEN
@@ -32,6 +64,11 @@ bosses:
     health: 500
     damage: 8.0
     scale: 3.5
+    skills:
+      - GROUND_SLAM
+      - PULL_AURA
+      - POISON_CLOUD
+      - RAGE_MODE
     rewards:
       money:
         enabled: true
@@ -44,6 +81,11 @@ bosses:
     health: 500
     damage: 10.0
     scale: 3.0
+    skills:
+      - GROUND_SLAM
+      - FIRE_BOMB
+      - SUMMON_MINIONS
+      - RAGE_MODE
     rewards:
       money:
         enabled: true
@@ -56,6 +98,10 @@ bosses:
     health: 300
     damage: 6.0
     scale: 3.0
+    skills:
+      - SUMMON_MINIONS
+      - POISON_CLOUD
+      - RAGE_MODE
     rewards:
       money:
         enabled: true
@@ -68,6 +114,11 @@ bosses:
     health: 400
     damage: 8.0
     scale: 3.5
+    skills:
+      - GROUND_SLAM
+      - FIRE_BOMB
+      - PULL_AURA
+      - RAGE_MODE
     rewards:
       money:
         enabled: true
@@ -80,6 +131,10 @@ bosses:
     health: 250
     damage: 6.0
     scale: 3.0
+    skills:
+      - GROUND_SLAM
+      - SUMMON_MINIONS
+      - RAGE_MODE
     rewards:
       money:
         enabled: true
@@ -92,6 +147,11 @@ bosses:
     health: 450
     damage: 9.0
     scale: 3.5
+    skills:
+      - PULL_AURA
+      - POISON_CLOUD
+      - SUMMON_MINIONS
+      - RAGE_MODE
     rewards:
       money:
         enabled: true
@@ -104,6 +164,9 @@ bosses:
     health: 150
     damage: 4.0
     scale: 3.5
+    skills:
+      - GROUND_SLAM
+      - SUMMON_MINIONS
     rewards:
       money:
         enabled: true
@@ -116,6 +179,10 @@ bosses:
     health: 300
     damage: 6.0
     scale: 3.0
+    skills:
+      - PULL_AURA
+      - POISON_CLOUD
+      - RAGE_MODE
     rewards:
       money:
         enabled: true
@@ -126,6 +193,13 @@ skills:
   enabled: true
   cooldown-seconds: 12
   random-skill: true
+  default:
+    - GROUND_SLAM
+    - SUMMON_MINIONS
+    - FIRE_BOMB
+    - PULL_AURA
+    - POISON_CLOUD
+    - RAGE_MODE
   damage:
     ground-slam: 6.0
     fire-bomb: 8.0
@@ -150,14 +224,13 @@ rewards:
 
   # Uang utama untuk semua player yang memenuhi minimal damage.
   # Bisa dioverride per boss di bosses.<boss-id>.rewards.money.
-  # Batas aman default: 1.000 - 30.000.
   default-money:
     enabled: true
     min: 1000
     max: 30000
 
   # Bonus uang tambahan untuk top damage 1/2/3.
-  # Bonus ini ditambahkan di atas reward uang utama.
+  # Bonus ini ditambahkan di atas reward uang utama, lalu dicap oleh money-total-cap.
   top-damage-bonus:
     enabled: true
     first:
@@ -169,6 +242,10 @@ rewards:
     third:
       min: 1000
       max: 8000
+
+  money-total-cap:
+    enabled: true
+    max-per-player: 30000
 
   # Item rare tetap kecil agar economy tidak inflasi.
   materials:
@@ -188,25 +265,14 @@ rewards:
       diamond: 10
       ancient-debris: 5
 
-  # Contoh override per boss:
-  # bosses:
-  #   ancient_warden:
-  #     rewards:
-  #       money:
-  #         enabled: true
-  #         min: 10000
-  #         max: 30000
-  #   stone_brute:
-  #     rewards:
-  #       money:
-  #         enabled: true
-  #         min: 1000
-  #         max: 5000
-
 effects:
   spawn:
+    title-enabled: true
+    title: '&c%boss%'
+    subtitle: '&7Boss %rarity% muncul di &f%world%'
     sound: ENTITY_WARDEN_ROAR
     particle: SOUL
+    particle-count: 120
   death:
     sound: UI_TOAST_CHALLENGE_COMPLETE
     particle: TOTEM_OF_UNDYING
@@ -228,3 +294,14 @@ messages:
   reward-money: '%prefix% &aKamu mendapat reward uang boss: &e%money%'
   reward-top-money: '%prefix% &aKamu mendapat bonus top damage: &e%money%'
   reward-no-economy: '%prefix% &cEconomy tidak tersedia, reward uang dilewati.'
+  reward-money-total: '%prefix% &aTotal reward uang boss kamu: &e%money%'
+  boss-list-header: '%prefix% &eBoss tersedia:'
+  boss-list-line: '&7- &f%boss% &8| &e%rarity% &8| &cHP %health% &8| &cDMG %damage%'
+  boss-info-header: '%prefix% &eInfo Boss: &f%boss%'
+  boss-info-line: '&7%key%: &f%value%'
+  boss-not-found: '%prefix% &cBoss tidak ditemukan: &f%boss%'
+  boss-top-header: '%prefix% &eTop Boss Damage:'
+  boss-top-line: '&7%rank%. &f%player% &8- &c%damage% damage'
+  boss-warning-5: '%prefix% &eBoss akan muncul dalam &f5 menit&e!'
+  boss-warning-1: '%prefix% &cBoss akan muncul dalam &f1 menit&c!'
+  boss-return-arena: '%prefix% &e%boss% kembali ke arena!'

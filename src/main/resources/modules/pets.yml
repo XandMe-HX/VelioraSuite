@@ -1,0 +1,510 @@
+settings:
+  enabled: true
+  max-level: 50
+  duplicate-exp: 50
+  auto-summon-new-pet: false
+  auto-summon-last-pet: false
+  death-cooldown-minutes: 15
+  follow:
+    use-pathfinder: true
+  flying-safe-mode:
+    enabled: true
+  economy:
+    enabled: true
+    gacha-price: 100000
+    direct-buy:
+      min-price: 100000
+      max-price: 1000000
+
+leveling:
+  scale-per-level: 0.003
+  max-scale-bonus: 0.15
+
+gacha:
+  chance:
+    common: 55.0
+    rare: 25.0
+    epic: 12.0
+    legendary: 6.0
+    mythic: 2.0
+
+storage:
+  allow-storage-without-active: false
+  size:
+    common: 9
+    rare: 9
+    epic: 18
+    legendary: 18
+    mythic: 27
+
+combat:
+  enabled: true
+  attack-range: 3.0
+  attack-cooldown-seconds: 2
+  allow-attack-passive: false
+  allow-attack-players: false
+  pet-damage-multiplier: 1.0
+
+cosmetic:
+  aura-enabled: true
+  aura-interval-seconds: 5
+  glow-enabled: false
+  particles-low-lag: true
+  aura-particle: HAPPY_VILLAGER
+
+pets:
+  baby_zombie:
+    display-name: '&fBaby Zombie'
+    entity: ZOMBIE
+    icon: ROTTEN_FLESH
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.50
+    price: 100000
+    food: { material: ROTTEN_FLESH, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_husk:
+    display-name: '&fBaby Husk'
+    entity: HUSK
+    icon: SAND
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.50
+    price: 100000
+    food: { material: ROTTEN_FLESH, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_slime:
+    display-name: '&fBaby Slime'
+    entity: SLIME
+    icon: SLIME_BALL
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.45
+    price: 100000
+    food: { material: SLIME_BALL, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_wolf:
+    display-name: '&fBaby Wolf'
+    entity: WOLF
+    icon: BONE
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.50
+    price: 100000
+    food: { material: BONE, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_cat:
+    display-name: '&fBaby Cat'
+    entity: CAT
+    icon: COD
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.50
+    price: 100000
+    food: { material: COD, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  rabbit:
+    display-name: '&fRabbit'
+    entity: RABBIT
+    icon: RABBIT_FOOT
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: CARROT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  chicken:
+    display-name: '&fChicken'
+    entity: CHICKEN
+    icon: FEATHER
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: WHEAT_SEEDS, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  turtle:
+    display-name: '&fTurtle'
+    entity: TURTLE
+    icon: TURTLE_SCUTE
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: SEAGRASS, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_pig:
+    display-name: '&fBaby Pig'
+    entity: PIG
+    icon: CARROT
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: CARROT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_sheep:
+    display-name: '&fBaby Sheep'
+    entity: SHEEP
+    icon: WHITE_WOOL
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: WHEAT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_cow:
+    display-name: '&fBaby Cow'
+    entity: COW
+    icon: WHEAT
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: WHEAT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  baby_goat:
+    display-name: '&fBaby Goat'
+    entity: GOAT
+    icon: GOAT_HORN
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: WHEAT, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+  armadillo:
+    display-name: '&fArmadillo'
+    entity: ARMADILLO
+    icon: ARMADILLO_SCUTE
+    rarity: COMMON
+    damage: 1.0
+    scale: 0.55
+    price: 100000
+    food: { material: SPIDER_EYE, exp: 20 }
+    skill: { type: NONE, bonus: 0.0 }
+
+  fox_spirit:
+    display-name: '&bFox Spirit'
+    entity: FOX
+    icon: SWEET_BERRIES
+    rarity: RARE
+    damage: 1.5
+    scale: 0.55
+    price: 200000
+    food: { material: SWEET_BERRIES, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mini_golem:
+    display-name: '&bMini Golem'
+    entity: IRON_GOLEM
+    icon: IRON_INGOT
+    rarity: RARE
+    damage: 1.5
+    scale: 0.45
+    price: 250000
+    food: { material: IRON_INGOT, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  baby_panda:
+    display-name: '&bBaby Panda'
+    entity: PANDA
+    icon: BAMBOO
+    rarity: RARE
+    damage: 1.5
+    scale: 0.50
+    price: 200000
+    food: { material: BAMBOO, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  baby_axolotl:
+    display-name: '&bBaby Axolotl'
+    entity: AXOLOTL
+    icon: TROPICAL_FISH
+    rarity: RARE
+    damage: 1.5
+    scale: 0.50
+    price: 200000
+    food: { material: TROPICAL_FISH, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  baby_frog:
+    display-name: '&bBaby Frog'
+    entity: FROG
+    icon: SLIME_BALL
+    rarity: RARE
+    damage: 1.5
+    scale: 0.50
+    price: 200000
+    food: { material: SLIME_BALL, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  mini_spider:
+    display-name: '&bMini Spider'
+    entity: SPIDER
+    icon: STRING
+    rarity: RARE
+    damage: 1.5
+    scale: 0.45
+    price: 220000
+    food: { material: SPIDER_EYE, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  snow_guardian:
+    display-name: '&bSnow Guardian'
+    entity: SNOW_GOLEM
+    icon: SNOWBALL
+    rarity: RARE
+    damage: 1.5
+    scale: 0.55
+    price: 220000
+    food: { material: SNOWBALL, exp: 25 }
+    skill: { type: PET_DAMAGE, bonus: 0.01 }
+  bat_sprite:
+    display-name: '&bBat Sprite'
+    entity: BAT
+    icon: ECHO_SHARD
+    rarity: RARE
+    damage: 1.2
+    scale: 0.45
+    price: 250000
+    food: { material: GLOW_BERRIES, exp: 25 }
+    skill: { type: FISHING_LUCK, bonus: 0.01 }
+  parrot_scout:
+    display-name: '&bParrot Scout'
+    entity: PARROT
+    icon: FEATHER
+    rarity: RARE
+    damage: 1.2
+    scale: 0.50
+    price: 250000
+    food: { material: WHEAT_SEEDS, exp: 25 }
+    skill: { type: FISHING_LUCK, bonus: 0.01 }
+
+  shadow_wolf:
+    display-name: '&dShadow Wolf'
+    entity: WOLF
+    icon: BLACK_WOOL
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.55
+    price: 400000
+    food: { material: COOKED_BEEF, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  crystal_bee:
+    display-name: '&dCrystal Bee'
+    entity: BEE
+    icon: AMETHYST_SHARD
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.45
+    price: 400000
+    food: { material: HONEY_BOTTLE, exp: 35 }
+    skill: { type: FISHING_LUCK, bonus: 0.01 }
+  baby_ravager:
+    display-name: '&dBaby Ravager'
+    entity: RAVAGER
+    icon: SADDLE
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.40
+    price: 450000
+    food: { material: HAY_BLOCK, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  mini_enderman:
+    display-name: '&dMini Enderman'
+    entity: ENDERMAN
+    icon: ENDER_PEARL
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.45
+    price: 450000
+    food: { material: CHORUS_FRUIT, exp: 35 }
+    skill: { type: FISHING_LUCK, bonus: 0.01 }
+  cave_golem:
+    display-name: '&dCave Golem'
+    entity: IRON_GOLEM
+    icon: DEEPSLATE
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.45
+    price: 450000
+    food: { material: COPPER_INGOT, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+  allay_wisp:
+    display-name: '&dAllay Wisp'
+    entity: ALLAY
+    icon: AMETHYST_SHARD
+    rarity: EPIC
+    damage: 1.8
+    scale: 0.45
+    price: 450000
+    food: { material: COOKIE, exp: 35 }
+    skill: { type: FISHING_LUCK, bonus: 0.01 }
+  blaze_core_safe:
+    display-name: '&dBlaze Core'
+    entity: BLAZE
+    icon: BLAZE_ROD
+    rarity: EPIC
+    damage: 2.0
+    scale: 0.45
+    price: 500000
+    food: { material: BLAZE_POWDER, exp: 35 }
+    skill: { type: PET_DAMAGE, bonus: 0.02 }
+
+  mini_warden:
+    display-name: '&6Mini Warden'
+    entity: WARDEN
+    icon: SCULK_CATALYST
+    rarity: LEGENDARY
+    damage: 2.5
+    scale: 0.35
+    price: 700000
+    food: { material: ECHO_SHARD, exp: 45 }
+    skill: { type: FISHING_LUCK, bonus: 0.02 }
+  soul_reaper:
+    display-name: '&6Soul Reaper'
+    entity: WITHER_SKELETON
+    icon: WITHER_SKELETON_SKULL
+    rarity: LEGENDARY
+    damage: 2.5
+    scale: 0.55
+    price: 700000
+    food: { material: BONE, exp: 45 }
+    skill: { type: PET_DAMAGE, bonus: 0.03 }
+  mini_piglin_brute:
+    display-name: '&6Mini Piglin Brute'
+    entity: PIGLIN_BRUTE
+    icon: GOLDEN_AXE
+    rarity: LEGENDARY
+    damage: 2.5
+    scale: 0.55
+    price: 700000
+    food: { material: GOLD_INGOT, exp: 45 }
+    skill: { type: PET_DAMAGE, bonus: 0.03 }
+  mini_guardian:
+    display-name: '&6Mini Guardian'
+    entity: GUARDIAN
+    icon: PRISMARINE_SHARD
+    rarity: LEGENDARY
+    damage: 2.5
+    scale: 0.45
+    price: 700000
+    food: { material: PRISMARINE_SHARD, exp: 45 }
+    skill: { type: FISHING_LUCK, bonus: 0.02 }
+  mini_wither_skeleton:
+    display-name: '&6Mini Wither Skeleton'
+    entity: WITHER_SKELETON
+    icon: COAL
+    rarity: LEGENDARY
+    damage: 2.5
+    scale: 0.55
+    price: 700000
+    food: { material: COAL, exp: 45 }
+    skill: { type: PET_DAMAGE, bonus: 0.03 }
+  crystal_golem:
+    display-name: '&6Crystal Golem'
+    entity: IRON_GOLEM
+    icon: AMETHYST_BLOCK
+    rarity: LEGENDARY
+    damage: 2.5
+    scale: 0.45
+    price: 750000
+    food: { material: AMETHYST_SHARD, exp: 45 }
+    skill: { type: PET_DAMAGE, bonus: 0.03 }
+  phantom_shadow_safe:
+    display-name: '&6Phantom Shadow'
+    entity: PHANTOM
+    icon: PHANTOM_MEMBRANE
+    rarity: LEGENDARY
+    damage: 2.2
+    scale: 0.35
+    price: 800000
+    food: { material: PHANTOM_MEMBRANE, exp: 45 }
+    skill: { type: FISHING_LUCK, bonus: 0.02 }
+  vex_lantern_safe:
+    display-name: '&6Vex Lantern'
+    entity: VEX
+    icon: SOUL_LANTERN
+    rarity: LEGENDARY
+    damage: 2.2
+    scale: 0.35
+    price: 800000
+    food: { material: SOUL_TORCH, exp: 45 }
+    skill: { type: PET_DAMAGE, bonus: 0.03 }
+
+  astral_warden:
+    display-name: '&cAstral Warden'
+    entity: WARDEN
+    icon: ECHO_SHARD
+    rarity: MYTHIC
+    damage: 3.0
+    scale: 0.35
+    price: 1000000
+    food: { material: ECHO_SHARD, exp: 60 }
+    skill: { type: PET_DAMAGE, bonus: 0.05 }
+  ancient_golem:
+    display-name: '&cAncient Golem'
+    entity: IRON_GOLEM
+    icon: ANCIENT_DEBRIS
+    rarity: MYTHIC
+    damage: 3.0
+    scale: 0.45
+    price: 1000000
+    food: { material: ANCIENT_DEBRIS, exp: 60 }
+    skill: { type: QUEST_MONEY, bonus: 0.02 }
+  dragonling:
+    display-name: '&cDragonling'
+    entity: WOLF
+    icon: DRAGON_BREATH
+    rarity: MYTHIC
+    damage: 3.0
+    scale: 0.50
+    price: 1000000
+    food: { material: DRAGON_BREATH, exp: 60 }
+    skill: { type: PET_DAMAGE, bonus: 0.05 }
+  soul_guardian:
+    display-name: '&cSoul Guardian'
+    entity: WARDEN
+    icon: SOUL_LANTERN
+    rarity: MYTHIC
+    damage: 3.0
+    scale: 0.35
+    price: 1000000
+    food: { material: ECHO_SHARD, exp: 60 }
+    skill: { type: QUEST_MONEY, bonus: 0.02 }
+  astral_allay:
+    display-name: '&cAstral Allay'
+    entity: ALLAY
+    icon: NETHER_STAR
+    rarity: MYTHIC
+    damage: 2.6
+    scale: 0.45
+    price: 1000000
+    food: { material: GOLDEN_APPLE, exp: 60 }
+    skill: { type: QUEST_MONEY, bonus: 0.02 }
+  abyss_phantom_safe:
+    display-name: '&cAbyss Phantom'
+    entity: PHANTOM
+    icon: ECHO_SHARD
+    rarity: MYTHIC
+    damage: 2.8
+    scale: 0.35
+    price: 1000000
+    food: { material: PHANTOM_MEMBRANE, exp: 60 }
+    skill: { type: PET_DAMAGE, bonus: 0.05 }
+
+messages:
+  prefix: '&8[&dVelioraPets&8] '
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  vault-missing: '%prefix% &cEconomy tidak aktif.'
+  not-enough-money: '%prefix% &cUang kamu tidak cukup.'
+  pet-bought: '%prefix% &aKamu membeli pet &f%pet% &adengan harga &e%money%&a.'
+  gacha-start: '%prefix% &eGacha pet dimulai...'
+  gacha-result: '%prefix% &aKamu mendapatkan pet &f%pet% &7(%rarity%&7)&a!'
+  already-owned: '%prefix% &eKamu sudah punya pet ini.'
+  pet-summoned: '%prefix% &aPet &f%pet% &adipanggil.'
+  pet-dismissed: '%prefix% &ePet kamu disimpan.'
+  pet-dead: '%prefix% &cPet kamu mati. Bisa dipanggil lagi dalam &f%time%&c.'
+  pet-cooldown: '%prefix% &cPet masih cooldown: &f%time%'
+  pet-storage-open: '%prefix% &aMembuka storage pet.'
+  pet-renamed: '%prefix% &aNama pet diubah menjadi &f%name%&a.'
+  pet-fed: '%prefix% &aPet &f%pet% &adiberi makan. EXP +&f%exp%&a.'
+  pet-feed-wrong-food: '%prefix% &cPet ini butuh makanan: &f%food%'
+  pet-not-owned: '%prefix% &cKamu belum punya pet itu.'
+  no-active-pet: '%prefix% &cTidak ada pet aktif.'
+  reload-success: '%prefix% &aVelioraPets berhasil direload.'

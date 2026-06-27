@@ -3,10 +3,12 @@ package id.velioragardens.veliorasuite.module.boss;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.boss.model.BossDefinition;
 import id.velioragardens.veliorasuite.module.boss.model.BossRarity;
+import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
 import id.velioragardens.veliorasuite.module.boss.model.BossSpawnPoint;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -22,9 +24,12 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public final class BossManager implements Listener {
 
@@ -36,8 +41,10 @@ public final class BossManager implements Listener {
     private final BossBarManager bossBarManager;
     private final BossRewardManager rewardManager;
     private final BossSkillManager skillManager;
+    private final BossTargetManager targetManager;
     private final BossQuestHook questHook;
     private final Random random = new Random();
+    private final Set<Integer> sentWarnings = new HashSet<>();
     private final NamespacedKey bossIdKey;
     private final NamespacedKey bossNameKey;
     private final NamespacedKey bossRarityKey;
@@ -46,8 +53,10 @@ public final class BossManager implements Listener {
     private LivingEntity activeBoss;
     private BossDefinition activeDefinition;
     private Location lastKnownLocation;
+    private Location arenaCenter;
     private long nextSpawnAt;
     private long despawnAt;
+    private long lastRetargetAt;
 
     public BossManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -56,6 +65,7 @@ public final class BossManager implements Listener {
         this.scaleHelper = new BossScaleHelper(plugin);
         this.bossBarManager = new BossBarManager(config);
         this.rewardManager = new BossRewardManager(plugin, config);
+        this.targetManager = new BossTargetManager(plugin, config);
         this.skillManager = new BossSkillManager(plugin, config, this);
         this.questHook = new BossQuestHook(plugin);
         this.bossIdKey = new NamespacedKey(plugin, "velioraboss_id");
@@ -67,13 +77,13 @@ public final class BossManager implements Listener {
     public void load() {
         config.load();
         data.load();
-        nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
+        scheduleNextSpawn();
     }
 
     public void start() {
         stopScheduler();
         cleanupTaggedEntities();
-        schedulerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L * 5L);
+        schedulerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
     }
 
     public void shutdown() {
@@ -85,6 +95,8 @@ public final class BossManager implements Listener {
     public void reload() {
         config.load();
         data.load();
+        sentWarnings.clear();
+        lastRetargetAt = 0L;
     }
 
     public BossConfigManager config() { return config; }
@@ -93,19 +105,84 @@ public final class BossManager implements Listener {
     public String getActiveBossId() { return activeDefinition == null ? "" : activeDefinition.id(); }
     public NamespacedKey getMinionOwnerKey() { return minionOwnerKey; }
     public Location getLastKnownLocation() { return lastKnownLocation; }
+    public Location getArenaCenter() { return arenaCenter; }
 
     public void setSpawnPoint(Player player, String name) {
-        data.setSpawnPoint(BossSpawnPoint.from(name.toLowerCase(java.util.Locale.ROOT), player.getLocation()));
+        data.setSpawnPoint(BossSpawnPoint.from(name.toLowerCase(Locale.ROOT), player.getLocation()));
         player.sendMessage(config.color(config.message("spawn-set", "%prefix% &aSpawn boss &f%name% &aberhasil diset.").replace("%name%", name)));
     }
 
-    public boolean spawnById(String id, CommandSender sender) {
-        BossDefinition definition = config.bosses().get(id.toLowerCase(java.util.Locale.ROOT));
+    public boolean spawnByName(String input, CommandSender sender) {
+        BossDefinition definition = resolveBoss(input);
         if (definition == null) {
-            sender.sendMessage(config.color(config.prefix() + "&cBoss tidak ditemukan: &f" + id));
+            sender.sendMessage(config.color(config.message("boss-not-found", "%prefix% &cBoss tidak ditemukan: &f%boss%").replace("%boss%", input)));
             return false;
         }
         return spawn(definition, randomSpawnPoint(), true);
+    }
+
+    public BossDefinition resolveBoss(String input) {
+        if (input == null || input.isBlank()) return null;
+        String exact = normalizeId(input);
+        BossDefinition definition = config.bosses().get(exact);
+        if (definition != null) return definition;
+        String compact = normalizeLoose(input);
+        for (BossDefinition boss : config.bosses().values()) {
+            if (normalizeLoose(boss.id()).equals(compact)) return boss;
+            if (normalizeLoose(config.plain(boss.displayName())).equals(compact)) return boss;
+        }
+        return null;
+    }
+
+    public void sendBossList(CommandSender sender) {
+        sender.sendMessage(config.color(config.message("boss-list-header", "%prefix% &eBoss tersedia:")));
+        for (BossDefinition boss : config.bosses().values()) {
+            sender.sendMessage(config.color(config.message("boss-list-line", "&7- &f%boss% &8| &e%rarity% &8| &cHP %health% &8| &cDMG %damage%")
+                    .replace("%boss%", config.color(boss.displayName()))
+                    .replace("%rarity%", boss.rarity().name())
+                    .replace("%health%", String.valueOf((int) boss.health()))
+                    .replace("%damage%", String.valueOf((int) boss.damage()))));
+        }
+    }
+
+    public void sendBossInfo(CommandSender sender, String input) {
+        BossDefinition boss = resolveBoss(input);
+        if (boss == null) {
+            sender.sendMessage(config.color(config.message("boss-not-found", "%prefix% &cBoss tidak ditemukan: &f%boss%").replace("%boss%", input)));
+            return;
+        }
+        sender.sendMessage(config.color(config.message("boss-info-header", "%prefix% &eInfo Boss: &f%boss%").replace("%boss%", config.color(boss.displayName()))));
+        infoLine(sender, "ID", boss.id());
+        infoLine(sender, "Entity", boss.entityType().name());
+        infoLine(sender, "Rarity", boss.rarity().name());
+        infoLine(sender, "Health", String.valueOf((int) boss.health()));
+        infoLine(sender, "Damage", String.valueOf((int) boss.damage()));
+        infoLine(sender, "Scale", String.valueOf(boss.scale()));
+        infoLine(sender, "Money", config.bossMoneyMin(boss) + " - " + config.bossMoneyMax(boss));
+        infoLine(sender, "Top Bonus", "1: " + config.topBonusMin(0) + "-" + config.topBonusMax(0) + ", 2: " + config.topBonusMin(1) + "-" + config.topBonusMax(1) + ", 3: " + config.topBonusMin(2) + "-" + config.topBonusMax(2));
+        infoLine(sender, "Material", "Diamond " + config.rewardMaterial(boss.rarity(), "diamond") + ", Ancient Debris " + config.rewardMaterial(boss.rarity(), "ancient-debris"));
+        infoLine(sender, "Skills", skillText(boss));
+    }
+
+    public void sendTop(CommandSender sender) {
+        sender.sendMessage(config.color(config.message("boss-top-header", "%prefix% &eTop Boss Damage:")));
+        sender.sendMessage(config.color("&7Total boss kill server: &f" + data.totalKills()));
+        if (!data.bossKills().isEmpty()) {
+            sender.sendMessage(config.color("&7Kill per boss:"));
+            for (Map.Entry<String, Integer> entry : data.bossKills().entrySet()) sender.sendMessage(config.color("&8- &f" + entry.getKey() + " &7= &e" + entry.getValue()));
+        }
+        List<BossDataManager.PlayerDamageStat> top = data.topDamage(10);
+        if (top.isEmpty()) {
+            sender.sendMessage(config.color("&7Belum ada data damage boss."));
+            return;
+        }
+        for (int i = 0; i < top.size(); i++) {
+            BossDataManager.PlayerDamageStat stat = top.get(i);
+            sender.sendMessage(config.color(config.message("boss-top-line", "&7%rank%. &f%player% &8- &c%damage% damage")
+                    .replace("%rank%", String.valueOf(i + 1))
+                    .replace("%player%", stat.name())
+                    .replace("%damage%", String.format("%.1f", stat.damage()))));
+        }
     }
 
     public void stopActive(boolean message) {
@@ -117,7 +194,7 @@ public final class BossManager implements Listener {
         if (activeBoss != null && !activeBoss.isDead()) activeBoss.remove();
         if (message && activeDefinition != null) Bukkit.broadcastMessage(config.color(config.message("boss-despawn", "%prefix% &e%boss% menghilang.").replace("%boss%", config.color(activeDefinition.displayName()))));
         clearRuntime();
-        nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
+        scheduleNextSpawn();
     }
 
     public void sendStatus(CommandSender sender) {
@@ -143,7 +220,11 @@ public final class BossManager implements Listener {
     public void onDamage(EntityDamageByEntityEvent event) {
         if (activeBoss != null && event.getEntity().getUniqueId().equals(activeBoss.getUniqueId())) {
             Player player = damager(event.getDamager());
-            if (player != null) damageTracker.add(player, event.getFinalDamage());
+            if (player != null) {
+                damageTracker.add(player, event.getFinalDamage());
+                data.addDamage(player, event.getFinalDamage());
+                if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
+            }
             return;
         }
         if (event.getDamager() != null && event.getDamager().getScoreboardTags().contains("velioraboss_boss")) event.setDamage(activeDefinition == null ? event.getDamage() : activeDefinition.damage());
@@ -159,12 +240,15 @@ public final class BossManager implements Listener {
         for (BossDamageTracker.Entry entry : damageTracker.top()) {
             if (entry.damage() >= config.minDamageToReward()) {
                 Player player = Bukkit.getPlayer(entry.uuid());
-                if (player != null) questHook.addMonsterHunterProgress(player);
+                if (player != null) {
+                    questHook.addMonsterHunterProgress(player);
+                    data.addParticipation(player);
+                }
             }
         }
         data.addKill(activeDefinition.id());
         clearRuntime();
-        nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
+        scheduleNextSpawn();
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -176,14 +260,16 @@ public final class BossManager implements Listener {
         if (!config.isEnabled() || !config.isSpawnEnabled()) return;
         if (isActive()) {
             lastKnownLocation = activeBoss.getLocation();
+            enforceArena();
             bossBarManager.tick(activeDefinition, activeBoss, despawnAt);
             if (System.currentTimeMillis() >= despawnAt) stopActive(true);
             return;
         }
+        sendSpawnWarnings();
         if (System.currentTimeMillis() >= nextSpawnAt) {
             if (data.spawnPoints().isEmpty() && config.requireSpawnPoint()) {
                 plugin.getLogger().warning("VelioraBoss: Belum ada spawn point. Gunakan /boss set <nama>.");
-                nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
+                scheduleNextSpawn();
                 return;
             }
             spawn(randomDefinition(), randomSpawnPoint(), true);
@@ -202,7 +288,10 @@ public final class BossManager implements Listener {
         activeBoss = living;
         activeDefinition = definition;
         lastKnownLocation = location.clone();
+        arenaCenter = location.clone();
         despawnAt = System.currentTimeMillis() + config.despawnMinutes() * 60_000L;
+        lastRetargetAt = 0L;
+        sentWarnings.clear();
         living.addScoreboardTag("velioraboss_boss");
         living.getPersistentDataContainer().set(bossIdKey, PersistentDataType.STRING, definition.id());
         living.getPersistentDataContainer().set(bossNameKey, PersistentDataType.STRING, org.bukkit.ChatColor.stripColor(config.color(definition.displayName())));
@@ -213,12 +302,13 @@ public final class BossManager implements Listener {
         living.setPersistent(true);
         scaleHelper.setMaxHealth(living, definition.health());
         scaleHelper.apply(living, definition.scale());
-        if (living instanceof Mob mob) mob.setTarget(nearestPlayer(location));
+        if (living instanceof Mob mob) mob.setTarget(findBestTarget(location));
         bossBarManager.create(definition);
         damageTracker.clear();
-        skillManager.start();
+        skillManager.start(definition);
         location.getWorld().playSound(location, config.sound("effects.spawn.sound", "ENTITY_WARDEN_ROAR"), 1.0F, 0.8F);
-        location.getWorld().spawnParticle(config.particle("effects.spawn.particle", "SOUL"), location, 80, 2.5D, 1.5D, 2.5D, 0.05D);
+        location.getWorld().spawnParticle(config.particle("effects.spawn.particle", "SOUL"), location, config.spawnParticleCount(), 3.0D, 1.7D, 3.0D, 0.07D);
+        if (config.spawnTitleEnabled()) sendSpawnTitle(definition, location);
         if (announce && config.announceSpawn()) Bukkit.broadcastMessage(config.color(config.message("boss-spawn", "%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!")
                 .replace("%boss%", config.color(definition.displayName()))
                 .replace("%world%", location.getWorld().getName())
@@ -226,6 +316,87 @@ public final class BossManager implements Listener {
                 .replace("%y%", String.valueOf(location.getBlockY()))
                 .replace("%z%", String.valueOf(location.getBlockZ()))));
         return true;
+    }
+
+    public boolean isPlayerInsideArena(Player player) {
+        if (!config.arenaEnabled() || arenaCenter == null || player == null || player.getWorld() == null || !player.getWorld().equals(arenaCenter.getWorld())) return true;
+        return horizontalDistance(arenaCenter, player.getLocation()) <= config.arenaRadius() + 6.0D;
+    }
+
+    public Player findBestTarget(Location center) {
+        return targetManager.findBestTarget(center == null ? (activeBoss == null ? arenaCenter : activeBoss.getLocation()) : center, arenaCenter);
+    }
+
+    public List<Player> nearbyTargetPlayers(Location center, double horizontalRadius) {
+        return targetManager.validPlayers(center, arenaCenter, horizontalRadius);
+    }
+
+    private void enforceArena() {
+        if (activeBoss == null || activeBoss.isDead() || arenaCenter == null) return;
+        Location current = activeBoss.getLocation();
+        boolean far = config.arenaEnabled() && config.teleportBackIfFar() && current.getWorld().equals(arenaCenter.getWorld()) && horizontalDistance(current, arenaCenter) > config.teleportBackDistance();
+        boolean below = config.arenaEnabled() && config.teleportBackIfBelowSpawnY() && current.getY() < arenaCenter.getY() - config.belowYOffset();
+        boolean stuck = !current.getBlock().isPassable() || !current.getBlock().getRelative(0, 1, 0).isPassable();
+        if (far || below || stuck) teleportBossBack();
+        retarget(false);
+        cleanupMinionsByArena();
+    }
+
+    private void retarget(boolean force) {
+        if (!config.targetingEnabled() || !(activeBoss instanceof Mob mob)) return;
+        long now = System.currentTimeMillis();
+        if (!force && now - lastRetargetAt < config.retargetIntervalSeconds() * 1000L) return;
+        lastRetargetAt = now;
+        Player current = mob.getTarget() instanceof Player player ? player : null;
+        if (!force && !config.forceTargetNearest() && targetManager.isValidCurrentTarget(current, activeBoss.getLocation(), arenaCenter)) return;
+        if (!force && current != null && targetManager.isValidCurrentTarget(current, activeBoss.getLocation(), arenaCenter) && !config.forceTargetNearest()) return;
+        Player target = findBestTarget(activeBoss.getLocation());
+        if (target != null) {
+            mob.setTarget(target);
+            return;
+        }
+        mob.setTarget(null);
+        if (config.noTargetTeleportBack() && arenaCenter != null && activeBoss.getLocation().distanceSquared(arenaCenter) > 4.0D) teleportBossBack();
+    }
+
+    private void teleportBossBack() {
+        if (activeBoss == null || arenaCenter == null) return;
+        activeBoss.teleport(arenaCenter);
+        arenaCenter.getWorld().spawnParticle(Particle.PORTAL, arenaCenter, 60, 1.5D, 1.0D, 1.5D, 0.1D);
+        arenaCenter.getWorld().playSound(arenaCenter, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.8F);
+        String message = config.color(config.message("boss-return-arena", "%prefix% &e%boss% kembali ke arena!").replace("%boss%", activeDefinition == null ? "Boss" : config.color(activeDefinition.displayName())));
+        for (Player player : arenaCenter.getWorld().getPlayers()) if (horizontalDistance(player.getLocation(), arenaCenter) <= config.arenaRadius()) player.sendMessage(message);
+        retarget(true);
+    }
+
+    private void cleanupMinionsByArena() {
+        if (arenaCenter == null || arenaCenter.getWorld() == null) return;
+        for (Entity entity : arenaCenter.getWorld().getNearbyEntities(arenaCenter, 96, 64, 96)) {
+            if (!entity.getScoreboardTags().contains("velioraboss_minion")) continue;
+            boolean outside = !entity.getWorld().equals(arenaCenter.getWorld()) || horizontalDistance(entity.getLocation(), arenaCenter) > config.arenaRadius();
+            if (outside && config.removeMinionOutsideRadius()) entity.remove();
+            else if (entity instanceof Mob mob && (mob.getTarget() == null || !(mob.getTarget() instanceof Player player) || !targetManager.isValidCurrentTarget(player, entity.getLocation(), arenaCenter))) mob.setTarget(findBestTarget(entity.getLocation()));
+        }
+    }
+
+    private void sendSpawnWarnings() {
+        long millis = nextSpawnAt - System.currentTimeMillis();
+        if (millis <= 0) return;
+        for (int minute : config.warningTimesMinutes()) {
+            if (sentWarnings.contains(minute)) continue;
+            if (millis <= minute * 60_000L) {
+                String key = "boss-warning-" + minute;
+                String fallback = minute == 1 ? "%prefix% &cBoss akan muncul dalam &f1 menit&c!" : "%prefix% &eBoss akan muncul dalam &f" + minute + " menit&e!";
+                Bukkit.broadcastMessage(config.color(config.message(key, fallback)));
+                sentWarnings.add(minute);
+            }
+        }
+    }
+
+    private void sendSpawnTitle(BossDefinition definition, Location location) {
+        String title = config.spawnTitle().replace("%boss%", config.color(definition.displayName())).replace("%rarity%", definition.rarity().displayName()).replace("%world%", location.getWorld().getName());
+        String subtitle = config.spawnSubtitle().replace("%boss%", config.color(definition.displayName())).replace("%rarity%", definition.rarity().displayName()).replace("%world%", location.getWorld().getName());
+        for (Player player : Bukkit.getOnlinePlayers()) player.sendTitle(config.color(title), config.color(subtitle), 10, 60, 20);
     }
 
     private boolean isActive() { return activeBoss != null && !activeBoss.isDead(); }
@@ -258,14 +429,14 @@ public final class BossManager implements Listener {
         return location;
     }
 
-    private Player nearestPlayer(Location location) {
-        Player nearest = null;
-        double distance = Double.MAX_VALUE;
-        for (Player player : location.getWorld().getPlayers()) {
-            double check = player.getLocation().distanceSquared(location);
-            if (check < distance) { distance = check; nearest = player; }
-        }
-        return nearest;
+    private void infoLine(CommandSender sender, String key, String value) {
+        sender.sendMessage(config.color(config.message("boss-info-line", "&7%key%: &f%value%").replace("%key%", key).replace("%value%", value)));
+    }
+
+    private String skillText(BossDefinition boss) {
+        List<String> names = new ArrayList<>();
+        for (BossSkillType skill : boss.skills()) names.add(skill.name());
+        return String.join(", ", names);
     }
 
     private Player damager(Entity entity) {
@@ -281,7 +452,9 @@ public final class BossManager implements Listener {
         damageTracker.clear();
         activeBoss = null;
         activeDefinition = null;
+        arenaCenter = null;
         despawnAt = 0L;
+        lastRetargetAt = 0L;
     }
 
     private void cleanupTaggedEntities() {
@@ -292,6 +465,19 @@ public final class BossManager implements Listener {
         }
     }
 
+    private void scheduleNextSpawn() {
+        nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
+        sentWarnings.clear();
+    }
+
+    private double horizontalDistance(Location a, Location b) {
+        double dx = a.getX() - b.getX();
+        double dz = a.getZ() - b.getZ();
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+
+    private String normalizeId(String input) { return input.trim().toLowerCase(Locale.ROOT).replace(' ', '_'); }
+    private String normalizeLoose(String input) { return input == null ? "" : config.plain(input).toLowerCase(Locale.ROOT).replace("_", "").replace("-", "").replace(" ", ""); }
     private void stopScheduler() { if (schedulerTask != null) schedulerTask.cancel(); schedulerTask = null; }
 
     private String timeLeft(long target) {

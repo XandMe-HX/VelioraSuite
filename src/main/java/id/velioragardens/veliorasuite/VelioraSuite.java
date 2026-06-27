@@ -12,6 +12,7 @@ import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import id.velioragardens.veliorasuite.module.guide.GuideModule;
 import id.velioragardens.veliorasuite.module.kits.KitsModule;
 import id.velioragardens.veliorasuite.module.loginsecurity.LoginSecurityModule;
+import id.velioragardens.veliorasuite.module.pets.PetsModule;
 import id.velioragardens.veliorasuite.module.quest.QuestModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
 import id.velioragardens.veliorasuite.module.security.SecurityModule;
@@ -88,6 +89,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new QuestModule(this));
         moduleManager.register(new TraderModule(this));
         moduleManager.register(new BossModule(this));
+        moduleManager.register(new PetsModule(this));
         moduleManager.register(new SecurityModule(this));
     }
 
@@ -128,15 +130,11 @@ public final class VelioraSuite extends JavaPlugin {
         }
     }
 
-    public void createFolder(String folderName) {
-        File folder = new File(getDataFolder(), folderName);
+    public void createFolder(String path) {
+        File folder = new File(getDataFolder(), path);
 
         if (!folder.exists()) {
-            boolean created = folder.mkdirs();
-
-            if (!created) {
-                getLogger().warning("Gagal membuat folder: " + folderName);
-            }
+            folder.mkdirs();
         }
     }
 }
