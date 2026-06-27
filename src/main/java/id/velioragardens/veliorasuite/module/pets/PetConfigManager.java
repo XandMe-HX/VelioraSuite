@@ -128,7 +128,7 @@ public final class PetConfigManager {
                     rarity,
                     skillType,
                     Math.min(maxSkillBonus(skillType), Math.max(0.0D, config.getDouble(path + ".skill.bonus", 0.0D))),
-                    Math.max(0.5D, config.getDouble(path + ".damage", defaultDamage(rarity))),
+                    Math.max(0.0D, config.getDouble(path + ".damage", defaultDamage(rarity))),
                     Math.max(0.1D, config.getDouble(path + ".scale", 0.5D)),
                     Math.max(0L, config.getLong(path + ".price", defaultPrice(rarity))),
                     storageSize(rarity),
@@ -143,14 +143,14 @@ public final class PetConfigManager {
 
     private boolean isFlyingPet(EntityType type) {
         return switch (type) {
-            case PHANTOM, GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER, BEE, ALLAY, BAT, PARROT -> true;
+            case PHANTOM, GHAST, HAPPY_GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER, BEE, ALLAY, BAT, PARROT -> true;
             default -> false;
         };
     }
 
     private boolean defaultRideable(EntityType type) {
         return switch (type) {
-            case COW, SHEEP, PIG, GOAT, CAMEL, HORSE, DONKEY, MULE, LLAMA, TRADER_LLAMA, PANDA, IRON_GOLEM, RAVAGER, WARDEN, HOGLIN, ZOGLIN -> true;
+            case COW, SHEEP, PIG, GOAT, CAMEL, HORSE, DONKEY, MULE, LLAMA, TRADER_LLAMA, PANDA, IRON_GOLEM, RAVAGER, WARDEN, HOGLIN, ZOGLIN, STRIDER, SKELETON_HORSE, ZOMBIE_HORSE, GIANT -> true;
             default -> false;
         };
     }
