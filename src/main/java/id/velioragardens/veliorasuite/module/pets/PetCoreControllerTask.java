@@ -77,6 +77,7 @@ public final class PetCoreControllerTask implements Runnable {
 
     private void follow(Player owner, LivingEntity pet) {
         Location target = targetLocation(owner);
+        if (!manager.redProtectCompat().canMovePet(owner, pet.getLocation(), target)) return;
         if (!pet.getWorld().equals(owner.getWorld())) {
             pet.teleport(target);
             return;
@@ -121,6 +122,7 @@ public final class PetCoreControllerTask implements Runnable {
         }
         LivingEntity pet = active.entity();
         if (!target.getWorld().equals(pet.getWorld())) { active.targetUuid(null); return; }
+        if (!manager.redProtectCompat().canMovePet(owner, pet.getLocation(), target.getLocation())) { active.targetUuid(null); return; }
         double distance = pet.getLocation().distance(target.getLocation());
         if (distance > 18.0D) { active.targetUuid(null); return; }
         if (distance > config.attackRange()) {
