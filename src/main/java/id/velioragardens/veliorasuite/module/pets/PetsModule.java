@@ -14,6 +14,7 @@ public final class PetsModule implements VelioraModule {
     private PetSafetyListener safetyListener;
     private PetRideController rideController;
     private PetSafeModeGuardListener safeModeGuardListener;
+    private PetRedProtectGuardListener redProtectGuardListener;
     private BukkitTask flyingFollowTask;
     private BukkitTask aquaticFollowTask;
     private BukkitTask rideTask;
@@ -35,6 +36,7 @@ public final class PetsModule implements VelioraModule {
         safetyListener = new PetSafetyListener();
         rideController = new PetRideController(manager);
         safeModeGuardListener = new PetSafeModeGuardListener(manager);
+        redProtectGuardListener = new PetRedProtectGuardListener(plugin, manager);
     }
 
     @Override
@@ -46,6 +48,7 @@ public final class PetsModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(safetyListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(rideController, plugin);
         plugin.getServer().getPluginManager().registerEvents(safeModeGuardListener, plugin);
+        plugin.getServer().getPluginManager().registerEvents(redProtectGuardListener, plugin);
         cleanupAnchorsOnly();
         manager.start(guiManager);
         if (manager.config().stableSafeMode()) {
@@ -81,6 +84,7 @@ public final class PetsModule implements VelioraModule {
         HandlerList.unregisterAll(safetyListener);
         HandlerList.unregisterAll(rideController);
         HandlerList.unregisterAll(safeModeGuardListener);
+        HandlerList.unregisterAll(redProtectGuardListener);
         if (manager != null) manager.shutdown();
         registerDisabledCommand();
     }
