@@ -12,16 +12,14 @@ import java.util.Locale;
 
 public final class RedProtectCompat {
     private final VelioraSuite plugin;
-    private final PetConfigManager config;
     private boolean warned;
 
     public RedProtectCompat(VelioraSuite plugin, PetConfigManager config) {
         this.plugin = plugin;
-        this.config = config;
     }
 
     public boolean isEnabled() {
-        return config.redProtectEnabled() && redProtectPlugin() != null;
+        return redProtectPlugin() != null;
     }
 
     public boolean isInstalled() {
@@ -32,14 +30,13 @@ public final class RedProtectCompat {
         if (!isEnabled() || owner == null || location == null) return true;
         if (owner.hasPermission("veliorasuite.pets.redprotect.bypass")) return true;
         Object region = region(location);
-        if (region == null) return config.redProtectAllowOutsideRegion();
+        if (region == null) return true;
         if (isOwnerOrMember(owner, location)) return true;
-        return !config.redProtectDenyOtherRegion();
+        return false;
     }
 
     public boolean canMovePet(Player owner, Location from, Location to) {
-        if (!isEnabled()) return true;
-        if (to == null) return true;
+        if (!isEnabled() || to == null) return true;
         return canSpawnPet(owner, to);
     }
 
@@ -59,13 +56,21 @@ public final class RedProtectCompat {
         if (player == null || location == null) return false;
         if (player.hasPermission("veliorasuite.pets.redprotect.bypass")) return true;
         Object region = region(location);
-        if (region == null) return config.redProtectAllowOutsideRegion();
+        if (region == null) return true;
         String name = player.getName();
         String uuid = player.getUniqueId().toString();
-        if (config.redProtectAllowOwnerRegion() && (callBool(region, "isLeader", name) || callBool(region, "isLeader", player) || callBool(region, "isOwner", name) || callBool(region, "isOwner", player) || listContains(region, "getLeaders", name, uuid) || listContains(region, "getOwners", name, uuid))) return true;
-        if (config.redProtectAllowAdminRegion() && (callBool(region, "isAdmin", name) || callBool(region, "isAdmin", player) || listContains(region, "getAdmins", name, uuid))) return true;
-        if (config.redProtectAllowMemberRegion() && (callBool(region, "isMember", name) || callBool(region, "isMember", player) || listContains(region, "getMembers", name, uuid))) return true;
-        return false;
+        return callBool(region, "isLeader", name)
+                || callBool(region, "isLeader", player)
+                || callBool(region, "isOwner", name)
+                || callBool(region, "isOwner", player)
+                || callBool(region, "isAdmin", name)
+                || callBool(region, "isAdmin", player)
+                || callBool(region, "isMember", name)
+                || callBool(region, "isMember", player)
+                || listContains(region, "getLeaders", name, uuid)
+                || listContains(region, "getOwners", name, uuid)
+                || listContains(region, "getAdmins", name, uuid)
+                || listContains(region, "getMembers", name, uuid);
     }
 
     private Object region(Location location) {
@@ -93,10 +98,7 @@ public final class RedProtectCompat {
     }
 
     private Object staticGetAPI() {
-        for (String className : new String[]{
-                "br.net.fabiozumbi12.RedProtect.Bukkit.RedProtect",
-                "br.net.fabiozumbi12.RedProtect.RedProtect"
-        }) {
+        for (String className : new String[]{"br.net.fabiozumbi12.RedProtect.Bukkit.RedProtect", "br.net.fabiozumbi12.RedProtect.RedProtect"}) {
             try {
                 Class<?> clazz = Class.forName(className);
                 Object instance = null;
@@ -132,8 +134,7 @@ public final class RedProtectCompat {
 
     private Object invoke(Object target, String method, Object... args) {
         if (target == null) return null;
-        Method[] methods = target.getClass().getMethods();
-        for (Method m : methods) {
+        for (Method m : target.getClass().getMethods()) {
             if (!m.getName().equals(method) || m.getParameterCount() != args.length) continue;
             try { return m.invoke(target, args); } catch (Throwable ignored) { }
         }
