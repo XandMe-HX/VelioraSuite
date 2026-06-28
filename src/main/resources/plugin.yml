@@ -172,6 +172,16 @@ permissions:
     default: op
   veliorasuite.kits.bypassprice:
     default: op
+  veliorasuite.kits.premium.1:
+    default: false
+  veliorasuite.kits.premium.2:
+    default: false
+  veliorasuite.kits.premium.3:
+    default: false
+  veliorasuite.kits.premium.4:
+    default: false
+  veliorasuite.kits.premium.5:
+    default: false
   veliorasuite.report.use:
     default: true
   veliorasuite.report.staff:
