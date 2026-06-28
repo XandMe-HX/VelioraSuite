@@ -23,27 +23,24 @@ public final class QuestGuiManager implements Listener {
 
     private static final Map<Integer, QuestCategory> SLOTS = new HashMap<>();
     static {
-        SLOTS.put(19, QuestCategory.WOODCUTTING);
-        SLOTS.put(21, QuestCategory.MINING);
-        SLOTS.put(23, QuestCategory.FARMER);
-        SLOTS.put(25, QuestCategory.CHEF);
-        SLOTS.put(38, QuestCategory.MONSTER_HUNTER);
-        SLOTS.put(40, QuestCategory.ANIMAL_HUNTER);
-        SLOTS.put(42, QuestCategory.FISHING);
+        SLOTS.put(20, QuestCategory.MONSTER_HUNTER);
+        SLOTS.put(22, QuestCategory.ANIMAL_HUNTER);
+        SLOTS.put(24, QuestCategory.FISHING);
+        SLOTS.put(29, QuestCategory.MINING);
+        SLOTS.put(31, QuestCategory.FARMER);
+        SLOTS.put(33, QuestCategory.CHEF);
+        SLOTS.put(40, QuestCategory.WOODCUTTING);
     }
 
     private final QuestManager manager;
 
-    public QuestGuiManager(QuestManager manager) {
-        this.manager = manager;
-    }
+    public QuestGuiManager(QuestManager manager) { this.manager = manager; }
 
     public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, manager.getConfigManager().getGuiSize(), manager.getConfigManager().color(manager.getConfigManager().getGuiTitle()));
+        Inventory inventory = Bukkit.createInventory(null, 54, manager.getConfigManager().color(manager.getConfigManager().getGuiTitle()));
+        fill(inventory);
         PlayerQuestData data = manager.getDataManager().getOrCreate(player);
-        for (Map.Entry<Integer, QuestCategory> entry : SLOTS.entrySet()) {
-            inventory.setItem(entry.getKey(), item(player, data, entry.getValue()));
-        }
+        for (Map.Entry<Integer, QuestCategory> entry : SLOTS.entrySet()) inventory.setItem(entry.getKey(), item(player, data, entry.getValue()));
         inventory.setItem(4, starterItem(data));
         player.openInventory(inventory);
     }
@@ -62,6 +59,16 @@ public final class QuestGuiManager implements Listener {
         open(player);
     }
 
+    private void fill(Inventory inventory) {
+        ItemStack filler = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        ItemMeta meta = filler.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(" ");
+            filler.setItemMeta(meta);
+        }
+        for (int i = 0; i < inventory.getSize(); i++) inventory.setItem(i, filler);
+    }
+
     private ItemStack item(Player player, PlayerQuestData data, QuestCategory category) {
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
         Material icon = manager.getConfigManager().getCategoryIcon(category);
@@ -70,16 +77,17 @@ public final class QuestGuiManager implements Listener {
         if (meta != null) {
             meta.setDisplayName(manager.getConfigManager().color(manager.getConfigManager().getCategoryDisplayName(category)));
             List<String> lore = new ArrayList<>();
+            lore.add("&7Quest tersedia: &f1");
             lore.add("&7Level: &f" + progress.getLevel());
             lore.add("&7Progress: &f" + progress.getCurrentProgress() + "/" + progress.getCurrentTarget());
-            lore.add("&7Mana Cost: &f" + manager.getSkillsHook().getQuestManaCost(progress.getLevel()));
-            lore.add("&7Reward: &f" + progress.getCurrentRewardMoney());
-            lore.add("&7Completed: &f" + progress.getCompletedCount());
+            lore.add("&7Reward Money: &a" + progress.getCurrentRewardMoney());
+            lore.add("&7Reward Mana: &b+" + manager.getConfigManager().getManaReward());
+            lore.add("&7Reward Item: &fAman / non-OP");
             lore.add("&7Status: &f" + progress.getState().name());
             lore.add(" ");
             if (progress.getState() == QuestState.READY_TO_CLAIM) lore.add("&aKlik untuk claim reward.");
             else if (progress.getState() == QuestState.ACTIVE) lore.add("&eKlik untuk lihat progress.");
-            else lore.add("&aKlik untuk mulai quest.");
+            else lore.add("&aKlik untuk buka/start quest.");
             meta.setLore(lore.stream().map(manager.getConfigManager()::color).toList());
             item.setItemMeta(meta);
         }
@@ -103,7 +111,5 @@ public final class QuestGuiManager implements Listener {
         return item;
     }
 
-    private String done(boolean value) {
-        return value ? "Selesai" : "Belum";
-    }
+    private String done(boolean value) { return value ? "Selesai" : "Belum"; }
 }
