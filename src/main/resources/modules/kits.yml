@@ -1,137 +1,79 @@
 # ==================================================
 # VelioraKits Configuration
 # ==================================================
-# File ini mengatur sistem kit server Veliora Gardens.
-# Semua kit, item, GUI, reward, cooldown, harga,
-# permission, premium level, command, dan pesan bisa
-# diubah dari file ini.
-#
-# Setelah mengubah file ini, jalankan:
-# - /kits reload
-# atau
-# - /vs reload
-# ==================================================
 
 settings:
-  # Mengaktifkan atau mematikan fitur kits dari sisi module.
   enabled: true
-
-  # Prefix default untuk pesan command.
   prefix: '&8[&bVelioraKits&8] '
-
-  # Command utama module ini.
   command: '/kits'
-
-  # Jika true, command /kits langsung membuka GUI.
   open-gui-on-main-command: true
-
-  # Jika true, kit bisa memakai permission per kit.
-  # Jika permission pada kit kosong, kit bisa dipakai semua player.
   use-per-kit-permission: true
-
-  # Prefix permission premium.
-  # premium-level: 1 -> veliorakits.premium.1
-  # premium-level: 2 -> veliorakits.premium.2
-  premium-permission-prefix: 'veliorakits.premium.'
-
-  # Jika true, player tidak bisa claim saat inventory penuh.
+  premium-permission-prefix: 'veliorasuite.kits.premium.'
   block-claim-when-inventory-full: true
-
-  # Jika true, item yang tidak muat akan jatuh ke tanah.
-  # Default false agar aman untuk survival/MMORPG.
   drop-extra-items: false
-
-  first-join-kit:
-    # Jika true, player baru otomatis mendapat kit ini saat join pertama.
+  economy:
     enabled: true
-
-    # ID kit yang diberikan saat first join.
+  first-join-kit:
+    enabled: false
     kit: 'starter'
 
 commands:
-  # Section ini untuk dokumentasi command di config.
   main: '/kits'
   aliases:
     - '/veliorakits'
     - '/vkits'
   examples:
     - '/kits'
-    - '/kits help'
+    - '/kits open'
+    - '/kits list'
     - '/kits claim starter'
     - '/kits preview starter'
-    - '/kits buy premium1'
-    - '/kits cooldown'
+    - '/kits buy premium_1'
     - '/kits reload'
 
 permissions:
-  # Permission untuk memakai /kits.
   use: 'veliorasuite.kits.use'
-
-  # Permission admin penuh.
   admin: 'veliorasuite.kits.admin'
-
-  # Permission reload config.
   reload: 'veliorasuite.kits.reload'
-
-  # Bypass cooldown claim kit.
   bypass-cooldown: 'veliorasuite.kits.bypasscooldown'
-
-  # Bypass harga pembelian kit.
   bypass-price: 'veliorasuite.kits.bypassprice'
-
-  # Prefix permission kit manual jika ingin dipakai.
   kit-prefix: 'veliorasuite.kits.kit.'
-
-  # Prefix permission premium.
-  premium-prefix: 'veliorakits.premium.'
+  premium-prefix: 'veliorasuite.kits.premium.'
 
 gui:
-  # Judul GUI utama.
   title: '&8Veliora Kits'
-
-  # Ukuran GUI. Harus kelipatan 9, maksimal 54.
   size: 54
-
-  # Judul GUI preview kit.
   preview-title: '&8Preview: %kit%'
-
   filler:
-    # Filler background GUI.
     enabled: true
     material: BLACK_STAINED_GLASS_PANE
     name: ' '
     lore: []
-
   status-lore:
     available:
       - ''
       - '&aStatus: Bisa diambil'
       - '&7Klik kiri untuk claim.'
       - '&7Klik kanan untuk preview.'
-
     cooldown:
       - ''
       - '&cStatus: Cooldown'
       - '&7Sisa waktu: &f%time%'
       - '&7Klik kanan untuk preview.'
-
     locked-permission:
       - ''
       - '&cStatus: Terkunci'
       - '&7Kamu tidak punya permission kit ini.'
-
     locked-premium:
       - ''
       - '&cStatus: Premium'
       - '&7Butuh permission: &f%premium_permission%'
-
     need-buy:
       - ''
       - '&eStatus: Belum dibeli'
       - '&7Harga: &a$%price%'
       - '&7Shift klik untuk membeli.'
       - '&7Klik kanan untuk preview.'
-
     bought:
       - ''
       - '&aStatus: Sudah dibeli'
@@ -168,168 +110,295 @@ messages:
   list-format: '&7- &f%kit_display% &8(&7%kit_id%&8) &7Cooldown: &f%cooldown%'
   list-empty: '%prefix% &cTidak ada kit aktif.'
   list-footer: '&8&m--------------------------------'
-
   help:
     - '&8&m--------------------------------'
     - '&b&lVelioraKits'
     - '&f/kits &7- Membuka GUI kit.'
+    - '&f/kits open &7- Membuka GUI kit.'
     - '&f/kits list &7- Melihat kit aktif.'
     - '&f/kits claim <kit> &7- Claim kit.'
     - '&f/kits preview <kit> &7- Preview kit.'
-    - '&f/kits buy <kit> &7- Beli kit.'
-    - '&f/kits cooldown &7- Cek cooldown.'
+    - '&f/kits buy <kit> &7- Beli kit jika sistem one-time aktif.'
     - '&f/kits reload &7- Reload config.'
     - '&8&m--------------------------------'
 
 kits:
   starter:
-    # Kit awal untuk player baru.
     enabled: true
     display-name: '&aStarter Kit'
     description:
-      - '&7Kit awal untuk player baru.'
-      - '&7Berisi item survival dasar.'
-
-    # Permission khusus kit ini. Kosongkan agar semua player bisa claim.
+      - '&7Kit awal survival.'
+      - '&7Claim pertama gratis, claim berikutnya 20K.'
     permission: ''
-
-    # 0 = bukan premium.
     premium-level: 0
-
-    # Format cooldown: 10s, 30m, 24h, 3d.
-    cooldown: '24h'
-
+    cooldown: '0s'
     buy:
-      enabled: false
-      price: 0
-      one-time-purchase: true
-
+      enabled: true
+      price: 20000
+      one-time-purchase: false
+      first-claim-free: true
     gui:
       slot: 10
       material: CHEST
       name: '&aStarter Kit'
       lore:
-        - '&7Kit awal untuk survival.'
-        - '&7Cooldown: &f24 jam'
-
+        - '&7Full leather armor.'
+        - '&7Full stone tools.'
+        - '&7Oak Fence x192.'
+        - '&aClaim pertama gratis, claim berikutnya 20K.'
     items:
-      - material: STONE_SWORD
-        amount: 1
-        name: '&aStarter Sword'
-        lore:
-          - '&7Pedang awal untuk bertahan hidup.'
-        enchants: []
+      - { material: LEATHER_HELMET, amount: 1, enchants: [] }
+      - { material: LEATHER_CHESTPLATE, amount: 1, enchants: [] }
+      - { material: LEATHER_LEGGINGS, amount: 1, enchants: [] }
+      - { material: LEATHER_BOOTS, amount: 1, enchants: [] }
+      - { material: STONE_SWORD, amount: 1, enchants: [] }
+      - { material: STONE_PICKAXE, amount: 1, enchants: [] }
+      - { material: STONE_AXE, amount: 1, enchants: [] }
+      - { material: STONE_SHOVEL, amount: 1, enchants: [] }
+      - { material: STONE_HOE, amount: 1, enchants: [] }
+      - { material: OAK_FENCE, amount: 64, enchants: [] }
+      - { material: OAK_FENCE, amount: 64, enchants: [] }
+      - { material: OAK_FENCE, amount: 64, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
 
-      - material: STONE_PICKAXE
-        amount: 1
-        name: '&aStarter Pickaxe'
-        lore:
-          - '&7Pickaxe awal untuk mining.'
-        enchants: []
+  food:
+    enabled: true
+    display-name: '&eFood Kit'
+    description:
+      - '&7Makanan awal.'
+      - '&7Claim pertama gratis, claim berikutnya 20K.'
+    permission: ''
+    premium-level: 0
+    cooldown: '0s'
+    buy:
+      enabled: true
+      price: 20000
+      one-time-purchase: false
+      first-claim-free: true
+    gui:
+      slot: 11
+      material: BREAD
+      name: '&eFood Kit'
+      lore:
+        - '&7Bread x64.'
+        - '&7Cooked Beef x32.'
+        - '&aClaim pertama gratis, claim berikutnya 20K.'
+    items:
+      - { material: BREAD, amount: 64, enchants: [] }
+      - { material: COOKED_BEEF, amount: 32, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
 
-      - material: BREAD
-        amount: 16
-        name: ''
-        lore: []
-        enchants: []
+  build:
+    enabled: true
+    display-name: '&6Build Kit'
+    description:
+      - '&7Material bangunan dasar.'
+      - '&7Claim pertama gratis, claim berikutnya 20K.'
+    permission: ''
+    premium-level: 0
+    cooldown: '0s'
+    buy:
+      enabled: true
+      price: 20000
+      one-time-purchase: false
+      first-claim-free: true
+    gui:
+      slot: 12
+      material: OAK_LOG
+      name: '&6Build Kit'
+      lore:
+        - '&7Material build banyak.'
+        - '&aClaim pertama gratis, claim berikutnya 20K.'
+    items:
+      - { material: OAK_FENCE, amount: 64, enchants: [] }
+      - { material: OAK_FENCE, amount: 64, enchants: [] }
+      - { material: OAK_LOG, amount: 64, enchants: [] }
+      - { material: OAK_LOG, amount: 64, enchants: [] }
+      - { material: OAK_LOG, amount: 64, enchants: [] }
+      - { material: COBBLESTONE, amount: 64, enchants: [] }
+      - { material: COBBLESTONE, amount: 64, enchants: [] }
+      - { material: COBBLESTONE, amount: 64, enchants: [] }
+      - { material: STONE, amount: 64, enchants: [] }
+      - { material: STONE, amount: 64, enchants: [] }
+      - { material: STONE, amount: 64, enchants: [] }
+      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
+      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
+      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
+      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
+      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
 
-      - material: TORCH
-        amount: 32
-        name: ''
-        lore: []
-        enchants: []
-
-    rewards:
-      # Uang Vault. Jika Vault tidak ada, reward money dilewati.
-      money: 250
-
-      # EXP vanilla.
-      exp: 50
-
-      # Command dari console.
-      # Placeholder: %player%, %kit%
-      commands:
-        - 'eco give %player% 250'
-
-  premium1:
+  premium_1:
     enabled: true
     display-name: '&bPremium 1'
     description:
-      - '&7Kit premium level 1.'
-      - '&7Butuh permission premium.'
-
-    permission: ''
+      - '&7Full iron kit.'
+      - '&7Butuh permission: veliorasuite.kits.premium.1'
+    permission: 'veliorasuite.kits.premium.1'
     premium-level: 1
-    cooldown: '3d'
-
+    cooldown: '0s'
     buy:
       enabled: true
-      price: 5000
-      one-time-purchase: true
-
+      price: 50000
+      one-time-purchase: false
+      first-claim-free: false
     gui:
-      slot: 12
-      material: ENDER_CHEST
+      slot: 19
+      material: IRON_CHESTPLATE
       name: '&bPremium 1'
       lore:
-        - '&7Kit premium level 1.'
-        - '&7Harga: &a$5000'
-        - '&7Permission: &fveliorakits.premium.1'
-
+        - '&7Full iron kit enchant easy.'
+        - '&7Harga claim: &a50K'
+        - '&7Butuh permission: &fveliorasuite.kits.premium.1'
     items:
-      - material: IRON_SWORD
-        amount: 1
-        name: '&bPremium Sword I'
-        lore:
-          - '&7Pedang premium level 1.'
-        enchants:
-          - 'SHARPNESS:1'
+      - { material: IRON_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
+      - { material: IRON_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
+      - { material: IRON_LEGGINGS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
+      - { material: IRON_BOOTS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
+      - { material: IRON_SWORD, amount: 1, enchants: ['DAMAGE_ALL:1', 'DURABILITY:1'] }
+      - { material: IRON_PICKAXE, amount: 1, enchants: ['DIG_SPEED:1', 'DURABILITY:1'] }
+      - { material: IRON_AXE, amount: 1, enchants: ['DIG_SPEED:1', 'DURABILITY:1'] }
+      - { material: IRON_SHOVEL, amount: 1, enchants: ['DIG_SPEED:1', 'DURABILITY:1'] }
+      - { material: IRON_HOE, amount: 1, enchants: ['DIG_SPEED:1', 'DURABILITY:1'] }
+      - { material: CARROT, amount: 64, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
 
-      - material: COOKED_BEEF
-        amount: 32
-        name: ''
-        lore: []
-        enchants: []
-
-    rewards:
-      money: 500
-      exp: 100
-      commands: []
-
-  premium2:
+  premium_2:
     enabled: true
     display-name: '&dPremium 2'
     description:
-      - '&7Kit premium level 2.'
-
-    permission: ''
+      - '&7Full diamond kit.'
+      - '&7Butuh permission: veliorasuite.kits.premium.2'
+    permission: 'veliorasuite.kits.premium.2'
     premium-level: 2
-    cooldown: '5d'
-
+    cooldown: '0s'
     buy:
       enabled: true
-      price: 10000
-      one-time-purchase: true
-
+      price: 75000
+      one-time-purchase: false
+      first-claim-free: false
     gui:
-      slot: 14
-      material: DIAMOND
+      slot: 20
+      material: DIAMOND_CHESTPLATE
       name: '&dPremium 2'
       lore:
-        - '&7Kit premium level 2.'
-        - '&7Harga: &a$10000'
-        - '&7Permission: &fveliorakits.premium.2'
-
+        - '&7Full diamond kit enchant level 2.'
+        - '&7Harga claim: &a75K'
+        - '&7Butuh permission: &fveliorasuite.kits.premium.2'
     items:
-      - material: IRON_PICKAXE
-        amount: 1
-        name: '&dPremium Pickaxe II'
-        lore:
-          - '&7Pickaxe premium level 2.'
-        enchants:
-          - 'EFFICIENCY:2'
+      - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_LEGGINGS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_BOOTS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_SWORD, amount: 1, enchants: ['DAMAGE_ALL:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_PICKAXE, amount: 1, enchants: ['DIG_SPEED:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_AXE, amount: 1, enchants: ['DIG_SPEED:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_SHOVEL, amount: 1, enchants: ['DIG_SPEED:2', 'DURABILITY:2'] }
+      - { material: DIAMOND_HOE, amount: 1, enchants: ['DIG_SPEED:2', 'DURABILITY:2'] }
+      - { material: GOLDEN_APPLE, amount: 10, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
 
-    rewards:
-      money: 1000
-      exp: 150
-      commands: []
+  premium_3:
+    enabled: true
+    display-name: '&5Premium 3'
+    description:
+      - '&7Full diamond kit hard.'
+      - '&7Butuh permission: veliorasuite.kits.premium.3'
+    permission: 'veliorasuite.kits.premium.3'
+    premium-level: 3
+    cooldown: '0s'
+    buy:
+      enabled: true
+      price: 100000
+      one-time-purchase: false
+      first-claim-free: false
+    gui:
+      slot: 21
+      material: DIAMOND_SWORD
+      name: '&5Premium 3'
+      lore:
+        - '&7Full diamond kit enchant level 3.'
+        - '&7Harga claim: &a100K'
+        - '&7Butuh permission: &fveliorasuite.kits.premium.3'
+    items:
+      - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_LEGGINGS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_BOOTS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_SWORD, amount: 1, enchants: ['DAMAGE_ALL:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_PICKAXE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_AXE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_SHOVEL, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: DIAMOND_HOE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: GOLDEN_APPLE, amount: 20, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
+
+  premium_4:
+    enabled: true
+    display-name: '&6Premium 4'
+    description:
+      - '&7Full netherite kit normal.'
+      - '&7Butuh permission: veliorasuite.kits.premium.4'
+    permission: 'veliorasuite.kits.premium.4'
+    premium-level: 4
+    cooldown: '0s'
+    buy:
+      enabled: true
+      price: 125000
+      one-time-purchase: false
+      first-claim-free: false
+    gui:
+      slot: 22
+      material: NETHERITE_CHESTPLATE
+      name: '&6Premium 4'
+      lore:
+        - '&7Full netherite kit enchant level 3.'
+        - '&7Harga claim: &a125K'
+        - '&7Butuh permission: &fveliorasuite.kits.premium.4'
+    items:
+      - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_LEGGINGS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_BOOTS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_SWORD, amount: 1, enchants: ['DAMAGE_ALL:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_PICKAXE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_AXE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_SHOVEL, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: NETHERITE_HOE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
+      - { material: GOLDEN_APPLE, amount: 30, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
+
+  premium_5:
+    enabled: true
+    display-name: '&cPremium 5'
+    description:
+      - '&7Full netherite kit hard.'
+      - '&7Butuh permission: veliorasuite.kits.premium.5'
+    permission: 'veliorasuite.kits.premium.5'
+    premium-level: 5
+    cooldown: '0s'
+    buy:
+      enabled: true
+      price: 150000
+      one-time-purchase: false
+      first-claim-free: false
+    gui:
+      slot: 23
+      material: NETHERITE_SWORD
+      name: '&cPremium 5'
+      lore:
+        - '&7Full netherite kit enchant hard.'
+        - '&7Harga claim: &a150K'
+        - '&7Butuh permission: &fveliorasuite.kits.premium.5'
+    items:
+      - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_LEGGINGS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_BOOTS, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_SWORD, amount: 1, enchants: ['DAMAGE_ALL:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_PICKAXE, amount: 1, enchants: ['DIG_SPEED:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_AXE, amount: 1, enchants: ['DIG_SPEED:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_SHOVEL, amount: 1, enchants: ['DIG_SPEED:4', 'DURABILITY:3'] }
+      - { material: NETHERITE_HOE, amount: 1, enchants: ['DIG_SPEED:4', 'DURABILITY:3'] }
+      - { material: GOLDEN_APPLE, amount: 30, enchants: [] }
+    rewards: { money: 0, exp: 0, commands: [] }
