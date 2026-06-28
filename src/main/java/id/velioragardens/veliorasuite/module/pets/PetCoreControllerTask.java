@@ -53,7 +53,7 @@ public final class PetCoreControllerTask implements Runnable {
             LivingEntity pet = active.entity();
             if (pet == null || pet.isDead() || !pet.isValid()) {
                 active.targetUuid(null);
-                manager.rememberMovement(owner.getUniqueId(), "entity invalid", null, false, false, "none");
+                PetMovementDebug.remember(owner.getUniqueId(), "entity invalid", null, false, false, "none");
                 continue;
             }
             PetDefinition definition = config.pets().get(active.petId());
@@ -92,13 +92,13 @@ public final class PetCoreControllerTask implements Runnable {
             }
         }
         if (!targetAllowed) {
-            manager.rememberMovement(owner.getUniqueId(), "redprotect movement denied target", target, false, false, "none");
+            PetMovementDebug.remember(owner.getUniqueId(), "redprotect movement denied target", target, false, false, "none");
             return;
         }
         if (!pet.getWorld().equals(owner.getWorld())) {
             pet.teleport(target);
             lastTeleport.put(pet.getUniqueId(), System.currentTimeMillis());
-            manager.rememberMovement(owner.getUniqueId(), "teleport world change", target, true, false, "world change");
+            PetMovementDebug.remember(owner.getUniqueId(), "teleport world change", target, true, false, "world change");
             return;
         }
         double distance = pet.getLocation().distance(target);
@@ -106,18 +106,18 @@ public final class PetCoreControllerTask implements Runnable {
             pet.teleport(target);
             lastTeleport.put(pet.getUniqueId(), System.currentTimeMillis());
             markMoved(pet);
-            manager.rememberMovement(owner.getUniqueId(), "teleport far distance", target, true, false, "distance > 16");
+            PetMovementDebug.remember(owner.getUniqueId(), "teleport far distance", target, true, false, "distance > 16");
             return;
         }
         if (distance > STUCK_DISTANCE && isStuck(pet) && canTeleport(pet)) {
             pet.teleport(target);
             lastTeleport.put(pet.getUniqueId(), System.currentTimeMillis());
             markMoved(pet);
-            manager.rememberMovement(owner.getUniqueId(), "teleport stuck", target, true, false, "stuck > 5s and distance > 8");
+            PetMovementDebug.remember(owner.getUniqueId(), "teleport stuck", target, true, false, "stuck > 5s and distance > 8");
             return;
         }
         if (distance <= FOLLOW_DISTANCE) {
-            manager.rememberMovement(owner.getUniqueId(), "near owner idle", target, true, false, "none");
+            PetMovementDebug.remember(owner.getUniqueId(), "near owner idle", target, true, false, "none");
             markMoved(pet);
             return;
         }
@@ -138,7 +138,7 @@ public final class PetCoreControllerTask implements Runnable {
             }
         }
         markMoved(pet);
-        manager.rememberMovement(owner.getUniqueId(), pathfinderUsed ? "pathfinder follow" : "fallback velocity follow", target, true, pathfinderUsed, "none");
+        PetMovementDebug.remember(owner.getUniqueId(), pathfinderUsed ? "pathfinder follow" : "fallback velocity follow", target, true, pathfinderUsed, "none");
     }
 
     private Location allowedLocationNearOwner(Player owner, Location fallback) {
