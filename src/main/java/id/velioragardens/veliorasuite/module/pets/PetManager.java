@@ -41,6 +41,9 @@ import java.util.Random;
 import java.util.UUID;
 
 public final class PetManager implements Listener {
+    private static final String PET_TAG = "veliorapets_pet";
+    private static final String AQUATIC_ANCHOR_TAG = "veliorapets_aquatic_anchor";
+
     private final VelioraSuite plugin;
     private final PetConfigManager config;
     private final PetDataManager data;
@@ -215,7 +218,13 @@ public final class PetManager implements Listener {
         UUID uuid = player != null ? player.getUniqueId() : null;
         if (uuid == null) return;
         VelioraPet active = activePets.remove(uuid);
-        if (active != null && !active.entity().isDead()) active.entity().remove();
+        if (active != null) {
+            removeAquaticAnchor(uuid.toString(), active.petId());
+            if (!active.entity().isDead()) {
+                active.entity().leaveVehicle();
+                active.entity().remove();
+            }
+        }
         PlayerPetData pdata = data.get(uuid);
         pdata.activePet(null);
         data.save(uuid);
@@ -282,14 +291,17 @@ public final class PetManager implements Listener {
     public void setTarget(Player player, LivingEntity target) {
         if (!isAllowedTarget(target)) return;
         VelioraPet active = activePets.get(player.getUniqueId());
-        if (active != null) active.targetUuid(target.getUniqueId());
+        if (active == null) return;
+        PetDefinition definition = config.pets().get(active.petId());
+        if (definition != null && definition.aquaticPet()) return;
+        active.targetUuid(target.getUniqueId());
     }
 
     private LivingEntity spawnEntity(Player player, PetDefinition definition, OwnedPet owned) {
         Location location = player.getLocation().clone().add(1.0D, 0.0D, 1.0D);
         Entity raw = player.getWorld().spawnEntity(location, definition.entityType());
         LivingEntity entity = (LivingEntity) raw;
-        entity.addScoreboardTag("veliorapets_pet");
+        entity.addScoreboardTag(PET_TAG);
         entity.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
         entity.getPersistentDataContainer().set(petIdKey, PersistentDataType.STRING, definition.id());
         entity.getPersistentDataContainer().set(rarityKey, PersistentDataType.STRING, definition.rarity().name());
@@ -298,10 +310,16 @@ public final class PetManager implements Listener {
         entity.setCustomNameVisible(true);
         entity.setRemoveWhenFarAway(false);
         entity.setPersistent(false);
-        entity.setAI(!definition.flyingPet());
+        entity.setAI(!definition.flyingPet() && !definition.aquaticPet());
+        entity.setGravity(!definition.aquaticPet());
+        entity.setSilent(config.silentPets() || definition.aquaticPet());
+        entity.setInvulnerable(definition.aquaticPet());
         entity.setCollidable(false);
         entity.setCanPickupItems(false);
         entity.setGlowing(config.glowEnabled());
+        entity.setFireTicks(0);
+        entity.setFallDistance(0.0F);
+        entity.setRemainingAir(entity.getMaximumAir());
         if (entity instanceof Mob mob) mob.setTarget(null);
         tryBaby(entity);
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
@@ -317,6 +335,11 @@ public final class PetManager implements Listener {
             if (owner == null || !owner.isOnline()) { if (pet != null && !pet.entity().isDead()) pet.entity().remove(); activePets.remove(uuid); continue; }
             if (pet == null || pet.entity().isDead()) { activePets.remove(uuid); continue; }
             PetDefinition definition = config.pets().get(pet.petId());
+            if (definition != null && definition.aquaticPet()) {
+                if (pet.entity() instanceof Mob mob) mob.setTarget(null);
+                pet.targetUuid(null);
+                continue;
+            }
             follow(owner, pet, definition);
             attackIfPossible(owner, pet, now);
         }
@@ -347,19 +370,19 @@ public final class PetManager implements Listener {
     }
 
     private void attackIfPossible(Player owner, VelioraPet pet, long now) {
+        PetDefinition definition = config.pets().get(pet.petId());
+        if (definition != null && definition.aquaticPet()) { pet.targetUuid(null); return; }
         if (!config.combatEnabled() || pet.targetUuid() == null) return;
         Entity target = Bukkit.getEntity(pet.targetUuid());
         if (!(target instanceof LivingEntity living) || living.isDead() || !isAllowedTarget(living)) { pet.targetUuid(null); return; }
         if (!living.getWorld().equals(pet.entity().getWorld())) { pet.targetUuid(null); return; }
         if (pet.entity().getLocation().distanceSquared(living.getLocation()) > 64.0D) { follow(owner, pet, config.pets().get(pet.petId())); return; }
         if (pet.entity().getLocation().distanceSquared(living.getLocation()) > config.attackRange() * config.attackRange()) {
-            PetDefinition definition = config.pets().get(pet.petId());
             boolean pathing = definition != null && !definition.flyingPet() && config.usePathfinderFollow() && moveWithPathfinder(pet.entity(), living.getLocation());
             if (!pathing) moveWithVelocity(pet.entity(), living.getLocation(), definition != null && definition.flyingPet() ? 0.32D : 0.45D);
             return;
         }
         if (now - pet.lastAttackMillis() < config.attackCooldownSeconds() * 1000L) return;
-        PetDefinition definition = config.pets().get(pet.petId());
         double amount = definition == null ? 1.0D : definition.damage() * config.petDamageMultiplier();
         living.damage(amount, owner);
         pet.entity().getWorld().playSound(pet.entity().getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5F, 1.4F);
@@ -391,7 +414,7 @@ public final class PetManager implements Listener {
     }
 
     private boolean isAllowedTarget(LivingEntity target) {
-        if (target == null || target instanceof Player || target.getScoreboardTags().contains("veliorapets_pet")) return false;
+        if (target == null || target instanceof Player || target.getScoreboardTags().contains(PET_TAG)) return false;
         if (!config.allowAttackPassive() && !(target instanceof Monster)) return false;
         return true;
     }
@@ -449,11 +472,11 @@ public final class PetManager implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (event.getDamager().getScoreboardTags().contains("veliorapets_pet")) {
-            if (event.getEntity() instanceof Player || event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true);
+        if (event.getDamager().getScoreboardTags().contains(PET_TAG)) {
+            if (event.getEntity() instanceof Player || event.getEntity().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true);
             return;
         }
-        if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) {
+        if (event.getEntity().getScoreboardTags().contains(PET_TAG)) {
             if (event.getDamager() instanceof Player) event.setCancelled(true);
             return;
         }
@@ -461,16 +484,17 @@ public final class PetManager implements Listener {
         if (event.getEntity() instanceof Player player && event.getDamager() instanceof LivingEntity attacker) setTarget(player, attacker);
     }
 
-    @EventHandler public void onTarget(EntityTargetLivingEntityEvent event) { if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true); if (event.getTarget() != null && event.getTarget().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true); }
+    @EventHandler public void onTarget(EntityTargetLivingEntityEvent event) { if (event.getEntity().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true); if (event.getTarget() != null && event.getTarget().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true); }
 
     @EventHandler
     public void onPetEntityRemoved(EntityDeathEvent event) {
-        if (!event.getEntity().getScoreboardTags().contains("veliorapets_pet")) return;
+        if (!event.getEntity().getScoreboardTags().contains(PET_TAG)) return;
         event.getDrops().clear();
         event.setDroppedExp(0);
         String ownerRaw = event.getEntity().getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
         String petId = event.getEntity().getPersistentDataContainer().get(petIdKey, PersistentDataType.STRING);
         if (ownerRaw == null || petId == null) return;
+        removeAquaticAnchor(ownerRaw, petId);
         UUID uuid = UUID.fromString(ownerRaw);
         activePets.remove(uuid);
         PlayerPetData pdata = data.get(uuid);
@@ -484,10 +508,28 @@ public final class PetManager implements Listener {
         if (player != null) player.sendMessage(config.color(config.message("pet-dead", "%prefix% &cPet kamu mati. Bisa dipanggil lagi dalam &f%time%&c.").replace("%time%", timeLeft(until))));
     }
 
-    @EventHandler public void onExplode(EntityExplodeEvent event) { if (event.getEntity() != null && event.getEntity().getScoreboardTags().contains("veliorapets_pet")) { event.blockList().clear(); event.setCancelled(true); } }
-    @EventHandler public void onPrime(ExplosionPrimeEvent event) { if (event.getEntity().getScoreboardTags().contains("veliorapets_pet")) event.setCancelled(true); }
+    @EventHandler public void onExplode(EntityExplodeEvent event) { if (event.getEntity() != null && event.getEntity().getScoreboardTags().contains(PET_TAG)) { event.blockList().clear(); event.setCancelled(true); } }
+    @EventHandler public void onPrime(ExplosionPrimeEvent event) { if (event.getEntity().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true); }
 
-    private void cleanupAllEntities() { for (org.bukkit.World world : Bukkit.getWorlds()) for (Entity entity : world.getEntities()) if (entity.getScoreboardTags().contains("veliorapets_pet")) entity.remove(); }
+    private void removeAquaticAnchor(String ownerRaw, String petId) {
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                if (!entity.getScoreboardTags().contains(AQUATIC_ANCHOR_TAG)) continue;
+                String anchorOwner = entity.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
+                String anchorPet = entity.getPersistentDataContainer().get(petIdKey, PersistentDataType.STRING);
+                if (ownerRaw.equals(anchorOwner) && petId.equals(anchorPet)) entity.remove();
+            }
+        }
+    }
+
+    private void cleanupAllEntities() {
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                if (entity.getScoreboardTags().contains(PET_TAG) || entity.getScoreboardTags().contains(AQUATIC_ANCHOR_TAG)) entity.remove();
+            }
+        }
+    }
+
     private void stopTasks() { if (followTask != null) followTask.cancel(); if (cosmeticTask != null) cosmeticTask.cancel(); followTask = null; cosmeticTask = null; }
     private void tryBaby(LivingEntity entity) { try { Method method = entity.getClass().getMethod("setBaby", boolean.class); method.invoke(entity, true); } catch (Exception ignored) { try { Method method = entity.getClass().getMethod("setBaby"); method.invoke(entity); } catch (Exception ignored2) { } } }
     private String timeLeft(long target) { long seconds = Math.max(0L, (target - System.currentTimeMillis()) / 1000L); return (seconds / 60L) + "m " + (seconds % 60L) + "s"; }
