@@ -58,6 +58,7 @@ public final class PetConfigManager {
     public long gachaPrice() { return Math.max(0L, config.getLong("settings.economy.gacha-price", 100000L)); }
     public int maxLevel() { return Math.max(1, integer("settings.max-level", 50)); }
     public int duplicateExp() { return Math.max(0, integer("settings.duplicate-exp", 50)); }
+    public int maxFeedAmount() { return Math.max(1, integer("feeding.max-feed-amount", 64)); }
     public boolean autoSummonNewPet() { return bool("settings.auto-summon-new-pet", false); }
     public boolean autoSummonLastPet() { return bool("settings.auto-summon-last-pet", false); }
     public int deathCooldownMinutes() { return Math.max(0, integer("settings.death-cooldown-minutes", 15)); }
