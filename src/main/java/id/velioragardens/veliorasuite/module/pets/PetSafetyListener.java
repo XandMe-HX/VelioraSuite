@@ -24,12 +24,10 @@ public final class PetSafetyListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPetHazard(EntityDamageEvent event) {
         if (!isPet(event.getEntity())) return;
-        switch (event.getCause()) {
-            case FIRE, FIRE_TICK, LAVA, HOT_FLOOR, DROWNING, FREEZE, FALL, DRYOUT, SUFFOCATION -> {
-                event.setCancelled(true);
-                event.getEntity().setFireTicks(0);
-            }
-            default -> { }
+        String cause = event.getCause().name();
+        if (isBlockedPetDamageCause(cause)) {
+            event.setCancelled(true);
+            event.getEntity().setFireTicks(0);
         }
     }
 
@@ -89,6 +87,22 @@ public final class PetSafetyListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPetPrime(ExplosionPrimeEvent event) {
         if (isPet(event.getEntity())) event.setCancelled(true);
+    }
+
+    private boolean isBlockedPetDamageCause(String cause) {
+        return cause.equalsIgnoreCase("DRYOUT")
+                || cause.equalsIgnoreCase("DROWNING")
+                || cause.equalsIgnoreCase("SUFFOCATION")
+                || cause.equalsIgnoreCase("FALL")
+                || cause.equalsIgnoreCase("CONTACT")
+                || cause.equalsIgnoreCase("FIRE")
+                || cause.equalsIgnoreCase("FIRE_TICK")
+                || cause.equalsIgnoreCase("LAVA")
+                || cause.equalsIgnoreCase("HOT_FLOOR")
+                || cause.equalsIgnoreCase("FREEZE")
+                || cause.equalsIgnoreCase("PROJECTILE")
+                || cause.equalsIgnoreCase("ENTITY_ATTACK")
+                || cause.equalsIgnoreCase("ENTITY_SWEEP_ATTACK");
     }
 
     private boolean isPet(Entity entity) {
