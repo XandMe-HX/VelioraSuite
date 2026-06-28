@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.pets;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.module.pets.compat.RedProtectCompat;
 import id.velioragardens.veliorasuite.module.pets.model.OwnedPet;
 import id.velioragardens.veliorasuite.module.pets.model.PetDefinition;
 import id.velioragardens.veliorasuite.module.pets.model.PetRarity;
@@ -11,6 +12,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -31,7 +33,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.Vector;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -51,7 +52,10 @@ public final class PetManager implements Listener {
     private final PetDataManager data;
     private final PetEconomyManager economy;
     private final PetScaleHelper scaleHelper;
+    private final RedProtectCompat redProtect;
     private final Map<UUID, VelioraPet> activePets = new HashMap<>();
+    private final Map<UUID, String> lastSpawnFailure = new HashMap<>();
+    private final Map<UUID, Integer> lastSpawnAttempts = new HashMap<>();
     private final Random random = new Random();
     private final NamespacedKey ownerKey;
     private final NamespacedKey petIdKey;
@@ -67,6 +71,7 @@ public final class PetManager implements Listener {
         this.data = new PetDataManager(plugin);
         this.economy = new PetEconomyManager(plugin, config);
         this.scaleHelper = new PetScaleHelper(plugin);
+        this.redProtect = new RedProtectCompat(plugin, config);
         this.ownerKey = new NamespacedKey(plugin, "veliorapets_owner_uuid");
         this.petIdKey = new NamespacedKey(plugin, "veliorapets_pet_id");
         this.rarityKey = new NamespacedKey(plugin, "veliorapets_rarity");
@@ -103,8 +108,12 @@ public final class PetManager implements Listener {
 
     public PetConfigManager config() { return config; }
     public PetDataManager data() { return data; }
+    public RedProtectCompat redProtectCompat() { return redProtect; }
     public PlayerPetData playerData(UUID uuid) { return data.get(uuid); }
     public VelioraPet activePet(UUID uuid) { return activePets.get(uuid); }
+    public String lastSpawnFailure(UUID uuid) { return lastSpawnFailure.getOrDefault(uuid, "none"); }
+    public int lastSpawnAttempts(UUID uuid) { return lastSpawnAttempts.getOrDefault(uuid, 0); }
+    public void rememberSpawnFailure(UUID uuid, String reason) { lastSpawnFailure.put(uuid, reason == null ? "unknown" : reason); }
     public void openMain(Player player) { guiManager.openMain(player); }
     public void openShop(Player player) { guiManager.openShop(player); }
     public void openGacha(Player player) { guiManager.openGacha(player); }
@@ -213,23 +222,91 @@ public final class PetManager implements Listener {
                     .replace("%time%", timeLeft(owned.cooldownUntil()))));
             return false;
         }
+        Location spawnLocation = safeSpawnLocation(player);
+        if (spawnLocation == null) {
+            rememberSpawnFailure(player.getUniqueId(), "RedProtect/world denied all safe spawn locations near owner");
+            player.sendMessage(config.color(config.message("redprotect-compat-blocked", "%prefix% &cPet diblokir oleh RedProtect. Cek flag region atau izin land.")));
+            return false;
+        }
         dismiss(player, false);
-        LivingEntity entity = spawnEntity(player, definition, owned);
+        LivingEntity entity;
+        try {
+            entity = spawnEntity(player, definition, owned, spawnLocation);
+        } catch (Exception exception) {
+            rememberSpawnFailure(player.getUniqueId(), exception.getMessage());
+            player.sendMessage(config.color(config.prefix() + "&cPet gagal spawn: &f" + exception.getMessage()));
+            plugin.getLogger().warning("VelioraPets DEBUG: spawn failed for " + definition.id() + " / " + definition.entityType() + " - " + exception.getMessage());
+            return false;
+        }
         activePets.put(player.getUniqueId(), new VelioraPet(player.getUniqueId(), definition.id(), entity));
         pdata.activePet(definition.id());
         pdata.lastPet(definition.id());
         data.save(player.getUniqueId());
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> verifySpawn(player, definition.id(), entity), 1L);
+        lastSpawnAttempts.put(player.getUniqueId(), 0);
+        scheduleSpawnChecks(player, definition, owned, entity);
         player.sendMessage(config.color(config.message("pet-summoned", "%prefix% &aPet &f%pet% &adipanggil.").replace("%pet%", config.color(owned.name()))));
         sendFoodHint(player, definition);
         return true;
     }
 
-    private void verifySpawn(Player player, String petId, LivingEntity entity) {
-        if (entity == null || entity.isDead() || !entity.isValid()) {
-            player.sendMessage(config.color(config.prefix() + "&cPet gagal muncul. Cek console debug."));
-            plugin.getLogger().warning("VelioraPets DEBUG: pet vanished after spawn: " + petId + " " + (entity == null ? "null" : entity.getType()) + " " + (entity == null ? "null" : entity.getUniqueId()));
+    private void scheduleSpawnChecks(Player player, PetDefinition definition, OwnedPet owned, LivingEntity entity) {
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> verifySpawn(player, definition, owned, entity), 1L);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> verifySpawn(player, definition, owned, entity), 5L);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> verifySpawn(player, definition, owned, entity), 20L);
+    }
+
+    private void verifySpawn(Player player, PetDefinition definition, OwnedPet owned, LivingEntity entity) {
+        UUID uuid = player.getUniqueId();
+        VelioraPet active = activePets.get(uuid);
+        if (active == null || active.entity().getUniqueId() != entity.getUniqueId()) return;
+        if (entity != null && !entity.isDead() && entity.isValid()) return;
+        int attempts = lastSpawnAttempts.getOrDefault(uuid, 0);
+        activePets.remove(uuid);
+        if (attempts < 2) {
+            lastSpawnAttempts.put(uuid, attempts + 1);
+            Location retryLocation = safeSpawnLocation(player);
+            if (retryLocation != null) {
+                try {
+                    LivingEntity retry = spawnEntity(player, definition, owned, retryLocation);
+                    activePets.put(uuid, new VelioraPet(uuid, definition.id(), retry));
+                    data.get(uuid).activePet(definition.id());
+                    data.save(uuid);
+                    scheduleSpawnChecks(player, definition, owned, retry);
+                    rememberSpawnFailure(uuid, "respawn attempt " + (attempts + 1) + " after vanished entity");
+                    return;
+                } catch (Exception exception) {
+                    rememberSpawnFailure(uuid, "retry failed: " + exception.getMessage());
+                }
+            }
         }
+        data.get(uuid).activePet(null);
+        data.save(uuid);
+        String region = redProtect.regionName(player.getLocation());
+        rememberSpawnFailure(uuid, "pet vanished after spawn. pet=" + definition.id() + ", type=" + definition.entityType() + ", region=" + region + ", attempts=" + attempts);
+        player.sendMessage(config.color(config.prefix() + "&cPet gagal muncul karena diblokir RedProtect/world/plugin lain."));
+        plugin.getLogger().warning("VelioraPets DEBUG: pet vanished after spawn: " + definition.id() + " " + definition.entityType() + " owner=" + player.getName() + " region=" + region + " attempts=" + attempts);
+    }
+
+    private Location safeSpawnLocation(Player owner) {
+        Location base = owner.getLocation();
+        for (int radius = 0; radius <= 3; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    Location candidate = base.clone().add(dx + 0.5D, 0.0D, dz + 0.5D);
+                    if (candidate.getY() < 1.0D || !isSafeSpawnBlock(candidate)) candidate = owner.getWorld().getHighestBlockAt(candidate).getLocation().add(0.5D, 1.0D, 0.5D);
+                    if (candidate.getY() < 1.0D) candidate.setY(1.0D);
+                    if (isSafeSpawnBlock(candidate) && redProtect.canSpawnPet(owner, candidate)) return candidate;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean isSafeSpawnBlock(Location location) {
+        Block feet = location.getBlock();
+        Block head = location.clone().add(0.0D, 1.0D, 0.0D).getBlock();
+        Block below = location.clone().add(0.0D, -1.0D, 0.0D).getBlock();
+        return !feet.getType().isSolid() && !head.getType().isSolid() && below.getType().isSolid();
     }
 
     public void dismiss(Player player, boolean message) {
@@ -316,10 +393,17 @@ public final class PetManager implements Listener {
         active.targetUuid(target.getUniqueId());
     }
 
-    private LivingEntity spawnEntity(Player player, PetDefinition definition, OwnedPet owned) {
-        Location location = player.getLocation().clone().add(1.0D, 0.0D, 1.0D);
-        Entity raw = player.getWorld().spawnEntity(location, definition.entityType());
-        LivingEntity entity = (LivingEntity) raw;
+    private LivingEntity spawnEntity(Player player, PetDefinition definition, OwnedPet owned, Location location) {
+        Class<? extends Entity> rawClass = definition.entityType().getEntityClass();
+        if (rawClass == null || !LivingEntity.class.isAssignableFrom(rawClass)) {
+            plugin.getLogger().warning("VelioraPets DEBUG: no entity class mapping for " + definition.entityType());
+            throw new IllegalStateException("no entity class mapping for " + definition.entityType());
+        }
+        Class<? extends LivingEntity> entityClass = rawClass.asSubclass(LivingEntity.class);
+        return player.getWorld().spawn(location, entityClass, entity -> configureSpawnedEntity(entity, player, definition, owned));
+    }
+
+    private void configureSpawnedEntity(LivingEntity entity, Player player, PetDefinition definition, OwnedPet owned) {
         entity.addScoreboardTag(PET_TAG);
         entity.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
         entity.getPersistentDataContainer().set(petIdKey, PersistentDataType.STRING, definition.id());
@@ -343,7 +427,6 @@ public final class PetManager implements Listener {
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
         tryBaby(entity);
         scaleHelper.apply(entity, scaleFor(definition, owned.level()));
-        return entity;
     }
 
     private void tickFollowCombatLegacy() { }
