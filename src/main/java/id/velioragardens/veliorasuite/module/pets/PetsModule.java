@@ -15,11 +15,8 @@ public final class PetsModule implements VelioraModule {
     private PetRideController rideController;
     private PetSafeModeGuardListener safeModeGuardListener;
     private PetRedProtectGuardListener redProtectGuardListener;
-    private BukkitTask flyingFollowTask;
-    private BukkitTask aquaticFollowTask;
     private BukkitTask rideTask;
     private BukkitTask quietTask;
-    private BukkitTask visibleControllerTask;
     private BukkitTask coreControllerTask;
     private boolean enabled;
 
@@ -51,33 +48,19 @@ public final class PetsModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(redProtectGuardListener, plugin);
         cleanupAnchorsOnly();
         manager.start(guiManager);
-        if (manager.config().stableSafeMode()) {
-            coreControllerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetCoreControllerTask(plugin, manager), 2L, 2L);
-            rideTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetRideTask(manager.config()), 2L, 2L);
-            quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager.config()), 20L, 40L);
-            return;
-        }
-        flyingFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetFlyingFollowTask(plugin, manager.config()), 5L, 5L);
-        aquaticFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetAquaticFollowTask(plugin, manager.config()), 2L, 2L);
+        coreControllerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetCoreControllerTask(plugin, manager), 2L, 2L);
         rideTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetRideTask(manager.config()), 2L, 2L);
         quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager.config()), 20L, 40L);
-        visibleControllerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetVisibleControllerTask(plugin, manager), 1L, 5L);
     }
 
     @Override
     public void disable() {
         enabled = false;
-        if (flyingFollowTask != null) flyingFollowTask.cancel();
-        if (aquaticFollowTask != null) aquaticFollowTask.cancel();
         if (rideTask != null) rideTask.cancel();
         if (quietTask != null) quietTask.cancel();
-        if (visibleControllerTask != null) visibleControllerTask.cancel();
         if (coreControllerTask != null) coreControllerTask.cancel();
-        flyingFollowTask = null;
-        aquaticFollowTask = null;
         rideTask = null;
         quietTask = null;
-        visibleControllerTask = null;
         coreControllerTask = null;
         HandlerList.unregisterAll(manager);
         HandlerList.unregisterAll(guiManager);
