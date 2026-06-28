@@ -13,11 +13,13 @@ public final class PetsModule implements VelioraModule {
     private PetGuiManager guiManager;
     private PetSafetyListener safetyListener;
     private PetRideController rideController;
+    private PetSafeModeGuardListener safeModeGuardListener;
     private BukkitTask flyingFollowTask;
     private BukkitTask aquaticFollowTask;
     private BukkitTask rideTask;
     private BukkitTask quietTask;
     private BukkitTask visibleControllerTask;
+    private BukkitTask coreControllerTask;
     private boolean enabled;
 
     public PetsModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -32,6 +34,7 @@ public final class PetsModule implements VelioraModule {
         guiManager = new PetGuiManager(plugin, manager, manager.config());
         safetyListener = new PetSafetyListener();
         rideController = new PetRideController(manager);
+        safeModeGuardListener = new PetSafeModeGuardListener(manager);
     }
 
     @Override
@@ -42,7 +45,15 @@ public final class PetsModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(guiManager, plugin);
         plugin.getServer().getPluginManager().registerEvents(safetyListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(rideController, plugin);
+        plugin.getServer().getPluginManager().registerEvents(safeModeGuardListener, plugin);
+        cleanupAnchorsOnly();
         manager.start(guiManager);
+        if (manager.config().stableSafeMode()) {
+            coreControllerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetCoreControllerTask(plugin, manager), 2L, 2L);
+            rideTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetRideTask(manager.config()), 2L, 2L);
+            quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager.config()), 20L, 40L);
+            return;
+        }
         flyingFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetFlyingFollowTask(plugin, manager.config()), 5L, 5L);
         aquaticFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetAquaticFollowTask(plugin, manager.config()), 2L, 2L);
         rideTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetRideTask(manager.config()), 2L, 2L);
@@ -58,15 +69,18 @@ public final class PetsModule implements VelioraModule {
         if (rideTask != null) rideTask.cancel();
         if (quietTask != null) quietTask.cancel();
         if (visibleControllerTask != null) visibleControllerTask.cancel();
+        if (coreControllerTask != null) coreControllerTask.cancel();
         flyingFollowTask = null;
         aquaticFollowTask = null;
         rideTask = null;
         quietTask = null;
         visibleControllerTask = null;
+        coreControllerTask = null;
         HandlerList.unregisterAll(manager);
         HandlerList.unregisterAll(guiManager);
         HandlerList.unregisterAll(safetyListener);
         HandlerList.unregisterAll(rideController);
+        HandlerList.unregisterAll(safeModeGuardListener);
         if (manager != null) manager.shutdown();
         registerDisabledCommand();
     }
@@ -96,5 +110,13 @@ public final class PetsModule implements VelioraModule {
         DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraPets");
         command.setExecutor(disabledCommand);
         command.setTabCompleter(disabledCommand);
+    }
+
+    private void cleanupAnchorsOnly() {
+        for (org.bukkit.World world : plugin.getServer().getWorlds()) {
+            for (org.bukkit.entity.Entity entity : world.getEntities()) {
+                if (entity.getScoreboardTags().contains("veliorapets_aquatic_anchor")) entity.remove();
+            }
+        }
     }
 }
