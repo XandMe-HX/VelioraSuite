@@ -23,9 +23,10 @@ import java.util.Map;
 import java.util.Set;
 
 public final class PetConfigManager {
-    private static final Set<String> SAFE_MODE_DISABLED_IDS = Set.of(
+    private static final Set<String> WALKING_DISABLED_IDS = Set.of(
             "bat_sprite", "parrot_scout", "bee_safe", "allay_wisp", "phantom_shadow_safe", "vex_lantern_safe", "blaze_core_safe", "astral_allay", "abyss_phantom_safe",
-            "dolphin", "cod", "salmon", "tropical_fish", "pufferfish", "tadpole", "elder_guardian", "guardian", "axolotl"
+            "phantom", "ghast", "happy_ghast", "happghast", "happyghast", "bee", "allay", "bat", "parrot", "blaze", "vex", "ender_dragon", "wither",
+            "dolphin", "cod", "salmon", "tropical_fish", "pufferfish", "tadpole", "elder_guardian", "guardian", "squid", "glow_squid"
     );
 
     private final VelioraSuite plugin;
@@ -50,7 +51,9 @@ public final class PetConfigManager {
 
     public String prefix() { return str("messages.prefix", "&8[&dVelioraPets&8] "); }
     public boolean stableSafeMode() { return bool("settings.stable-safe-mode", true); }
+    public boolean walkingPetsOnly() { return bool("settings.walking-pets-only", true); }
     public boolean allowAquaticPets() { return bool("settings.allow-aquatic-pets", false); }
+    public boolean allowAxolotlGroundPet() { return bool("settings.allow-axolotl-ground-pet", true); }
     public boolean economyEnabled() { return bool("settings.economy.enabled", true); }
     public long gachaPrice() { return Math.max(0L, config.getLong("settings.economy.gacha-price", 100000L)); }
     public int maxLevel() { return Math.max(1, integer("settings.max-level", 50)); }
@@ -105,12 +108,12 @@ public final class PetConfigManager {
     public Sound sound(String path, String fallback) { try { return Sound.valueOf(str(path, fallback).toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Sound.UI_BUTTON_CLICK; } }
 
     public boolean isSafeModeDisabledPet(String id) {
-        if (!stableSafeMode()) return false;
         String key = id == null ? "" : id.toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
-        if (SAFE_MODE_DISABLED_IDS.contains(key)) return true;
+        if (walkingPetsOnly() && WALKING_DISABLED_IDS.contains(key)) return true;
+        if (!stableSafeMode()) return false;
         String rawEntity = config == null ? "" : config.getString("pets." + key + ".entity", "");
         EntityType type = entityType(rawEntity);
-        return type != null && (isFlyingPet(type) || defaultAquatic(type));
+        return type != null && isDisabledByWalkingMode(type);
     }
 
     private void loadChances() {
@@ -142,6 +145,11 @@ public final class PetConfigManager {
         }
         boolean flyingPet = isFlyingPet(type);
         boolean aquatic = config.getBoolean(path + ".aquatic", defaultAquatic(type));
+        if (isAxolotlGround(type)) aquatic = false;
+        if (walkingPetsOnly() && (WALKING_DISABLED_IDS.contains(normalizedId) || isDisabledByWalkingMode(type))) {
+            plugin.getLogger().warning("VelioraPets: skip non-walking pet karena walking-pets-only: " + id + " / " + rawEntity);
+            return;
+        }
         if (stableSafeMode() && (flyingPet || aquatic || isSafeModeDisabledPet(normalizedId))) {
             plugin.getLogger().warning("VelioraPets: skip pet karena stable-safe-mode: " + id + " / " + rawEntity);
             return;
@@ -166,6 +174,7 @@ public final class PetConfigManager {
     }
 
     private void addBuiltinPhase12EPets() {
+        addBuiltin("axolotl", "&dAxolotl", "AXOLOTL", "TROPICAL_FISH_BUCKET", PetRarity.COMMON, 0.0D, 0.55D, 120000L, false, 10, "TROPICAL_FISH", 20, PetSkillType.NONE, 0.0D, false);
         addBuiltin("ocelot", "&eOcelot", "OCELOT", "COD", PetRarity.COMMON, 1.0D, 0.55D, 130000L, false, 10, "COD", 20, PetSkillType.NONE, 0.0D, false);
         addBuiltin("polar_bear", "&bPolar Bear", "POLAR_BEAR", "SNOW_BLOCK", PetRarity.RARE, 1.5D, 0.65D, 280000L, true, 10, "COD", 25, PetSkillType.PET_DAMAGE, 0.01D, false);
         addBuiltin("dolphin", "&bDolphin", "DOLPHIN", "COD", PetRarity.RARE, 0.0D, 0.55D, 220000L, false, 10, "COD", 25, PetSkillType.NONE, 0.0D, true);
@@ -202,6 +211,8 @@ public final class PetConfigManager {
         }
         boolean flying = isFlyingPet(type);
         boolean isAquatic = aquatic || defaultAquatic(type);
+        if (isAxolotlGround(type)) isAquatic = false;
+        if (walkingPetsOnly() && (WALKING_DISABLED_IDS.contains(normalizedId) || isDisabledByWalkingMode(type))) return;
         if (stableSafeMode() && (flying || isAquatic || isSafeModeDisabledPet(normalizedId))) return;
         if (flying && !allowFlyingPets()) return;
         if (isAquatic && !allowAquaticPets()) return;
@@ -223,10 +234,21 @@ public final class PetConfigManager {
 
     private boolean defaultAquatic(EntityType type) {
         if (type == null) return false;
+        if (isAxolotlGround(type)) return false;
         return switch (type) {
             case DOLPHIN, COD, SALMON, TROPICAL_FISH, PUFFERFISH, TADPOLE, ELDER_GUARDIAN, GUARDIAN, AXOLOTL -> true;
             default -> false;
         };
+    }
+
+    private boolean isAxolotlGround(EntityType type) {
+        return walkingPetsOnly() && allowAxolotlGroundPet() && type == EntityType.AXOLOTL;
+    }
+
+    private boolean isDisabledByWalkingMode(EntityType type) {
+        if (type == null) return false;
+        if (isAxolotlGround(type)) return false;
+        return isFlyingPet(type) || defaultAquatic(type) || type.name().equals("SQUID") || type.name().equals("GLOW_SQUID");
     }
 
     private boolean defaultRideable(EntityType type) {
