@@ -1,7 +1,6 @@
 package id.velioragardens.veliorasuite.module.pets;
 
 import id.velioragardens.veliorasuite.module.pets.model.VelioraPet;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -44,11 +43,18 @@ public final class PetSafeModeGuardListener implements Listener {
     private void sendDebug(Player player) {
         VelioraPet active = manager.activePet(player.getUniqueId());
         LivingEntity entity = active == null ? null : active.entity();
+        Location playerLoc = player.getLocation();
         player.sendMessage(config.color("&8[&dVelioraPets Debug&8]"));
         player.sendMessage(config.color("&7module enabled: &ftrue"));
         player.sendMessage(config.color("&7stable-safe-mode: &f" + config.stableSafeMode()));
         player.sendMessage(config.color("&7active pet id: &f" + (active == null ? "none" : active.petId())));
         player.sendMessage(config.color("&7owner gamemode: &f" + player.getGameMode().name()));
+        player.sendMessage(config.color("&7redprotect installed: &f" + manager.redProtectCompat().isInstalled()));
+        player.sendMessage(config.color("&7redprotect region: &f" + manager.redProtectCompat().regionName(playerLoc)));
+        player.sendMessage(config.color("&7redprotect can spawn here: &f" + manager.redProtectCompat().canSpawnPet(player, playerLoc)));
+        player.sendMessage(config.color("&7redprotect can move here: &f" + manager.redProtectCompat().canMovePet(player, playerLoc, playerLoc)));
+        player.sendMessage(config.color("&7last spawn failure: &f" + manager.lastSpawnFailure(player.getUniqueId())));
+        player.sendMessage(config.color("&7last spawn attempts: &f" + manager.lastSpawnAttempts(player.getUniqueId())));
         if (entity == null) {
             player.sendMessage(config.color("&7entity: &cnone"));
             player.sendMessage(config.color("&7nearby veliorapets_pet count: &f" + nearbyPetCount(player)));
