@@ -59,6 +59,17 @@ public final class KitsDataManager {
         save();
     }
 
+    public boolean hasClaimedFree(UUID uuid, String kitId) {
+        String normalized = kitId.toLowerCase();
+        String path = playerPath(uuid) + ".claims." + normalized;
+        return data.getBoolean(path + ".claimed-free", data.getInt(path + ".total", 0) > 0);
+    }
+
+    public void setClaimedFree(UUID uuid, String kitId, boolean claimed) {
+        data.set(playerPath(uuid) + ".claims." + kitId.toLowerCase() + ".claimed-free", claimed);
+        save();
+    }
+
     public boolean hasPurchased(UUID uuid, String kitId) {
         return data.getStringList(playerPath(uuid) + ".purchased").contains(kitId.toLowerCase());
     }
