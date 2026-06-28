@@ -7,14 +7,11 @@ import id.velioragardens.veliorasuite.module.pets.model.VelioraPet;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
 import java.lang.reflect.Method;
@@ -34,14 +31,12 @@ public final class PetCoreControllerTask implements Runnable {
 
     private final PetManager manager;
     private final PetConfigManager config;
-    private final NamespacedKey ownerKey;
     private final Map<UUID, Location> lastLocations = new HashMap<>();
     private final Map<UUID, Long> stuckSince = new HashMap<>();
 
     public PetCoreControllerTask(VelioraSuite plugin, PetManager manager) {
         this.manager = manager;
         this.config = manager.config();
-        this.ownerKey = new NamespacedKey(plugin, "veliorapets_owner_uuid");
     }
 
     @Override
@@ -56,16 +51,14 @@ public final class PetCoreControllerTask implements Runnable {
                 continue;
             }
             PetDefinition definition = config.pets().get(active.petId());
-            stabilize(owner, pet, definition);
-            if (ownerNotCombat(owner) || definition == null || definition.aquaticPet() || definition.flyingPet()) {
-                active.targetUuid(null);
-            }
+            stabilize(pet);
+            if (ownerNotCombat(owner) || definition == null || definition.aquaticPet() || definition.flyingPet()) active.targetUuid(null);
             follow(owner, pet);
             combat(owner, active, definition);
         }
     }
 
-    private void stabilize(Player owner, LivingEntity pet, PetDefinition definition) {
+    private void stabilize(LivingEntity pet) {
         setInvisible(pet, false);
         pet.setCustomNameVisible(true);
         pet.setRemoveWhenFarAway(false);
@@ -145,9 +138,8 @@ public final class PetCoreControllerTask implements Runnable {
         active.lastAttackMillis(now);
         OwnedPet owned = manager.playerData(owner.getUniqueId()).get(active.petId());
         if (owned != null) {
-            boolean leveled = owned.addExp(2, config.maxLevel());
+            owned.addExp(2, config.maxLevel());
             manager.data().save(owner.getUniqueId());
-            if (leveled) pet.getPersistentDataContainer().set(new NamespacedKey("veliorasuite", "noop"), PersistentDataType.STRING, "noop");
         }
     }
 
