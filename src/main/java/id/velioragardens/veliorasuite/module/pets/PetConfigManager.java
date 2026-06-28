@@ -20,8 +20,14 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public final class PetConfigManager {
+    private static final Set<String> SAFE_MODE_DISABLED_IDS = Set.of(
+            "bat_sprite", "parrot_scout", "bee_safe", "allay_wisp", "phantom_shadow_safe", "vex_lantern_safe", "blaze_core_safe", "astral_allay", "abyss_phantom_safe",
+            "dolphin", "cod", "salmon", "tropical_fish", "pufferfish", "tadpole", "elder_guardian", "guardian", "axolotl"
+    );
+
     private final VelioraSuite plugin;
     private FileConfiguration config;
     private final Map<String, PetDefinition> pets = new LinkedHashMap<>();
@@ -43,6 +49,8 @@ public final class PetConfigManager {
     }
 
     public String prefix() { return str("messages.prefix", "&8[&dVelioraPets&8] "); }
+    public boolean stableSafeMode() { return bool("settings.stable-safe-mode", true); }
+    public boolean allowAquaticPets() { return bool("settings.allow-aquatic-pets", false); }
     public boolean economyEnabled() { return bool("settings.economy.enabled", true); }
     public long gachaPrice() { return Math.max(0L, config.getLong("settings.economy.gacha-price", 100000L)); }
     public int maxLevel() { return Math.max(1, integer("settings.max-level", 50)); }
@@ -96,6 +104,15 @@ public final class PetConfigManager {
     public String formatMoney(long amount) { return moneyFormat.format(Math.max(0L, amount)); }
     public Sound sound(String path, String fallback) { try { return Sound.valueOf(str(path, fallback).toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Sound.UI_BUTTON_CLICK; } }
 
+    public boolean isSafeModeDisabledPet(String id) {
+        if (!stableSafeMode()) return false;
+        String key = id == null ? "" : id.toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+        if (SAFE_MODE_DISABLED_IDS.contains(key)) return true;
+        String rawEntity = config == null ? "" : config.getString("pets." + key + ".entity", "");
+        EntityType type = entityType(rawEntity);
+        return type != null && (isFlyingPet(type) || defaultAquatic(type));
+    }
+
     private void loadChances() {
         chances.clear();
         for (PetRarity rarity : PetRarity.values()) chances.put(rarity, Math.max(0.0D, number("gacha.chance." + rarity.name().toLowerCase(Locale.ROOT), defaultChance(rarity))));
@@ -124,8 +141,17 @@ public final class PetConfigManager {
             return;
         }
         boolean flyingPet = isFlyingPet(type);
+        boolean aquatic = config.getBoolean(path + ".aquatic", defaultAquatic(type));
+        if (stableSafeMode() && (flyingPet || aquatic || isSafeModeDisabledPet(normalizedId))) {
+            plugin.getLogger().warning("VelioraPets: skip pet karena stable-safe-mode: " + id + " / " + rawEntity);
+            return;
+        }
         if (flyingPet && !allowFlyingPets()) {
             plugin.getLogger().warning("VelioraPets: skip flying pet karena settings.allow-flying-pets false: " + type + " for " + id);
+            return;
+        }
+        if (aquatic && !allowAquaticPets()) {
+            plugin.getLogger().warning("VelioraPets: skip aquatic pet karena settings.allow-aquatic-pets false: " + type + " for " + id);
             return;
         }
         if (flyingPet && !flyingSafeMode()) {
@@ -135,27 +161,8 @@ public final class PetConfigManager {
         PetRarity rarity = PetRarity.from(config.getString(path + ".rarity", "COMMON"));
         PetSkillType skillType = PetSkillType.from(config.getString(path + ".skill.type", "NONE"));
         Material food = material(config.getString(path + ".food.material", defaultFood(rarity).name()), defaultFood(rarity));
-        boolean aquatic = config.getBoolean(path + ".aquatic", defaultAquatic(type));
         double defaultDamage = aquatic ? 0.0D : defaultDamage(rarity);
-        pets.put(normalizedId, new PetDefinition(
-                normalizedId,
-                config.getString(path + ".display-name", id),
-                type,
-                material(config.getString(path + ".icon", "BONE"), Material.BONE),
-                rarity,
-                skillType,
-                Math.min(maxSkillBonus(skillType), Math.max(0.0D, config.getDouble(path + ".skill.bonus", 0.0D))),
-                Math.max(0.0D, config.getDouble(path + ".damage", defaultDamage)),
-                Math.max(0.1D, config.getDouble(path + ".scale", 0.5D)),
-                Math.max(0L, config.getLong(path + ".price", defaultPrice(rarity))),
-                storageSize(rarity),
-                food,
-                Math.max(1, config.getInt(path + ".food.exp", defaultFeedExp(rarity))),
-                flyingPet,
-                config.getBoolean(path + ".rideable", defaultRideable(type)),
-                Math.max(1, config.getInt(path + ".adult-level", defaultAdultLevel())),
-                aquatic
-        ));
+        pets.put(normalizedId, new PetDefinition(normalizedId, config.getString(path + ".display-name", id), type, material(config.getString(path + ".icon", "BONE"), Material.BONE), rarity, skillType, Math.min(maxSkillBonus(skillType), Math.max(0.0D, config.getDouble(path + ".skill.bonus", 0.0D))), Math.max(0.0D, config.getDouble(path + ".damage", defaultDamage)), Math.max(0.1D, config.getDouble(path + ".scale", 0.5D)), Math.max(0L, config.getLong(path + ".price", defaultPrice(rarity))), storageSize(rarity), food, Math.max(1, config.getInt(path + ".food.exp", defaultFeedExp(rarity))), flyingPet, config.getBoolean(path + ".rideable", defaultRideable(type)), Math.max(1, config.getInt(path + ".adult-level", defaultAdultLevel())), aquatic));
     }
 
     private void addBuiltinPhase12EPets() {
@@ -194,8 +201,11 @@ public final class PetConfigManager {
             return;
         }
         boolean flying = isFlyingPet(type);
+        boolean isAquatic = aquatic || defaultAquatic(type);
+        if (stableSafeMode() && (flying || isAquatic || isSafeModeDisabledPet(normalizedId))) return;
         if (flying && !allowFlyingPets()) return;
-        pets.put(normalizedId, new PetDefinition(normalizedId, display, type, material(icon, Material.BONE), rarity, skill, Math.min(maxSkillBonus(skill), Math.max(0.0D, skillBonus)), Math.max(0.0D, damage), scale, price, storageSize(rarity), material(food, defaultFood(rarity)), Math.max(1, feedExp), flying, rideable, Math.max(1, adultLevel), aquatic || defaultAquatic(type)));
+        if (isAquatic && !allowAquaticPets()) return;
+        pets.put(normalizedId, new PetDefinition(normalizedId, display, type, material(icon, Material.BONE), rarity, skill, Math.min(maxSkillBonus(skill), Math.max(0.0D, skillBonus)), Math.max(0.0D, damage), scale, price, storageSize(rarity), material(food, defaultFood(rarity)), Math.max(1, feedExp), flying, rideable, Math.max(1, adultLevel), isAquatic));
     }
 
     private boolean isBlacklistedPet(String id, String rawEntity) {
@@ -205,7 +215,6 @@ public final class PetConfigManager {
     }
 
     private boolean isFlyingPet(EntityType type) {
-        // Jangan pakai EntityType.HAPPY_GHAST di sini agar tetap aman di API yang belum punya enum itu.
         return type != null && switch (type) {
             case PHANTOM, GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER, BEE, ALLAY, BAT, PARROT -> true;
             default -> false;
@@ -227,10 +236,7 @@ public final class PetConfigManager {
         };
     }
 
-    private double maxSkillBonus(PetSkillType type) {
-        return switch (type) { case QUEST_MONEY -> 0.03D; case FISHING_LUCK -> 0.02D; case PET_DAMAGE -> 0.05D; default -> 0.0D; };
-    }
-
+    private double maxSkillBonus(PetSkillType type) { return switch (type) { case QUEST_MONEY -> 0.03D; case FISHING_LUCK -> 0.02D; case PET_DAMAGE -> 0.05D; default -> 0.0D; }; }
     private double defaultChance(PetRarity rarity) { return switch (rarity) { case COMMON -> 55.0D; case RARE -> 25.0D; case EPIC -> 12.0D; case LEGENDARY -> 6.0D; case MYTHIC -> 2.0D; }; }
     private long defaultPrice(PetRarity rarity) { return switch (rarity) { case COMMON -> 100000L; case RARE -> 200000L; case EPIC -> 400000L; case LEGENDARY -> 700000L; case MYTHIC -> 1000000L; }; }
     private double defaultDamage(PetRarity rarity) { return switch (rarity) { case COMMON -> 1.0D; case RARE -> 1.5D; case EPIC -> 2.0D; case LEGENDARY -> 2.5D; case MYTHIC -> 3.0D; }; }
