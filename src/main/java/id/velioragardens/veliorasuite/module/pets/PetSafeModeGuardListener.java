@@ -31,6 +31,10 @@ public final class PetSafeModeGuardListener implements Listener {
         if (!root.equals("pet") && !root.equals("pets") && !root.equals("vpet") && !root.equals("vpets")) return;
         if (args.length >= 2 && args[1].equalsIgnoreCase("debug")) {
             event.setCancelled(true);
+            if (!event.getPlayer().hasPermission("veliorasuite.pets.admin") && !event.getPlayer().isOp()) {
+                event.getPlayer().sendMessage(config.color(config.message("no-permission", "%prefix% &cKamu tidak punya izin.")));
+                return;
+            }
             sendDebug(event.getPlayer());
             return;
         }
@@ -89,22 +93,10 @@ public final class PetSafeModeGuardListener implements Listener {
     }
 
     private boolean isInvisible(LivingEntity entity) {
-        try {
-            Method method = entity.getClass().getMethod("isInvisible");
-            Object value = method.invoke(entity);
-            return value instanceof Boolean b && b;
-        } catch (Exception ignored) {
-            return false;
-        }
+        try { Method method = entity.getClass().getMethod("isInvisible"); Object value = method.invoke(entity); return value instanceof Boolean b && b; } catch (Exception ignored) { return false; }
     }
 
     private boolean hasAi(LivingEntity entity) {
-        try {
-            Method method = entity.getClass().getMethod("hasAI");
-            Object value = method.invoke(entity);
-            return value instanceof Boolean b && b;
-        } catch (Exception ignored) {
-            return false;
-        }
+        try { Method method = entity.getClass().getMethod("hasAI"); Object value = method.invoke(entity); return value instanceof Boolean b && b; } catch (Exception ignored) { return false; }
     }
 }
