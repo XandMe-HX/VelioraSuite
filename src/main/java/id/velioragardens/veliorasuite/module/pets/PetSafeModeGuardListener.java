@@ -47,6 +47,7 @@ public final class PetSafeModeGuardListener implements Listener {
         player.sendMessage(config.color("&8[&dVelioraPets Debug&8]"));
         player.sendMessage(config.color("&7module enabled: &ftrue"));
         player.sendMessage(config.color("&7stable-safe-mode: &f" + config.stableSafeMode()));
+        player.sendMessage(config.color("&7walking-pets-only: &f" + config.walkingPetsOnly()));
         player.sendMessage(config.color("&7active pet id: &f" + (active == null ? "none" : active.petId())));
         player.sendMessage(config.color("&7owner gamemode: &f" + player.getGameMode().name()));
         player.sendMessage(config.color("&7redprotect installed: &f" + manager.redProtectCompat().isInstalled()));
@@ -55,6 +56,11 @@ public final class PetSafeModeGuardListener implements Listener {
         player.sendMessage(config.color("&7redprotect can move here: &f" + manager.redProtectCompat().canMovePet(player, playerLoc, playerLoc)));
         player.sendMessage(config.color("&7last spawn failure: &f" + manager.lastSpawnFailure(player.getUniqueId())));
         player.sendMessage(config.color("&7last spawn attempts: &f" + manager.lastSpawnAttempts(player.getUniqueId())));
+        player.sendMessage(config.color("&7last movement reason: &f" + PetMovementDebug.reason(player.getUniqueId())));
+        player.sendMessage(config.color("&7last target location: &f" + PetMovementDebug.target(player.getUniqueId())));
+        player.sendMessage(config.color("&7redprotect target allowed: &f" + PetMovementDebug.redProtectAllowed(player.getUniqueId())));
+        player.sendMessage(config.color("&7pathfinder used: &f" + PetMovementDebug.pathfinderUsed(player.getUniqueId())));
+        player.sendMessage(config.color("&7last teleport reason: &f" + PetMovementDebug.teleportReason(player.getUniqueId())));
         if (entity == null) {
             player.sendMessage(config.color("&7entity: &cnone"));
             player.sendMessage(config.color("&7nearby veliorapets_pet count: &f" + nearbyPetCount(player)));
