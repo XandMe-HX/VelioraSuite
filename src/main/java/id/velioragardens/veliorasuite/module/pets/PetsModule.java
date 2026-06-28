@@ -43,7 +43,7 @@ public final class PetsModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(rideController, plugin);
         manager.start(guiManager);
         flyingFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetFlyingFollowTask(plugin, manager.config()), 5L, 5L);
-        aquaticFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetAquaticFollowTask(plugin, manager.config()), 5L, 5L);
+        aquaticFollowTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetAquaticFollowTask(plugin, manager.config()), 2L, 2L);
         rideTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetRideTask(manager.config()), 2L, 2L);
         quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager.config()), 20L, 40L);
     }
