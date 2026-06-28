@@ -284,6 +284,8 @@ permissions:
     default: op
   veliorasuite.boss.stop:
     default: op
+  veliorasuite.boss.top:
+    default: true
   veliorasuite.pets.use:
     default: true
   veliorasuite.pets.shop:
