@@ -29,7 +29,7 @@ public final class KitRewardManager {
 
     public int getMissingSlots(Player player, Kit kit) {
         RewardPlan plan = buildPlan(player, kit);
-        return countMissingSlots(player.getInventory().getStorageContents(), plan.inventoryItems());
+        return countMissingSlots(player.getInventory().getStorageContents(), plan.allInventoryItems());
     }
 
     public boolean willReplaceArmor(Player player, Kit kit) {
