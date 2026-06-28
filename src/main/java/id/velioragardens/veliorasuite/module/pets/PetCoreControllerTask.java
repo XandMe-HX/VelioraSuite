@@ -9,7 +9,6 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
@@ -206,11 +205,14 @@ public final class PetCoreControllerTask implements Runnable {
 
     private boolean shouldUsePathfinder(PetDefinition definition) {
         if (definition == null || definition.aquaticPet() || definition.flyingPet()) return false;
-        EntityType type = definition.entityType();
+        String type = definition.entityType().name();
         return switch (type) {
-            case COW, SHEEP, PIG, CHICKEN, RABBIT, TURTLE, GOAT, CAMEL, HORSE, DONKEY, MULE,
-                    LLAMA, TRADER_LLAMA, FOX, PANDA, CAT, WOLF, FROG, AXOLOTL, ARMADILLO, SNIFFER,
-                    MUSHROOM_COW, VILLAGER, WANDERING_TRADER, STRIDER, SKELETON_HORSE, ZOMBIE_HORSE -> true;
+            case "COW", "SHEEP", "PIG", "CHICKEN", "RABBIT", "TURTLE", "GOAT", "CAMEL",
+                    "HORSE", "DONKEY", "MULE", "LLAMA", "TRADER_LLAMA",
+                    "FOX", "PANDA", "CAT", "WOLF", "FROG", "AXOLOTL", "ARMADILLO", "SNIFFER",
+                    "MOOSHROOM", "MUSHROOM_COW",
+                    "VILLAGER", "WANDERING_TRADER", "STRIDER",
+                    "SKELETON_HORSE", "ZOMBIE_HORSE" -> true;
             default -> false;
         };
     }
