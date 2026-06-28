@@ -135,12 +135,16 @@ public final class KitsManager {
             return;
         }
 
-        if (!handlePriceBeforeClaim(player, kit)) {
+        boolean freeClaim = isFreeClaimAvailable(player, kit);
+        if (!handlePriceBeforeClaim(player, kit, freeClaim)) {
             return;
         }
 
         rewardManager.giveKit(player, kit, configManager.isDropExtraItems());
         dataManager.setLastClaim(player.getUniqueId(), kit.getId(), System.currentTimeMillis());
+        if (freeClaim) {
+            dataManager.setClaimedFree(player.getUniqueId(), kit.getId(), true);
+        }
         send(player, "kit-claimed", "%prefix% &aKamu berhasil claim kit &f%kit%&a.", Map.of("%kit%", kit.getId()));
     }
 
@@ -204,6 +208,9 @@ public final class KitsManager {
 
         rewardManager.giveKit(player, kit, configManager.isDropExtraItems());
         dataManager.setLastClaim(player.getUniqueId(), kit.getId(), System.currentTimeMillis());
+        if (kit.isFirstClaimFree()) {
+            dataManager.setClaimedFree(player.getUniqueId(), kit.getId(), true);
+        }
         dataManager.setFirstJoinGiven(player.getUniqueId(), true);
         send(player, "first-join-given", "%prefix% &aKamu menerima first join kit &f%kit%&a.", Map.of("%kit%", kit.getId()));
     }
@@ -294,8 +301,12 @@ public final class KitsManager {
         return configManager.getPremiumPermissionPrefix() + kit.getPremiumLevel();
     }
 
-    private boolean handlePriceBeforeClaim(Player player, Kit kit) {
-        if (!kit.isBuyEnabled() || player.hasPermission(configManager.getBypassPricePermission()) || player.hasPermission(configManager.getAdminPermission())) {
+    private boolean isFreeClaimAvailable(Player player, Kit kit) {
+        return kit.isFirstClaimFree() && !dataManager.hasClaimedFree(player.getUniqueId(), kit.getId());
+    }
+
+    private boolean handlePriceBeforeClaim(Player player, Kit kit, boolean freeClaim) {
+        if (!kit.isBuyEnabled() || freeClaim || player.hasPermission(configManager.getBypassPricePermission()) || player.hasPermission(configManager.getAdminPermission())) {
             return true;
         }
 
@@ -311,6 +322,10 @@ public final class KitsManager {
     }
 
     private boolean chargePlayer(Player player, Kit kit) {
+        if (kit.getPrice() <= 0.0D || !configManager.isEconomyEnabled()) {
+            return true;
+        }
+
         if (!purchaseManager.hasEconomy()) {
             send(player, "vault-not-found", "%prefix% &cEconomy belum tersedia, pembelian kit tidak bisa digunakan.", Map.of());
             return false;
