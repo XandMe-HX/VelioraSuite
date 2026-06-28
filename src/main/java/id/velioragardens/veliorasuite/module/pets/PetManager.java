@@ -340,6 +340,14 @@ public final class PetManager implements Listener {
     }
 
     public void feed(Player player, String target) {
+        feed(player, target, 1);
+    }
+
+    public void feed(Player player, String target, int requestedAmount) {
+        if (requestedAmount < 1) {
+            player.sendMessage(config.color(config.message("pet-feed-invalid-amount", "%prefix% &cJumlah makanan harus angka minimal 1.")));
+            return;
+        }
         OwnedPet owned = resolveOwned(player, target);
         if (owned == null) {
             player.sendMessage(config.color(config.message("pet-not-owned", "%prefix% &cKamu belum punya pet &f%pet%&c.").replace("%pet%", target)));
@@ -352,14 +360,22 @@ public final class PetManager implements Listener {
             player.sendMessage(config.color(config.message("pet-feed-wrong-food", "%prefix% &cPet ini butuh makanan: &f%food%").replace("%food%", definition.foodMaterial().name())));
             return;
         }
-        hand.setAmount(Math.max(0, hand.getAmount() - 1));
+        int available = hand.getAmount();
+        int amount = Math.min(requestedAmount, config.maxFeedAmount());
+        if (amount > available) {
+            player.sendMessage(config.color(config.message("pet-feed-no-food-amount", "%prefix% &cKamu hanya memegang &f%amount% &cmakanan yang sesuai.").replace("%amount%", String.valueOf(available))));
+            amount = available;
+        }
+        int exp = definition.feedExp() * amount;
+        hand.setAmount(Math.max(0, available - amount));
         owned.lastFed(System.currentTimeMillis());
-        boolean leveled = owned.addExp(definition.feedExp(), config.maxLevel());
+        boolean leveled = owned.addExp(exp, config.maxLevel());
         data.save(player.getUniqueId());
         if (leveled) updateActiveScale(player, owned.id());
-        player.sendMessage(config.color(config.message("pet-fed", "%prefix% &aPet &f%pet% &adiberi makan. EXP +&f%exp%&a.")
+        player.sendMessage(config.color(config.message("pet-fed", "%prefix% &aPet &f%pet% &adiberi makan x&f%amount%&a. EXP +&f%exp%&a.")
                 .replace("%pet%", owned.name())
-                .replace("%exp%", String.valueOf(definition.feedExp()))));
+                .replace("%amount%", String.valueOf(amount))
+                .replace("%exp%", String.valueOf(exp))));
     }
 
     public void sendInfo(Player player, String target) {
