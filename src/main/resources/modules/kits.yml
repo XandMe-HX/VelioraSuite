@@ -63,10 +63,12 @@ gui:
     locked-permission:
       - ''
       - '&cStatus: Terkunci'
+      - '&cTerkunci'
       - '&7Kamu tidak punya permission kit ini.'
     locked-premium:
       - ''
       - '&cStatus: Premium'
+      - '&cTerkunci'
       - '&7Butuh permission: &f%premium_permission%'
     need-buy:
       - ''
@@ -88,6 +90,8 @@ messages:
   kit-not-found: '%prefix% &cKit &f%kit% &ctidak ditemukan.'
   kit-disabled: '%prefix% &cKit &f%kit% &csedang dimatikan.'
   kit-claimed: '%prefix% &aKamu berhasil claim kit &f%kit%&a.'
+  kit-claimed-equipped: '%prefix% &aKit &f%kit% &aberhasil diclaim. Armor otomatis dipakai.'
+  kit-armor-replaced: '%prefix% &eArmor lama kamu dipindahkan ke inventory.'
   kit-preview: '%prefix% &aPreview kit &f%kit%&a.'
   kit-bought: '%prefix% &aKamu berhasil membeli kit &f%kit% &adengan harga &f$%price%&a.'
   already-bought: '%prefix% &cKamu sudah membeli kit ini.'
@@ -95,7 +99,9 @@ messages:
   vault-not-found: '%prefix% &cEconomy belum tersedia, pembelian kit tidak bisa digunakan.'
   kit-on-cooldown: '%prefix% &cKit &f%kit% &cmasih cooldown: &f%time%&c.'
   inventory-full: '%prefix% &cInventory kamu penuh. Kosongkan beberapa slot dulu.'
+  inventory-not-enough-space: '%prefix% &cInventory kamu penuh. Kosongkan minimal &f%slots% slot &cuntuk claim kit ini.'
   premium-required: '%prefix% &cKit ini butuh akses premium: &f%premium_permission%'
+  kit-locked-permission: '%prefix% &cKamu belum punya permission untuk kit ini.'
   need-buy: '%prefix% &cKit ini harus dibeli dulu. Gunakan &f/kits buy %kit%&c.'
   buy-not-required: '%prefix% &cKit ini tidak perlu dibeli.'
   buy-each-claim: '%prefix% &cKit ini dibayar setiap claim. Gunakan &f/kits claim %kit%&c.'
@@ -138,7 +144,7 @@ kits:
       one-time-purchase: false
       first-claim-free: true
     gui:
-      slot: 10
+      slot: 20
       material: CHEST
       name: '&aStarter Kit'
       lore:
@@ -176,7 +182,7 @@ kits:
       one-time-purchase: false
       first-claim-free: true
     gui:
-      slot: 11
+      slot: 22
       material: BREAD
       name: '&eFood Kit'
       lore:
@@ -203,7 +209,7 @@ kits:
       one-time-purchase: false
       first-claim-free: true
     gui:
-      slot: 12
+      slot: 24
       material: OAK_LOG
       name: '&6Build Kit'
       lore:
@@ -230,7 +236,7 @@ kits:
 
   premium_1:
     enabled: true
-    display-name: '&bPremium 1'
+    display-name: '&aPremium I'
     description:
       - '&7Full iron kit.'
       - '&7Butuh permission: veliorasuite.kits.premium.1'
@@ -243,13 +249,14 @@ kits:
       one-time-purchase: false
       first-claim-free: false
     gui:
-      slot: 19
-      material: IRON_CHESTPLATE
-      name: '&bPremium 1'
+      slot: 29
+      material: PLAYER_HEAD
+      name: '&aPremium I'
       lore:
         - '&7Full iron kit enchant easy.'
         - '&7Harga claim: &a50K'
         - '&7Butuh permission: &fveliorasuite.kits.premium.1'
+        - '&7Klik kiri untuk claim/buy.'
     items:
       - { material: IRON_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
       - { material: IRON_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
@@ -265,7 +272,7 @@ kits:
 
   premium_2:
     enabled: true
-    display-name: '&dPremium 2'
+    display-name: '&bPremium II'
     description:
       - '&7Full diamond kit.'
       - '&7Butuh permission: veliorasuite.kits.premium.2'
@@ -278,13 +285,14 @@ kits:
       one-time-purchase: false
       first-claim-free: false
     gui:
-      slot: 20
-      material: DIAMOND_CHESTPLATE
-      name: '&dPremium 2'
+      slot: 31
+      material: PLAYER_HEAD
+      name: '&bPremium II'
       lore:
         - '&7Full diamond kit enchant level 2.'
         - '&7Harga claim: &a75K'
         - '&7Butuh permission: &fveliorasuite.kits.premium.2'
+        - '&7Klik kiri untuk claim/buy.'
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
@@ -300,7 +308,7 @@ kits:
 
   premium_3:
     enabled: true
-    display-name: '&5Premium 3'
+    display-name: '&dPremium III'
     description:
       - '&7Full diamond kit hard.'
       - '&7Butuh permission: veliorasuite.kits.premium.3'
@@ -313,13 +321,15 @@ kits:
       one-time-purchase: false
       first-claim-free: false
     gui:
-      slot: 21
-      material: DIAMOND_SWORD
-      name: '&5Premium 3'
+      slot: 33
+      material: PLAYER_HEAD
+      name: '&dPremium III'
       lore:
         - '&7Full diamond kit enchant level 3.'
+        - '&7Golden Apple x20, Totem x2.'
         - '&7Harga claim: &a100K'
         - '&7Butuh permission: &fveliorasuite.kits.premium.3'
+        - '&7Klik kiri untuk claim/buy.'
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -331,11 +341,12 @@ kits:
       - { material: DIAMOND_SHOVEL, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
       - { material: DIAMOND_HOE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
       - { material: GOLDEN_APPLE, amount: 20, enchants: [] }
+      - { material: TOTEM_OF_UNDYING, amount: 2, enchants: [] }
     rewards: { money: 0, exp: 0, commands: [] }
 
   premium_4:
     enabled: true
-    display-name: '&6Premium 4'
+    display-name: '&6Premium IV'
     description:
       - '&7Full netherite kit normal.'
       - '&7Butuh permission: veliorasuite.kits.premium.4'
@@ -348,13 +359,15 @@ kits:
       one-time-purchase: false
       first-claim-free: false
     gui:
-      slot: 22
-      material: NETHERITE_CHESTPLATE
-      name: '&6Premium 4'
+      slot: 39
+      material: PLAYER_HEAD
+      name: '&6Premium IV'
       lore:
         - '&7Full netherite kit enchant level 3.'
+        - '&7Golden Apple x30, Totem x2.'
         - '&7Harga claim: &a125K'
         - '&7Butuh permission: &fveliorasuite.kits.premium.4'
+        - '&7Klik kiri untuk claim/buy.'
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -366,11 +379,12 @@ kits:
       - { material: NETHERITE_SHOVEL, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
       - { material: NETHERITE_HOE, amount: 1, enchants: ['DIG_SPEED:3', 'DURABILITY:3'] }
       - { material: GOLDEN_APPLE, amount: 30, enchants: [] }
+      - { material: TOTEM_OF_UNDYING, amount: 2, enchants: [] }
     rewards: { money: 0, exp: 0, commands: [] }
 
   premium_5:
     enabled: true
-    display-name: '&cPremium 5'
+    display-name: '&cPremium V'
     description:
       - '&7Full netherite kit hard.'
       - '&7Butuh permission: veliorasuite.kits.premium.5'
@@ -383,13 +397,15 @@ kits:
       one-time-purchase: false
       first-claim-free: false
     gui:
-      slot: 23
-      material: NETHERITE_SWORD
-      name: '&cPremium 5'
+      slot: 41
+      material: PLAYER_HEAD
+      name: '&cPremium V'
       lore:
         - '&7Full netherite kit enchant hard.'
+        - '&7Golden Apple x30, Totem x2.'
         - '&7Harga claim: &a150K'
         - '&7Butuh permission: &fveliorasuite.kits.premium.5'
+        - '&7Klik kiri untuk claim/buy.'
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
@@ -401,4 +417,5 @@ kits:
       - { material: NETHERITE_SHOVEL, amount: 1, enchants: ['DIG_SPEED:4', 'DURABILITY:3'] }
       - { material: NETHERITE_HOE, amount: 1, enchants: ['DIG_SPEED:4', 'DURABILITY:3'] }
       - { material: GOLDEN_APPLE, amount: 30, enchants: [] }
+      - { material: TOTEM_OF_UNDYING, amount: 2, enchants: [] }
     rewards: { money: 0, exp: 0, commands: [] }
