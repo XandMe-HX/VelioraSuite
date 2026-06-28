@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Locale;
 
 public final class PetCommand implements CommandExecutor, TabCompleter {
+    private static final List<String> FEED_AMOUNTS = List.of("1", "5", "10", "32", "64");
+
     private final PetManager manager;
     private final PetConfigManager config;
 
@@ -41,7 +43,7 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
             case "dismiss" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } manager.dismiss(player, true); }
             case "storage" -> { if (!has(player, "veliorasuite.pets.storage")) { noPerm(player); return true; } manager.openStorage(player); }
             case "rename" -> { if (!has(player, "veliorasuite.pets.rename")) { noPerm(player); return true; } if (args.length < 3) { player.sendMessage("/pet rename <pet|active> <nama>"); return true; } manager.rename(player, args[1].toLowerCase(Locale.ROOT), join(args, 2)); }
-            case "feed" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } if (args.length < 2) { player.sendMessage("/pet feed <pet|active>"); return true; } manager.feed(player, args[1].toLowerCase(Locale.ROOT)); }
+            case "feed" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } handleFeed(player, args); }
             case "ride" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } return true; }
             case "reload" -> { if (!has(player, "veliorasuite.pets.reload") && !has(player, "veliorasuite.pets.admin")) { noPerm(player); return true; } manager.reload(); player.sendMessage(config.color(config.message("reload-success", "%prefix% &aVelioraPets berhasil direload."))); }
             case "give" -> {
@@ -63,6 +65,34 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private void handleFeed(Player player, String[] args) {
+        String target = "active";
+        int amount = 1;
+        if (args.length >= 2) {
+            if (isInteger(args[1])) {
+                amount = parseAmount(player, args[1]);
+                if (amount < 1) return;
+            } else {
+                target = args[1].toLowerCase(Locale.ROOT);
+            }
+        }
+        if (args.length >= 3) {
+            amount = parseAmount(player, args[2]);
+            if (amount < 1) return;
+        }
+        manager.feed(player, target, amount);
+    }
+
+    private int parseAmount(Player player, String raw) {
+        try {
+            int amount = Integer.parseInt(raw);
+            if (amount >= 1) return amount;
+        } catch (NumberFormatException ignored) {
+        }
+        player.sendMessage(config.color(config.message("pet-feed-invalid-amount", "%prefix% &cJumlah makanan harus angka minimal 1.")));
+        return -1;
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> result = new ArrayList<>();
@@ -75,7 +105,12 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
                 String lower = args[1].toLowerCase(Locale.ROOT);
                 if ("active".startsWith(lower)) result.add("active");
                 for (String id : manager.playerData(player.getUniqueId()).owned().keySet()) if (id.startsWith(lower)) result.add(id);
+                if (args[0].equalsIgnoreCase("feed")) addAmountTabs(result, lower);
             }
+            return result;
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("feed")) {
+            addAmountTabs(result, args[2].toLowerCase(Locale.ROOT));
             return result;
         }
         if ((args.length == 3 && (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("remove")))) {
@@ -85,6 +120,11 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
         return result;
     }
 
+    private void addAmountTabs(List<String> result, String lower) {
+        for (String option : FEED_AMOUNTS) if (option.startsWith(lower)) result.add(option);
+    }
+
+    private boolean isInteger(String raw) { try { Integer.parseInt(raw); return true; } catch (NumberFormatException ignored) { return false; } }
     private boolean has(CommandSender sender, String permission) { return sender.hasPermission(permission) || sender.isOp(); }
     private void noPerm(CommandSender sender) { sender.sendMessage(config.color(config.message("no-permission", "%prefix% &cKamu tidak punya izin."))); }
     private String join(String[] args, int start) { StringBuilder builder = new StringBuilder(); for (int i = start; i < args.length; i++) { if (builder.length() > 0) builder.append(' '); builder.append(args[i]); } return builder.toString(); }
