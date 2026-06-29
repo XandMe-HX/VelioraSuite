@@ -107,6 +107,51 @@ public final class FishingManager {
         bagDataManager.remove(player, entry.getKey(), moved);
     }
 
+    public int storeItemToBag(Player player, ItemStack item, int amount) {
+        if (player == null || item == null || item.getType().isAir() || amount <= 0) return 0;
+        if (!configManager.isBagEnabled()) {
+            send(player, "bag-disabled", "%prefix% &cFish Bag sedang dimatikan.", Map.of());
+            return 0;
+        }
+        CaughtFish fish = itemFactory.read(item);
+        if (fish == null) {
+            send(player, "bag-not-fish", "%prefix% &eItem itu bukan ikan yang bisa disimpan.", Map.of());
+            return 0;
+        }
+        int moved = Math.min(amount, item.getAmount());
+        bagDataManager.add(player, fish, moved);
+        item.setAmount(item.getAmount() - moved);
+        send(player, "bag-store-success", "%prefix% &aBerhasil menyimpan &f%amount% &aikan ke Fish Bag.", Map.of("%amount%", String.valueOf(moved)));
+        return moved;
+    }
+
+    public int storeAllInventoryFish(Player player) {
+        if (player == null) return 0;
+        if (!configManager.isBagEnabled()) {
+            send(player, "bag-disabled", "%prefix% &cFish Bag sedang dimatikan.", Map.of());
+            return 0;
+        }
+
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        int moved = 0;
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (item == null || item.getType().isAir() || !itemFactory.isStorableFish(item)) continue;
+            CaughtFish fish = itemFactory.read(item);
+            if (fish == null) continue;
+            int amount = item.getAmount();
+            bagDataManager.add(player, fish, amount);
+            contents[slot] = null;
+            moved += amount;
+        }
+        player.getInventory().setStorageContents(contents);
+        player.updateInventory();
+
+        if (moved <= 0) send(player, "bag-no-fish", "%prefix% &eTidak ada ikan di inventory untuk disimpan.", Map.of());
+        else send(player, "bag-store-success", "%prefix% &aBerhasil menyimpan &f%amount% &aikan ke Fish Bag.", Map.of("%amount%", String.valueOf(moved)));
+        return moved;
+    }
+
     public void sellFromBag(Player player, FishingBagEntry entry, int amount) {
         if (player == null || entry == null || amount <= 0) return;
         int sold = Math.min(amount, entry.getAmount());

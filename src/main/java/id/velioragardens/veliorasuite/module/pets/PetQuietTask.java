@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.pets;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 
 public final class PetQuietTask implements Runnable {
@@ -23,7 +24,18 @@ public final class PetQuietTask implements Runnable {
                 pet.setCanPickupItems(false);
                 pet.setRemoveWhenFarAway(false);
                 pet.setPersistent(false);
+                if (isAquaticPet(pet.getType())) {
+                    pet.setRemainingAir(pet.getMaximumAir());
+                    pet.setGravity(false);
+                }
             }
         }
+    }
+
+    private boolean isAquaticPet(EntityType type) {
+        return switch (type) {
+            case AXOLOTL, COD, DOLPHIN, ELDER_GUARDIAN, GLOW_SQUID, GUARDIAN, PUFFERFISH, SALMON, SQUID, TADPOLE, TROPICAL_FISH -> true;
+            default -> false;
+        };
     }
 }
