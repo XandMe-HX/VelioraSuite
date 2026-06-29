@@ -51,7 +51,7 @@ public final class PetManager implements Listener {
     private static final double TELEPORT_DISTANCE_SQUARED = 576.0D;
     private static final double WALK_SPEED = 1.10D;
     private static final double VELOCITY_SPEED = 0.28D;
-    private static final double HOSTILE_VELOCITY_SPEED = 0.36D;
+    private static final double HOSTILE_FALLBACK_SPEED = 0.30D;
 
     private final VelioraSuite plugin;
     private final PetConfigManager config;
@@ -440,9 +440,11 @@ public final class PetManager implements Listener {
         entity.setFallDistance(0.0F);
         entity.removePotionEffect(PotionEffectType.INVISIBILITY);
         setInvisible(entity, false);
-        entity.setAI(!definition.flyingPet() && !definition.aquaticPet() && !hostilePet);
+        entity.setAI(!definition.flyingPet() && !definition.aquaticPet());
         entity.setGravity(!definition.flyingPet() && !definition.aquaticPet());
-        if (entity instanceof Mob mob) mob.setTarget(null);
+        if (entity instanceof Mob mob) {
+            mob.setTarget(hostilePet ? player : null);
+        }
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
         tryBaby(entity);
         scaleHelper.apply(entity, scaleFor(definition, owned.level()));
@@ -473,7 +475,6 @@ public final class PetManager implements Listener {
         LivingEntity pet = active.entity();
         pet.setFireTicks(0);
         pet.setFallDistance(0.0F);
-        if (pet instanceof Mob mob) mob.setTarget(null);
 
         Location ownerLocation = owner.getLocation();
         if (!pet.getWorld().equals(owner.getWorld())) {
@@ -485,23 +486,25 @@ public final class PetManager implements Listener {
             pet.teleport(safeFollowLocation(owner));
             return;
         }
-        if (distanceSquared <= FOLLOW_START_DISTANCE_SQUARED) return;
 
-        Location destination = safeFollowLocation(owner);
         if (definition.flyingPet() || definition.aquaticPet()) {
-            moveWithVelocity(pet, destination.clone().add(0.0D, 0.7D, 0.0D), 0.22D);
-            return;
-        }
-
-        if (pet instanceof Monster) {
-            pet.setAI(false);
-            pet.setGravity(true);
-            moveWithVelocity(pet, destination, HOSTILE_VELOCITY_SPEED);
+            if (distanceSquared > FOLLOW_START_DISTANCE_SQUARED) moveWithVelocity(pet, safeFollowLocation(owner).clone().add(0.0D, 0.7D, 0.0D), 0.22D);
             return;
         }
 
         pet.setAI(true);
         pet.setGravity(true);
+
+        if (pet instanceof Monster && pet instanceof Mob mob) {
+            mob.setTarget(owner);
+            if (distanceSquared > 196.0D) moveWithVelocity(pet, safeFollowLocation(owner), HOSTILE_FALLBACK_SPEED);
+            return;
+        }
+
+        if (pet instanceof Mob mob) mob.setTarget(null);
+        if (distanceSquared <= FOLLOW_START_DISTANCE_SQUARED) return;
+
+        Location destination = safeFollowLocation(owner);
         boolean pathing = config.usePathfinderFollow() && moveWithPathfinder(pet, destination);
         if (!pathing) moveWithVelocity(pet, destination, VELOCITY_SPEED);
     }
@@ -630,12 +633,22 @@ public final class PetManager implements Listener {
         player.sendMessage(config.color(config.message("pet-food-info", "%prefix% &7Makanan pet ini: &f%food%").replace("%food%", definition.foodMaterial().name())));
     }
 
+    private Player ownerOf(LivingEntity pet) {
+        String raw = pet.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
+        if (raw == null) return null;
+        try { return Bukkit.getPlayer(UUID.fromString(raw)); } catch (IllegalArgumentException ignored) { return null; }
+    }
+
     @EventHandler public void onQuit(PlayerQuitEvent event) { dismiss(event.getPlayer(), false); }
     @EventHandler public void onJoin(PlayerJoinEvent event) { if (config.autoSummonLastPet()) { String last = data.get(event.getPlayer().getUniqueId()).lastPet(); if (last != null) plugin.getServer().getScheduler().runTaskLater(plugin, () -> summon(event.getPlayer(), last), 20L); } }
 
     @EventHandler(ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager().getScoreboardTags().contains(PET_TAG)) {
+            if (event.getDamager() instanceof Monster) {
+                event.setCancelled(true);
+                return;
+            }
             if (event.getEntity() instanceof Player || event.getEntity().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true);
             return;
         }
@@ -651,7 +664,23 @@ public final class PetManager implements Listener {
         }
     }
 
-    @EventHandler public void onTarget(EntityTargetLivingEntityEvent event) { if (event.getEntity().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true); if (event.getTarget() != null && event.getTarget().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true); }
+    @EventHandler
+    public void onTarget(EntityTargetLivingEntityEvent event) {
+        if (event.getTarget() != null && event.getTarget().getScoreboardTags().contains(PET_TAG)) {
+            event.setCancelled(true);
+            return;
+        }
+        if (!event.getEntity().getScoreboardTags().contains(PET_TAG)) return;
+        if (!(event.getEntity() instanceof LivingEntity pet)) {
+            event.setCancelled(true);
+            return;
+        }
+        if (pet instanceof Monster) {
+            Player owner = ownerOf(pet);
+            if (owner != null && event.getTarget() != null && event.getTarget().getUniqueId().equals(owner.getUniqueId())) return;
+        }
+        event.setCancelled(true);
+    }
 
     @EventHandler
     public void onPetEntityRemoved(EntityDeathEvent event) {
