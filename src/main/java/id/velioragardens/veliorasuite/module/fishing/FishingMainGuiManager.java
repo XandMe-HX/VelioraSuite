@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -47,6 +48,17 @@ public final class FishingMainGuiManager implements Listener {
             }
             case 26 -> player.closeInventory();
             default -> { }
+        }
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8VelioraFishing"))) return;
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot < 27) {
+                event.setCancelled(true);
+                return;
+            }
         }
     }
 
