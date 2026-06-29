@@ -44,9 +44,17 @@ public final class FishingSellGuiManager implements Listener {
         }
 
         boolean sold = manager.sell(player, sellable);
+        if (!sold) {
+            for (ItemStack item : sellable) returnItem(player, item);
+        }
         for (ItemStack item : rejected) returnItem(player, item);
-        if (!sold && sellable.isEmpty()) {
-            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("sell-empty", "%prefix% &eTidak ada ikan yang bisa dijual.")));
+
+        if (!sold) {
+            String path = sellable.isEmpty() ? "sell-empty" : "sell-failed-returned";
+            String fallback = sellable.isEmpty()
+                    ? "%prefix% &eTidak ada ikan yang bisa dijual."
+                    : "%prefix% &eSell dibatalkan. Ikan sudah dikembalikan ke inventory.";
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message(path, fallback)));
         }
     }
 
