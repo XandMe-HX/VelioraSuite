@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -63,6 +64,18 @@ public final class FishingCollectionGuiManager implements Listener {
         if (event.getRawSlot() == size - 9) manager.openMainGui(player);
         else if (event.getRawSlot() == size - 6) open(player, page - 1);
         else if (event.getRawSlot() == size - 4) open(player, page + 1);
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        if (!event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getCollectionTitle()))) return;
+        int size = manager.getConfigManager().getCollectionSize();
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot < size) {
+                event.setCancelled(true);
+                return;
+            }
+        }
     }
 
     private ItemStack collectionItem(Player player, FishDefinition definition) {
