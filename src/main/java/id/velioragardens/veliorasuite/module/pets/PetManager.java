@@ -33,6 +33,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -46,6 +47,10 @@ import java.util.UUID;
 public final class PetManager implements Listener {
     private static final String PET_TAG = "veliorapets_pet";
     private static final String AQUATIC_ANCHOR_TAG = "veliorapets_aquatic_anchor";
+    private static final double FOLLOW_START_DISTANCE_SQUARED = 9.0D;
+    private static final double TELEPORT_DISTANCE_SQUARED = 576.0D;
+    private static final double WALK_SPEED = 1.10D;
+    private static final double VELOCITY_SPEED = 0.28D;
 
     private final VelioraSuite plugin;
     private final PetConfigManager config;
@@ -83,10 +88,8 @@ public final class PetManager implements Listener {
     public void start(PetGuiManager guiManager) {
         this.guiManager = guiManager;
         stopTasks();
-        if (!config.stableSafeMode()) {
-            followTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickFollowCombatLegacy, 20L, 20L);
-            cosmeticTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickCosmetic, 20L * config.auraIntervalSeconds(), 20L * config.auraIntervalSeconds());
-        }
+        followTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickFollowCombat, 20L, 10L);
+        cosmeticTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickCosmetic, 20L * config.auraIntervalSeconds(), 20L * config.auraIntervalSeconds());
     }
 
     public void shutdown() {
@@ -100,10 +103,8 @@ public final class PetManager implements Listener {
         config.load();
         data.load();
         stopTasks();
-        if (!config.stableSafeMode()) {
-            followTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickFollowCombatLegacy, 20L, 20L);
-            cosmeticTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickCosmetic, 20L * config.auraIntervalSeconds(), 20L * config.auraIntervalSeconds());
-        }
+        followTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickFollowCombat, 20L, 10L);
+        cosmeticTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickCosmetic, 20L * config.auraIntervalSeconds(), 20L * config.auraIntervalSeconds());
     }
 
     public PetConfigManager config() { return config; }
@@ -437,15 +438,125 @@ public final class PetManager implements Listener {
         entity.setFallDistance(0.0F);
         entity.removePotionEffect(PotionEffectType.INVISIBILITY);
         setInvisible(entity, false);
-        entity.setAI(false);
-        entity.setGravity(true);
+        entity.setAI(!definition.flyingPet() && !definition.aquaticPet());
+        entity.setGravity(!definition.flyingPet() && !definition.aquaticPet());
         if (entity instanceof Mob mob) mob.setTarget(null);
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
         tryBaby(entity);
         scaleHelper.apply(entity, scaleFor(definition, owned.level()));
     }
 
-    private void tickFollowCombatLegacy() { }
+    private void tickFollowCombat() {
+        long now = System.currentTimeMillis();
+        for (UUID uuid : new ArrayList<>(activePets.keySet())) {
+            Player owner = Bukkit.getPlayer(uuid);
+            VelioraPet pet = activePets.get(uuid);
+            if (owner == null || !owner.isOnline()) {
+                if (pet != null && !pet.entity().isDead()) pet.entity().remove();
+                activePets.remove(uuid);
+                continue;
+            }
+            if (pet == null || pet.entity() == null || pet.entity().isDead() || !pet.entity().isValid()) {
+                activePets.remove(uuid);
+                continue;
+            }
+            PetDefinition definition = config.pets().get(pet.petId());
+            if (definition == null) continue;
+            follow(owner, pet, definition);
+            if (!config.stableSafeMode()) attackIfPossible(owner, pet, definition, now);
+        }
+    }
+
+    private void follow(Player owner, VelioraPet active, PetDefinition definition) {
+        LivingEntity pet = active.entity();
+        Location ownerLocation = owner.getLocation();
+        if (!pet.getWorld().equals(owner.getWorld())) {
+            pet.teleport(safeFollowLocation(owner));
+            return;
+        }
+        double distanceSquared = pet.getLocation().distanceSquared(ownerLocation);
+        if (distanceSquared > TELEPORT_DISTANCE_SQUARED) {
+            pet.teleport(safeFollowLocation(owner));
+            return;
+        }
+        if (distanceSquared <= FOLLOW_START_DISTANCE_SQUARED) {
+            if (pet instanceof Mob mob) mob.setTarget(null);
+            return;
+        }
+
+        Location destination = safeFollowLocation(owner);
+        if (definition.flyingPet() || definition.aquaticPet()) {
+            moveWithVelocity(pet, destination.clone().add(0.0D, 0.7D, 0.0D), 0.22D);
+            return;
+        }
+
+        pet.setAI(true);
+        pet.setGravity(true);
+        if (pet instanceof Mob mob) mob.setTarget(null);
+        boolean pathing = config.usePathfinderFollow() && moveWithPathfinder(pet, destination);
+        if (!pathing) moveWithVelocity(pet, destination, VELOCITY_SPEED);
+    }
+
+    private Location safeFollowLocation(Player owner) {
+        Location base = owner.getLocation().clone();
+        Vector direction = base.getDirection();
+        direction.setY(0.0D);
+        if (direction.lengthSquared() < 0.01D) direction = new Vector(0, 0, 1);
+        direction.normalize();
+        Vector back = direction.multiply(-1.4D);
+        Vector side = new Vector(-direction.getZ(), 0.0D, direction.getX()).multiply(0.9D);
+        Location target = base.add(back).add(side);
+        if (!isSafeSpawnBlock(target)) {
+            Location highest = owner.getWorld().getHighestBlockAt(target).getLocation().add(0.5D, 1.0D, 0.5D);
+            if (isSafeSpawnBlock(highest)) return highest;
+        }
+        return target;
+    }
+
+    private void attackIfPossible(Player owner, VelioraPet pet, PetDefinition definition, long now) {
+        if (!config.combatEnabled() || pet.targetUuid() == null) return;
+        if (definition.aquaticPet() || definition.flyingPet()) { pet.targetUuid(null); return; }
+        Entity target = Bukkit.getEntity(pet.targetUuid());
+        if (!(target instanceof LivingEntity living) || living.isDead() || !isAllowedTarget(living)) { pet.targetUuid(null); return; }
+        if (!living.getWorld().equals(pet.entity().getWorld())) { pet.targetUuid(null); return; }
+        if (pet.entity().getLocation().distanceSquared(living.getLocation()) > 64.0D) { follow(owner, pet, definition); return; }
+        if (pet.entity().getLocation().distanceSquared(living.getLocation()) > config.attackRange() * config.attackRange()) {
+            boolean pathing = config.usePathfinderFollow() && moveWithPathfinder(pet.entity(), living.getLocation());
+            if (!pathing) moveWithVelocity(pet.entity(), living.getLocation(), 0.35D);
+            return;
+        }
+        if (now - pet.lastAttackMillis() < config.attackCooldownSeconds() * 1000L) return;
+        double amount = definition.damage() * config.petDamageMultiplier();
+        living.damage(amount, owner);
+        pet.entity().getWorld().playSound(pet.entity().getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5F, 1.4F);
+        pet.lastAttackMillis(now);
+        OwnedPet owned = data.get(owner.getUniqueId()).get(pet.petId());
+        if (owned != null) {
+            boolean leveled = owned.addExp(2, config.maxLevel());
+            data.save(owner.getUniqueId());
+            if (leveled) updateActiveScale(owner, owned.id());
+        }
+    }
+
+    private boolean moveWithPathfinder(LivingEntity pet, Location destination) {
+        try {
+            Method getPathfinder = pet.getClass().getMethod("getPathfinder");
+            Object pathfinder = getPathfinder.invoke(pet);
+            Method moveTo = pathfinder.getClass().getMethod("moveTo", Location.class, double.class);
+            moveTo.invoke(pathfinder, destination, WALK_SPEED);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void moveWithVelocity(LivingEntity pet, Location destination, double speed) {
+        Vector velocity = destination.toVector().subtract(pet.getLocation().toVector());
+        if (velocity.lengthSquared() <= 0.01D) return;
+        velocity.normalize().multiply(speed);
+        velocity.setY(Math.max(-0.10D, Math.min(0.35D, velocity.getY())));
+        pet.setVelocity(velocity);
+    }
 
     private void tickCosmetic() {
         if (!config.auraEnabled()) return;
