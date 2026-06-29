@@ -422,6 +422,7 @@ public final class PetManager implements Listener {
     }
 
     private void configureSpawnedEntity(LivingEntity entity, Player player, PetDefinition definition, OwnedPet owned) {
+        boolean hostilePet = entity instanceof Monster;
         entity.addScoreboardTag(PET_TAG);
         entity.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
         entity.getPersistentDataContainer().set(petIdKey, PersistentDataType.STRING, definition.id());
@@ -439,7 +440,7 @@ public final class PetManager implements Listener {
         entity.setFallDistance(0.0F);
         entity.removePotionEffect(PotionEffectType.INVISIBILITY);
         setInvisible(entity, false);
-        entity.setAI(!definition.flyingPet() && !definition.aquaticPet());
+        entity.setAI(!definition.flyingPet() && !definition.aquaticPet() && !hostilePet);
         entity.setGravity(!definition.flyingPet() && !definition.aquaticPet());
         if (entity instanceof Mob mob) mob.setTarget(null);
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
@@ -492,13 +493,15 @@ public final class PetManager implements Listener {
             return;
         }
 
-        pet.setAI(true);
-        pet.setGravity(true);
         if (pet instanceof Monster) {
+            pet.setAI(false);
+            pet.setGravity(true);
             moveWithVelocity(pet, destination, HOSTILE_VELOCITY_SPEED);
             return;
         }
 
+        pet.setAI(true);
+        pet.setGravity(true);
         boolean pathing = config.usePathfinderFollow() && moveWithPathfinder(pet, destination);
         if (!pathing) moveWithVelocity(pet, destination, VELOCITY_SPEED);
     }
