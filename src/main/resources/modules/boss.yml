@@ -2,21 +2,23 @@ settings:
   enabled: true
   spawn:
     enabled: true
-    interval-minutes: 30
-    despawn-minutes: 20
+    # Boss baru aktif setelah /boss set <nama> dipakai.
+    # Jika interval 60, jadwal otomatis mengikuti jam real-time WIB/Asia Jakarta.
+    interval-minutes: 60
+    despawn-minutes: 25
     announce-spawn: true
     announce-death: true
     announce-despawn: true
     allow-multiple-active: false
     require-spawn-point: true
-    warning-times-minutes: [5, 1]
+    warning-times-minutes: [10, 5, 1]
 
 rarity-chance:
-  common: 50.0
-  rare: 25.0
-  epic: 15.0
-  legendary: 8.0
-  mythic: 2.0
+  common: 45.0
+  rare: 27.0
+  epic: 16.0
+  legendary: 9.0
+  mythic: 3.0
 
 bossbar:
   enabled: true
@@ -59,27 +61,27 @@ bosses:
     entity: HUSK
     display-name: '&2Rotten Colossus'
     rarity: COMMON
-    health: 150
+    health: 1200
     damage: 4.0
     scale: 3.5
     skills: [GROUND_SLAM, SUMMON_MINIONS]
     rewards:
       money: { enabled: true, min: 10000, max: 25000 }
-  forest_guardian:
-    entity: IRON_GOLEM
-    display-name: '&aForest Guardian'
+  forest_beast:
+    entity: RAVAGER
+    display-name: '&aForest Beast'
     rarity: RARE
-    health: 300
+    health: 1800
     damage: 6.0
-    scale: 3.0
-    skills: [SUMMON_MINIONS, POISON_CLOUD, RAGE_MODE]
+    scale: 2.4
+    skills: [GROUND_SLAM, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 25000, max: 50000 }
   infernal_butcher:
     entity: VINDICATOR
     display-name: '&cInfernal Butcher'
     rarity: RARE
-    health: 250
+    health: 1700
     damage: 6.0
     scale: 3.0
     skills: [GROUND_SLAM, SUMMON_MINIONS, RAGE_MODE]
@@ -89,19 +91,29 @@ bosses:
     entity: DROWNED
     display-name: '&3Deep Drowned King'
     rarity: RARE
-    health: 300
+    health: 1800
     damage: 6.0
     scale: 3.0
     skills: [PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 25000, max: 50000 }
+  cave_titan:
+    entity: RAVAGER
+    display-name: '&7Cave Titan'
+    rarity: EPIC
+    health: 2300
+    damage: 7.0
+    scale: 2.7
+    skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 50000, max: 100000 }
   ancient_warden:
     entity: WARDEN
     display-name: '&9Ancient Warden'
     rarity: EPIC
-    health: 500
+    health: 2800
     damage: 8.0
-    scale: 3.5
+    scale: 2.2
     skills: [GROUND_SLAM, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 50000, max: 100000 }
@@ -109,17 +121,27 @@ bosses:
     entity: PIGLIN_BRUTE
     display-name: '&5Abyss Brute'
     rarity: EPIC
-    health: 400
+    health: 2400
     damage: 8.0
-    scale: 3.5
+    scale: 3.2
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 50000, max: 100000 }
+  crystal_evoker:
+    entity: EVOKER
+    display-name: '&dCrystal Evoker'
+    rarity: LEGENDARY
+    health: 3200
+    damage: 9.0
+    scale: 2.0
+    skills: [FIRE_BOMB, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 75000, max: 150000 }
   namazu_earthshaker:
     entity: RAVAGER
     display-name: '&6Namazu Earthshaker'
     rarity: LEGENDARY
-    health: 500
+    health: 3500
     damage: 10.0
     scale: 3.0
     skills: [GROUND_SLAM, FIRE_BOMB, SUMMON_MINIONS, RAGE_MODE]
@@ -129,16 +151,26 @@ bosses:
     entity: WITHER_SKELETON
     display-name: '&8Soul Reaper'
     rarity: LEGENDARY
-    health: 450
+    health: 3200
     damage: 9.0
-    scale: 3.5
+    scale: 3.3
     skills: [PULL_AURA, POISON_CLOUD, SUMMON_MINIONS, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 75000, max: 150000 }
+  void_executioner:
+    entity: WITHER_SKELETON
+    display-name: '&5Void Executioner'
+    rarity: MYTHIC
+    health: 4500
+    damage: 12.0
+    scale: 3.8
+    skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 100000, max: 150000 }
 
 skills:
   enabled: true
-  cooldown-seconds: 12
+  cooldown-seconds: 14
   random-skill: true
   default: [GROUND_SLAM, SUMMON_MINIONS, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
   damage:
@@ -147,7 +179,7 @@ skills:
   summon:
     max-minions: 8
     minions-per-cast: 3
-    types: [ZOMBIE, HUSK, VINDICATOR, DROWNED]
+    types: [ZOMBIE, HUSK, DROWNED, ZOMBIFIED_PIGLIN]
 
 protection:
   respect-worldguard: false
@@ -176,7 +208,7 @@ rewards:
     rare: { diamond: 1, ancient-debris: 0 }
     epic: { diamond: 2, ancient-debris: 0 }
     legendary: { diamond: 3, ancient-debris: 1 }
-    mythic: { diamond: 3, ancient-debris: 1 }
+    mythic: { diamond: 4, ancient-debris: 2 }
 
 effects:
   spawn:
@@ -197,11 +229,11 @@ messages:
   boss-despawn: '%prefix% &e%boss% menghilang.'
   boss-next: '%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.'
   boss-active: '%prefix% &cBoss aktif: &f%boss% &7di &f%world% %x% %y% %z%&7. HP: &f%health%/%max_health%'
-  spawn-set: '%prefix% &aSpawn boss &f%name% &aberhasil diset.'
+  spawn-set: '%prefix% &aSpawn boss &f%name% &aberhasil diset. Jadwal boss sekarang aktif dan mengikuti WIB setiap 1 jam.'
   reload-success: '%prefix% &aVelioraBoss berhasil direload.'
   stop-success: '%prefix% &aBoss aktif berhasil dihentikan.'
   no-active-boss: '%prefix% &eTidak ada boss aktif.'
-  no-spawn-point: '%prefix% &cBelum ada spawn point boss. Gunakan /boss set <nama>.'
+  no-spawn-point: '%prefix% &cBelum ada spawn point boss. Gunakan &f/boss set <nama>&c dulu. Notif dan timer boss belum aktif.'
   top-damage-header: '&cTop Damage Boss:'
   reward-received: '%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.'
   reward-money: '%prefix% &aKamu mendapat reward uang boss: &e%money%'
@@ -215,6 +247,7 @@ messages:
   boss-not-found: '%prefix% &cBoss tidak ditemukan: &f%boss%'
   boss-top-header: '%prefix% &eTop Boss Damage:'
   boss-top-line: '&7%rank%. &f%player% &8- &c%damage% damage'
+  boss-warning-10: '%prefix% &eBoss akan muncul dalam &f10 menit&e!'
   boss-warning-5: '%prefix% &eBoss akan muncul dalam &f5 menit&e!'
   boss-warning-1: '%prefix% &cBoss akan muncul dalam &f1 menit&c!'
   boss-return-arena: '%prefix% &e%boss% kembali ke arena!'
