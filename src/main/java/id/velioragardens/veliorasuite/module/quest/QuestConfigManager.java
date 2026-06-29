@@ -52,7 +52,7 @@ public final class QuestConfigManager {
     public int getMoneyIncreasePerTier() { return Math.max(0, integer("settings.rewards.money-increase-per-tier", 5000)); }
     public boolean isStarterEnabled() { return bool("settings.starter.enabled", true); }
     public boolean isStarterReminderEnabled() { return bool("settings.starter.reminder-enabled", true); }
-    public int getStarterReminderIntervalSeconds() { return Math.max(10, integer("settings.starter.reminder-interval-seconds", 600)); }
+    public int getStarterReminderIntervalSeconds() { return Math.max(900, integer("settings.starter.reminder-interval-seconds", 900)); }
     public List<String> getClaimLandCommands() { return commandList("settings.starter.claim-land-commands", List.of("/claim", "/lands claim", "/land claim", "/claimland")); }
     public List<String> getSetHomeCommands() { return commandList("settings.starter.set-home-commands", List.of("/sethome", "/home set")); }
     public List<String> getStarterKitCommands() { return commandList("settings.starter.starter-kit-commands", List.of("/kits claim starter", "/kit starter", "/kits starter")); }
