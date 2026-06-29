@@ -23,7 +23,8 @@ settings:
   starter:
     enabled: true
     reminder-enabled: true
-    reminder-interval-seconds: 600
+    # 15 menit sekali supaya tidak spam chat.
+    reminder-interval-seconds: 900
     claim-land-commands: ['/claim', '/lands claim', '/land claim', '/claimland']
     set-home-commands: ['/sethome', '/home set']
     starter-kit-commands: ['/kits claim starter', '/kit starter', '/kits starter']
@@ -65,7 +66,7 @@ categories:
     icon: IRON_SWORD
     base-target: 10
     target-increase-per-level: 5
-    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PILLAGER]
+    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER]
   animal_hunter:
     enabled: true
     display-name: '&fAnimal'
@@ -107,10 +108,10 @@ messages:
   starter-reminder:
     - '&8&m--------------------------------'
     - '&a&lStarter Quest'
-    - '&7Selesaikan tugas awal agar aman bermain:'
-    - '&fClaim Land: &e%claim_land%'
-    - '&fSet Home: &e%set_home%'
-    - '&fAmbil Kit Starter: &e%starter_kit%'
+    - '&7Selesaikan tugas awal supaya progres awalmu aman:'
+    - '&fClaim Land: &e%claim_land% &7- Tutorial ada di TikTok &f@velioragardensofficial'
+    - '&fSet Home: &e%set_home% &7- Gunakan &f/sethome &7di base kamu.'
+    - '&fAmbil Kit Starter: &e%starter_kit% &7- Gunakan &f/kits starter'
     - '&8&m--------------------------------'
   help:
     - '&8&m--------------------------------'
