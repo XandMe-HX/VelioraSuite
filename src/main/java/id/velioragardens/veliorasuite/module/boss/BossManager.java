@@ -23,6 +23,9 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +35,8 @@ import java.util.Random;
 import java.util.Set;
 
 public final class BossManager implements Listener {
+
+    private static final ZoneId JAKARTA_ZONE = ZoneId.of("Asia/Jakarta");
 
     private final VelioraSuite plugin;
     private final BossConfigManager config;
@@ -97,6 +102,7 @@ public final class BossManager implements Listener {
         data.load();
         sentWarnings.clear();
         lastRetargetAt = 0L;
+        scheduleNextSpawn();
     }
 
     public BossConfigManager config() { return config; }
@@ -109,7 +115,10 @@ public final class BossManager implements Listener {
 
     public void setSpawnPoint(Player player, String name) {
         data.setSpawnPoint(BossSpawnPoint.from(name.toLowerCase(Locale.ROOT), player.getLocation()));
-        player.sendMessage(config.color(config.message("spawn-set", "%prefix% &aSpawn boss &f%name% &aberhasil diset.").replace("%name%", name)));
+        scheduleNextSpawn();
+        String message = config.message("spawn-set", "%prefix% &aSpawn boss &f%name% &aberhasil diset. Jadwal boss mulai aktif dan mengikuti WIB setiap 1 jam.");
+        player.sendMessage(config.color(message.replace("%name%", name)));
+        player.sendMessage(config.color(config.message("boss-next", "%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.").replace("%time%", timeLeft(nextSpawnAt))));
     }
 
     public boolean spawnByName(String input, CommandSender sender) {
@@ -118,7 +127,12 @@ public final class BossManager implements Listener {
             sender.sendMessage(config.color(config.message("boss-not-found", "%prefix% &cBoss tidak ditemukan: &f%boss%").replace("%boss%", input)));
             return false;
         }
-        return spawn(definition, randomSpawnPoint(), true);
+        Location location = randomSpawnPoint();
+        if (location == null) {
+            sender.sendMessage(config.color(config.message("no-spawn-point", "%prefix% &cBelum ada spawn point boss. Gunakan &f/boss set <nama>&c dulu.")));
+            return false;
+        }
+        return spawn(definition, location, true);
     }
 
     public BossDefinition resolveBoss(String input) {
@@ -211,6 +225,10 @@ public final class BossManager implements Listener {
             sender.sendMessage(config.color(config.message("top-damage-header", "&cTop Damage Boss:")));
             sender.sendMessage(config.color("&f" + damageTracker.topText(5)));
         } else {
+            if (config.requireSpawnPoint() && data.spawnPoints().isEmpty()) {
+                sender.sendMessage(config.color(config.message("no-spawn-point", "%prefix% &cBelum ada spawn point boss. Gunakan &f/boss set <nama>&c dulu. Notif dan timer boss belum aktif.")));
+                return;
+            }
             sender.sendMessage(config.color(config.message("boss-next", "%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.").replace("%time%", timeLeft(nextSpawnAt))));
             sender.sendMessage(config.color("&7Spawn point tersedia: &f" + data.spawnPoints().size()));
         }
@@ -218,7 +236,15 @@ public final class BossManager implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (activeBoss != null && event.getEntity().getUniqueId().equals(activeBoss.getUniqueId())) {
+        boolean damagedBoss = activeBoss != null && event.getEntity().getUniqueId().equals(activeBoss.getUniqueId());
+        boolean damagedMinion = event.getEntity().getScoreboardTags().contains("velioraboss_minion");
+        boolean damagerBoss = event.getDamager().getScoreboardTags().contains("velioraboss_boss");
+        boolean damagerMinion = event.getDamager().getScoreboardTags().contains("velioraboss_minion");
+        if ((damagedBoss && damagerMinion) || (damagedMinion && (damagerBoss || damagerMinion))) {
+            event.setCancelled(true);
+            return;
+        }
+        if (damagedBoss) {
             Player player = damager(event.getDamager());
             if (player != null) {
                 damageTracker.add(player, event.getFinalDamage());
@@ -227,7 +253,7 @@ public final class BossManager implements Listener {
             }
             return;
         }
-        if (event.getDamager() != null && event.getDamager().getScoreboardTags().contains("velioraboss_boss")) event.setDamage(activeDefinition == null ? event.getDamage() : activeDefinition.damage());
+        if (damagerBoss) event.setDamage(activeDefinition == null ? event.getDamage() : activeDefinition.damage());
     }
 
     @EventHandler
@@ -258,6 +284,13 @@ public final class BossManager implements Listener {
 
     private void tick() {
         if (!config.isEnabled() || !config.isSpawnEnabled()) return;
+        if (config.requireSpawnPoint() && data.spawnPoints().isEmpty()) {
+            if (nextSpawnAt != 0L) {
+                nextSpawnAt = 0L;
+                sentWarnings.clear();
+            }
+            return;
+        }
         if (isActive()) {
             lastKnownLocation = activeBoss.getLocation();
             enforceArena();
@@ -267,11 +300,6 @@ public final class BossManager implements Listener {
         }
         sendSpawnWarnings();
         if (System.currentTimeMillis() >= nextSpawnAt) {
-            if (data.spawnPoints().isEmpty() && config.requireSpawnPoint()) {
-                plugin.getLogger().warning("VelioraBoss: Belum ada spawn point. Gunakan /boss set <nama>.");
-                scheduleNextSpawn();
-                return;
-            }
             spawn(randomDefinition(), randomSpawnPoint(), true);
         }
     }
@@ -380,6 +408,7 @@ public final class BossManager implements Listener {
     }
 
     private void sendSpawnWarnings() {
+        if (nextSpawnAt <= 0L) return;
         long millis = nextSpawnAt - System.currentTimeMillis();
         if (millis <= 0) return;
         for (int minute : config.warningTimesMinutes()) {
@@ -466,8 +495,21 @@ public final class BossManager implements Listener {
     }
 
     private void scheduleNextSpawn() {
-        nextSpawnAt = System.currentTimeMillis() + config.intervalMinutes() * 60_000L;
+        if (config.requireSpawnPoint() && data.spawnPoints().isEmpty()) {
+            nextSpawnAt = 0L;
+            sentWarnings.clear();
+            return;
+        }
+        nextSpawnAt = nextSpawnMillis();
         sentWarnings.clear();
+    }
+
+    private long nextSpawnMillis() {
+        int interval = config.intervalMinutes();
+        if (interval == 60) {
+            return ZonedDateTime.now(JAKARTA_ZONE).truncatedTo(ChronoUnit.HOURS).plusHours(1L).toInstant().toEpochMilli();
+        }
+        return System.currentTimeMillis() + interval * 60_000L;
     }
 
     private double horizontalDistance(Location a, Location b) {
@@ -481,6 +523,7 @@ public final class BossManager implements Listener {
     private void stopScheduler() { if (schedulerTask != null) schedulerTask.cancel(); schedulerTask = null; }
 
     private String timeLeft(long target) {
+        if (target <= 0L) return "belum aktif";
         long seconds = Math.max(0L, (target - System.currentTimeMillis()) / 1000L);
         return (seconds / 60L) + "m " + (seconds % 60L) + "s";
     }
