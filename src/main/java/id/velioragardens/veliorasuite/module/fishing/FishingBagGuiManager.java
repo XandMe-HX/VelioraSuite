@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -39,6 +40,7 @@ public final class FishingBagGuiManager implements Listener {
         }
         inventory.setItem(size - 9, button(Material.ARROW, "&aBack", List.of("&7Kembali ke menu fishing.")));
         inventory.setItem(size - 5, button(Material.EMERALD, "&aSell All Fish Bag", List.of("&7Klik untuk menjual semua ikan di bag.")));
+        inventory.setItem(size - 4, button(Material.HOPPER, "&bStore All Fish", List.of("&7Masukkan semua ikan dari inventory", "&7ke Fish Bag.")));
         slotKeys.put(player.getUniqueId(), map);
         player.openInventory(inventory);
     }
@@ -47,15 +49,33 @@ public final class FishingBagGuiManager implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getBagTitle()))) return;
-        event.setCancelled(true);
+
         int slot = event.getRawSlot();
         int size = manager.getConfigManager().getBagSize();
+        event.setCancelled(true);
+
+        if (slot >= size) {
+            ItemStack clicked = event.getCurrentItem();
+            if (clicked == null || clicked.getType().isAir()) return;
+            int amount = event.getClick().isShiftClick() ? clicked.getAmount() : 1;
+            if (manager.storeItemToBag(player, clicked, amount) > 0) {
+                player.updateInventory();
+                open(player);
+            }
+            return;
+        }
+
         if (slot == size - 9) {
             manager.openMainGui(player);
             return;
         }
         if (slot == size - 5) {
             manager.sellAllBag(player);
+            open(player);
+            return;
+        }
+        if (slot == size - 4) {
+            manager.storeAllInventoryFish(player);
             open(player);
             return;
         }
@@ -72,6 +92,18 @@ public final class FishingBagGuiManager implements Listener {
             int amount = click.isShiftClick() ? entry.getAmount() : 1;
             manager.sellFromBag(player, entry, amount);
             open(player);
+        }
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        if (!event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getBagTitle()))) return;
+        int size = manager.getConfigManager().getBagSize();
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot < size) {
+                event.setCancelled(true);
+                return;
+            }
         }
     }
 
