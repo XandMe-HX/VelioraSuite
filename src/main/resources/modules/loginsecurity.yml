@@ -3,19 +3,10 @@
 # ==================================================
 # Module register/login/password untuk Veliora Gardens.
 #
-# Compatibility:
-# - Target server: Paper/Purpur 1.21.8 + Java 21.
-# - Java 21 recommended.
-# - Plugin tetap compile Java 21.
-#
-# Password tidak boleh disimpan plain text.
-# Semua password harus di-hash dengan PBKDF2.
-# Jangan tampilkan password/hash/salt ke chat atau console.
-#
 # Command:
 # /register <password> <password confirm>
 # /reg <password> <password confirm>
-# /r <password> <password confirm>  # pre-auth only, bukan alias global
+# /r <password> <password confirm>  # pre-auth only
 # /login <password>
 # /l <password>
 # /changepass <old> <new>
@@ -32,46 +23,25 @@ settings:
   enabled: true
   prefix: '&8[&bVelioraLogin&8] '
 
-  # Jika true, player wajib login/register.
   require-login: true
-
-  # Minimal panjang password.
   min-password-length: 5
-
-  # Maksimal panjang password.
   max-password-length: 32
 
-  # Password hashing.
   hashing:
     algorithm: 'PBKDF2WithHmacSHA256'
     iterations: 120000
     key-length: 256
     salt-length: 16
 
-  # Batas percobaan login salah.
   max-login-attempts: 5
-
-  # Lock sementara jika terlalu banyak gagal.
   lock-seconds: 60
-
-  # Timeout login/register setelah join.
-  # Jika 0 berarti tidak kick otomatis.
   auth-timeout-seconds: 120
 
-  # Jika true, player yang belum login tidak bisa bergerak.
   block-movement-before-login: true
-
-  # Radius gerak kecil agar player tidak rubberband terlalu kasar.
   allowed-move-distance-before-login: 0.2
-
-  # Jika true, player yang belum login tidak bisa chat.
   block-chat-before-login: true
-
-  # Jika true, player yang belum login tidak bisa interact/drop/pickup/damage.
   block-actions-before-login: true
 
-  # Efek blindness sebelum register/login.
-  # Effect akan dihapus setelah register/login sukses atau jika player bypass.
   blind-before-login:
     enabled: true
     duration-ticks: 999999
@@ -79,7 +49,6 @@ settings:
     particles: false
     icon: false
 
-  # Command yang boleh dipakai sebelum login/register.
   allowed-commands-before-login:
     - '/login'
     - '/l'
@@ -87,8 +56,6 @@ settings:
     - '/reg'
     - '/r'
 
-  # Shortcut yang hanya diambil LoginSecurity saat player belum authenticated.
-  # /r tidak didaftarkan sebagai alias global agar tidak mengganggu Essentials reply.
   pre-auth-shortcuts:
     enabled: true
     register:
@@ -96,7 +63,6 @@ settings:
     login:
       - '/l'
 
-  # UUID owner server yang boleh pakai command reset password owner.
   owner-uuids:
     - 'isi-uuid-owner-di-sini'
 
@@ -111,34 +77,34 @@ messages:
   player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
   reload-success: '%prefix% &aVelioraLoginSecurity berhasil direload.'
 
-  need-register: '%prefix% &eSilakan daftar dengan &f/register <password> <password confirm>&e.'
-  need-login: '%prefix% &eSilakan login dengan &f/login <password>&e.'
-  already-registered: '%prefix% &cAkun kamu sudah terdaftar. Gunakan &f/login <password>&c.'
-  not-registered: '%prefix% &cAkun kamu belum terdaftar. Gunakan &f/register <password> <password confirm>&c.'
-  already-logged-in: '%prefix% &aKamu sudah login.'
+  need-register: '%prefix% &eKamu belum punya akun di server ini. Ketik &f/register <password> <password>&e. Contoh: &f/register rahasia123 rahasia123&e. Password harus sama dua kali dan dipakai lagi saat login nanti.'
+  need-login: '%prefix% &eAkun kamu sudah terdaftar. Ketik &f/login <password>&e untuk masuk. Contoh: &f/login rahasia123&e. Kalau lupa password, hubungi staff.'
+  already-registered: '%prefix% &cAkun kamu sudah terdaftar. Gunakan &f/login <password>&c, bukan register ulang.'
+  not-registered: '%prefix% &cAkun kamu belum terdaftar. Daftar dulu dengan &f/register <password> <password>&c.'
+  already-logged-in: '%prefix% &aKamu sudah login dan bisa bermain.'
   not-logged-in: '%prefix% &cKamu belum login.'
 
-  register-usage: '%prefix% &cGunakan: &f/register <password> <password confirm> &7atau &f/r <password> <password confirm>'
-  login-usage: '%prefix% &cGunakan: &f/login <password> &7atau &f/l <password>'
-  changepass-usage: '%prefix% &cGunakan: &f/changepass <old> <new>'
+  register-usage: '%prefix% &cCara daftar: &f/register <password> <password> &7contoh: &f/register rahasia123 rahasia123 &7atau &f/r rahasia123 rahasia123'
+  login-usage: '%prefix% &cCara login: &f/login <password> &7contoh: &f/login rahasia123 &7atau &f/l rahasia123'
+  changepass-usage: '%prefix% &cGunakan: &f/changepass <password_lama> <password_baru>'
   unregister-usage: '%prefix% &cGunakan: &f/unregister <password>'
   risetpw-usage: '%prefix% &cGunakan: &f/risetpw <playername>'
-  cpowner-usage: '%prefix% &cGunakan: &f/cpowner <playername> <new>'
+  cpowner-usage: '%prefix% &cGunakan: &f/cpowner <playername> <password_baru>'
 
-  password-not-match: '%prefix% &cPassword konfirmasi tidak sama.'
+  password-not-match: '%prefix% &cPassword konfirmasi tidak sama. Tulis password yang sama dua kali.'
   password-too-short: '%prefix% &cPassword terlalu pendek. Minimal &f%min% &ckarakter.'
   password-too-long: '%prefix% &cPassword terlalu panjang. Maksimal &f%max% &ckarakter.'
-  wrong-password: '%prefix% &cPassword salah.'
-  account-locked: '%prefix% &cAkun sementara terkunci. Coba lagi dalam &f%time%s&c.'
-  login-success: '%prefix% &aLogin berhasil. Selamat bermain!'
-  register-success: '%prefix% &aRegistrasi berhasil. Selamat bermain!'
-  logout-success: '%prefix% &aKamu berhasil logout.'
+  wrong-password: '%prefix% &cPassword salah. Coba lagi pelan-pelan, jangan pakai spasi.'
+  account-locked: '%prefix% &cAkun sementara terkunci karena terlalu sering salah password. Coba lagi dalam &f%time%s&c.'
+  login-success: '%prefix% &aLogin berhasil. Sekarang kamu bisa bergerak, chat, dan memakai command.'
+  register-success: '%prefix% &aRegistrasi berhasil. Ingat password kamu, nanti dipakai untuk &f/login&a.'
+  logout-success: '%prefix% &aKamu berhasil logout. Untuk bermain lagi, gunakan &f/login <password>&a.'
   changepass-success: '%prefix% &aPassword berhasil diganti.'
-  unregister-success: '%prefix% &aAkun login kamu berhasil dihapus.'
-  auth-required-command: '%prefix% &cLogin/register dulu sebelum memakai command.'
-  auth-required-chat: '%prefix% &cLogin/register dulu sebelum chat.'
-  auth-required-action: '%prefix% &cLogin/register dulu sebelum melakukan aksi.'
-  auth-timeout-kick: '&cKamu terlalu lama tidak login/register.'
+  unregister-success: '%prefix% &aAkun login kamu berhasil dihapus. Kamu harus register ulang untuk bermain.'
+  auth-required-command: '%prefix% &cKamu belum login/register. Pakai &f/login <password> &catau &f/register <password> <password>&c dulu.'
+  auth-required-chat: '%prefix% &cKamu belum login/register, jadi belum bisa chat. Ikuti instruksi login di chat.'
+  auth-required-action: '%prefix% &cKamu belum login/register, jadi belum bisa bergerak/interaksi. Ikuti instruksi login di chat.'
+  auth-timeout-kick: '&cKamu terlalu lama tidak login/register. Join ulang lalu ikuti instruksi di chat.'
 
   owner-reset-success: '%prefix% &aPassword player &f%player% &aberhasil direset. Player harus register ulang.'
   owner-changepass-success: '%prefix% &aPassword player &f%player% &aberhasil diubah.'
@@ -147,10 +113,10 @@ messages:
   help:
     - '&8&m--------------------------------'
     - '&b&lVelioraLoginSecurity'
-    - '&f/register <password> <confirm> &7- Daftar akun.'
-    - '&f/r <password> <confirm> &7- Shortcut daftar akun.'
-    - '&f/login <password> &7- Login akun.'
-    - '&f/l <password> &7- Shortcut login akun.'
+    - '&f/register <password> <confirm> &7- Daftar akun pertama kali.'
+    - '&f/r <password> <confirm> &7- Shortcut daftar sebelum login.'
+    - '&f/login <password> &7- Login akun setelah pernah daftar.'
+    - '&f/l <password> &7- Shortcut login.'
     - '&f/changepass <old> <new> &7- Ganti password.'
     - '&f/unregister <password> &7- Hapus akun login.'
     - '&f/logout &7- Logout akun.'
