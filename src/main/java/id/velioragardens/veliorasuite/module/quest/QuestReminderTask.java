@@ -19,7 +19,8 @@ public final class QuestReminderTask {
     public void start() {
         stop();
         if (!manager.getConfigManager().isEnabled() || !manager.getConfigManager().isStarterReminderEnabled()) return;
-        task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 20L * 60L, 20L * 60L);
+        long intervalTicks = 20L * Math.max(60L, manager.getConfigManager().getStarterReminderIntervalSeconds());
+        task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, intervalTicks, intervalTicks);
     }
 
     public void stop() {
