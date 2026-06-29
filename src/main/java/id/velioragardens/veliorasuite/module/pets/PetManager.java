@@ -51,6 +51,7 @@ public final class PetManager implements Listener {
     private static final double TELEPORT_DISTANCE_SQUARED = 576.0D;
     private static final double WALK_SPEED = 1.10D;
     private static final double VELOCITY_SPEED = 0.28D;
+    private static final double HOSTILE_VELOCITY_SPEED = 0.36D;
 
     private final VelioraSuite plugin;
     private final PetConfigManager config;
@@ -406,7 +407,7 @@ public final class PetManager implements Listener {
         VelioraPet active = activePets.get(player.getUniqueId());
         if (active == null) return;
         PetDefinition definition = config.pets().get(active.petId());
-        if (definition != null && (definition.aquaticPet() || definition.flyingPet())) return;
+        if (definition != null && (definition.aquaticPet() || definition.flyingPet() || active.entity() instanceof Monster)) return;
         active.targetUuid(target.getUniqueId());
     }
 
@@ -469,6 +470,10 @@ public final class PetManager implements Listener {
 
     private void follow(Player owner, VelioraPet active, PetDefinition definition) {
         LivingEntity pet = active.entity();
+        pet.setFireTicks(0);
+        pet.setFallDistance(0.0F);
+        if (pet instanceof Mob mob) mob.setTarget(null);
+
         Location ownerLocation = owner.getLocation();
         if (!pet.getWorld().equals(owner.getWorld())) {
             pet.teleport(safeFollowLocation(owner));
@@ -479,10 +484,7 @@ public final class PetManager implements Listener {
             pet.teleport(safeFollowLocation(owner));
             return;
         }
-        if (distanceSquared <= FOLLOW_START_DISTANCE_SQUARED) {
-            if (pet instanceof Mob mob) mob.setTarget(null);
-            return;
-        }
+        if (distanceSquared <= FOLLOW_START_DISTANCE_SQUARED) return;
 
         Location destination = safeFollowLocation(owner);
         if (definition.flyingPet() || definition.aquaticPet()) {
@@ -492,7 +494,11 @@ public final class PetManager implements Listener {
 
         pet.setAI(true);
         pet.setGravity(true);
-        if (pet instanceof Mob mob) mob.setTarget(null);
+        if (pet instanceof Monster) {
+            moveWithVelocity(pet, destination, HOSTILE_VELOCITY_SPEED);
+            return;
+        }
+
         boolean pathing = config.usePathfinderFollow() && moveWithPathfinder(pet, destination);
         if (!pathing) moveWithVelocity(pet, destination, VELOCITY_SPEED);
     }
@@ -515,7 +521,7 @@ public final class PetManager implements Listener {
 
     private void attackIfPossible(Player owner, VelioraPet pet, PetDefinition definition, long now) {
         if (!config.combatEnabled() || pet.targetUuid() == null) return;
-        if (definition.aquaticPet() || definition.flyingPet()) { pet.targetUuid(null); return; }
+        if (definition.aquaticPet() || definition.flyingPet() || pet.entity() instanceof Monster) { pet.targetUuid(null); return; }
         Entity target = Bukkit.getEntity(pet.targetUuid());
         if (!(target instanceof LivingEntity living) || living.isDead() || !isAllowedTarget(living)) { pet.targetUuid(null); return; }
         if (!living.getWorld().equals(pet.entity().getWorld())) { pet.targetUuid(null); return; }
