@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public final class LoginSecurityManager {
 
@@ -53,14 +52,14 @@ public final class LoginSecurityManager {
     public LoginSecurityDataManager getDataManager() { return dataManager; }
 
     public boolean isAuthenticated(Player player) {
-        if (!configManager.isEnabled() || !configManager.isRequireLogin() || configManager.hasBypassPermission(player)) {
+        if (!configManager.isEnabled() || !configManager.isRequireLogin()) {
             return true;
         }
         return sessionManager.isAuthenticated(player);
     }
 
     public void handleJoin(Player player) {
-        if (!configManager.isEnabled() || !configManager.isRequireLogin() || configManager.hasBypassPermission(player)) {
+        if (!configManager.isEnabled() || !configManager.isRequireLogin()) {
             sessionManager.setState(player, AuthState.AUTHENTICATED);
             return;
         }
@@ -310,21 +309,10 @@ public final class LoginSecurityManager {
         ));
     }
 
-    public void sendReloadSuccess(CommandSender sender) {
-        send(sender, "reload-success", "%prefix% &aVelioraLoginSecurity berhasil direload.", Map.of());
-    }
-
-    public void sendNoPermission(CommandSender sender) {
-        send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of());
-    }
-
-    public void sendPlayerOnly(CommandSender sender) {
-        send(sender, "player-only", "%prefix% &cCommand ini hanya bisa digunakan oleh player.", Map.of());
-    }
-
-    public void sendUsage(CommandSender sender, String messageKey) {
-        send(sender, messageKey, "%prefix% &cGunakan command dengan format yang benar.", Map.of());
-    }
+    public void sendReloadSuccess(CommandSender sender) { send(sender, "reload-success", "%prefix% &aVelioraLoginSecurity berhasil direload.", Map.of()); }
+    public void sendNoPermission(CommandSender sender) { send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of()); }
+    public void sendPlayerOnly(CommandSender sender) { send(sender, "player-only", "%prefix% &cCommand ini hanya bisa digunakan oleh player.", Map.of()); }
+    public void sendUsage(CommandSender sender, String messageKey) { send(sender, messageKey, "%prefix% &cGunakan command dengan format yang benar.", Map.of()); }
 
     private boolean checkUse(Player player) {
         if (!configManager.hasUsePermission(player)) {
@@ -358,9 +346,7 @@ public final class LoginSecurityManager {
     private AuthPlayerData getPlayerData(Player player) {
         AuthPlayerData data = dataManager.getByUuid(player.getUniqueId());
         if (data != null) {
-            if (data.getName() == null || !data.getName().equalsIgnoreCase(player.getName())) {
-                dataManager.updateName(data, player.getName());
-            }
+            if (data.getName() == null || !data.getName().equalsIgnoreCase(player.getName())) dataManager.updateName(data, player.getName());
             return data;
         }
         return dataManager.getByName(player.getName());
@@ -372,25 +358,19 @@ public final class LoginSecurityManager {
         return passwordManager.hashIp(address.getAddress().getHostAddress());
     }
 
-    private String now() {
-        return LocalDateTime.now().format(TIME_FORMATTER);
-    }
+    private String now() { return LocalDateTime.now().format(TIME_FORMATTER); }
 
     private void send(CommandSender sender, String path, String fallback, Map<String, String> placeholders) {
         sender.sendMessage(configManager.color(apply(configManager.getMessage(path, fallback), placeholders)));
     }
 
     private void sendLines(CommandSender sender, List<String> lines, Map<String, String> placeholders) {
-        for (String line : lines) {
-            sender.sendMessage(configManager.color(apply(line, placeholders)));
-        }
+        for (String line : lines) sender.sendMessage(configManager.color(apply(line, placeholders)));
     }
 
     private String apply(String text, Map<String, String> placeholders) {
         String result = text == null ? "" : text;
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-        }
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) result = result.replace(entry.getKey(), entry.getValue());
         return result;
     }
 }
