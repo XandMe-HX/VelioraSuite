@@ -18,8 +18,8 @@ settings:
   rewards:
     give-mana-on-complete: true
     mana-reward: 1
-    base-money: 5000
-    money-increase-per-tier: 5000
+    base-money: 2500
+    money-increase-per-tier: 2500
   starter:
     enabled: true
     reminder-enabled: true
@@ -31,10 +31,10 @@ settings:
 categories:
   woodcutting:
     enabled: true
-    display-name: '&aWoodcutting'
-    icon: OAK_LOG
-    base-target: 32
-    target-increase-per-level: 16
+    display-name: '&dWeekly / Special'
+    icon: NETHER_STAR
+    base-target: 128
+    target-increase-per-level: 48
     materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
   mining:
     enabled: true
@@ -42,20 +42,20 @@ categories:
     icon: IRON_PICKAXE
     base-target: 64
     target-increase-per-level: 32
-    materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE, ANCIENT_DEBRIS]
+    materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
   farmer:
     enabled: true
-    display-name: '&eFarmer'
+    display-name: '&eFarming'
     icon: WHEAT
-    base-target: 32
-    target-increase-per-level: 16
+    base-target: 48
+    target-increase-per-level: 24
     harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, SUGAR_CANE, MELON, PUMPKIN, COCOA, NETHER_WART]
     plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
     count-hoe-farmland: true
   chef:
     enabled: true
-    display-name: '&6Chef'
-    icon: COOKED_BEEF
+    display-name: '&bDaily'
+    icon: CLOCK
     base-target: 16
     target-increase-per-level: 8
     cooked-items: [COOKED_BEEF, COOKED_CHICKEN, COOKED_MUTTON, COOKED_PORKCHOP, COOKED_COD, COOKED_SALMON, BAKED_POTATO, DRIED_KELP]
@@ -65,14 +65,14 @@ categories:
     icon: IRON_SWORD
     base-target: 10
     target-increase-per-level: 5
-    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER]
+    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PILLAGER]
   animal_hunter:
     enabled: true
-    display-name: '&fAnimal Hunter'
+    display-name: '&fAnimal'
     icon: COOKED_CHICKEN
     base-target: 10
     target-increase-per-level: 5
-    entities: [COW, SHEEP, CHICKEN, PIG, RABBIT, COD, SALMON]
+    entities: [COW, SHEEP, CHICKEN, PIG, RABBIT]
   fishing:
     enabled: true
     display-name: '&bFishing'
@@ -119,6 +119,7 @@ messages:
     - '&f/quests progress &7- Cek progress quest.'
     - '&f/quests start <category> &7- Mulai quest.'
     - '&f/quests claim <category> &7- Claim reward.'
+    - '&f/quests cancel <category> &7- Batalkan quest.'
     - '&8&m--------------------------------'
   status:
     - '&8&m--------------------------------'

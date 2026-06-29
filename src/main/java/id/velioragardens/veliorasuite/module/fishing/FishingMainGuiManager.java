@@ -10,6 +10,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 
@@ -38,14 +39,15 @@ public final class FishingMainGuiManager implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8VelioraFishing"))) return;
         event.setCancelled(true);
-        switch (event.getRawSlot()) {
-            case 10 -> manager.openBagGui(player);
-            case 11 -> manager.openSellGui(player);
-            case 15 -> manager.openCollectionGui(player);
-            case 16, 22 -> {
-                player.closeInventory();
-                manager.sendTop(player);
-            }
+
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= event.getView().getTopInventory().getSize()) return;
+
+        switch (slot) {
+            case 10 -> openNextTick(player, () -> manager.openBagGui(player));
+            case 11 -> openNextTick(player, () -> manager.openSellGui(player));
+            case 15 -> openNextTick(player, () -> manager.openCollectionGui(player));
+            case 16, 22 -> openNextTick(player, () -> manager.sendTop(player));
             case 26 -> player.closeInventory();
             default -> { }
         }
@@ -54,12 +56,12 @@ public final class FishingMainGuiManager implements Listener {
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
         if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8VelioraFishing"))) return;
-        for (int rawSlot : event.getRawSlots()) {
-            if (rawSlot < 27) {
-                event.setCancelled(true);
-                return;
-            }
-        }
+        event.setCancelled(true);
+    }
+
+    private void openNextTick(Player player, Runnable action) {
+        player.closeInventory();
+        Bukkit.getScheduler().runTask(JavaPlugin.getProvidingPlugin(FishingMainGuiManager.class), action);
     }
 
     private ItemStack item(Material material, String name, List<String> lore) {

@@ -42,6 +42,10 @@ public final class KitsConfigManager {
         return getBoolean("settings.enabled", true);
     }
 
+    public boolean isEconomyEnabled() {
+        return getBoolean("settings.economy.enabled", true);
+    }
+
     public boolean isOpenGuiOnMainCommand() {
         return getBoolean("settings.open-gui-on-main-command", true);
     }
@@ -95,7 +99,7 @@ public final class KitsConfigManager {
     }
 
     public String getPremiumPermissionPrefix() {
-        return getString("permissions.premium-prefix", getString("settings.premium-permission-prefix", "veliorakits.premium."));
+        return getString("permissions.premium-prefix", getString("settings.premium-permission-prefix", "veliorasuite.kits.premium."));
     }
 
     public String getGuiTitle() {
@@ -197,6 +201,7 @@ public final class KitsConfigManager {
         boolean buyEnabled = getBoolean(path + ".buy.enabled", false);
         double price = Math.max(0.0D, getDouble(path + ".buy.price", 0.0D));
         boolean oneTimePurchase = getBoolean(path + ".buy.one-time-purchase", true);
+        boolean firstClaimFree = getBoolean(path + ".buy.first-claim-free", false);
 
         int slot = getInt(path + ".gui.slot", 0);
         Material guiMaterial = parseMaterial(getString(path + ".gui.material", "CHEST"), Material.CHEST, path + ".gui.material");
@@ -212,7 +217,7 @@ public final class KitsConfigManager {
                 config.getStringList(path + ".rewards.commands")
         );
 
-        return new Kit(id, enabled, displayName, description, permission, premiumLevel, cooldownMillis, buyEnabled, price, oneTimePurchase, guiItem, items, reward);
+        return new Kit(id, enabled, displayName, description, permission, premiumLevel, cooldownMillis, buyEnabled, price, oneTimePurchase, firstClaimFree, guiItem, items, reward);
     }
 
     private List<ItemStack> parseItems(String path) {
@@ -372,24 +377,21 @@ public final class KitsConfigManager {
 
     private int getMapInt(Map<?, ?> map, String key, int fallback) {
         Object value = map.get(key);
-        if (value == null) return fallback;
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
         try {
             return Integer.parseInt(String.valueOf(value));
-        } catch (NumberFormatException ignored) {
+        } catch (Exception ignored) {
             return fallback;
         }
     }
 
     private List<String> getMapStringList(Map<?, ?> map, String key) {
         Object value = map.get(key);
-        if (!(value instanceof List<?> list)) {
-            return List.of();
+        if (value instanceof List<?> list) {
+            return list.stream().map(String::valueOf).toList();
         }
-
-        List<String> result = new ArrayList<>();
-        for (Object object : list) {
-            result.add(String.valueOf(object));
-        }
-        return result;
+        return List.of();
     }
 }

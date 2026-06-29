@@ -16,6 +16,7 @@ public final class Kit {
     private final boolean buyEnabled;
     private final double price;
     private final boolean oneTimePurchase;
+    private final boolean firstClaimFree;
     private final KitGuiItem guiItem;
     private final List<ItemStack> items;
     private final KitReward reward;
@@ -31,6 +32,7 @@ public final class Kit {
             boolean buyEnabled,
             double price,
             boolean oneTimePurchase,
+            boolean firstClaimFree,
             KitGuiItem guiItem,
             List<ItemStack> items,
             KitReward reward
@@ -45,6 +47,7 @@ public final class Kit {
         this.buyEnabled = buyEnabled;
         this.price = Math.max(0.0D, price);
         this.oneTimePurchase = oneTimePurchase;
+        this.firstClaimFree = firstClaimFree;
         this.guiItem = guiItem;
         this.items = items == null ? List.of() : items.stream().map(ItemStack::clone).toList();
         this.reward = reward == null ? new KitReward(0, 0, List.of(), List.of()) : reward;
@@ -88,6 +91,10 @@ public final class Kit {
 
     public boolean isOneTimePurchase() {
         return oneTimePurchase;
+    }
+
+    public boolean isFirstClaimFree() {
+        return firstClaimFree;
     }
 
     public KitGuiItem getGuiItem() {

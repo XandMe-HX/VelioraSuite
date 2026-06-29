@@ -74,7 +74,7 @@ commands:
   vskills:
     description: Manage VelioraSkills.
     usage: /vskills <help|status|reload|mana>
-    aliases: [vski, vmana, mana]
+    aliases: [vski, vmana]
     permission: veliorasuite.skills.use
   quests:
     description: Open and manage VelioraQuest.
@@ -103,7 +103,7 @@ commands:
     permission: veliorasuite.boss.use
   pet:
     description: Open and manage VelioraPets.
-    usage: /pet <shop|gacha|list|info|summon|dismiss|storage|rename|feed|ride|reload|give|remove>
+    usage: /pet <shop|gacha|list|info|debug|summon|dismiss|storage|rename|feed|ride|reload|give|remove>
     aliases:
       - pets
       - vpet
@@ -172,6 +172,16 @@ permissions:
     default: op
   veliorasuite.kits.bypassprice:
     default: op
+  veliorasuite.kits.premium.1:
+    default: false
+  veliorasuite.kits.premium.2:
+    default: false
+  veliorasuite.kits.premium.3:
+    default: false
+  veliorasuite.kits.premium.4:
+    default: false
+  veliorasuite.kits.premium.5:
+    default: false
   veliorasuite.report.use:
     default: true
   veliorasuite.report.staff:
@@ -274,6 +284,8 @@ permissions:
     default: op
   veliorasuite.boss.stop:
     default: op
+  veliorasuite.boss.top:
+    default: true
   veliorasuite.pets.use:
     default: true
   veliorasuite.pets.shop:
@@ -284,6 +296,8 @@ permissions:
     default: true
   veliorasuite.pets.rename:
     default: true
+  veliorasuite.pets.redprotect.bypass:
+    default: op
   veliorasuite.pets.admin:
     default: op
   veliorasuite.pets.reload:

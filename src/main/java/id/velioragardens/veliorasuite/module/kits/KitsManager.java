@@ -38,17 +38,9 @@ public final class KitsManager {
         plugin.getLogger().info("VelioraKits loaded with " + configManager.getEnabledKits().size() + " enabled kit(s).");
     }
 
-    public void reload() {
-        load();
-    }
-
-    public boolean isEnabled() {
-        return configManager.isEnabled();
-    }
-
-    public KitsConfigManager getConfigManager() {
-        return configManager;
-    }
+    public void reload() { load(); }
+    public boolean isEnabled() { return configManager.isEnabled(); }
+    public KitsConfigManager getConfigManager() { return configManager; }
 
     public void openGui(Player player) {
         if (!isEnabled()) {
@@ -71,26 +63,19 @@ public final class KitsManager {
                 "&f/kits reload &7- Reload config.",
                 "&8&m--------------------------------"
         ));
-
-        for (String line : help) {
-            sender.sendMessage(configManager.color(applyPlaceholders(line, Map.of())));
-        }
+        for (String line : help) sender.sendMessage(configManager.color(applyPlaceholders(line, Map.of())));
     }
 
     public void sendList(CommandSender sender) {
         sender.sendMessage(configManager.color(configManager.getMessage("list-header", "&8&m--------------------------------")));
         sender.sendMessage(configManager.color(configManager.getMessage("list-title", "&b&lVelioraKits List")));
-
         List<Kit> enabledKits = configManager.getEnabledKits();
         if (enabledKits.isEmpty()) {
             sender.sendMessage(configManager.color(configManager.getMessage("list-empty", "%prefix% &cTidak ada kit aktif.")));
         } else {
             String format = configManager.getMessage("list-format", "&7- &f%kit_display% &8(&7%kit_id%&8) &7Cooldown: &f%cooldown%");
-            for (Kit kit : enabledKits) {
-                sender.sendMessage(configManager.color(applyPlaceholders(format, getKitPlaceholders(kit))));
-            }
+            for (Kit kit : enabledKits) sender.sendMessage(configManager.color(applyPlaceholders(format, getKitPlaceholders(kit))));
         }
-
         sender.sendMessage(configManager.color(configManager.getMessage("list-footer", "&8&m--------------------------------")));
     }
 
@@ -98,7 +83,6 @@ public final class KitsManager {
         boolean any = false;
         player.sendMessage(configManager.color("&8&m--------------------------------"));
         player.sendMessage(configManager.color("&b&lCooldown Kit"));
-
         for (Kit kit : configManager.getEnabledKits()) {
             long remaining = cooldownManager.getRemainingMillis(player.getUniqueId(), kit);
             if (remaining > 0) {
@@ -106,23 +90,15 @@ public final class KitsManager {
                 player.sendMessage(configManager.color("&7- &f" + getKitDisplayName(kit) + " &8(&7" + kit.getId() + "&8) &8: &c" + cooldownManager.formatTime(remaining)));
             }
         }
-
-        if (!any) {
-            send(player, "no-cooldown", "%prefix% &aTidak ada kit yang sedang cooldown.", Map.of());
-        }
-
+        if (!any) send(player, "no-cooldown", "%prefix% &aTidak ada kit yang sedang cooldown.", Map.of());
         player.sendMessage(configManager.color("&8&m--------------------------------"));
     }
 
-    public void claimKit(Player player, String kitId) {
-        claimKit(player, kitId, false);
-    }
+    public void claimKit(Player player, String kitId) { claimKit(player, kitId, false); }
 
     public void claimKit(Player player, String kitId, boolean firstJoin) {
         Kit kit = getUsableKit(player, kitId);
-        if (kit == null) {
-            return;
-        }
+        if (kit == null) return;
 
         if (!firstJoin && cooldownManager.isOnCooldown(player.getUniqueId(), kit) && !player.hasPermission(configManager.getBypassCooldownPermission()) && !player.hasPermission(configManager.getAdminPermission())) {
             String time = cooldownManager.formatTime(cooldownManager.getRemainingMillis(player.getUniqueId(), kit));
@@ -130,18 +106,28 @@ public final class KitsManager {
             return;
         }
 
-        if (configManager.isBlockClaimWhenInventoryFull() && !rewardManager.hasInventorySpace(player, kit)) {
-            send(player, "inventory-full", "%prefix% &cInventory kamu penuh. Kosongkan beberapa slot dulu.", Map.of());
-            return;
+        if (configManager.isBlockClaimWhenInventoryFull()) {
+            int missingSlots = rewardManager.getMissingSlots(player, kit);
+            if (missingSlots > 0) {
+                send(player, "inventory-not-enough-space", "%prefix% &cInventory kamu penuh. Kosongkan minimal &f%slots% slot &cuntuk claim kit ini.", Map.of("%slots%", String.valueOf(missingSlots)));
+                return;
+            }
         }
 
-        if (!handlePriceBeforeClaim(player, kit)) {
-            return;
-        }
+        boolean freeClaim = isFreeClaimAvailable(player, kit);
+        boolean armorEquipped = rewardManager.hasArmorToEquip(kit);
+        boolean armorReplaced = rewardManager.willReplaceArmor(player, kit);
+        if (!handlePriceBeforeClaim(player, kit, freeClaim)) return;
 
         rewardManager.giveKit(player, kit, configManager.isDropExtraItems());
         dataManager.setLastClaim(player.getUniqueId(), kit.getId(), System.currentTimeMillis());
-        send(player, "kit-claimed", "%prefix% &aKamu berhasil claim kit &f%kit%&a.", Map.of("%kit%", kit.getId()));
+        if (freeClaim) dataManager.setClaimedFree(player.getUniqueId(), kit.getId(), true);
+        if (armorReplaced) send(player, "kit-armor-replaced", "%prefix% &eArmor lama kamu dipindahkan ke inventory.", Map.of());
+        if (armorEquipped) {
+            send(player, "kit-claimed-equipped", "%prefix% &aKit &f%kit% &aberhasil diclaim. Armor otomatis dipakai.", Map.of("%kit%", kit.getId()));
+        } else {
+            send(player, "kit-claimed", "%prefix% &aKamu berhasil claim kit &f%kit%&a.", Map.of("%kit%", kit.getId()));
+        }
     }
 
     public void previewKit(Player player, String kitId) {
@@ -156,74 +142,46 @@ public final class KitsManager {
 
     public void buyKit(Player player, String kitId) {
         Kit kit = getUsableKit(player, kitId);
-        if (kit == null) {
-            return;
-        }
-
+        if (kit == null) return;
         if (!kit.isBuyEnabled()) {
             send(player, "buy-not-required", "%prefix% &cKit ini tidak perlu dibeli.", Map.of("%kit%", kit.getId()));
             return;
         }
-
         if (!kit.isOneTimePurchase()) {
             send(player, "buy-each-claim", "%prefix% &cKit ini dibayar setiap claim. Gunakan &f/kits claim %kit%&c.", Map.of("%kit%", kit.getId()));
             return;
         }
-
         if (dataManager.hasPurchased(player.getUniqueId(), kit.getId())) {
             send(player, "already-bought", "%prefix% &cKamu sudah membeli kit ini.", Map.of("%kit%", kit.getId()));
             return;
         }
-
-        if (!chargePlayer(player, kit)) {
-            return;
-        }
-
+        if (!chargePlayer(player, kit)) return;
         dataManager.setPurchased(player.getUniqueId(), kit.getId());
         send(player, "kit-bought", "%prefix% &aKamu berhasil membeli kit &f%kit% &adengan harga &f$%price%&a.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(kit.getPrice())));
     }
 
     public void giveFirstJoinKit(Player player) {
-        if (!configManager.isFirstJoinKitEnabled()) {
-            return;
-        }
-
-        if (dataManager.isFirstJoinGiven(player.getUniqueId())) {
-            return;
-        }
-
+        if (!configManager.isFirstJoinKitEnabled()) return;
+        if (dataManager.isFirstJoinGiven(player.getUniqueId())) return;
         Kit kit = configManager.getKit(configManager.getFirstJoinKit());
         if (kit == null || !kit.isEnabled()) {
             dataManager.setFirstJoinGiven(player.getUniqueId(), true);
             return;
         }
-
-        if (configManager.isBlockClaimWhenInventoryFull() && !rewardManager.hasInventorySpace(player, kit)) {
-            return;
-        }
-
+        if (configManager.isBlockClaimWhenInventoryFull() && rewardManager.getMissingSlots(player, kit) > 0) return;
         rewardManager.giveKit(player, kit, configManager.isDropExtraItems());
         dataManager.setLastClaim(player.getUniqueId(), kit.getId(), System.currentTimeMillis());
+        if (kit.isFirstClaimFree()) dataManager.setClaimedFree(player.getUniqueId(), kit.getId(), true);
         dataManager.setFirstJoinGiven(player.getUniqueId(), true);
         send(player, "first-join-given", "%prefix% &aKamu menerima first join kit &f%kit%&a.", Map.of("%kit%", kit.getId()));
     }
 
     public String getStatusKey(Player player, Kit kit) {
-        if (!hasKitPermission(player, kit)) {
-            return "locked-permission";
-        }
-        if (!hasPremiumPermission(player, kit)) {
-            return "locked-premium";
-        }
-        if (kit.isBuyEnabled() && kit.isOneTimePurchase() && !dataManager.hasPurchased(player.getUniqueId(), kit.getId()) && !player.hasPermission(configManager.getBypassPricePermission()) && !player.hasPermission(configManager.getAdminPermission())) {
-            return "need-buy";
-        }
-        if (cooldownManager.isOnCooldown(player.getUniqueId(), kit) && !player.hasPermission(configManager.getBypassCooldownPermission()) && !player.hasPermission(configManager.getAdminPermission())) {
-            return "cooldown";
-        }
-        if (kit.isBuyEnabled() && kit.isOneTimePurchase() && dataManager.hasPurchased(player.getUniqueId(), kit.getId())) {
-            return "bought";
-        }
+        if (!hasKitPermission(player, kit)) return "locked-permission";
+        if (!hasPremiumPermission(player, kit)) return "locked-premium";
+        if (kit.isBuyEnabled() && kit.isOneTimePurchase() && !dataManager.hasPurchased(player.getUniqueId(), kit.getId()) && !player.hasPermission(configManager.getBypassPricePermission()) && !player.hasPermission(configManager.getAdminPermission())) return "need-buy";
+        if (cooldownManager.isOnCooldown(player.getUniqueId(), kit) && !player.hasPermission(configManager.getBypassCooldownPermission()) && !player.hasPermission(configManager.getAdminPermission())) return "cooldown";
+        if (kit.isBuyEnabled() && kit.isOneTimePurchase() && dataManager.hasPurchased(player.getUniqueId(), kit.getId())) return "bought";
         return "available";
     }
 
@@ -232,101 +190,70 @@ public final class KitsManager {
         return applyPlaceholders(text, getKitPlaceholders(kit, time));
     }
 
-    public List<String> getKitIds() {
-        return configManager.getKitIds();
-    }
+    public List<String> getKitIds() { return configManager.getKitIds(); }
 
     private Kit getUsableKit(Player player, String kitId) {
         Kit kit = configManager.getKit(kitId);
         String safeKit = kitId == null ? "" : kitId.toLowerCase(Locale.ROOT);
-
         if (kit == null) {
             send(player, "kit-not-found", "%prefix% &cKit &f%kit% &ctidak ditemukan.", Map.of("%kit%", safeKit));
             return null;
         }
-
         if (!kit.isEnabled()) {
             send(player, "kit-disabled", "%prefix% &cKit &f%kit% &csedang dimatikan.", Map.of("%kit%", kit.getId()));
             return null;
         }
-
         if (!hasKitPermission(player, kit)) {
-            send(player, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of());
+            send(player, "kit-locked-permission", "%prefix% &cKamu belum punya permission untuk kit ini.", Map.of());
             return null;
         }
-
         if (!hasPremiumPermission(player, kit)) {
             send(player, "premium-required", "%prefix% &cKit ini butuh akses premium: &f%premium_permission%", Map.of("%premium_permission%", getPremiumPermission(kit)));
             return null;
         }
-
         return kit;
     }
 
     private boolean hasKitPermission(Player player, Kit kit) {
-        if (player.hasPermission(configManager.getAdminPermission())) {
-            return true;
-        }
-
-        if (!configManager.isUsePerKitPermission()) {
-            return true;
-        }
-
-        if (kit.getPermission().isBlank()) {
-            return true;
-        }
-
-        if (kit.getPermission().equalsIgnoreCase("auto")) {
-            return player.hasPermission(configManager.getKitPermissionPrefix() + kit.getId());
-        }
-
+        if (player.hasPermission(configManager.getAdminPermission())) return true;
+        if (!configManager.isUsePerKitPermission()) return true;
+        if (kit.getPermission().isBlank()) return true;
+        if (kit.getPermission().equalsIgnoreCase("auto")) return player.hasPermission(configManager.getKitPermissionPrefix() + kit.getId());
         return player.hasPermission(kit.getPermission());
     }
 
     private boolean hasPremiumPermission(Player player, Kit kit) {
-        if (kit.getPremiumLevel() <= 0 || player.hasPermission(configManager.getAdminPermission())) {
-            return true;
-        }
+        if (kit.getPremiumLevel() <= 0 || player.hasPermission(configManager.getAdminPermission())) return true;
         return player.hasPermission(getPremiumPermission(kit));
     }
 
-    private String getPremiumPermission(Kit kit) {
-        return configManager.getPremiumPermissionPrefix() + kit.getPremiumLevel();
-    }
+    private String getPremiumPermission(Kit kit) { return configManager.getPremiumPermissionPrefix() + kit.getPremiumLevel(); }
+    private boolean isFreeClaimAvailable(Player player, Kit kit) { return kit.isFirstClaimFree() && !dataManager.hasClaimedFree(player.getUniqueId(), kit.getId()); }
 
-    private boolean handlePriceBeforeClaim(Player player, Kit kit) {
-        if (!kit.isBuyEnabled() || player.hasPermission(configManager.getBypassPricePermission()) || player.hasPermission(configManager.getAdminPermission())) {
-            return true;
-        }
-
+    private boolean handlePriceBeforeClaim(Player player, Kit kit, boolean freeClaim) {
+        if (!kit.isBuyEnabled() || freeClaim || player.hasPermission(configManager.getBypassPricePermission()) || player.hasPermission(configManager.getAdminPermission())) return true;
         if (kit.isOneTimePurchase()) {
-            if (dataManager.hasPurchased(player.getUniqueId(), kit.getId())) {
-                return true;
-            }
+            if (dataManager.hasPurchased(player.getUniqueId(), kit.getId())) return true;
             send(player, "need-buy", "%prefix% &cKit ini harus dibeli dulu. Gunakan &f/kits buy %kit%&c.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(kit.getPrice())));
             return false;
         }
-
         return chargePlayer(player, kit);
     }
 
     private boolean chargePlayer(Player player, Kit kit) {
+        if (kit.getPrice() <= 0.0D || !configManager.isEconomyEnabled()) return true;
         if (!purchaseManager.hasEconomy()) {
             send(player, "vault-not-found", "%prefix% &cEconomy belum tersedia, pembelian kit tidak bisa digunakan.", Map.of());
             return false;
         }
-
         if (!purchaseManager.hasEnough(player, kit.getPrice())) {
             send(player, "not-enough-money", "%prefix% &cUang kamu kurang. Butuh &f$%price%&c.", Map.of("%price%", formatPrice(kit.getPrice())));
             return false;
         }
-
         return purchaseManager.withdraw(player, kit.getPrice());
     }
 
-    private Map<String, String> getKitPlaceholders(Kit kit) {
-        return getKitPlaceholders(kit, cooldownManager.formatTime(kit.getCooldownMillis()));
-    }
+    private Map<String, String> getKitPlaceholders(Kit kit) { return getKitPlaceholders(kit, cooldownManager.formatTime(kit.getCooldownMillis())); }
 
     private Map<String, String> getKitPlaceholders(Kit kit, String cooldown) {
         return Map.of(
@@ -343,21 +270,14 @@ public final class KitsManager {
 
     private String getKitDisplayName(Kit kit) {
         String displayName = kit.getDisplayName();
-        if (displayName == null || displayName.isBlank() || displayName.equalsIgnoreCase(kit.getId())) {
-            return prettifyKitId(kit.getId());
-        }
+        if (displayName == null || displayName.isBlank() || displayName.equalsIgnoreCase(kit.getId())) return prettifyKitId(kit.getId());
         return displayName;
     }
 
     private String prettifyKitId(String id) {
-        if (id == null || id.isBlank()) {
-            return "Kit";
-        }
-
+        if (id == null || id.isBlank()) return "Kit";
         String spaced = id.replace('_', ' ').replace('-', ' ').replaceAll("(?<=\\D)(?=\\d)", " ").trim();
-        if (spaced.isEmpty()) {
-            return "Kit";
-        }
+        if (spaced.isEmpty()) return "Kit";
         return spaced.substring(0, 1).toUpperCase(Locale.ROOT) + spaced.substring(1).toLowerCase(Locale.ROOT);
     }
 
@@ -367,16 +287,12 @@ public final class KitsManager {
 
     private String applyPlaceholders(String text, Map<String, String> placeholders) {
         String result = text.replace("%prefix%", configManager.getPrefix());
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-        }
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) result = result.replace(entry.getKey(), entry.getValue());
         return result;
     }
 
     private String formatPrice(double price) {
-        if (price == Math.rint(price)) {
-            return String.valueOf((long) price);
-        }
+        if (price == Math.rint(price)) return String.valueOf((long) price);
         return String.format(Locale.US, "%.2f", price);
     }
 }

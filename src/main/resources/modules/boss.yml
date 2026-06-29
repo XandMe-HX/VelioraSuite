@@ -9,9 +9,7 @@ settings:
     announce-despawn: true
     allow-multiple-active: false
     require-spawn-point: true
-    warning-times-minutes:
-      - 5
-      - 1
+    warning-times-minutes: [5, 1]
 
 rarity-chance:
   common: 50.0
@@ -42,7 +40,7 @@ targeting:
   enabled: true
   include-survival: true
   include-adventure: true
-  include-creative: true
+  include-creative: false
   include-spectator: false
   target-radius-horizontal: 64
   target-radius-vertical: 32
@@ -57,106 +55,6 @@ debug:
   targeting: false
 
 bosses:
-  ancient_warden:
-    entity: WARDEN
-    display-name: '&9Ancient Warden'
-    rarity: EPIC
-    health: 500
-    damage: 8.0
-    scale: 3.5
-    skills:
-      - GROUND_SLAM
-      - PULL_AURA
-      - POISON_CLOUD
-      - RAGE_MODE
-    rewards:
-      money:
-        enabled: true
-        min: 10000
-        max: 30000
-  namazu_earthshaker:
-    entity: RAVAGER
-    display-name: '&6Namazu Earthshaker'
-    rarity: LEGENDARY
-    health: 500
-    damage: 10.0
-    scale: 3.0
-    skills:
-      - GROUND_SLAM
-      - FIRE_BOMB
-      - SUMMON_MINIONS
-      - RAGE_MODE
-    rewards:
-      money:
-        enabled: true
-        min: 12000
-        max: 30000
-  forest_guardian:
-    entity: IRON_GOLEM
-    display-name: '&aForest Guardian'
-    rarity: RARE
-    health: 300
-    damage: 6.0
-    scale: 3.0
-    skills:
-      - SUMMON_MINIONS
-      - POISON_CLOUD
-      - RAGE_MODE
-    rewards:
-      money:
-        enabled: true
-        min: 3000
-        max: 12000
-  abyss_brute:
-    entity: PIGLIN_BRUTE
-    display-name: '&5Abyss Brute'
-    rarity: EPIC
-    health: 400
-    damage: 8.0
-    scale: 3.5
-    skills:
-      - GROUND_SLAM
-      - FIRE_BOMB
-      - PULL_AURA
-      - RAGE_MODE
-    rewards:
-      money:
-        enabled: true
-        min: 8000
-        max: 25000
-  infernal_butcher:
-    entity: VINDICATOR
-    display-name: '&cInfernal Butcher'
-    rarity: RARE
-    health: 250
-    damage: 6.0
-    scale: 3.0
-    skills:
-      - GROUND_SLAM
-      - SUMMON_MINIONS
-      - RAGE_MODE
-    rewards:
-      money:
-        enabled: true
-        min: 3000
-        max: 10000
-  soul_reaper:
-    entity: WITHER_SKELETON
-    display-name: '&8Soul Reaper'
-    rarity: LEGENDARY
-    health: 450
-    damage: 9.0
-    scale: 3.5
-    skills:
-      - PULL_AURA
-      - POISON_CLOUD
-      - SUMMON_MINIONS
-      - RAGE_MODE
-    rewards:
-      money:
-        enabled: true
-        min: 12000
-        max: 30000
   rotten_colossus:
     entity: HUSK
     display-name: '&2Rotten Colossus'
@@ -164,14 +62,29 @@ bosses:
     health: 150
     damage: 4.0
     scale: 3.5
-    skills:
-      - GROUND_SLAM
-      - SUMMON_MINIONS
+    skills: [GROUND_SLAM, SUMMON_MINIONS]
     rewards:
-      money:
-        enabled: true
-        min: 1000
-        max: 5000
+      money: { enabled: true, min: 10000, max: 25000 }
+  forest_guardian:
+    entity: IRON_GOLEM
+    display-name: '&aForest Guardian'
+    rarity: RARE
+    health: 300
+    damage: 6.0
+    scale: 3.0
+    skills: [SUMMON_MINIONS, POISON_CLOUD, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 25000, max: 50000 }
+  infernal_butcher:
+    entity: VINDICATOR
+    display-name: '&cInfernal Butcher'
+    rarity: RARE
+    health: 250
+    damage: 6.0
+    scale: 3.0
+    skills: [GROUND_SLAM, SUMMON_MINIONS, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 25000, max: 50000 }
   deep_drowned_king:
     entity: DROWNED
     display-name: '&3Deep Drowned King'
@@ -179,38 +92,62 @@ bosses:
     health: 300
     damage: 6.0
     scale: 3.0
-    skills:
-      - PULL_AURA
-      - POISON_CLOUD
-      - RAGE_MODE
+    skills: [PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money:
-        enabled: true
-        min: 3000
-        max: 12000
+      money: { enabled: true, min: 25000, max: 50000 }
+  ancient_warden:
+    entity: WARDEN
+    display-name: '&9Ancient Warden'
+    rarity: EPIC
+    health: 500
+    damage: 8.0
+    scale: 3.5
+    skills: [GROUND_SLAM, PULL_AURA, POISON_CLOUD, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 50000, max: 100000 }
+  abyss_brute:
+    entity: PIGLIN_BRUTE
+    display-name: '&5Abyss Brute'
+    rarity: EPIC
+    health: 400
+    damage: 8.0
+    scale: 3.5
+    skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 50000, max: 100000 }
+  namazu_earthshaker:
+    entity: RAVAGER
+    display-name: '&6Namazu Earthshaker'
+    rarity: LEGENDARY
+    health: 500
+    damage: 10.0
+    scale: 3.0
+    skills: [GROUND_SLAM, FIRE_BOMB, SUMMON_MINIONS, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 75000, max: 150000 }
+  soul_reaper:
+    entity: WITHER_SKELETON
+    display-name: '&8Soul Reaper'
+    rarity: LEGENDARY
+    health: 450
+    damage: 9.0
+    scale: 3.5
+    skills: [PULL_AURA, POISON_CLOUD, SUMMON_MINIONS, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 75000, max: 150000 }
 
 skills:
   enabled: true
   cooldown-seconds: 12
   random-skill: true
-  default:
-    - GROUND_SLAM
-    - SUMMON_MINIONS
-    - FIRE_BOMB
-    - PULL_AURA
-    - POISON_CLOUD
-    - RAGE_MODE
+  default: [GROUND_SLAM, SUMMON_MINIONS, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
   damage:
     ground-slam: 6.0
     fire-bomb: 8.0
   summon:
     max-minions: 8
     minions-per-cast: 3
-    types:
-      - ZOMBIE
-      - HUSK
-      - VINDICATOR
-      - DROWNED
+    types: [ZOMBIE, HUSK, VINDICATOR, DROWNED]
 
 protection:
   respect-worldguard: false
@@ -219,51 +156,27 @@ protection:
   allow-boss-damage-in-protected-region: true
 
 rewards:
-  # Player harus memberi minimal damage ini agar dapat reward.
   min-damage-to-reward: 20.0
-
-  # Uang utama untuk semua player yang memenuhi minimal damage.
-  # Bisa dioverride per boss di bosses.<boss-id>.rewards.money.
+  min-damage-contribution-percent: 5.0
+  reward-cooldown-seconds: 60
   default-money:
     enabled: true
-    min: 1000
-    max: 30000
-
-  # Bonus uang tambahan untuk top damage 1/2/3.
-  # Bonus ini ditambahkan di atas reward uang utama, lalu dicap oleh money-total-cap.
+    min: 10000
+    max: 150000
   top-damage-bonus:
-    enabled: true
-    first:
-      min: 5000
-      max: 30000
-    second:
-      min: 3000
-      max: 15000
-    third:
-      min: 1000
-      max: 8000
-
+    enabled: false
+    first: { min: 0, max: 0 }
+    second: { min: 0, max: 0 }
+    third: { min: 0, max: 0 }
   money-total-cap:
     enabled: true
-    max-per-player: 30000
-
-  # Item rare tetap kecil agar economy tidak inflasi.
+    max-per-player: 150000
   materials:
-    common:
-      diamond: 0
-      ancient-debris: 0
-    rare:
-      diamond: 2
-      ancient-debris: 0
-    epic:
-      diamond: 5
-      ancient-debris: 1
-    legendary:
-      diamond: 10
-      ancient-debris: 3
-    mythic:
-      diamond: 10
-      ancient-debris: 5
+    common: { diamond: 0, ancient-debris: 0 }
+    rare: { diamond: 1, ancient-debris: 0 }
+    epic: { diamond: 2, ancient-debris: 0 }
+    legendary: { diamond: 3, ancient-debris: 1 }
+    mythic: { diamond: 3, ancient-debris: 1 }
 
 effects:
   spawn:
