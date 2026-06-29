@@ -24,23 +24,23 @@ import java.util.Set;
 
 public final class PetConfigManager {
     private static final Set<String> SAFE_ANIMAL_IDS = Set.of(
-            "wolf", "cat", "fox", "rabbit", "panda", "parrot", "axolotl",
+            "wolf", "cat", "fox", "rabbit", "panda", "axolotl",
             "chicken", "cow", "sheep", "pig", "mooshroom", "mushroom_cow", "sniffer"
     );
 
     private static final Set<String> SAFE_ANIMAL_ENTITY_NAMES = Set.of(
-            "WOLF", "CAT", "FOX", "RABBIT", "PANDA", "PARROT", "AXOLOTL",
+            "WOLF", "CAT", "FOX", "RABBIT", "PANDA", "AXOLOTL",
             "CHICKEN", "COW", "SHEEP", "PIG", "MOOSHROOM", "MUSHROOM_COW", "SNIFFER"
     );
 
     private static final Set<String> WALKING_DISABLED_IDS = Set.of(
-            "bat_sprite", "parrot_scout", "bee_safe", "allay_wisp", "phantom_shadow_safe", "vex_lantern_safe", "blaze_core_safe", "astral_allay", "abyss_phantom_safe",
+            "bat_sprite", "parrot", "parrot_scout", "bee_safe", "allay_wisp", "phantom_shadow_safe", "vex_lantern_safe", "blaze_core_safe", "astral_allay", "abyss_phantom_safe",
             "phantom", "ghast", "happy_ghast", "happghast", "happyghast", "bee", "allay", "bat", "blaze", "vex", "ender_dragon", "wither",
             "dolphin", "cod", "salmon", "tropical_fish", "pufferfish", "tadpole", "elder_guardian", "guardian", "squid", "glow_squid"
     );
 
     private static final Set<String> FLYING_ENTITY_NAMES = Set.of(
-            "PHANTOM", "GHAST", "BLAZE", "VEX", "ENDER_DRAGON", "WITHER", "BEE", "ALLAY", "BAT"
+            "PHANTOM", "GHAST", "BLAZE", "VEX", "ENDER_DRAGON", "WITHER", "BEE", "ALLAY", "BAT", "PARROT"
     );
 
     private static final Set<String> AQUATIC_ENTITY_NAMES = Set.of(
@@ -85,8 +85,8 @@ public final class PetConfigManager {
     public boolean autoSummonLastPet() { return bool("settings.auto-summon-last-pet", false); }
     public int deathCooldownMinutes() { return Math.max(0, integer("settings.death-cooldown-minutes", 15)); }
     public boolean usePathfinderFollow() { return bool("settings.follow.use-pathfinder", true); }
-    public boolean allowFlyingPets() { return bool("settings.allow-flying-pets", false); }
-    public boolean flyingSafeMode() { return bool("settings.flying-safe-mode.enabled", true); }
+    public boolean allowFlyingPets() { return false; }
+    public boolean flyingSafeMode() { return true; }
     public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", false); }
     public int storageSize(PetRarity rarity) { return Math.max(9, integer("storage.size." + rarity.name().toLowerCase(Locale.ROOT), defaultStorage(rarity))); }
 
@@ -164,10 +164,9 @@ public final class PetConfigManager {
         if (type == null) { plugin.getLogger().warning("VelioraPets: skip invalid or unavailable entity for pet " + id + ": " + rawEntity); return; }
         if (!isSafeAnimalType(type)) { plugin.getLogger().warning("VelioraPets: skip non-animal safe pet: " + id + " / " + rawEntity); return; }
 
-        boolean flyingPet = isFlyingPet(type);
+        boolean flyingPet = false;
         boolean aquatic = config.getBoolean(path + ".aquatic", defaultAquatic(type));
         if (isAxolotlGround(type)) aquatic = false;
-        if (flyingPet && !allowFlyingPets()) { plugin.getLogger().warning("VelioraPets: skip flying pet karena settings.allow-flying-pets false: " + type + " for " + id); return; }
         if (aquatic && !allowAquaticPets() && !isAxolotlGround(type)) { plugin.getLogger().warning("VelioraPets: skip aquatic pet karena settings.allow-aquatic-pets false: " + type + " for " + id); return; }
 
         PetRarity rarity = PetRarity.from(config.getString(path + ".rarity", "COMMON"));
@@ -198,7 +197,6 @@ public final class PetConfigManager {
         addBuiltin("fox", "&6Fox", "FOX", "SWEET_BERRIES", PetRarity.COMMON, 0.50D, 50_000L, false, 10, "SWEET_BERRIES", 20);
         addBuiltin("rabbit", "&fRabbit", "RABBIT", "CARROT", PetRarity.COMMON, 0.42D, 50_000L, false, 10, "CARROT", 20);
         addBuiltin("panda", "&aPanda", "PANDA", "BAMBOO", PetRarity.RARE, 0.65D, 100_000L, true, 10, "BAMBOO", 25);
-        addBuiltin("parrot", "&bParrot", "PARROT", "FEATHER", PetRarity.RARE, 0.42D, 100_000L, false, 10, "WHEAT_SEEDS", 25);
         addBuiltin("axolotl", "&dAxolotl", "AXOLOTL", "TROPICAL_FISH_BUCKET", PetRarity.RARE, 0.55D, 100_000L, false, 10, "TROPICAL_FISH", 25);
         addBuiltin("chicken", "&fChicken", "CHICKEN", "FEATHER", PetRarity.COMMON, 0.45D, 50_000L, false, 10, "WHEAT_SEEDS", 20);
         addBuiltin("cow", "&fCow", "COW", "WHEAT", PetRarity.COMMON, 0.60D, 50_000L, true, 10, "WHEAT", 20);
@@ -215,10 +213,9 @@ public final class PetConfigManager {
         EntityType type = entityType(entity);
         if (type == null) { plugin.getLogger().warning("VelioraPets: skip builtin animal pet, EntityType tidak tersedia: " + entity + " for " + id); return; }
         if (!isSafeAnimalType(type)) return;
-        boolean flying = isFlyingPet(type);
+        boolean flying = false;
         boolean isAquatic = defaultAquatic(type);
         if (isAxolotlGround(type)) isAquatic = false;
-        if (flying && !allowFlyingPets()) return;
         if (isAquatic && !allowAquaticPets() && !isAxolotlGround(type)) return;
         pets.put(normalizedId, new PetDefinition(normalizedId, display, type, material(icon, Material.BONE), rarity, PetSkillType.NONE, 0.0D, 0.0D, scale, balancedPrice(rarity, price), storageSize(rarity), material(food, defaultFood(rarity)), Math.max(1, feedExp), flying, rideable, Math.max(1, adultLevel), isAquatic));
     }
