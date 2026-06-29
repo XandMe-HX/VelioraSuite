@@ -23,10 +23,32 @@ import java.util.Map;
 import java.util.Set;
 
 public final class PetConfigManager {
+    private static final Set<String> SAFE_ANIMAL_IDS = Set.of(
+            "wolf", "cat", "fox", "rabbit", "panda", "parrot", "axolotl",
+            "chicken", "cow", "sheep", "pig", "mooshroom", "mushroom_cow", "sniffer"
+    );
+
+    private static final Set<String> SAFE_ANIMAL_ENTITY_NAMES = Set.of(
+            "WOLF", "CAT", "FOX", "RABBIT", "PANDA", "PARROT", "AXOLOTL",
+            "CHICKEN", "COW", "SHEEP", "PIG", "MOOSHROOM", "MUSHROOM_COW", "SNIFFER"
+    );
+
     private static final Set<String> WALKING_DISABLED_IDS = Set.of(
             "bat_sprite", "parrot_scout", "bee_safe", "allay_wisp", "phantom_shadow_safe", "vex_lantern_safe", "blaze_core_safe", "astral_allay", "abyss_phantom_safe",
-            "phantom", "ghast", "happy_ghast", "happghast", "happyghast", "bee", "allay", "bat", "parrot", "blaze", "vex", "ender_dragon", "wither",
+            "phantom", "ghast", "happy_ghast", "happghast", "happyghast", "bee", "allay", "bat", "blaze", "vex", "ender_dragon", "wither",
             "dolphin", "cod", "salmon", "tropical_fish", "pufferfish", "tadpole", "elder_guardian", "guardian", "squid", "glow_squid"
+    );
+
+    private static final Set<String> FLYING_ENTITY_NAMES = Set.of(
+            "PHANTOM", "GHAST", "BLAZE", "VEX", "ENDER_DRAGON", "WITHER", "BEE", "ALLAY", "BAT"
+    );
+
+    private static final Set<String> AQUATIC_ENTITY_NAMES = Set.of(
+            "DOLPHIN", "COD", "SALMON", "TROPICAL_FISH", "PUFFERFISH", "TADPOLE", "ELDER_GUARDIAN", "GUARDIAN", "AXOLOTL", "SQUID", "GLOW_SQUID"
+    );
+
+    private static final Set<String> RIDEABLE_ENTITY_NAMES = Set.of(
+            "COW", "SHEEP", "PIG", "PANDA", "MOOSHROOM", "MUSHROOM_COW", "SNIFFER"
     );
 
     private final VelioraSuite plugin;
@@ -86,12 +108,12 @@ public final class PetConfigManager {
 
     public double scalePerLevel() { return Math.max(0.0D, number("leveling.scale-per-level", 0.003D)); }
     public double maxScaleBonus() { return Math.max(0.0D, number("leveling.max-scale-bonus", 0.15D)); }
-    public boolean combatEnabled() { return bool("combat.enabled", true); }
+    public boolean combatEnabled() { return bool("combat.enabled", false); }
     public double attackRange() { return Math.max(1.0D, number("combat.attack-range", 3.0D)); }
     public int attackCooldownSeconds() { return Math.max(1, integer("combat.attack-cooldown-seconds", 2)); }
     public boolean allowAttackPassive() { return bool("combat.allow-attack-passive", false); }
-    public boolean allowAttackPlayers() { return bool("combat.allow-attack-players", false); }
-    public double petDamageMultiplier() { return Math.max(0.1D, number("combat.pet-damage-multiplier", 1.0D)); }
+    public boolean allowAttackPlayers() { return false; }
+    public double petDamageMultiplier() { return Math.max(0.0D, number("combat.pet-damage-multiplier", 0.0D)); }
 
     public boolean auraEnabled() { return bool("cosmetic.aura-enabled", true); }
     public int auraIntervalSeconds() { return Math.max(3, integer("cosmetic.aura-interval-seconds", 5)); }
@@ -109,6 +131,11 @@ public final class PetConfigManager {
 
     public boolean isSafeModeDisabledPet(String id) {
         String key = id == null ? "" : id.toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+        if (SAFE_ANIMAL_IDS.contains(key)) return false;
+        if (config != null) {
+            EntityType configuredType = entityType(config.getString("pets." + key + ".entity", ""));
+            if (isSafeAnimalType(configuredType)) return false;
+        }
         if (walkingPetsOnly() && WALKING_DISABLED_IDS.contains(key)) return true;
         if (!stableSafeMode()) return false;
         String rawEntity = config == null ? "" : config.getString("pets." + key + ".entity", "");
@@ -125,7 +152,7 @@ public final class PetConfigManager {
         pets.clear();
         ConfigurationSection section = config.getConfigurationSection("pets");
         if (section != null) for (String id : section.getKeys(false)) loadConfiguredPet(id);
-        addBuiltinPhase12EPets();
+        addBuiltinAnimalPets();
     }
 
     private void loadConfiguredPet(String id) {
@@ -135,63 +162,65 @@ public final class PetConfigManager {
         if (isBlacklistedPet(normalizedId, rawEntity)) { plugin.getLogger().warning("VelioraPets: skip blacklisted pet: " + id + " / " + rawEntity); return; }
         EntityType type = entityType(rawEntity);
         if (type == null) { plugin.getLogger().warning("VelioraPets: skip invalid or unavailable entity for pet " + id + ": " + rawEntity); return; }
+        if (!isSafeAnimalType(type)) { plugin.getLogger().warning("VelioraPets: skip non-animal safe pet: " + id + " / " + rawEntity); return; }
+
         boolean flyingPet = isFlyingPet(type);
         boolean aquatic = config.getBoolean(path + ".aquatic", defaultAquatic(type));
         if (isAxolotlGround(type)) aquatic = false;
-        if (walkingPetsOnly() && (WALKING_DISABLED_IDS.contains(normalizedId) || isDisabledByWalkingMode(type))) { plugin.getLogger().warning("VelioraPets: skip non-walking pet karena walking-pets-only: " + id + " / " + rawEntity); return; }
-        if (stableSafeMode() && (flyingPet || aquatic || isSafeModeDisabledPet(normalizedId))) { plugin.getLogger().warning("VelioraPets: skip pet karena stable-safe-mode: " + id + " / " + rawEntity); return; }
         if (flyingPet && !allowFlyingPets()) { plugin.getLogger().warning("VelioraPets: skip flying pet karena settings.allow-flying-pets false: " + type + " for " + id); return; }
-        if (aquatic && !allowAquaticPets()) { plugin.getLogger().warning("VelioraPets: skip aquatic pet karena settings.allow-aquatic-pets false: " + type + " for " + id); return; }
-        if (flyingPet && !flyingSafeMode()) { plugin.getLogger().warning("VelioraPets: skip flying pet entity karena flying-safe-mode false: " + type + " for " + id); return; }
+        if (aquatic && !allowAquaticPets() && !isAxolotlGround(type)) { plugin.getLogger().warning("VelioraPets: skip aquatic pet karena settings.allow-aquatic-pets false: " + type + " for " + id); return; }
+
         PetRarity rarity = PetRarity.from(config.getString(path + ".rarity", "COMMON"));
-        PetSkillType skillType = PetSkillType.from(config.getString(path + ".skill.type", "NONE"));
         Material food = material(config.getString(path + ".food.material", defaultFood(rarity).name()), defaultFood(rarity));
-        double defaultDamage = aquatic ? 0.0D : defaultDamage(rarity);
         long price = balancedPrice(rarity, config.getLong(path + ".price", defaultPrice(rarity)));
-        pets.put(normalizedId, new PetDefinition(normalizedId, config.getString(path + ".display-name", id), type, material(config.getString(path + ".icon", "BONE"), Material.BONE), rarity, skillType, Math.min(maxSkillBonus(skillType), Math.max(0.0D, config.getDouble(path + ".skill.bonus", 0.0D))), Math.max(0.0D, config.getDouble(path + ".damage", defaultDamage)), Math.max(0.1D, config.getDouble(path + ".scale", 0.5D)), price, storageSize(rarity), food, Math.max(1, config.getInt(path + ".food.exp", defaultFeedExp(rarity))), flyingPet, config.getBoolean(path + ".rideable", defaultRideable(type)), Math.max(1, config.getInt(path + ".adult-level", defaultAdultLevel())), aquatic));
+        pets.put(normalizedId, new PetDefinition(normalizedId,
+                config.getString(path + ".display-name", id),
+                type,
+                material(config.getString(path + ".icon", "BONE"), Material.BONE),
+                rarity,
+                PetSkillType.NONE,
+                0.0D,
+                0.0D,
+                Math.max(0.1D, config.getDouble(path + ".scale", 0.5D)),
+                price,
+                storageSize(rarity),
+                food,
+                Math.max(1, config.getInt(path + ".food.exp", defaultFeedExp(rarity))),
+                flyingPet,
+                config.getBoolean(path + ".rideable", defaultRideable(type)),
+                Math.max(1, config.getInt(path + ".adult-level", defaultAdultLevel())),
+                aquatic));
     }
 
-    private void addBuiltinPhase12EPets() {
-        addBuiltin("axolotl", "&dAxolotl", "AXOLOTL", "TROPICAL_FISH_BUCKET", PetRarity.COMMON, 0.0D, 0.55D, 50_000L, false, 10, "TROPICAL_FISH", 20, PetSkillType.NONE, 0.0D, false);
-        addBuiltin("ocelot", "&eOcelot", "OCELOT", "COD", PetRarity.COMMON, 1.0D, 0.55D, 50_000L, false, 10, "COD", 20, PetSkillType.NONE, 0.0D, false);
-        addBuiltin("polar_bear", "&bPolar Bear", "POLAR_BEAR", "SNOW_BLOCK", PetRarity.RARE, 1.5D, 0.65D, 100_000L, true, 10, "COD", 25, PetSkillType.PET_DAMAGE, 0.01D, false);
-        addBuiltin("dolphin", "&bDolphin", "DOLPHIN", "COD", PetRarity.RARE, 0.0D, 0.55D, 100_000L, false, 10, "COD", 25, PetSkillType.NONE, 0.0D, true);
-        addBuiltin("cod", "&fCod", "COD", "COD", PetRarity.COMMON, 0.0D, 0.45D, 50_000L, false, 10, "KELP", 20, PetSkillType.NONE, 0.0D, true);
-        addBuiltin("salmon", "&fSalmon", "SALMON", "SALMON", PetRarity.COMMON, 0.0D, 0.45D, 50_000L, false, 10, "KELP", 20, PetSkillType.NONE, 0.0D, true);
-        addBuiltin("tropical_fish", "&fTropical Fish", "TROPICAL_FISH", "TROPICAL_FISH", PetRarity.COMMON, 0.0D, 0.45D, 50_000L, false, 10, "KELP", 20, PetSkillType.NONE, 0.0D, true);
-        addBuiltin("pufferfish", "&ePufferfish", "PUFFERFISH", "PUFFERFISH", PetRarity.RARE, 0.0D, 0.45D, 100_000L, false, 10, "KELP", 25, PetSkillType.NONE, 0.0D, true);
-        addBuiltin("tadpole", "&fTadpole", "TADPOLE", "SLIME_BALL", PetRarity.COMMON, 0.0D, 0.35D, 50_000L, false, 10, "KELP", 20, PetSkillType.NONE, 0.0D, true);
-        addBuiltin("elder_guardian", "&6Elder Guardian", "ELDER_GUARDIAN", "PRISMARINE_CRYSTALS", PetRarity.LEGENDARY, 0.0D, 0.40D, 350_000L, false, 15, "PRISMARINE_SHARD", 45, PetSkillType.FISHING_LUCK, 0.02D, true);
-        addBuiltin("silverfish", "&fSilverfish", "SILVERFISH", "STONE", PetRarity.COMMON, 1.0D, 0.45D, 50_000L, false, 10, "STONE", 20, PetSkillType.NONE, 0.0D, false);
-        addBuiltin("endermite", "&bEndermite", "ENDERMITE", "ENDER_PEARL", PetRarity.RARE, 1.5D, 0.45D, 100_000L, false, 10, "CHORUS_FRUIT", 25, PetSkillType.PET_DAMAGE, 0.01D, false);
-        addBuiltin("shulker", "&dShulker", "SHULKER", "SHULKER_SHELL", PetRarity.EPIC, 2.0D, 0.45D, 200_000L, false, 10, "SHULKER_SHELL", 35, PetSkillType.PET_DAMAGE, 0.02D, false);
-        addBuiltin("witch", "&dWitch", "WITCH", "POTION", PetRarity.EPIC, 2.0D, 0.55D, 200_000L, false, 10, "GLASS_BOTTLE", 35, PetSkillType.PET_DAMAGE, 0.02D, false);
-        addBuiltin("wither_skeleton", "&dWither Skeleton", "WITHER_SKELETON", "WITHER_SKELETON_SKULL", PetRarity.EPIC, 2.0D, 0.55D, 200_000L, false, 10, "BONE", 35, PetSkillType.PET_DAMAGE, 0.02D, false);
-        addBuiltin("zombified_piglin", "&bZombified Piglin", "ZOMBIFIED_PIGLIN", "GOLD_NUGGET", PetRarity.RARE, 1.5D, 0.55D, 100_000L, false, 10, "GOLD_NUGGET", 25, PetSkillType.PET_DAMAGE, 0.01D, false);
-        addBuiltin("villager", "&fVillager", "VILLAGER", "EMERALD", PetRarity.COMMON, 1.0D, 0.55D, 50_000L, false, 10, "BREAD", 20, PetSkillType.NONE, 0.0D, false);
-        addBuiltin("wandering_trader", "&bWandering Trader", "WANDERING_TRADER", "EMERALD", PetRarity.RARE, 1.5D, 0.55D, 100_000L, false, 10, "BREAD", 25, PetSkillType.QUEST_MONEY, 0.01D, false);
-        addBuiltin("strider", "&bStrider", "STRIDER", "WARPED_FUNGUS_ON_A_STICK", PetRarity.RARE, 1.5D, 0.55D, 100_000L, true, 10, "WARPED_FUNGUS", 25, PetSkillType.PET_DAMAGE, 0.01D, false);
-        addBuiltin("skeleton_horse", "&dSkeleton Horse", "SKELETON_HORSE", "BONE", PetRarity.EPIC, 2.0D, 0.60D, 200_000L, true, 10, "BONE", 35, PetSkillType.PET_DAMAGE, 0.02D, false);
-        addBuiltin("zombie_horse", "&dZombie Horse", "ZOMBIE_HORSE", "ROTTEN_FLESH", PetRarity.EPIC, 2.0D, 0.60D, 200_000L, true, 10, "ROTTEN_FLESH", 35, PetSkillType.PET_DAMAGE, 0.02D, false);
-        addBuiltin("creaking", "&6Creaking", "CREAKING", "RESIN_CLUMP", PetRarity.LEGENDARY, 2.5D, 0.50D, 350_000L, false, 15, "RESIN_CLUMP", 45, PetSkillType.PET_DAMAGE, 0.03D, false);
-        addBuiltin("illusioner", "&6Illusioner", "ILLUSIONER", "BOW", PetRarity.LEGENDARY, 2.5D, 0.55D, 350_000L, false, 15, "BREAD", 45, PetSkillType.PET_DAMAGE, 0.03D, false);
-        addBuiltin("giant", "&5Giant", "GIANT", "ZOMBIE_HEAD", PetRarity.MYTHIC, 3.0D, 0.18D, 500_000L, true, 20, "ROTTEN_FLESH", 60, PetSkillType.PET_DAMAGE, 0.05D, false);
+    private void addBuiltinAnimalPets() {
+        addBuiltin("wolf", "&fWolf", "WOLF", "BONE", PetRarity.COMMON, 0.55D, 50_000L, false, 10, "BONE", 20);
+        addBuiltin("cat", "&eCat", "CAT", "COD", PetRarity.COMMON, 0.50D, 50_000L, false, 10, "COD", 20);
+        addBuiltin("fox", "&6Fox", "FOX", "SWEET_BERRIES", PetRarity.COMMON, 0.50D, 50_000L, false, 10, "SWEET_BERRIES", 20);
+        addBuiltin("rabbit", "&fRabbit", "RABBIT", "CARROT", PetRarity.COMMON, 0.42D, 50_000L, false, 10, "CARROT", 20);
+        addBuiltin("panda", "&aPanda", "PANDA", "BAMBOO", PetRarity.RARE, 0.65D, 100_000L, true, 10, "BAMBOO", 25);
+        addBuiltin("parrot", "&bParrot", "PARROT", "FEATHER", PetRarity.RARE, 0.42D, 100_000L, false, 10, "WHEAT_SEEDS", 25);
+        addBuiltin("axolotl", "&dAxolotl", "AXOLOTL", "TROPICAL_FISH_BUCKET", PetRarity.RARE, 0.55D, 100_000L, false, 10, "TROPICAL_FISH", 25);
+        addBuiltin("chicken", "&fChicken", "CHICKEN", "FEATHER", PetRarity.COMMON, 0.45D, 50_000L, false, 10, "WHEAT_SEEDS", 20);
+        addBuiltin("cow", "&fCow", "COW", "WHEAT", PetRarity.COMMON, 0.60D, 50_000L, true, 10, "WHEAT", 20);
+        addBuiltin("sheep", "&fSheep", "SHEEP", "WHITE_WOOL", PetRarity.COMMON, 0.55D, 50_000L, true, 10, "WHEAT", 20);
+        addBuiltin("pig", "&dPig", "PIG", "CARROT", PetRarity.COMMON, 0.55D, 50_000L, true, 10, "CARROT", 20);
+        addBuiltin("mooshroom", "&cMooshroom Cow", "MUSHROOM_COW", "RED_MUSHROOM", PetRarity.RARE, 0.60D, 100_000L, true, 10, "WHEAT", 25);
+        addBuiltin("sniffer", "&6Sniffer", "SNIFFER", "SNIFFER_EGG", PetRarity.EPIC, 0.75D, 200_000L, true, 15, "TORCHFLOWER_SEEDS", 35);
     }
 
-    private void addBuiltin(String id, String display, String entity, String icon, PetRarity rarity, double damage, double scale, long price, boolean rideable, int adultLevel, String food, int feedExp, PetSkillType skill, double skillBonus, boolean aquatic) {
+    private void addBuiltin(String id, String display, String entity, String icon, PetRarity rarity, double scale, long price, boolean rideable, int adultLevel, String food, int feedExp) {
         String normalizedId = id.toLowerCase(Locale.ROOT);
         if (pets.containsKey(normalizedId)) return;
         if (isBlacklistedPet(normalizedId, entity)) return;
         EntityType type = entityType(entity);
-        if (type == null) { plugin.getLogger().warning("VelioraPets: skip builtin pet, EntityType tidak tersedia: " + entity + " for " + id); return; }
+        if (type == null) { plugin.getLogger().warning("VelioraPets: skip builtin animal pet, EntityType tidak tersedia: " + entity + " for " + id); return; }
+        if (!isSafeAnimalType(type)) return;
         boolean flying = isFlyingPet(type);
-        boolean isAquatic = aquatic || defaultAquatic(type);
+        boolean isAquatic = defaultAquatic(type);
         if (isAxolotlGround(type)) isAquatic = false;
-        if (walkingPetsOnly() && (WALKING_DISABLED_IDS.contains(normalizedId) || isDisabledByWalkingMode(type))) return;
-        if (stableSafeMode() && (flying || isAquatic || isSafeModeDisabledPet(normalizedId))) return;
         if (flying && !allowFlyingPets()) return;
-        if (isAquatic && !allowAquaticPets()) return;
-        pets.put(normalizedId, new PetDefinition(normalizedId, display, type, material(icon, Material.BONE), rarity, skill, Math.min(maxSkillBonus(skill), Math.max(0.0D, skillBonus)), Math.max(0.0D, damage), scale, balancedPrice(rarity, price), storageSize(rarity), material(food, defaultFood(rarity)), Math.max(1, feedExp), flying, rideable, Math.max(1, adultLevel), isAquatic));
+        if (isAquatic && !allowAquaticPets() && !isAxolotlGround(type)) return;
+        pets.put(normalizedId, new PetDefinition(normalizedId, display, type, material(icon, Material.BONE), rarity, PetSkillType.NONE, 0.0D, 0.0D, scale, balancedPrice(rarity, price), storageSize(rarity), material(food, defaultFood(rarity)), Math.max(1, feedExp), flying, rideable, Math.max(1, adultLevel), isAquatic));
     }
 
     private boolean isBlacklistedPet(String id, String rawEntity) {
@@ -200,21 +229,34 @@ public final class PetConfigManager {
         return raw.equals("ghast") || raw.equals("happy_ghast") || raw.equals("happghast") || key.equals("happy_ghast") || key.equals("happghast") || key.equals("happyghast") || key.contains("happy_ghast") || key.contains("happghast");
     }
 
-    private boolean isFlyingPet(EntityType type) { return type != null && switch (type) { case PHANTOM, GHAST, BLAZE, VEX, ENDER_DRAGON, WITHER, BEE, ALLAY, BAT, PARROT -> true; default -> false; }; }
-    private boolean defaultAquatic(EntityType type) { if (type == null || isAxolotlGround(type)) return false; return switch (type) { case DOLPHIN, COD, SALMON, TROPICAL_FISH, PUFFERFISH, TADPOLE, ELDER_GUARDIAN, GUARDIAN, AXOLOTL -> true; default -> false; }; }
+    private boolean isSafeAnimalType(EntityType type) { return type != null && SAFE_ANIMAL_ENTITY_NAMES.contains(type.name()); }
+    private boolean isFlyingPet(EntityType type) { return type != null && FLYING_ENTITY_NAMES.contains(type.name()); }
+    private boolean defaultAquatic(EntityType type) { if (type == null || isAxolotlGround(type)) return false; return AQUATIC_ENTITY_NAMES.contains(type.name()); }
     private boolean isAxolotlGround(EntityType type) { return walkingPetsOnly() && allowAxolotlGroundPet() && type == EntityType.AXOLOTL; }
-    private boolean isDisabledByWalkingMode(EntityType type) { if (type == null) return false; if (isAxolotlGround(type)) return false; return isFlyingPet(type) || defaultAquatic(type) || type.name().equals("SQUID") || type.name().equals("GLOW_SQUID"); }
-    private boolean defaultRideable(EntityType type) { return switch (type) { case COW, SHEEP, PIG, GOAT, CAMEL, HORSE, DONKEY, MULE, LLAMA, TRADER_LLAMA, PANDA, IRON_GOLEM, RAVAGER, WARDEN, HOGLIN, ZOGLIN, POLAR_BEAR, STRIDER, SKELETON_HORSE, ZOMBIE_HORSE, GIANT -> true; default -> false; }; }
+    private boolean isDisabledByWalkingMode(EntityType type) { if (type == null) return false; if (isSafeAnimalType(type) || isAxolotlGround(type)) return false; return isFlyingPet(type) || defaultAquatic(type) || type.name().equals("SQUID") || type.name().equals("GLOW_SQUID"); }
+    private boolean defaultRideable(EntityType type) { return type != null && RIDEABLE_ENTITY_NAMES.contains(type.name()); }
     private double maxSkillBonus(PetSkillType type) { return switch (type) { case QUEST_MONEY -> 0.03D; case FISHING_LUCK -> 0.02D; case PET_DAMAGE -> 0.05D; default -> 0.0D; }; }
-    private double defaultChance(PetRarity rarity) { return switch (rarity) { case COMMON -> 55.0D; case RARE -> 25.0D; case EPIC -> 12.0D; case LEGENDARY -> 6.0D; case MYTHIC -> 2.0D; }; }
+    private double defaultChance(PetRarity rarity) { return switch (rarity) { case COMMON -> 65.0D; case RARE -> 25.0D; case EPIC -> 8.0D; case LEGENDARY -> 2.0D; case MYTHIC -> 0.0D; }; }
     private long defaultPrice(PetRarity rarity) { return switch (rarity) { case COMMON -> 50_000L; case RARE -> 100_000L; case EPIC -> 200_000L; case LEGENDARY -> 350_000L; case MYTHIC -> 500_000L; }; }
     private long balancedPrice(PetRarity rarity, long configured) { long target = defaultPrice(rarity); return Math.max(50_000L, Math.min(500_000L, target)); }
-    private double defaultDamage(PetRarity rarity) { return switch (rarity) { case COMMON -> 1.0D; case RARE -> 1.5D; case EPIC -> 2.0D; case LEGENDARY -> 2.5D; case MYTHIC -> 3.0D; }; }
+    private double defaultDamage(PetRarity rarity) { return 0.0D; }
     private int defaultStorage(PetRarity rarity) { return switch (rarity) { case COMMON, RARE -> 9; case EPIC, LEGENDARY -> 18; case MYTHIC -> 27; }; }
     private int defaultFeedExp(PetRarity rarity) { return switch (rarity) { case COMMON -> 20; case RARE -> 25; case EPIC -> 35; case LEGENDARY -> 45; case MYTHIC -> 60; }; }
     private Material defaultFood(PetRarity rarity) { return switch (rarity) { case COMMON -> Material.APPLE; case RARE -> Material.COOKED_CHICKEN; case EPIC -> Material.GOLDEN_CARROT; case LEGENDARY -> Material.GOLDEN_APPLE; case MYTHIC -> Material.ENCHANTED_GOLDEN_APPLE; }; }
     private Material material(String raw, Material fallback) { Material material = Material.matchMaterial(raw == null ? "" : raw.toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
-    private EntityType entityType(String raw) { try { return EntityType.valueOf(raw == null ? "" : raw.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return null; } }
+
+    private EntityType entityType(String raw) {
+        String key = raw == null ? "" : raw.toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+        try { return EntityType.valueOf(key); } catch (Exception ignored) { }
+        if (key.equals("MOOSHROOM")) {
+            try { return EntityType.valueOf("MUSHROOM_COW"); } catch (Exception ignored) { }
+        }
+        if (key.equals("MUSHROOM_COW")) {
+            try { return EntityType.valueOf("MOOSHROOM"); } catch (Exception ignored) { }
+        }
+        return null;
+    }
+
     private Particle particle(String path, String fallback) { try { return Particle.valueOf(str(path, fallback).toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Particle.HAPPY_VILLAGER; } }
     private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
     private boolean bool(String path, boolean fallback) { return config == null || !config.contains(path) ? fallback : config.getBoolean(path, fallback); }
