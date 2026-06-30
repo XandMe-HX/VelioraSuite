@@ -19,7 +19,7 @@ settings:
   prefix: '&8[&bVelioraTeam&8] '
 
   # Biaya membuat team.
-  create-cost: 250000
+  create-cost: 150000
 
   # Kapasitas awal member saat team dibuat.
   default-max-members: 5
