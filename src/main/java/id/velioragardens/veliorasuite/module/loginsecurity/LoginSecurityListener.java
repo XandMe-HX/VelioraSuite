@@ -30,8 +30,12 @@ public final class LoginSecurityListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        manager.handleJoin(event.getPlayer());
-        LoginSecurityBlindnessManager.sync(event.getPlayer(), manager);
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTaskLater(VelioraSuite.getInstance(), () -> {
+            if (!player.isOnline() || manager.isAuthenticated(player)) return;
+            manager.handleJoin(player);
+            LoginSecurityBlindnessManager.sync(player, manager);
+        }, 25L);
     }
 
     @EventHandler
@@ -48,6 +52,7 @@ public final class LoginSecurityListener implements Listener {
         Location authLocation = manager.getSessionManager().getAuthLocation(player);
         if (authLocation == null) {
             manager.getSessionManager().setAuthLocation(player, event.getFrom());
+            LoginSecurityBlindnessManager.sync(player, manager);
             return;
         }
 
