@@ -13,7 +13,6 @@ public final class LoginSecurityModule implements VelioraModule {
     private final VelioraSuite plugin;
     private LoginSecurityManager manager;
     private LoginSecurityListener listener;
-    private LoginSecuritySpawnListener spawnListener;
     private boolean enabled;
 
     public LoginSecurityModule(VelioraSuite plugin) {
@@ -45,10 +44,6 @@ public final class LoginSecurityModule implements VelioraModule {
         if (listener != null) {
             HandlerList.unregisterAll(listener);
             listener = null;
-        }
-        if (spawnListener != null) {
-            HandlerList.unregisterAll(spawnListener);
-            spawnListener = null;
         }
         LoginSecurityBlindnessManager.clearAll();
         if (manager != null) {
@@ -86,9 +81,7 @@ public final class LoginSecurityModule implements VelioraModule {
 
     private void registerListener() {
         listener = new LoginSecurityListener(manager);
-        spawnListener = new LoginSecuritySpawnListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
-        plugin.getServer().getPluginManager().registerEvents(spawnListener, plugin);
     }
 
     private void registerDisabledCommands() {
