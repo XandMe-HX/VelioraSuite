@@ -23,25 +23,48 @@ public final class LoginSecuritySpawnListener implements Listener {
     public void onAuthCommand(PlayerCommandPreprocessEvent event) {
         String command = commandToken(event.getMessage());
         if (!command.equals("/login") && !command.equals("/l") && !command.equals("/register") && !command.equals("/reg") && !command.equals("/r")) return;
-        teleportNextTick(event.getPlayer());
+        teleportAfterAuth(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        Bukkit.getScheduler().runTaskLater(VelioraSuite.getInstance(), () -> teleportIfAuthenticated(event.getPlayer()), 3L);
+        Player player = event.getPlayer();
+        Bukkit.getScheduler().runTaskLater(VelioraSuite.getInstance(), () -> teleportToLoginSpawn(player), 1L);
+        Bukkit.getScheduler().runTaskLater(VelioraSuite.getInstance(), () -> teleportToLoginSpawn(player), 5L);
     }
 
-    private void teleportNextTick(Player player) {
-        Bukkit.getScheduler().runTask(VelioraSuite.getInstance(), () -> teleportIfAuthenticated(player));
+    private void teleportAfterAuth(Player player) {
+        Bukkit.getScheduler().runTask(VelioraSuite.getInstance(), () -> {
+            if (player == null || !player.isOnline()) return;
+            if (!manager.isAuthenticated(player)) return;
+            teleportToConfiguredSpawn(player);
+        });
     }
 
-    private void teleportIfAuthenticated(Player player) {
+    private void teleportToLoginSpawn(Player player) {
         if (player == null || !player.isOnline()) return;
-        if (!manager.isAuthenticated(player)) return;
-        if (!manager.getConfigManager().isTeleportAfterAuthEnabled()) return;
-        Location location = manager.getConfigManager().getTeleportAfterAuthLocation();
-        if (location == null || location.getWorld() == null) return;
+        if (manager.isAuthenticated(player)) {
+            teleportToConfiguredSpawn(player);
+            return;
+        }
+        Location location = getConfiguredSpawn();
+        if (location == null) return;
+        manager.getSessionManager().setAuthLocation(player, location);
         player.teleport(location);
+    }
+
+    private void teleportToConfiguredSpawn(Player player) {
+        Location location = getConfiguredSpawn();
+        if (location == null) return;
+        manager.getSessionManager().setAuthLocation(player, location);
+        player.teleport(location);
+    }
+
+    private Location getConfiguredSpawn() {
+        if (!manager.getConfigManager().isTeleportAfterAuthEnabled()) return null;
+        Location location = manager.getConfigManager().getTeleportAfterAuthLocation();
+        if (location == null || location.getWorld() == null) return null;
+        return location;
     }
 
     private String commandToken(String raw) {
