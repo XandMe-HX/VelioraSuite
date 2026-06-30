@@ -49,7 +49,7 @@ public final class LoginSecurityConfigManager {
     public boolean isBlockChatBeforeLogin() { return getBoolean("settings.block-chat-before-login", true); }
     public boolean isBlockActionsBeforeLogin() { return getBoolean("settings.block-actions-before-login", true); }
 
-    public boolean isTeleportAfterAuthEnabled() { return getBoolean("settings.teleport-after-auth.enabled", true); }
+    public boolean isTeleportAfterAuthEnabled() { return getBoolean("settings.teleport-after-auth.enabled", false); }
     public Location getTeleportAfterAuthLocation() {
         String worldName = getString("settings.teleport-after-auth.world", "lobby");
         World world = Bukkit.getWorld(worldName);
