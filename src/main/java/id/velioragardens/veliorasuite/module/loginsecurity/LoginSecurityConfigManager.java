@@ -1,7 +1,10 @@
 package id.velioragardens.veliorasuite.module.loginsecurity;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -45,6 +48,19 @@ public final class LoginSecurityConfigManager {
     public double getAllowedMoveDistanceBeforeLogin() { return Math.max(0D, getDouble("settings.allowed-move-distance-before-login", 0.2D)); }
     public boolean isBlockChatBeforeLogin() { return getBoolean("settings.block-chat-before-login", true); }
     public boolean isBlockActionsBeforeLogin() { return getBoolean("settings.block-actions-before-login", true); }
+
+    public boolean isTeleportAfterAuthEnabled() { return getBoolean("settings.teleport-after-auth.enabled", true); }
+    public Location getTeleportAfterAuthLocation() {
+        String worldName = getString("settings.teleport-after-auth.world", "lobby");
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) return null;
+        double x = getDouble("settings.teleport-after-auth.x", -1.0D);
+        double y = getDouble("settings.teleport-after-auth.y", 3.0D);
+        double z = getDouble("settings.teleport-after-auth.z", -1.0D);
+        float yaw = (float) getDouble("settings.teleport-after-auth.yaw", 0.0D);
+        float pitch = (float) getDouble("settings.teleport-after-auth.pitch", 0.0D);
+        return new Location(world, x, y, z, yaw, pitch);
+    }
 
     public boolean isBlindBeforeLoginEnabled() { return getBoolean("settings.blind-before-login.enabled", true); }
     public int getBlindDurationTicks() { return Math.max(20, getInt("settings.blind-before-login.duration-ticks", 999999)); }
