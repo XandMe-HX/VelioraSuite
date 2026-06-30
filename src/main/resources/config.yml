@@ -27,9 +27,9 @@ settings:
 modules:
   guide: true
   login-security: true
-  team: false
-  kits: false
-  report: false
+  team: true
+  kits: true
+  report: true
   announcement: true
   fishing: true
   skills: true
@@ -38,4 +38,4 @@ modules:
   boss: true
   pets: true
   security: true
-  chat: false
+  chat: true
