@@ -3,10 +3,10 @@ package id.velioragardens.veliorasuite.module.quest;
 import id.velioragardens.veliorasuite.module.quest.model.PlayerCategoryProgress;
 import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
 import org.bukkit.Bukkit;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +16,7 @@ public final class QuestBossBarManager {
 
     private final QuestConfigManager configManager;
     private final Map<UUID, BossBar> bossBars = new HashMap<>();
+    private final Map<UUID, BukkitTask> hideTasks = new HashMap<>();
 
     public QuestBossBarManager(QuestConfigManager configManager) {
         this.configManager = configManager;
@@ -30,11 +31,15 @@ public final class QuestBossBarManager {
         bossBar.setProgress(progressPercent(progress));
         if (!bossBar.getPlayers().contains(player)) bossBar.addPlayer(player);
         bossBar.setVisible(true);
+        scheduleAutoHide(player);
     }
 
     public void hide(Player player) {
         if (player == null) return;
-        BossBar bossBar = bossBars.remove(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
+        BukkitTask task = hideTasks.remove(uuid);
+        if (task != null) task.cancel();
+        BossBar bossBar = bossBars.remove(uuid);
         if (bossBar != null) {
             bossBar.removePlayer(player);
             bossBar.removeAll();
@@ -43,11 +48,27 @@ public final class QuestBossBarManager {
     }
 
     public void hideAll() {
+        for (BukkitTask task : hideTasks.values()) task.cancel();
+        hideTasks.clear();
         for (BossBar bossBar : bossBars.values()) {
             bossBar.removeAll();
             bossBar.setVisible(false);
         }
         bossBars.clear();
+    }
+
+    private void scheduleAutoHide(Player player) {
+        int seconds = configManager.getBossBarAutoHideSeconds();
+        if (seconds <= 0) return;
+        UUID uuid = player.getUniqueId();
+        BukkitTask oldTask = hideTasks.remove(uuid);
+        if (oldTask != null) oldTask.cancel();
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("VelioraSuite");
+        if (plugin == null || !plugin.isEnabled()) return;
+        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()) hide(player);
+        }, seconds * 20L);
+        hideTasks.put(uuid, task);
     }
 
     private String title(QuestCategory category, PlayerCategoryProgress progress) {
