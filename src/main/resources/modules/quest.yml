@@ -14,6 +14,9 @@ settings:
     color: GREEN
     style: SEGMENTED_10
     hide-when-complete: true
+    # Supaya bossbar quest tidak nyangkut terus di layar.
+    # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
+    auto-hide-seconds: 8
   progression:
     # Mode manual: player harus pilih quest dulu lewat /quests atau /quests start <category>.
     # Mining/kill/farming/fishing tidak akan mengganti quest sendiri.
@@ -42,7 +45,6 @@ categories:
     enabled: true
     display-name: '&dWeekly / Special'
     icon: NETHER_STAR
-    # Level 1 ringan, level 50 mulai berat, level 100 butuh grind panjang.
     base-target: 192
     target-increase-per-level: 110
     materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
@@ -50,7 +52,6 @@ categories:
     enabled: true
     display-name: '&7Mining'
     icon: IRON_PICKAXE
-    # Mining adalah quest utama grind, total level 1-100 dibuat sangat panjang.
     base-target: 128
     target-increase-per-level: 80
     materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE, ANCIENT_DEBRIS]
