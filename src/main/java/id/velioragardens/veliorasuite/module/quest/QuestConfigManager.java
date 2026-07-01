@@ -45,6 +45,7 @@ public final class QuestConfigManager {
     public BarColor getBossBarColor() { return bossBarColor(str("settings.bossbar.color", "GREEN")); }
     public BarStyle getBossBarStyle() { return bossBarStyle(str("settings.bossbar.style", "SEGMENTED_10")); }
     public boolean isBossBarHideWhenComplete() { return bool("settings.bossbar.hide-when-complete", true); }
+    public int getBossBarAutoHideSeconds() { return Math.max(0, integer("settings.bossbar.auto-hide-seconds", 8)); }
     public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 1)); }
     public int getMaxLevel() { return Math.max(1, integer("settings.progression.max-level", 100)); }
     public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", false); }
