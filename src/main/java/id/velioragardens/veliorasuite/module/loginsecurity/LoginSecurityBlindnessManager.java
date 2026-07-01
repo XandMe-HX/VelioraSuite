@@ -42,9 +42,19 @@ public final class LoginSecurityBlindnessManager {
             return;
         }
 
-        if (BLINDED_BY_LOGIN_SECURITY.remove(player.getUniqueId())) {
-            player.removePotionEffect(PotionEffectType.BLINDNESS);
-        }
+        BLINDED_BY_LOGIN_SECURITY.remove(player.getUniqueId());
+        player.removePotionEffect(PotionEffectType.BLINDNESS);
+    }
+
+    public static void removeSafe(Player player) {
+        remove(player);
+        if (player == null || !player.isOnline()) return;
+        Bukkit.getScheduler().runTaskLater(Bukkit.getPluginManager().getPlugin("VelioraSuite"), () -> {
+            if (player.isOnline()) player.removePotionEffect(PotionEffectType.BLINDNESS);
+        }, 2L);
+        Bukkit.getScheduler().runTaskLater(Bukkit.getPluginManager().getPlugin("VelioraSuite"), () -> {
+            if (player.isOnline()) player.removePotionEffect(PotionEffectType.BLINDNESS);
+        }, 20L);
     }
 
     public static void sync(Player player, LoginSecurityManager manager) {
@@ -53,7 +63,7 @@ public final class LoginSecurityBlindnessManager {
         }
 
         if (manager.isAuthenticated(player)) {
-            remove(player);
+            removeSafe(player);
         } else {
             apply(player, manager.getConfigManager());
         }
