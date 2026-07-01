@@ -46,12 +46,14 @@ public final class QuestConfigManager {
     public BarStyle getBossBarStyle() { return bossBarStyle(str("settings.bossbar.style", "SEGMENTED_10")); }
     public boolean isBossBarHideWhenComplete() { return bool("settings.bossbar.hide-when-complete", true); }
     public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 1)); }
+    public int getMaxLevel() { return Math.max(1, integer("settings.progression.max-level", 100)); }
     public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", true); }
     public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", true); }
-    public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", true); }
-    public int getManaReward() { return Math.max(0, integer("settings.rewards.mana-reward", 1)); }
-    public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 5000)); }
-    public int getMoneyIncreasePerTier() { return Math.max(0, integer("settings.rewards.money-increase-per-tier", 5000)); }
+    public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", false); }
+    public int getManaReward() { return Math.max(0, integer("settings.rewards.mana-reward", 0)); }
+    public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 1000)); }
+    public int getMoneyIncreasePerLevel() { return Math.max(0, integer("settings.rewards.money-increase-per-level", integer("settings.rewards.money-increase-per-tier", 150))); }
+    public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }
     public boolean isStarterEnabled() { return bool("settings.starter.enabled", true); }
     public boolean isStarterReminderEnabled() { return bool("settings.starter.reminder-enabled", true); }
     public int getStarterReminderIntervalSeconds() { return Math.max(900, integer("settings.starter.reminder-interval-seconds", 900)); }
@@ -64,8 +66,23 @@ public final class QuestConfigManager {
     public Material getCategoryIcon(QuestCategory category) { return material(str("categories." + category.key() + ".icon", fallbackIcon(category).name()), fallbackIcon(category)); }
     public int getBaseTarget(QuestCategory category) { return Math.max(1, integer("categories." + category.key() + ".base-target", fallbackBaseTarget(category))); }
     public int getTargetIncreasePerLevel(QuestCategory category) { return Math.max(0, integer("categories." + category.key() + ".target-increase-per-level", fallbackTargetIncrease(category))); }
-    public int calculateTarget(QuestCategory category, int level) { return getBaseTarget(category) + ((Math.max(1, level) - 1) * getTargetIncreasePerLevel(category)); }
-    public int calculateRewardMoney(int level) { return getBaseMoney() + (rewardTier(level) * getMoneyIncreasePerTier()); }
+
+    public int calculateTarget(QuestCategory category, int level) {
+        int cappedLevel = Math.max(1, Math.min(level, getMaxLevel()));
+        double levelIndex = cappedLevel - 1.0D;
+        double hardMultiplier = 1.0D + (levelIndex * 0.28D) + (Math.pow(levelIndex / 10.0D, 2.0D) * 0.65D);
+        long target = Math.round((getBaseTarget(category) * hardMultiplier) + (levelIndex * getTargetIncreasePerLevel(category)));
+        return (int) Math.max(1L, Math.min(200000L, target));
+    }
+
+    public int calculateRewardMoney(int level) {
+        int cappedLevel = Math.max(1, Math.min(level, getMaxLevel()));
+        long reward = Math.round(getBaseMoney()
+                + ((cappedLevel - 1L) * (long) getMoneyIncreasePerLevel())
+                + (Math.sqrt(cappedLevel) * 350.0D));
+        return (int) Math.max(0L, Math.min(getMaxMoneyReward(), reward));
+    }
+
     public boolean isCountHoeFarmland() { return bool("categories.farmer.count-hoe-farmland", true); }
 
     public Set<Material> getMaterials(QuestCategory category, String node) {
@@ -104,7 +121,6 @@ public final class QuestConfigManager {
     public List<String> messageList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList("messages." + path); return list.isEmpty() ? fallback : list; }
     public String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }
 
-    private int rewardTier(int level) { if (level <= 4) return 0; if (level <= 9) return 1; if (level <= 14) return 2; return 3; }
     private Material material(String name, Material fallback) { Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
     private List<String> commandList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList(path); return list.isEmpty() ? fallback : list; }
     private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
@@ -139,21 +155,23 @@ public final class QuestConfigManager {
 
     private int fallbackBaseTarget(QuestCategory category) {
         return switch (category) {
-            case WOODCUTTING, FARMER -> 32;
-            case MINING -> 64;
-            case CHEF -> 16;
-            case MONSTER_HUNTER, ANIMAL_HUNTER -> 10;
-            case FISHING -> 8;
+            case WOODCUTTING -> 192;
+            case MINING -> 96;
+            case FARMER -> 96;
+            case CHEF -> 32;
+            case MONSTER_HUNTER, ANIMAL_HUNTER -> 25;
+            case FISHING -> 20;
         };
     }
 
     private int fallbackTargetIncrease(QuestCategory category) {
         return switch (category) {
-            case WOODCUTTING, FARMER -> 16;
-            case MINING -> 32;
-            case CHEF -> 8;
-            case MONSTER_HUNTER, ANIMAL_HUNTER -> 5;
-            case FISHING -> 4;
+            case WOODCUTTING -> 96;
+            case MINING -> 64;
+            case FARMER -> 48;
+            case CHEF -> 18;
+            case MONSTER_HUNTER, ANIMAL_HUNTER -> 12;
+            case FISHING -> 10;
         };
     }
 
@@ -167,8 +185,8 @@ public final class QuestConfigManager {
     }
 
     private List<String> fallbackEntities(QuestCategory category) {
-        if (category == QuestCategory.MONSTER_HUNTER) return List.of("ZOMBIE", "SKELETON", "SPIDER", "CREEPER", "ENDERMAN", "WITCH", "DROWNED", "HUSK", "STRAY", "SLIME", "PHANTOM", "PILLAGER");
-        if (category == QuestCategory.ANIMAL_HUNTER) return List.of("COW", "SHEEP", "CHICKEN", "PIG", "RABBIT", "COD", "SALMON");
+        if (category == QuestCategory.MONSTER_HUNTER) return List.of("ZOMBIE", "SKELETON", "SPIDER", "CREEPER", "ENDERMAN", "WITCH", "DROWNED", "HUSK", "STRAY", "SLIME", "PHANTOM", "PILLAGER", "VINDICATOR", "EVOKER", "RAVAGER", "BREEZE", "BOGGED");
+        if (category == QuestCategory.ANIMAL_HUNTER) return List.of("COW", "SHEEP", "CHICKEN", "PIG", "RABBIT", "COD", "SALMON", "PUFFERFISH", "TROPICAL_FISH");
         return List.of();
     }
 }
