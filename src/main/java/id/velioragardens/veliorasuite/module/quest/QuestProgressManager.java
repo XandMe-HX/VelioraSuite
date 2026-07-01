@@ -22,7 +22,8 @@ public final class QuestProgressManager {
         if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category)) return false;
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
-        if (progress == null || progress.getState() == QuestState.READY_TO_CLAIM) return false;
+        if (progress == null) return false;
+        if (progress.getState() == QuestState.READY_TO_CLAIM) return true;
 
         if (progress.getState() != QuestState.ACTIVE) {
             if (!configManager.isAutoStartOnProgress()) return false;
