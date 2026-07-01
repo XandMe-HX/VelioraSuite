@@ -76,8 +76,7 @@ public final class QuestManager {
             return false;
         }
         if (progress.getState() == QuestState.READY_TO_CLAIM) {
-            send(player, "quest-not-ready", "%prefix% &cQuest ini sudah selesai. Claim dulu rewardnya.", Map.of());
-            return false;
+            return completeQuest(player, category, data, progress, true);
         }
 
         int manaCost = skillsHook.getQuestManaCost(progress.getLevel());
@@ -122,31 +121,7 @@ public final class QuestManager {
             send(player, "quest-not-ready", "%prefix% &cQuest ini belum selesai.", Map.of());
             return false;
         }
-
-        int money = progress.getCurrentRewardMoney();
-        rewardManager.depositMoney(player, money);
-        if (configManager.isGiveManaOnComplete() && skillsHook.isAvailable()) {
-            skillsHook.addMaxMana(player, configManager.getManaReward(), true);
-        }
-
-        int newCompleted = progress.getCompletedCount() + 1;
-        progress.setCompletedCount(newCompleted);
-        boolean levelUp = newCompleted % configManager.getCompletionsPerLevel() == 0;
-        if (levelUp) progress.setLevel(progress.getLevel() + 1);
-        progress.setCurrentProgress(0);
-        progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
-        progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
-
-        boolean autoRestart = configManager.isAutoRestartAfterClaim();
-        progress.setState(autoRestart ? QuestState.ACTIVE : QuestState.CLAIMED);
-        dataManager.save(data);
-        if (autoRestart) bossBarManager.showOrUpdate(player, category, progress);
-        else bossBarManager.hide(player);
-
-        send(player, "quest-claimed", "%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.", placeholders(category, progress, skillsHook.getQuestManaCost(progress.getLevel()), money));
-        if (levelUp) send(player, "quest-level-up", "%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.", placeholders(category, progress, 0));
-        if (autoRestart) send(player, "quest-auto-restarted", "%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.", placeholders(category, progress, 0));
-        return true;
+        return completeQuest(player, category, data, progress, false);
     }
 
     public void cancelQuest(Player player, QuestCategory category) {
@@ -166,13 +141,14 @@ public final class QuestManager {
 
     public void addProgress(Player player, QuestCategory category, int amount) {
         boolean ready = progressManager.addProgress(player, category, amount);
-        PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        PlayerQuestData data = dataManager.getOrCreate(player);
+        PlayerCategoryProgress progress = data.getCategoryProgress(category);
+        if (ready) {
+            completeQuest(player, category, data, progress, true);
+            return;
+        }
         if (progress.getState() == QuestState.ACTIVE) {
             bossBarManager.showOrUpdate(player, category, progress);
-        }
-        if (ready) {
-            if (configManager.isBossBarHideWhenComplete()) bossBarManager.hide(player);
-            send(player, "quest-ready-claim", "%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.", placeholders(category, progress, 0));
         }
     }
 
@@ -196,7 +172,7 @@ public final class QuestManager {
     public void sendStatus(CommandSender sender) {
         Map<String, String> map = new HashMap<>();
         map.put("%enabled%", String.valueOf(configManager.isEnabled()));
-        map.put("%skills_mana%", String.valueOf(plugin.getServer().getPluginManager().getPlugin("Skills") != null));
+        map.put("%skills_mana%", String.valueOf(skillsHook.isAvailable()));
         map.put("%vault%", String.valueOf(plugin.getServer().getPluginManager().getPlugin("Vault") != null));
         map.put("%categories%", String.valueOf(QuestCategory.values().length));
         map.put("%players%", String.valueOf(dataManager.countPlayers()));
@@ -215,6 +191,40 @@ public final class QuestManager {
     public void sendReloadSuccess(CommandSender sender) { send(sender, "reload-success", "%prefix% &aVelioraQuest berhasil direload.", Map.of()); }
     public void sendNoPermission(CommandSender sender) { send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of()); }
     public void sendPlayerOnly(CommandSender sender) { send(sender, "player-only", "%prefix% &cCommand ini hanya bisa digunakan oleh player.", Map.of()); }
+
+    private boolean completeQuest(Player player, QuestCategory category, PlayerQuestData data, PlayerCategoryProgress progress, boolean automatic) {
+        if (progress == null || progress.getState() != QuestState.READY_TO_CLAIM) return false;
+
+        int money = progress.getCurrentRewardMoney();
+        rewardManager.depositMoney(player, money);
+        if (configManager.isGiveManaOnComplete() && skillsHook.isAvailable()) {
+            skillsHook.addMaxMana(player, configManager.getManaReward(), true);
+        }
+
+        int newCompleted = progress.getCompletedCount() + 1;
+        progress.setCompletedCount(newCompleted);
+        boolean levelUp = newCompleted % configManager.getCompletionsPerLevel() == 0;
+        if (levelUp) progress.setLevel(progress.getLevel() + 1);
+        progress.setCurrentProgress(0);
+        progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
+        progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
+
+        boolean autoRestart = configManager.isAutoRestartAfterClaim();
+        progress.setState(autoRestart ? QuestState.ACTIVE : QuestState.CLAIMED);
+        dataManager.save(data);
+        if (autoRestart) bossBarManager.showOrUpdate(player, category, progress);
+        else bossBarManager.hide(player);
+
+        if (automatic) {
+            send(player, "quest-auto-completed", "%prefix% &aQuest &f%quest% &aselesai otomatis. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Target baru: &f%target%&a.", placeholders(category, progress, 0, money));
+            return true;
+        }
+
+        send(player, "quest-claimed", "%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.", placeholders(category, progress, skillsHook.getQuestManaCost(progress.getLevel()), money));
+        if (levelUp) send(player, "quest-level-up", "%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.", placeholders(category, progress, 0));
+        if (autoRestart) send(player, "quest-auto-restarted", "%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.", placeholders(category, progress, 0));
+        return true;
+    }
 
     private boolean validateCategory(Player player, QuestCategory category) {
         if (category == null) return false;
