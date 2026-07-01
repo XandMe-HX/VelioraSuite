@@ -171,7 +171,8 @@ public final class BossManager implements Listener {
         infoLine(sender, "Rarity", boss.rarity().name());
         infoLine(sender, "Health", String.valueOf((int) boss.health()));
         infoLine(sender, "Damage", String.valueOf((int) boss.damage()));
-        infoLine(sender, "Scale", String.valueOf(boss.scale()));
+        infoLine(sender, "Size", config.randomScaleEnabled() ? "Random " + config.randomScaleMin() + " - " + config.randomScaleMax() + " block" : String.valueOf(boss.scale()));
+        infoLine(sender, "Defense", "Armor " + config.bossArmor() + ", Toughness " + config.bossArmorToughness() + ", Knockback Resist " + config.bossKnockbackResistance());
         infoLine(sender, "Money", config.bossMoneyMin(boss) + " - " + config.bossMoneyMax(boss));
         infoLine(sender, "Top Bonus", "1: " + config.topBonusMin(0) + "-" + config.topBonusMax(0) + ", 2: " + config.topBonusMin(1) + "-" + config.topBonusMax(1) + ", 3: " + config.topBonusMin(2) + "-" + config.topBonusMax(2));
         infoLine(sender, "Material", "Diamond " + config.rewardMaterial(boss.rarity(), "diamond") + ", Ancient Debris " + config.rewardMaterial(boss.rarity(), "ancient-debris"));
@@ -291,6 +292,7 @@ public final class BossManager implements Listener {
             }
             return;
         }
+        if (nextSpawnAt <= 0L) scheduleNextSpawn();
         if (isActive()) {
             lastKnownLocation = activeBoss.getLocation();
             enforceArena();
@@ -300,7 +302,8 @@ public final class BossManager implements Listener {
         }
         sendSpawnWarnings();
         if (System.currentTimeMillis() >= nextSpawnAt) {
-            spawn(randomDefinition(), randomSpawnPoint(), true);
+            boolean spawned = spawn(randomDefinition(), randomSpawnPoint(), true);
+            if (!spawned) rescheduleSpawnRetry("auto spawn gagal");
         }
     }
 
@@ -328,12 +331,16 @@ public final class BossManager implements Listener {
         living.setCustomNameVisible(true);
         living.setRemoveWhenFarAway(false);
         living.setPersistent(true);
-        scaleHelper.setMaxHealth(living, definition.health());
-        scaleHelper.apply(living, definition.scale());
+        double spawnHealth = calculateSpawnHealth(definition.health(), location);
+        double spawnScale = calculateSpawnScale(definition);
+        scaleHelper.setMaxHealth(living, spawnHealth);
+        scaleHelper.applyCombatDefense(living, config.bossArmor(), config.bossArmorToughness(), config.bossKnockbackResistance());
+        scaleHelper.apply(living, spawnScale);
         if (living instanceof Mob mob) mob.setTarget(findBestTarget(location));
         bossBarManager.create(definition);
         damageTracker.clear();
         skillManager.start(definition);
+        plugin.getLogger().info("VelioraBoss spawned: " + definition.id() + " health=" + (int) spawnHealth + " size=" + String.format(Locale.US, "%.2f", spawnScale));
         location.getWorld().playSound(location, config.sound("effects.spawn.sound", "ENTITY_WARDEN_ROAR"), 1.0F, 0.8F);
         location.getWorld().spawnParticle(config.particle("effects.spawn.particle", "SOUL"), location, config.spawnParticleCount(), 3.0D, 1.7D, 3.0D, 0.07D);
         if (config.spawnTitleEnabled()) sendSpawnTitle(definition, location);
@@ -456,6 +463,27 @@ public final class BossManager implements Listener {
         Location location = points.get(random.nextInt(points.size())).toLocation();
         if (location != null) location.getChunk().load(true);
         return location;
+    }
+
+    private double calculateSpawnScale(BossDefinition definition) {
+        if (!config.randomScaleEnabled()) return definition.scale();
+        double min = config.randomScaleMin();
+        double max = config.randomScaleMax();
+        if (max <= min) return min;
+        return min + (random.nextDouble() * (max - min));
+    }
+
+    private double calculateSpawnHealth(double baseHealth, Location location) {
+        if (!config.healthScalingEnabled()) return baseHealth;
+        int nearbyPlayers = Math.max(1, targetManager.validPlayers(location, location, config.targetRadius()).size());
+        double multiplier = Math.min(config.maxHealthMultiplier(), 1.0D + ((nearbyPlayers - 1) * config.healthPerPlayerMultiplier()));
+        return Math.max(baseHealth, baseHealth * multiplier);
+    }
+
+    private void rescheduleSpawnRetry(String reason) {
+        nextSpawnAt = System.currentTimeMillis() + (config.spawnRetryMinutes() * 60_000L);
+        sentWarnings.clear();
+        plugin.getLogger().warning("VelioraBoss: " + reason + ", retry dalam " + config.spawnRetryMinutes() + " menit. Cek spawn point, world, dan entity boss.");
     }
 
     private void infoLine(CommandSender sender, String key, String value) {
