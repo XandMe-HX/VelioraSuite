@@ -79,52 +79,94 @@ public final class ChatConfigManager {
         if (!replies.isEmpty()) return replies;
 
         replies.put("guide", new AutoReplyEntry(
-                List.of("panduan", "cara main", "bingung", "command apa", "fitur server", "guide", "vguide"),
+                List.of("panduan", "cara main", "bingung", "command apa", "fitur server", "guide", "vguide", "mulai dari mana"),
                 List.of(
                         "&fButuh panduan? Ketik &b/vguide &7untuk menu utama server.",
-                        "&7Cek juga &b/vrules&7, &b/vrank&7, dan &b/vproduct&7."
+                        "&7Cek juga &b/vrules&7, &b/vrank&7, &b/vproduct&7, dan &b/quests&7."
                 )
         ));
         replies.put("rank", new AutoReplyEntry(
-                List.of("rank", "vip", "harga rank", "benefit rank", "beli rank", "donate"),
+                List.of("rank", "vip", "harga rank", "benefit rank", "beli rank", "donate", "donasi"),
                 List.of(
                         "&fInfo rank ada di &b/vrank&f.",
                         "&7Pakai &b/vrank 2&7 sampai &b/vrank 13 &7untuk detail harga dan benefit."
                 )
         ));
         replies.put("product", new AutoReplyEntry(
-                List.of("produk", "product", "fitur", "plugin", "vproduct", "vporduct"),
+                List.of("produk", "product", "fitur", "plugin", "vproduct", "vporduct", "server ada apa"),
                 List.of(
                         "&fDaftar fitur dan produk server ada di &b/vproduct&f.",
                         "&7Kalau typo &b/vporduct&7 juga tetap diarahkan ke product."
                 )
         ));
         replies.put("home", new AutoReplyEntry(
-                List.of("sethome", "cara set home", "home tidak bisa", "home pin", "teleport home"),
+                List.of("sethome", "cara set home", "home tidak bisa", "home pin", "teleport home", "cara pulang"),
                 List.of(
                         "&fBuat home: &b/sethome <nama>&f. Teleport: &b/home <nama>&f.",
                         "&7Contoh: &b/sethome base &7lalu &b/home base&7."
                 )
         ));
         replies.put("quest", new AutoReplyEntry(
-                List.of("quest", "misi", "level quest", "cara quest"),
+                List.of("quest", "misi", "level quest", "cara quest", "quest jalan sendiri", "pilih quest", "mana quest"),
                 List.of(
-                        "&fQuest jalan otomatis saat mining, farming, fishing, atau kill mob.",
-                        "&7Cek progress: &b/quests progress &7atau buka menu: &b/quests&7."
+                        "&fQuest harus dipilih dulu lewat &b/quests&f atau &b/quests start <category>&f.",
+                        "&7Quest memakai Mana dan tidak jalan sendiri kalau belum dipilih."
                 )
         ));
         replies.put("claim", new AutoReplyEntry(
-                List.of("claim", "claim land", "cara claim", "base aman", "grief"),
+                List.of("claim", "claim land", "cara claim", "base aman", "grief", "lahan", "protect base"),
                 List.of(
                         "&fUntuk claim area/base, cek panduan di &b/vguide 5&f.",
                         "&7Jangan lupa sethome di base setelah claim: &b/sethome base&7."
                 )
         ));
         replies.put("report", new AutoReplyEntry(
-                List.of("lapor", "report", "bug", "player nakal", "cheater"),
+                List.of("lapor", "report", "bug", "player nakal", "cheater", "error", "stuck"),
                 List.of(
                         "&fLaporkan bug/player dengan &b/report <player|bug> <alasan>&f.",
                         "&7Staff/OP online akan menerima notifikasi report."
+                )
+        ));
+        replies.put("boss", new AutoReplyEntry(
+                List.of("boss", "dungeon", "boss dimana", "boss kapan", "boss hilang", "boss ga muncul"),
+                List.of(
+                        "&fInfo boss aktif dan lokasi: &b/boss status&f.",
+                        "&7Boss muncul sesuai jadwal dan lokasi dungeon yang sudah diset staff."
+                )
+        ));
+        replies.put("gacha", new AutoReplyEntry(
+                List.of("gacha", "key", "kunci", "crate", "buka crate", "kunci gacha"),
+                List.of(
+                        "&fInfo gacha/key cek &b/vproduct&f atau tanya staff kalau key belum masuk.",
+                        "&7Pegang key lalu klik crate yang sesuai warnanya."
+                )
+        ));
+        replies.put("rtp", new AutoReplyEntry(
+                List.of("rtp", "random teleport", "cari tempat", "survival mulai", "kemana dulu"),
+                List.of(
+                        "&fCari tempat survival pakai &b/rtp&f, lalu claim dan sethome di base.",
+                        "&7Urutan aman: &b/rtp &7-> claim -> &b/sethome base&7."
+                )
+        ));
+        replies.put("shop", new AutoReplyEntry(
+                List.of("shop", "jual item", "sell", "uang", "cara jual", "balance", "duit"),
+                List.of(
+                        "&fBuka shop pakai &b/shop&f, jual item pakai &b/sell&f atau menu shop.",
+                        "&7Cek uang: &b/balance&7. Transfer: &b/pay <nama> <jumlah>&7."
+                )
+        ));
+        replies.put("kit", new AutoReplyEntry(
+                List.of("kit", "starter", "kit starter", "ambil kit", "peralatan awal"),
+                List.of(
+                        "&fAmbil kit awal lewat &b/kits starter&f atau buka menu &b/kits&f.",
+                        "&7Kit hanya bisa diambil sesuai cooldown/rules server."
+                )
+        ));
+        replies.put("login", new AutoReplyEntry(
+                List.of("login", "register", "daftar", "password", "blindness", "buta"),
+                List.of(
+                        "&fDaftar: &b/register <password> <confirm>&f. Login: &b/login <password>&f.",
+                        "&7Kalau layar masih gelap setelah login, relog atau lapor staff."
                 )
         ));
         return replies;
