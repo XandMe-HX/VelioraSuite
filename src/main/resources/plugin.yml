@@ -26,22 +26,22 @@ commands:
   velioraguide:
     description: Open Veliora guide pages.
     usage: /velioraguide [page|reload]
-    aliases: [vguide]
+    aliases: [vguide, vpanduan, panduan]
     permission: veliorasuite.guide.use
   veliorarules:
     description: Open Veliora rules pages.
     usage: /veliorarules [page]
-    aliases: [vrules]
+    aliases: [vrules, rules]
     permission: veliorasuite.guide.use
   velioraproduct:
     description: Open Veliora product pages.
     usage: /velioraproduct [page]
-    aliases: [vproduct]
+    aliases: [vproduct, vporduct, produk, product]
     permission: veliorasuite.guide.use
   veliorarank:
     description: Open Veliora rank guide.
     usage: /veliorarank [page]
-    aliases: [vrank]
+    aliases: [vrank, rank]
     permission: veliorasuite.guide.use
   velioraannouncement:
     description: Manage Veliora announcements.
@@ -178,131 +178,3 @@ permissions:
     default: false
   veliorasuite.kits.premium.3:
     default: false
-  veliorasuite.kits.premium.4:
-    default: false
-  veliorasuite.kits.premium.5:
-    default: false
-  veliorasuite.report.use:
-    default: true
-  veliorasuite.report.staff:
-    default: op
-  veliorasuite.report.admin:
-    default: op
-  veliorasuite.report.reload:
-    default: op
-  veliorasuite.report.bypasscooldown:
-    default: op
-  veliorasuite.team.use:
-    default: true
-  veliorasuite.team.admin:
-    default: op
-  veliorasuite.team.reload:
-    default: op
-  veliorasuite.team.setowner:
-    default: op
-  veliorasuite.team.delete:
-    default: op
-  veliorasuite.team.bypasscost:
-    default: op
-  veliorasuite.team.bypasslimit:
-    default: op
-  veliorasuite.chat.use:
-    default: true
-  veliorasuite.chat.admin:
-    default: op
-  veliorasuite.chat.reload:
-    default: op
-  veliorasuite.chat.bypasscooldown:
-    default: op
-  veliorasuite.chat.bypasscommandcooldown:
-    default: op
-  veliorasuite.chat.bypassfilter:
-    default: op
-  veliorasuite.loginsecurity.use:
-    default: true
-  veliorasuite.loginsecurity.admin:
-    default: op
-  veliorasuite.loginsecurity.owner:
-    default: op
-  veliorasuite.loginsecurity.bypass:
-    default: op
-  veliorasuite.security.admin:
-    default: op
-  veliorasuite.security.reload:
-    default: op
-  veliorasuite.security.alerts:
-    default: op
-  veliorasuite.security.bypass:
-    default: op
-  veliorasuite.skills.use:
-    default: true
-  veliorasuite.skills.admin:
-    default: op
-  veliorasuite.skills.reload:
-    default: op
-  veliorasuite.skills.mana.admin:
-    default: op
-  veliorasuite.skills.bypass:
-    default: op
-  veliorasuite.quest.use:
-    default: true
-  veliorasuite.quest.admin:
-    default: op
-  veliorasuite.quest.reload:
-    default: op
-  veliorasuite.quest.bypassmana:
-    default: op
-  veliorasuite.quest.reset:
-    default: op
-  veliorasuite.fishing.use:
-    default: true
-  veliorasuite.fishing.sell:
-    default: true
-  veliorasuite.fishing.bag:
-    default: true
-  veliorasuite.fishing.top:
-    default: true
-  veliorasuite.fishing.admin:
-    default: op
-  veliorasuite.fishing.reload:
-    default: op
-  veliorasuite.trader.use:
-    default: true
-  veliorasuite.trader.admin:
-    default: op
-  veliorasuite.trader.reload:
-    default: op
-  veliorasuite.boss.use:
-    default: true
-  veliorasuite.boss.admin:
-    default: op
-  veliorasuite.boss.reload:
-    default: op
-  veliorasuite.boss.spawn:
-    default: op
-  veliorasuite.boss.set:
-    default: op
-  veliorasuite.boss.stop:
-    default: op
-  veliorasuite.boss.top:
-    default: true
-  veliorasuite.pets.use:
-    default: true
-  veliorasuite.pets.shop:
-    default: true
-  veliorasuite.pets.gacha:
-    default: true
-  veliorasuite.pets.storage:
-    default: true
-  veliorasuite.pets.rename:
-    default: true
-  veliorasuite.pets.redprotect.bypass:
-    default: op
-  veliorasuite.pets.admin:
-    default: op
-  veliorasuite.pets.reload:
-    default: op
-  veliorasuite.pets.give:
-    default: op
-  veliorasuite.pets.remove:
-    default: op
