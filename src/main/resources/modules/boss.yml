@@ -5,13 +5,27 @@ settings:
     # Boss baru aktif setelah /boss set <nama> dipakai.
     # Jika interval 60, jadwal otomatis mengikuti jam real-time WIB/Asia Jakarta.
     interval-minutes: 60
-    despawn-minutes: 25
+    retry-minutes: 5
+    despawn-minutes: 35
     announce-spawn: true
     announce-death: true
     announce-despawn: true
     allow-multiple-active: false
     require-spawn-point: true
     warning-times-minutes: [10, 5, 1]
+  boss-size:
+    # Ukuran boss random setiap spawn. Butuh MC/Paper 1.20.5+ yang support Attribute SCALE.
+    random-enabled: true
+    min: 4.0
+    max: 10.0
+  combat:
+    # Dibuat lebih tahan untuk dikeroyok banyak player.
+    armor: 18.0
+    armor-toughness: 12.0
+    knockback-resistance: 0.85
+    health-scale-by-nearby-players: true
+    health-per-player-multiplier: 0.20
+    max-health-multiplier: 2.75
 
 rarity-chance:
   common: 45.0
@@ -29,11 +43,11 @@ bossbar-radius: 80
 
 arena:
   enabled: true
-  radius: 45
-  target-radius: 45
+  radius: 55
+  target-radius: 55
   leash-to-spawn: true
   teleport-back-if-far: true
-  teleport-back-distance: 55
+  teleport-back-distance: 70
   teleport-back-if-below-spawn-y: true
   below-y-offset: 12
   remove-minion-outside-radius: true
@@ -44,14 +58,14 @@ targeting:
   include-adventure: true
   include-creative: false
   include-spectator: false
-  target-radius-horizontal: 64
-  target-radius-vertical: 32
-  retarget-interval-seconds: 3
+  target-radius-horizontal: 72
+  target-radius-vertical: 40
+  retarget-interval-seconds: 2
   force-target-nearest: true
   ignore-line-of-sight: true
   target-players-above: true
   target-players-below: true
-  no-target-teleport-back: false
+  no-target-teleport-back: true
 
 debug:
   targeting: false
@@ -61,9 +75,9 @@ bosses:
     entity: HUSK
     display-name: '&2Rotten Colossus'
     rarity: COMMON
-    health: 1200
-    damage: 4.0
-    scale: 3.5
+    health: 5000
+    damage: 5.0
+    scale: 4.0
     skills: [GROUND_SLAM, SUMMON_MINIONS]
     rewards:
       money: { enabled: true, min: 10000, max: 25000 }
@@ -71,9 +85,9 @@ bosses:
     entity: RAVAGER
     display-name: '&aForest Beast'
     rarity: RARE
-    health: 1800
-    damage: 6.0
-    scale: 2.4
+    health: 7500
+    damage: 7.0
+    scale: 5.0
     skills: [GROUND_SLAM, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 25000, max: 50000 }
@@ -81,9 +95,9 @@ bosses:
     entity: VINDICATOR
     display-name: '&cInfernal Butcher'
     rarity: RARE
-    health: 1700
-    damage: 6.0
-    scale: 3.0
+    health: 7200
+    damage: 7.0
+    scale: 5.0
     skills: [GROUND_SLAM, SUMMON_MINIONS, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 25000, max: 50000 }
@@ -91,9 +105,9 @@ bosses:
     entity: DROWNED
     display-name: '&3Deep Drowned King'
     rarity: RARE
-    health: 1800
-    damage: 6.0
-    scale: 3.0
+    health: 7600
+    damage: 7.0
+    scale: 5.0
     skills: [PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 25000, max: 50000 }
@@ -101,9 +115,9 @@ bosses:
     entity: RAVAGER
     display-name: '&7Cave Titan'
     rarity: EPIC
-    health: 2300
-    damage: 7.0
-    scale: 2.7
+    health: 10500
+    damage: 8.0
+    scale: 6.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 50000, max: 100000 }
@@ -111,9 +125,9 @@ bosses:
     entity: WARDEN
     display-name: '&9Ancient Warden'
     rarity: EPIC
-    health: 2800
-    damage: 8.0
-    scale: 2.2
+    health: 11500
+    damage: 9.0
+    scale: 6.0
     skills: [GROUND_SLAM, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 50000, max: 100000 }
@@ -121,9 +135,9 @@ bosses:
     entity: PIGLIN_BRUTE
     display-name: '&5Abyss Brute'
     rarity: EPIC
-    health: 2400
-    damage: 8.0
-    scale: 3.2
+    health: 11000
+    damage: 9.0
+    scale: 6.0
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 50000, max: 100000 }
@@ -131,9 +145,9 @@ bosses:
     entity: EVOKER
     display-name: '&dCrystal Evoker'
     rarity: LEGENDARY
-    health: 3200
-    damage: 9.0
-    scale: 2.0
+    health: 15000
+    damage: 10.0
+    scale: 7.0
     skills: [FIRE_BOMB, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 75000, max: 150000 }
@@ -141,9 +155,9 @@ bosses:
     entity: RAVAGER
     display-name: '&6Namazu Earthshaker'
     rarity: LEGENDARY
-    health: 3500
-    damage: 10.0
-    scale: 3.0
+    health: 16500
+    damage: 11.0
+    scale: 7.0
     skills: [GROUND_SLAM, FIRE_BOMB, SUMMON_MINIONS, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 75000, max: 150000 }
@@ -151,9 +165,9 @@ bosses:
     entity: WITHER_SKELETON
     display-name: '&8Soul Reaper'
     rarity: LEGENDARY
-    health: 3200
-    damage: 9.0
-    scale: 3.3
+    health: 15500
+    damage: 10.0
+    scale: 7.0
     skills: [PULL_AURA, POISON_CLOUD, SUMMON_MINIONS, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 75000, max: 150000 }
@@ -161,24 +175,24 @@ bosses:
     entity: WITHER_SKELETON
     display-name: '&5Void Executioner'
     rarity: MYTHIC
-    health: 4500
-    damage: 12.0
-    scale: 3.8
+    health: 23000
+    damage: 13.0
+    scale: 8.0
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 100000, max: 150000 }
 
 skills:
   enabled: true
-  cooldown-seconds: 14
+  cooldown-seconds: 11
   random-skill: true
   default: [GROUND_SLAM, SUMMON_MINIONS, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
   damage:
-    ground-slam: 6.0
-    fire-bomb: 8.0
+    ground-slam: 7.0
+    fire-bomb: 9.0
   summon:
-    max-minions: 8
-    minions-per-cast: 3
+    max-minions: 14
+    minions-per-cast: 4
     types: [ZOMBIE, HUSK, DROWNED, ZOMBIFIED_PIGLIN]
 
 protection:
@@ -188,7 +202,7 @@ protection:
   allow-boss-damage-in-protected-region: true
 
 rewards:
-  min-damage-to-reward: 20.0
+  min-damage-to-reward: 25.0
   min-damage-contribution-percent: 5.0
   reward-cooldown-seconds: 60
   default-money:
@@ -217,7 +231,7 @@ effects:
     subtitle: '&7Boss %rarity% muncul di &f%world%'
     sound: ENTITY_WARDEN_ROAR
     particle: SOUL
-    particle-count: 120
+    particle-count: 150
   death:
     sound: UI_TOAST_CHALLENGE_COMPLETE
     particle: TOTEM_OF_UNDYING
