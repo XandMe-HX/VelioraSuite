@@ -12,7 +12,8 @@ settings:
     announce-despawn: true
     allow-multiple-active: false
     require-spawn-point: true
-    warning-times-minutes: [10, 5, 1]
+    # Jangan terlalu banyak notif. Cukup 5 menit dan 1 menit sebelum spawn.
+    warning-times-minutes: [5, 1]
   boss-size:
     # Ukuran boss random setiap spawn. Butuh MC/Paper 1.20.5+ yang support Attribute SCALE.
     random-enabled: true
@@ -238,7 +239,7 @@ effects:
 
 messages:
   prefix: '&8[&cVelioraBoss&8] '
-  boss-spawn: '%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!'
+  boss-spawn: '%prefix% &c%boss% &7muncul di dungeon. &f/boss status &7untuk lokasi.'
   boss-death: '%prefix% &a%boss% berhasil dikalahkan!'
   boss-despawn: '%prefix% &e%boss% menghilang.'
   boss-next: '%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.'
@@ -261,7 +262,6 @@ messages:
   boss-not-found: '%prefix% &cBoss tidak ditemukan: &f%boss%'
   boss-top-header: '%prefix% &eTop Boss Damage:'
   boss-top-line: '&7%rank%. &f%player% &8- &c%damage% damage'
-  boss-warning-10: '%prefix% &eBoss akan muncul dalam &f10 menit&e!'
-  boss-warning-5: '%prefix% &eBoss akan muncul dalam &f5 menit&e!'
-  boss-warning-1: '%prefix% &cBoss akan muncul dalam &f1 menit&c!'
-  boss-return-arena: '%prefix% &e%boss% kembali ke arena!'
+  boss-warning-5: '%prefix% &eBoss akan muncul dalam &f5 menit&e.'
+  boss-warning-1: '%prefix% &cBoss akan muncul dalam &f1 menit&c.'
+  boss-return-arena: '%prefix% &e%boss% kembali ke arena.'
