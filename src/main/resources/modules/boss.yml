@@ -18,7 +18,7 @@ settings:
     # Ukuran boss random setiap spawn. Butuh MC/Paper 1.20.5+ yang support Attribute SCALE.
     random-enabled: true
     min: 4.0
-    max: 10.0
+    max: 7.0
   combat:
     # Dibuat lebih tahan untuk dikeroyok banyak player.
     armor: 18.0
@@ -178,7 +178,7 @@ bosses:
     rarity: MYTHIC
     health: 23000
     damage: 13.0
-    scale: 8.0
+    scale: 7.0
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
       money: { enabled: true, min: 100000, max: 150000 }
