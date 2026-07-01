@@ -31,8 +31,12 @@ settings:
   # Jika true, player tidak bisa report diri sendiri.
   block-self-report: true
 
-  # Jika true, staff online menerima notifikasi saat report baru dibuat.
+  # Jika true, OP online menerima notifikasi saat report baru dibuat.
   notify-staff: true
+
+  # Jika true, notifikasi report hanya dikirim ke player OP.
+  # Player yang cuma punya permission staff/admin tidak akan menerima notif.
+  notify-op-only: true
 
   # Jika true, lokasi player saat membuat report akan disimpan.
   save-location: true
