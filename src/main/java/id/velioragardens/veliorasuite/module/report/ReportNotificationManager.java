@@ -46,6 +46,12 @@ public final class ReportNotificationManager {
     }
 
     private boolean canReceive(Player player) {
+        if (player == null) {
+            return false;
+        }
+        if (configManager.isNotifyOpOnly()) {
+            return player.isOp();
+        }
         return player.hasPermission(configManager.getStaffPermission()) || player.hasPermission(configManager.getAdminPermission());
     }
 }
