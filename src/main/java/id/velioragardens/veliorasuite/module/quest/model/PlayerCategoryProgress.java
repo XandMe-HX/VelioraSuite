@@ -2,6 +2,8 @@ package id.velioragardens.veliorasuite.module.quest.model;
 
 public final class PlayerCategoryProgress {
 
+    private static final int MAX_LEVEL = 100;
+
     private final QuestCategory category;
     private int level;
     private int completedCount;
@@ -12,7 +14,7 @@ public final class PlayerCategoryProgress {
 
     public PlayerCategoryProgress(QuestCategory category, int level, int completedCount, QuestState state, int currentTarget, int currentProgress, int currentRewardMoney) {
         this.category = category;
-        this.level = level;
+        this.level = Math.max(1, Math.min(MAX_LEVEL, level));
         this.completedCount = completedCount;
         this.state = state;
         this.currentTarget = currentTarget;
@@ -22,7 +24,7 @@ public final class PlayerCategoryProgress {
 
     public QuestCategory getCategory() { return category; }
     public int getLevel() { return level; }
-    public void setLevel(int level) { this.level = Math.max(1, level); }
+    public void setLevel(int level) { this.level = Math.max(1, Math.min(MAX_LEVEL, level)); }
     public int getCompletedCount() { return completedCount; }
     public void setCompletedCount(int completedCount) { this.completedCount = Math.max(0, completedCount); }
     public QuestState getState() { return state; }
