@@ -42,6 +42,7 @@ public final class BossConfigManager {
     public String prefix() { return str("messages.prefix", "&8[&cVelioraBoss&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
     public int intervalMinutes() { return Math.max(60, integer("settings.spawn.interval-minutes", 60)); }
+    public int spawnRetryMinutes() { return Math.max(1, integer("settings.spawn.retry-minutes", 5)); }
     public int despawnMinutes() { return Math.max(1, integer("settings.spawn.despawn-minutes", 25)); }
     public boolean announceSpawn() { return bool("settings.spawn.announce-spawn", true); }
     public boolean announceDeath() { return bool("settings.spawn.announce-death", true); }
@@ -49,6 +50,15 @@ public final class BossConfigManager {
     public boolean allowMultiple() { return bool("settings.spawn.allow-multiple-active", false); }
     public boolean requireSpawnPoint() { return bool("settings.spawn.require-spawn-point", true); }
     public List<Integer> warningTimesMinutes() { List<Integer> list = config == null ? List.of() : config.getIntegerList("settings.spawn.warning-times-minutes"); return list.isEmpty() ? List.of(10, 5, 1) : list; }
+    public boolean randomScaleEnabled() { return bool("settings.boss-size.random-enabled", true); }
+    public double randomScaleMin() { return Math.max(1.0D, number("settings.boss-size.min", 4.0D)); }
+    public double randomScaleMax() { return Math.max(randomScaleMin(), number("settings.boss-size.max", 10.0D)); }
+    public double bossArmor() { return Math.max(0.0D, number("settings.combat.armor", 18.0D)); }
+    public double bossArmorToughness() { return Math.max(0.0D, number("settings.combat.armor-toughness", 12.0D)); }
+    public double bossKnockbackResistance() { return clamp(number("settings.combat.knockback-resistance", 0.85D), 0.0D, 1.0D); }
+    public boolean healthScalingEnabled() { return bool("settings.combat.health-scale-by-nearby-players", true); }
+    public double healthPerPlayerMultiplier() { return Math.max(0.0D, number("settings.combat.health-per-player-multiplier", 0.20D)); }
+    public double maxHealthMultiplier() { return Math.max(1.0D, number("settings.combat.max-health-multiplier", 2.75D)); }
     public boolean spawnTitleEnabled() { return bool("effects.spawn.title-enabled", true); }
     public String spawnTitle() { return str("effects.spawn.title", "&c%boss%"); }
     public String spawnSubtitle() { return str("effects.spawn.subtitle", "&7Boss %rarity% muncul di &f%world%"); }
@@ -126,7 +136,7 @@ public final class BossConfigManager {
             if (!isAllowedBossType(type)) { plugin.getLogger().warning("VelioraBoss: entity boss tidak aman/terbang atau tidak dipakai lagi, skip: " + type); continue; }
             BossRarity rarity = BossRarity.from(boss.getString("rarity", "COMMON"));
             List<BossSkillType> skills = parseSkills(boss.getStringList("skills"));
-            bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(id.toLowerCase(Locale.ROOT), type, boss.getString("display-name", id), rarity, clamp(boss.getDouble("health", 1200.0D), 800.0D, 10_000.0D), clamp(boss.getDouble("damage", 4.0D), 3.0D, 20.0D), Math.max(1.0D, boss.getDouble("scale", 3.0D)), skills.isEmpty() ? defaultSkills() : skills));
+            bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(id.toLowerCase(Locale.ROOT), type, boss.getString("display-name", id), rarity, clamp(boss.getDouble("health", 5000.0D), 800.0D, 50_000.0D), clamp(boss.getDouble("damage", 4.0D), 3.0D, 20.0D), Math.max(1.0D, boss.getDouble("scale", 4.0D)), skills.isEmpty() ? defaultSkills() : skills));
         }
     }
     private List<BossSkillType> parseSkills(List<String> raw) { List<BossSkillType> skills = new ArrayList<>(); for (String value : raw) { BossSkillType skill = BossSkillType.from(value); if (skill != null && !skills.contains(skill)) skills.add(skill); } if (skills.isEmpty()) skills.addAll(List.of(BossSkillType.GROUND_SLAM, BossSkillType.SUMMON_MINIONS, BossSkillType.FIRE_BOMB, BossSkillType.PULL_AURA, BossSkillType.POISON_CLOUD, BossSkillType.RAGE_MODE)); return skills; }
