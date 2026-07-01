@@ -44,6 +44,7 @@ public final class LoginSecurityManager {
     }
 
     public void shutdown() {
+        LoginSecurityBlindnessManager.clearAll();
         sessionManager.clearAll();
     }
 
@@ -61,12 +62,14 @@ public final class LoginSecurityManager {
     public void handleJoin(Player player) {
         if (!configManager.isEnabled() || !configManager.isRequireLogin()) {
             sessionManager.setState(player, AuthState.AUTHENTICATED);
+            finishAuthentication(player);
             return;
         }
 
         AuthPlayerData data = getPlayerData(player);
         sessionManager.setAuthLocation(player, player.getLocation());
         sessionManager.setState(player, data == null ? AuthState.WAITING_REGISTER : AuthState.WAITING_LOGIN);
+        LoginSecurityBlindnessManager.apply(player, configManager);
         send(player, data == null ? "need-register" : "need-login", data == null
                 ? "%prefix% &eSilakan daftar dengan &f/register <password> <password confirm>&e."
                 : "%prefix% &eSilakan login dengan &f/login <password>&e.", Map.of());
@@ -82,6 +85,7 @@ public final class LoginSecurityManager {
     }
 
     public void handleQuit(Player player) {
+        LoginSecurityBlindnessManager.remove(player);
         sessionManager.clear(player);
     }
 
@@ -102,6 +106,7 @@ public final class LoginSecurityManager {
             AuthPlayerData data = new AuthPlayerData(player.getUniqueId(), player.getName(), passwordHash.hash(), passwordHash.salt(), now(), now(), getIpHash(player), 0, 0L);
             dataManager.savePlayer(data);
             sessionManager.setState(player, AuthState.AUTHENTICATED);
+            finishAuthentication(player);
             send(player, "register-success", "%prefix% &aRegistrasi berhasil. Selamat bermain!", Map.of());
         } catch (Exception exception) {
             plugin.getLogger().warning("VelioraLoginSecurity: gagal membuat hash password untuk register.");
@@ -117,6 +122,7 @@ public final class LoginSecurityManager {
             return;
         }
         if (sessionManager.isAuthenticated(player)) {
+            finishAuthentication(player);
             send(player, "already-logged-in", "%prefix% &aKamu sudah login.", Map.of());
             return;
         }
@@ -148,6 +154,7 @@ public final class LoginSecurityManager {
         if (data.getUuid() == null) data.setUuid(player.getUniqueId());
         dataManager.updateName(data, player.getName());
         sessionManager.setState(player, AuthState.AUTHENTICATED);
+        finishAuthentication(player);
         send(player, "login-success", "%prefix% &aLogin berhasil. Selamat bermain!", Map.of());
     }
 
@@ -171,6 +178,7 @@ public final class LoginSecurityManager {
             data.setSalt(passwordHash.salt());
             protectionManager.resetAttempts(data);
             dataManager.savePlayer(data);
+            finishAuthentication(player);
             send(player, "changepass-success", "%prefix% &aPassword berhasil diganti.", Map.of());
         } catch (Exception exception) {
             plugin.getLogger().warning("VelioraLoginSecurity: gagal mengganti password player.");
@@ -194,6 +202,7 @@ public final class LoginSecurityManager {
             dataManager.deleteByName(data.getName());
             sessionManager.setState(player, AuthState.WAITING_REGISTER);
             sessionManager.setAuthLocation(player, player.getLocation());
+            LoginSecurityBlindnessManager.apply(player, configManager);
             send(player, "unregister-success", "%prefix% &aAkun login kamu berhasil dihapus.", Map.of());
             send(player, "need-register", "%prefix% &eSilakan daftar dengan &f/register <password> <password confirm>&e.", Map.of());
         } catch (Exception exception) {
@@ -211,6 +220,7 @@ public final class LoginSecurityManager {
         AuthPlayerData data = getPlayerData(player);
         sessionManager.setAuthLocation(player, player.getLocation());
         sessionManager.setState(player, data == null ? AuthState.WAITING_REGISTER : AuthState.WAITING_LOGIN);
+        LoginSecurityBlindnessManager.apply(player, configManager);
         send(player, "logout-success", "%prefix% &aKamu berhasil logout.", Map.of());
     }
 
@@ -229,6 +239,7 @@ public final class LoginSecurityManager {
         if (online != null) {
             sessionManager.setAuthLocation(online, online.getLocation());
             sessionManager.setState(online, AuthState.WAITING_REGISTER);
+            LoginSecurityBlindnessManager.apply(online, configManager);
             send(online, "need-register", "%prefix% &eSilakan daftar dengan &f/register <password> <password confirm>&e.", Map.of());
         }
         send(sender, "owner-reset-success", "%prefix% &aPassword player &f%player% &aberhasil direset. Player harus register ulang.", Map.of("%player%", data.getName()));
@@ -255,6 +266,7 @@ public final class LoginSecurityManager {
             if (online != null) {
                 sessionManager.setAuthLocation(online, online.getLocation());
                 sessionManager.setState(online, AuthState.WAITING_LOGIN);
+                LoginSecurityBlindnessManager.apply(online, configManager);
                 send(online, "need-login", "%prefix% &eSilakan login dengan &f/login <password>&e.", Map.of());
             }
             send(sender, "owner-changepass-success", "%prefix% &aPassword player &f%player% &aberhasil diubah.", Map.of("%player%", data.getName()));
@@ -341,6 +353,10 @@ public final class LoginSecurityManager {
             return false;
         }
         return true;
+    }
+
+    private void finishAuthentication(Player player) {
+        LoginSecurityBlindnessManager.removeSafe(player);
     }
 
     private AuthPlayerData getPlayerData(Player player) {
