@@ -35,7 +35,7 @@ public final class QuestConfigManager {
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&aVelioraQuest&8] "); }
-    public boolean isRequireSkillsMana() { return bool("settings.require-skills-mana", true); }
+    public boolean isRequireSkillsMana() { return bool("settings.require-skills-mana", false); }
     public boolean isDebugMana() { return bool("settings.debug-mana", false); }
     public boolean isGuiEnabled() { return bool("settings.gui.enabled", true); }
     public String getGuiTitle() { return str("settings.gui.title", "&8Veliora Quest"); }
@@ -45,7 +45,9 @@ public final class QuestConfigManager {
     public BarColor getBossBarColor() { return bossBarColor(str("settings.bossbar.color", "GREEN")); }
     public BarStyle getBossBarStyle() { return bossBarStyle(str("settings.bossbar.style", "SEGMENTED_10")); }
     public boolean isBossBarHideWhenComplete() { return bool("settings.bossbar.hide-when-complete", true); }
-    public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 5)); }
+    public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 1)); }
+    public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", true); }
+    public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", true); }
     public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", true); }
     public int getManaReward() { return Math.max(0, integer("settings.rewards.mana-reward", 1)); }
     public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 5000)); }
