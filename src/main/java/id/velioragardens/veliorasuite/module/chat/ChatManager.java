@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 public final class ChatManager {
 
@@ -19,6 +20,7 @@ public final class ChatManager {
     private final ChatFilterManager filterManager;
     private final ChatPlaceholderManager placeholderManager;
     private final ChatFormatManager formatManager;
+    private final Map<UUID, Long> autoReplyCooldowns = new HashMap<>();
 
     public ChatManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -39,12 +41,14 @@ public final class ChatManager {
         configManager.load();
         cooldownManager.clear();
         commandCooldownManager.clear();
+        autoReplyCooldowns.clear();
         filterManager.clear();
     }
 
     public void shutdown() {
         cooldownManager.clear();
         commandCooldownManager.clear();
+        autoReplyCooldowns.clear();
         filterManager.clear();
     }
 
@@ -91,6 +95,8 @@ public final class ChatManager {
                 }
             }
         }
+
+        scheduleAutoReply(player, finalMessage);
 
         if (configManager.isCooldownEnabled() && configManager.isProtectionEnabled() && !player.hasPermission(configManager.getBypassCooldownPermission()) && !hasAdminPermission(player)) {
             cooldownManager.setCooldown(player.getUniqueId(), configManager.getCooldownSeconds());
@@ -149,6 +155,7 @@ public final class ChatManager {
                 "&7Chat cooldown: &fsettings.cooldown.seconds",
                 "&7Command cooldown: &fsettings.command-spam.seconds",
                 "&7Word filter: &fsettings.word-filter.blocked-words",
+                "&7Auto reply: &fsettings.auto-reply",
                 "&8&m--------------------------------"
         )), Map.of());
     }
@@ -162,6 +169,8 @@ public final class ChatManager {
         placeholders.put("%chat_cooldown_seconds%", String.valueOf(configManager.getCooldownSeconds()));
         placeholders.put("%command_cooldown%", String.valueOf(configManager.isCommandSpamEnabled()));
         placeholders.put("%command_cooldown_seconds%", String.valueOf(configManager.getCommandSpamSeconds()));
+        placeholders.put("%auto_reply%", String.valueOf(configManager.isAutoReplyEnabled()));
+        placeholders.put("%auto_reply_cooldown%", String.valueOf(configManager.getAutoReplyCooldownSeconds()));
         placeholders.put("%anti_repeat%", String.valueOf(configManager.isAntiRepeatEnabled()));
         placeholders.put("%anti_repeat_max%", String.valueOf(configManager.getMaxRepeat()));
         placeholders.put("%anti_caps%", String.valueOf(configManager.isAntiCapsEnabled()));
@@ -177,6 +186,7 @@ public final class ChatManager {
                 "&7Protection: &f%protection%",
                 "&7Chat Cooldown: &f%chat_cooldown% &7(%chat_cooldown_seconds%s)",
                 "&7Command Cooldown: &f%command_cooldown% &7(%command_cooldown_seconds%s)",
+                "&7Auto Reply: &f%auto_reply% &7(%auto_reply_cooldown%s)",
                 "&7Anti Repeat: &f%anti_repeat% &7(max %anti_repeat_max%)",
                 "&7Anti Caps: &f%anti_caps%",
                 "&7Word Filter: &f%word_filter% &7(%word_filter_action%)",
@@ -191,6 +201,40 @@ public final class ChatManager {
 
     public void sendNoPermission(CommandSender sender) {
         send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of());
+    }
+
+    private void scheduleAutoReply(Player player, String message) {
+        if (!configManager.isAutoReplyEnabled() || player == null || message == null || message.isBlank()) return;
+        if (hasAdminPermission(player)) return;
+
+        long now = System.currentTimeMillis();
+        long last = autoReplyCooldowns.getOrDefault(player.getUniqueId(), 0L);
+        long cooldownMillis = configManager.getAutoReplyCooldownSeconds() * 1000L;
+        if (cooldownMillis > 0 && now - last < cooldownMillis) return;
+
+        String normalizedMessage = message.toLowerCase(Locale.ROOT);
+        for (Map.Entry<String, ChatConfigManager.AutoReplyEntry> entry : configManager.getAutoReplies().entrySet()) {
+            ChatConfigManager.AutoReplyEntry reply = entry.getValue();
+            if (!matchesAnyTrigger(normalizedMessage, reply.triggers())) continue;
+
+            autoReplyCooldowns.put(player.getUniqueId(), now);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!player.isOnline()) return;
+                player.sendMessage(configManager.color(configManager.getAutoReplyPrefix() + "&7Auto bantuan: &f" + entry.getKey()));
+                for (String line : reply.lines()) {
+                    player.sendMessage(configManager.color(line));
+                }
+            }, configManager.getAutoReplyDelayTicks());
+            return;
+        }
+    }
+
+    private boolean matchesAnyTrigger(String normalizedMessage, List<String> triggers) {
+        for (String trigger : triggers) {
+            if (trigger == null || trigger.isBlank()) continue;
+            if (normalizedMessage.contains(trigger.toLowerCase(Locale.ROOT))) return true;
+        }
+        return false;
     }
 
     private int getCommandCooldownSeconds(String command) {
