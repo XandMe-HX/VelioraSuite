@@ -100,6 +100,8 @@ public final class BossConfigManager {
     public boolean noTargetTeleportBack() { return bool("targeting.no-target-teleport-back", false); }
     public boolean debugTargeting() { return bool("debug.targeting", false); }
     public double minDamageToReward() { return number("rewards.min-damage-to-reward", 20.0D); }
+    public double minDamageContributionPercent() { return clamp(number("rewards.min-damage-contribution-percent", 5.0D), 0.0D, 100.0D); }
+    public long rewardCooldownMillis() { return Math.max(0L, (long) integer("rewards.reward-cooldown-seconds", 60)) * 1000L; }
     public int rewardMaterial(BossRarity rarity, String key) { return Math.max(0, config.getInt("rewards.materials." + rarity.name().toLowerCase(Locale.ROOT) + "." + key, 0)); }
     public boolean defaultMoneyEnabled() { return bool("rewards.default-money.enabled", true); }
     public long defaultMoneyMin() { return clampMoney(integer("rewards.default-money.min", 10_000)); }
