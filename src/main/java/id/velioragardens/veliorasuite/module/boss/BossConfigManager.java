@@ -49,10 +49,10 @@ public final class BossConfigManager {
     public boolean announceDespawn() { return bool("settings.spawn.announce-despawn", true); }
     public boolean allowMultiple() { return bool("settings.spawn.allow-multiple-active", false); }
     public boolean requireSpawnPoint() { return bool("settings.spawn.require-spawn-point", true); }
-    public List<Integer> warningTimesMinutes() { List<Integer> list = config == null ? List.of() : config.getIntegerList("settings.spawn.warning-times-minutes"); return list.isEmpty() ? List.of(10, 5, 1) : list; }
+    public List<Integer> warningTimesMinutes() { List<Integer> list = config == null ? List.of() : config.getIntegerList("settings.spawn.warning-times-minutes"); return list.isEmpty() ? List.of(5, 1) : list; }
     public boolean randomScaleEnabled() { return bool("settings.boss-size.random-enabled", true); }
     public double randomScaleMin() { return Math.max(1.0D, number("settings.boss-size.min", 4.0D)); }
-    public double randomScaleMax() { return Math.max(randomScaleMin(), number("settings.boss-size.max", 10.0D)); }
+    public double randomScaleMax() { return Math.max(randomScaleMin(), number("settings.boss-size.max", 7.0D)); }
     public double bossArmor() { return Math.max(0.0D, number("settings.combat.armor", 18.0D)); }
     public double bossArmorToughness() { return Math.max(0.0D, number("settings.combat.armor-toughness", 12.0D)); }
     public double bossKnockbackResistance() { return clamp(number("settings.combat.knockback-resistance", 0.85D), 0.0D, 1.0D); }
