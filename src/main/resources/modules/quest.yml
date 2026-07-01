@@ -1,7 +1,8 @@
 settings:
   enabled: true
   prefix: '&8[&aVelioraQuest&8] '
-  require-skills-mana: false
+  # Quest wajib dipilih dulu dan memakai Mana dari VelioraSkills.
+  require-skills-mana: true
   debug-mana: false
   gui:
     enabled: true
@@ -14,13 +15,13 @@ settings:
     style: SEGMENTED_10
     hide-when-complete: true
   progression:
-    # Desain progress: level 100 bukan target cepat.
-    # Player aktif normal dibuat butuh sekitar 45-60 hari untuk mendekati level 100.
-    # Setiap level punya target baru karena target dihitung ulang dari level player.
+    # Mode manual: player harus pilih quest dulu lewat /quests atau /quests start <category>.
+    # Mining/kill/farming/fishing tidak akan mengganti quest sendiri.
+    # Setelah quest selesai, player harus pilih lagi untuk lanjut level berikutnya dan bayar Mana lagi.
     completions-per-level: 1
     max-level: 100
-    auto-start-on-progress: true
-    auto-restart-after-claim: true
+    auto-start-on-progress: false
+    auto-restart-after-claim: false
   rewards:
     # Anti-inflasi: reward uang naik pelan dan tetap ada batas maksimal.
     give-mana-on-complete: false
@@ -101,20 +102,20 @@ messages:
   no-permission: '%prefix% &cKamu tidak punya izin.'
   player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
   reload-success: '%prefix% &aVelioraQuest berhasil direload.'
-  quest-started: '%prefix% &aQuest &f%quest% &adimulai. Mana terpakai: &f%mana_cost%&a.'
+  quest-started: '%prefix% &aQuest &f%quest% &adimulai. Mana terpakai: &f%mana_cost%&a. Selesaikan targetnya dulu.'
   quest-progress: '%prefix% &eProgress &f%quest%&e: &f%progress%&7/&f%target%&e.'
   quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.'
-  quest-auto-completed: '%prefix% &aQuest &f%quest% &aselesai otomatis. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Target baru: &f%target%&a.'
-  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money%&a.'
+  quest-auto-completed: '%prefix% &aQuest &f%quest% &aselesai. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Pilih quest lagi untuk lanjut dan memakai Mana lagi.'
+  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money%&a. Pilih quest lagi untuk lanjut level berikutnya.'
   quest-level-up: '%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.'
   quest-auto-restarted: '%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.'
   quest-max-level: '%prefix% &6Quest &f%quest% &6sudah mencapai level maksimal &f100&6.'
-  quest-not-active: '%prefix% &cQuest ini belum aktif.'
+  quest-not-active: '%prefix% &cQuest ini belum aktif. Pilih dulu lewat &f/quests&c atau &f/quests start <category>&c.'
   quest-already-active: '%prefix% &cQuest ini sedang aktif.'
   quest-not-ready: '%prefix% &cQuest ini belum selesai.'
   quest-disabled: '%prefix% &cQuest ini sedang dinonaktifkan.'
   mana-not-enough: '%prefix% &cMana kamu tidak cukup. Butuh &f%mana_cost% &cMana untuk mulai quest ini.'
-  skills-not-found: '%prefix% &cMana system belum aktif. Hubungi staff.'
+  skills-not-found: '%prefix% &cMana system belum aktif. Aktifkan module VelioraSkills dulu.'
   vault-not-found: '%prefix% &eVault economy belum aktif, reward money dilewati.'
   quest-cancelled: '%prefix% &eQuest &f%quest% &edibatalkan. Mana yang sudah dipakai tidak dikembalikan.'
   starter-reminder:
@@ -128,9 +129,9 @@ messages:
   help:
     - '&8&m--------------------------------'
     - '&a&lVelioraQuest'
-    - '&f/quests &7- Buka GUI quest.'
-    - '&f/quests progress &7- Cek progress quest.'
-    - '&f/quests start <category> &7- Mulai quest manual.'
+    - '&f/quests &7- Buka GUI quest dan pilih quest.'
+    - '&f/quests progress &7- Cek progress quest aktif.'
+    - '&f/quests start <category> &7- Mulai quest manual dan memakai Mana.'
     - '&f/quests claim <category> &7- Claim manual untuk data lama yang stuck.'
     - '&f/quests cancel <category> &7- Batalkan quest.'
     - '&8&m--------------------------------'
