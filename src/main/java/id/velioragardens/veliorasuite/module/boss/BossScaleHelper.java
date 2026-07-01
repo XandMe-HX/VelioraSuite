@@ -10,7 +10,7 @@ import java.util.Locale;
 public final class BossScaleHelper {
 
     private final VelioraSuite plugin;
-    private boolean warned;
+    private boolean warnedScale;
 
     public BossScaleHelper(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -20,12 +20,12 @@ public final class BossScaleHelper {
         if (entity == null || scale <= 1.0D) return;
         Attribute attribute = scaleAttribute();
         if (attribute == null) {
-            warnOnce();
+            warnScaleOnce();
             return;
         }
         AttributeInstance instance = entity.getAttribute(attribute);
         if (instance == null) {
-            warnOnce();
+            warnScaleOnce();
             return;
         }
         instance.setBaseValue(scale);
@@ -34,8 +34,22 @@ public final class BossScaleHelper {
     public void setMaxHealth(LivingEntity entity, double health) {
         if (entity == null) return;
         Attribute attribute = attribute("MAX_HEALTH", "GENERIC_MAX_HEALTH");
-        if (attribute != null && entity.getAttribute(attribute) != null) entity.getAttribute(attribute).setBaseValue(health);
+        AttributeInstance instance = attribute == null ? null : entity.getAttribute(attribute);
+        if (instance != null) instance.setBaseValue(health);
         try { entity.setHealth(Math.min(health, entity.getMaxHealth())); } catch (Exception ignored) { }
+    }
+
+    public void applyCombatDefense(LivingEntity entity, double armor, double toughness, double knockbackResistance) {
+        if (entity == null) return;
+        setAttribute(entity, armor, "ARMOR", "GENERIC_ARMOR");
+        setAttribute(entity, toughness, "ARMOR_TOUGHNESS", "GENERIC_ARMOR_TOUGHNESS");
+        setAttribute(entity, knockbackResistance, "KNOCKBACK_RESISTANCE", "GENERIC_KNOCKBACK_RESISTANCE");
+    }
+
+    private void setAttribute(LivingEntity entity, double value, String... names) {
+        Attribute attribute = attribute(names);
+        AttributeInstance instance = attribute == null ? null : entity.getAttribute(attribute);
+        if (instance != null) instance.setBaseValue(value);
     }
 
     private Attribute scaleAttribute() { return attribute("SCALE", "GENERIC_SCALE"); }
@@ -47,9 +61,9 @@ public final class BossScaleHelper {
         return null;
     }
 
-    private void warnOnce() {
-        if (warned) return;
-        warned = true;
+    private void warnScaleOnce() {
+        if (warnedScale) return;
+        warnedScale = true;
         plugin.getLogger().warning("VelioraBoss: Attribute SCALE tidak tersedia, boss tetap spawn ukuran normal.");
     }
 }
