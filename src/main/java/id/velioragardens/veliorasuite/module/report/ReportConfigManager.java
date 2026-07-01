@@ -52,6 +52,10 @@ public final class ReportConfigManager {
         return getBoolean("settings.notify-staff", true);
     }
 
+    public boolean isNotifyOpOnly() {
+        return getBoolean("settings.notify-op-only", true);
+    }
+
     public boolean isSaveLocation() {
         return getBoolean("settings.save-location", true);
     }
