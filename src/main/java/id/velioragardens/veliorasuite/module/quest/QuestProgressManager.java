@@ -22,7 +22,15 @@ public final class QuestProgressManager {
         if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category)) return false;
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
-        if (progress == null || progress.getState() != QuestState.ACTIVE) return false;
+        if (progress == null || progress.getState() == QuestState.READY_TO_CLAIM) return false;
+
+        if (progress.getState() != QuestState.ACTIVE) {
+            if (!configManager.isAutoStartOnProgress()) return false;
+            progress.setState(QuestState.ACTIVE);
+            progress.setCurrentProgress(0);
+            progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
+            progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
+        }
 
         progress.setCurrentProgress(progress.getCurrentProgress() + amount);
         if (progress.getCurrentProgress() >= progress.getCurrentTarget()) {
