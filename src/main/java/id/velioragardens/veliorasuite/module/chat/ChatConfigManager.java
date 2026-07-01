@@ -56,6 +56,80 @@ public final class ChatConfigManager {
         return cooldowns;
     }
 
+    public boolean isAutoReplyEnabled() { return getBoolean("settings.auto-reply.enabled", true); }
+    public int getAutoReplyCooldownSeconds() { return Math.max(0, getInt("settings.auto-reply.cooldown-seconds", 30)); }
+    public int getAutoReplyDelayTicks() { return Math.max(0, getInt("settings.auto-reply.delay-ticks", 20)); }
+    public String getAutoReplyPrefix() { return getString("settings.auto-reply.prefix", "&8[&aVelioraGuide&8] "); }
+
+    public Map<String, AutoReplyEntry> getAutoReplies() {
+        Map<String, AutoReplyEntry> replies = new LinkedHashMap<>();
+        if (config != null) {
+            ConfigurationSection section = config.getConfigurationSection("settings.auto-reply.replies");
+            if (section != null) {
+                for (String key : section.getKeys(false)) {
+                    List<String> triggers = section.getStringList(key + ".triggers");
+                    List<String> lines = section.getStringList(key + ".lines");
+                    if (!triggers.isEmpty() && !lines.isEmpty()) {
+                        replies.put(key, new AutoReplyEntry(triggers, lines));
+                    }
+                }
+            }
+        }
+
+        if (!replies.isEmpty()) return replies;
+
+        replies.put("guide", new AutoReplyEntry(
+                List.of("panduan", "cara main", "bingung", "command apa", "fitur server", "guide", "vguide"),
+                List.of(
+                        "&fButuh panduan? Ketik &b/vguide &7untuk menu utama server.",
+                        "&7Cek juga &b/vrules&7, &b/vrank&7, dan &b/vproduct&7."
+                )
+        ));
+        replies.put("rank", new AutoReplyEntry(
+                List.of("rank", "vip", "harga rank", "benefit rank", "beli rank", "donate"),
+                List.of(
+                        "&fInfo rank ada di &b/vrank&f.",
+                        "&7Pakai &b/vrank 2&7 sampai &b/vrank 13 &7untuk detail harga dan benefit."
+                )
+        ));
+        replies.put("product", new AutoReplyEntry(
+                List.of("produk", "product", "fitur", "plugin", "vproduct", "vporduct"),
+                List.of(
+                        "&fDaftar fitur dan produk server ada di &b/vproduct&f.",
+                        "&7Kalau typo &b/vporduct&7 juga tetap diarahkan ke product."
+                )
+        ));
+        replies.put("home", new AutoReplyEntry(
+                List.of("sethome", "cara set home", "home tidak bisa", "home pin", "teleport home"),
+                List.of(
+                        "&fBuat home: &b/sethome <nama>&f. Teleport: &b/home <nama>&f.",
+                        "&7Contoh: &b/sethome base &7lalu &b/home base&7."
+                )
+        ));
+        replies.put("quest", new AutoReplyEntry(
+                List.of("quest", "misi", "level quest", "cara quest"),
+                List.of(
+                        "&fQuest jalan otomatis saat mining, farming, fishing, atau kill mob.",
+                        "&7Cek progress: &b/quests progress &7atau buka menu: &b/quests&7."
+                )
+        ));
+        replies.put("claim", new AutoReplyEntry(
+                List.of("claim", "claim land", "cara claim", "base aman", "grief"),
+                List.of(
+                        "&fUntuk claim area/base, cek panduan di &b/vguide 5&f.",
+                        "&7Jangan lupa sethome di base setelah claim: &b/sethome base&7."
+                )
+        ));
+        replies.put("report", new AutoReplyEntry(
+                List.of("lapor", "report", "bug", "player nakal", "cheater"),
+                List.of(
+                        "&fLaporkan bug/player dengan &b/report <player|bug> <alasan>&f.",
+                        "&7Staff/OP online akan menerima notifikasi report."
+                )
+        ));
+        return replies;
+    }
+
     public boolean isAntiRepeatEnabled() { return getBoolean("settings.anti-repeat.enabled", true); }
     public int getMaxRepeat() { return Math.max(1, getInt("settings.anti-repeat.max-repeat", 2)); }
 
@@ -111,4 +185,6 @@ public final class ChatConfigManager {
         if (config == null || !config.contains(path)) return fallback;
         return config.getInt(path, fallback);
     }
+
+    public record AutoReplyEntry(List<String> triggers, List<String> lines) { }
 }
