@@ -1,8 +1,6 @@
 settings:
   enabled: true
   prefix: '&8[&aVelioraQuest&8] '
-  # Quest dibuat jalan terus. Kalau true, player harus punya mana untuk /quests start manual.
-  # Default false supaya quest tidak macet saat module Skills/Mana belum aktif.
   require-skills-mana: false
   debug-mana: false
   gui:
@@ -16,21 +14,21 @@ settings:
     style: SEGMENTED_10
     hide-when-complete: true
   progression:
-    # Naik level setiap selesai claim, biar tidak stuck di level 1.
+    # Quest berjalan otomatis sampai level 100.
     completions-per-level: 1
-    # Quest otomatis aktif saat player melakukan aktivitas yang cocok.
+    max-level: 100
     auto-start-on-progress: true
-    # Setelah reward masuk, quest langsung lanjut lagi ke target berikutnya.
     auto-restart-after-claim: true
   rewards:
-    give-mana-on-complete: true
-    mana-reward: 1
-    base-money: 2500
-    money-increase-per-tier: 2500
+    # Anti-inflasi: reward uang naik pelan, tidak melonjak liar.
+    give-mana-on-complete: false
+    mana-reward: 0
+    base-money: 1000
+    money-increase-per-level: 150
+    max-money: 20000
   starter:
     enabled: true
     reminder-enabled: true
-    # 15 menit sekali supaya tidak spam chat.
     reminder-interval-seconds: 900
     claim-land-commands: ['/claim', '/lands claim', '/land claim', '/claimland']
     set-home-commands: ['/sethome', '/home set']
@@ -41,22 +39,22 @@ categories:
     enabled: true
     display-name: '&dWeekly / Special'
     icon: NETHER_STAR
-    base-target: 128
-    target-increase-per-level: 48
+    base-target: 192
+    target-increase-per-level: 96
     materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
   mining:
     enabled: true
     display-name: '&7Mining'
     icon: IRON_PICKAXE
-    base-target: 64
-    target-increase-per-level: 32
-    materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
+    base-target: 96
+    target-increase-per-level: 64
+    materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE, ANCIENT_DEBRIS]
   farmer:
     enabled: true
     display-name: '&eFarming'
     icon: WHEAT
-    base-target: 48
-    target-increase-per-level: 24
+    base-target: 96
+    target-increase-per-level: 48
     harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, SUGAR_CANE, MELON, PUMPKIN, COCOA, NETHER_WART]
     plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
     count-hoe-farmland: true
@@ -64,29 +62,29 @@ categories:
     enabled: true
     display-name: '&bDaily'
     icon: CLOCK
-    base-target: 16
-    target-increase-per-level: 8
+    base-target: 32
+    target-increase-per-level: 18
     cooked-items: [COOKED_BEEF, COOKED_CHICKEN, COOKED_MUTTON, COOKED_PORKCHOP, COOKED_COD, COOKED_SALMON, BAKED_POTATO, DRIED_KELP]
   monster_hunter:
     enabled: true
     display-name: '&cMonster Hunter'
     icon: IRON_SWORD
-    base-target: 10
-    target-increase-per-level: 5
-    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER]
+    base-target: 25
+    target-increase-per-level: 12
+    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER, VINDICATOR, EVOKER, RAVAGER, BREEZE, BOGGED]
   animal_hunter:
     enabled: true
     display-name: '&fAnimal'
     icon: COOKED_CHICKEN
-    base-target: 10
-    target-increase-per-level: 5
-    entities: [COW, SHEEP, CHICKEN, PIG, RABBIT]
+    base-target: 25
+    target-increase-per-level: 12
+    entities: [COW, SHEEP, CHICKEN, PIG, RABBIT, COD, SALMON, PUFFERFISH, TROPICAL_FISH]
   fishing:
     enabled: true
     display-name: '&bFishing'
     icon: FISHING_ROD
-    base-target: 8
-    target-increase-per-level: 4
+    base-target: 20
+    target-increase-per-level: 10
 
 permissions:
   use: 'veliorasuite.quest.use'
@@ -103,9 +101,10 @@ messages:
   quest-progress: '%prefix% &eProgress &f%quest%&e: &f%progress%&7/&f%target%&e.'
   quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.'
   quest-auto-completed: '%prefix% &aQuest &f%quest% &aselesai otomatis. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Target baru: &f%target%&a.'
-  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.'
+  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money%&a.'
   quest-level-up: '%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.'
   quest-auto-restarted: '%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.'
+  quest-max-level: '%prefix% &6Quest &f%quest% &6sudah mencapai level maksimal &f100&6.'
   quest-not-active: '%prefix% &cQuest ini belum aktif.'
   quest-already-active: '%prefix% &cQuest ini sedang aktif.'
   quest-not-ready: '%prefix% &cQuest ini belum selesai.'
