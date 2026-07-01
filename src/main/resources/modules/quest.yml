@@ -1,7 +1,9 @@
 settings:
   enabled: true
   prefix: '&8[&aVelioraQuest&8] '
-  require-skills-mana: true
+  # Quest dibuat jalan terus. Kalau true, player harus punya mana untuk /quests start manual.
+  # Default false supaya quest tidak macet saat module Skills/Mana belum aktif.
+  require-skills-mana: false
   debug-mana: false
   gui:
     enabled: true
@@ -14,7 +16,12 @@ settings:
     style: SEGMENTED_10
     hide-when-complete: true
   progression:
-    completions-per-level: 5
+    # Naik level setiap selesai claim, biar tidak stuck di level 1.
+    completions-per-level: 1
+    # Quest otomatis aktif saat player melakukan aktivitas yang cocok.
+    auto-start-on-progress: true
+    # Setelah claim reward, quest langsung lanjut lagi ke target berikutnya.
+    auto-restart-after-claim: true
   rewards:
     give-mana-on-complete: true
     mana-reward: 1
@@ -97,6 +104,7 @@ messages:
   quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.'
   quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.'
   quest-level-up: '%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.'
+  quest-auto-restarted: '%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.'
   quest-not-active: '%prefix% &cQuest ini belum aktif.'
   quest-already-active: '%prefix% &cQuest ini sedang aktif.'
   quest-not-ready: '%prefix% &cQuest ini belum selesai.'
