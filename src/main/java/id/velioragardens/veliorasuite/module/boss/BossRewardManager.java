@@ -20,8 +20,6 @@ import java.util.Random;
 import java.util.UUID;
 
 public final class BossRewardManager {
-    private static final double MIN_CONTRIBUTION_PERCENT = 5.0D;
-    private static final long REWARD_COOLDOWN_MILLIS = 60_000L;
 
     private final VelioraSuite plugin;
     private final BossConfigManager config;
@@ -68,9 +66,10 @@ public final class BossRewardManager {
         }
         if (damage < config.minDamageToReward()) return false;
         double percent = totalDamage <= 0.0D ? 0.0D : (damage / totalDamage) * 100.0D;
-        if (percent < MIN_CONTRIBUTION_PERCENT) return false;
+        if (percent < config.minDamageContributionPercent()) return false;
         long last = rewardCooldown.getOrDefault(cooldownKey(player.getUniqueId(), bossId), 0L);
-        return System.currentTimeMillis() - last >= REWARD_COOLDOWN_MILLIS;
+        long cooldown = config.rewardCooldownMillis();
+        return cooldown <= 0L || System.currentTimeMillis() - last >= cooldown;
     }
 
     private String cooldownKey(UUID uuid, String bossId) { return uuid + ":" + bossId; }
