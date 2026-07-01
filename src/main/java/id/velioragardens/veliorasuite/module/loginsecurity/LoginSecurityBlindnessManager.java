@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.loginsecurity;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -49,10 +50,12 @@ public final class LoginSecurityBlindnessManager {
     public static void removeSafe(Player player) {
         remove(player);
         if (player == null || !player.isOnline()) return;
-        Bukkit.getScheduler().runTaskLater(Bukkit.getPluginManager().getPlugin("VelioraSuite"), () -> {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("VelioraSuite");
+        if (plugin == null || !plugin.isEnabled()) return;
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) player.removePotionEffect(PotionEffectType.BLINDNESS);
         }, 2L);
-        Bukkit.getScheduler().runTaskLater(Bukkit.getPluginManager().getPlugin("VelioraSuite"), () -> {
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) player.removePotionEffect(PotionEffectType.BLINDNESS);
         }, 20L);
     }
