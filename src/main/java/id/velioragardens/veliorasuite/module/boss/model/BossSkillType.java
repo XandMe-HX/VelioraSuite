@@ -8,6 +8,10 @@ public enum BossSkillType {
     FIRE_BOMB,
     PULL_AURA,
     POISON_CLOUD,
+    LIGHTNING_CHAIN,
+    FEAR_PULSE,
+    HEAL_PULSE,
+    SOUL_CAGE,
     RAGE_MODE;
 
     public static BossSkillType from(String raw) {
