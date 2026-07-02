@@ -144,6 +144,11 @@ commands:
     usage: /loginsecurity <help|reload|status>
     aliases: [vlogsec, vlogin]
     permission: veliorasuite.loginsecurity.admin
+  cmdadmin:
+    description: Open Veliora admin command guide.
+    usage: /cmdadmin [page]
+    aliases: [admincmd, vadmincmd]
+    permission: veliorasuite.guide.admin
 
 permissions:
   veliorasuite.admin:
