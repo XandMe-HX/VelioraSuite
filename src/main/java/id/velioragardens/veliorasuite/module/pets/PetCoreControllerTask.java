@@ -11,6 +11,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -28,7 +29,9 @@ public final class PetCoreControllerTask implements Runnable {
     private static final double FOLLOW_DISTANCE = 2.5D;
     private static final double STUCK_DISTANCE = 8.0D;
     private static final double PATHFINDER_SPEED = 1.15D;
-    private static final double FALLBACK_SPEED = 0.16D;
+    private static final double FALLBACK_SPEED = 0.18D;
+    private static final double COMBAT_SPEED = 0.34D;
+    private static final double AUTO_TARGET_RADIUS = 14.0D;
     private static final long STUCK_MILLIS = 5000L;
     private static final long TELEPORT_COOLDOWN_MILLIS = 5000L;
 
@@ -56,10 +59,17 @@ public final class PetCoreControllerTask implements Runnable {
                 continue;
             }
             PetDefinition definition = config.pets().get(active.petId());
+            if (hasPlayerPassenger(pet)) {
+                stabilizeRiddenPet(pet);
+                active.targetUuid(null);
+                PetMovementDebug.remember(owner.getUniqueId(), "ridden by owner", pet.getLocation(), true, false, "ride control active");
+                continue;
+            }
             stabilize(pet, definition);
             if (ownerNotCombat(owner) || definition == null || definition.aquaticPet() || definition.flyingPet()) active.targetUuid(null);
-            follow(owner, pet, definition);
+            acquireTargetIfNeeded(owner, active, definition);
             combat(owner, active, definition);
+            if (active.targetUuid() == null) follow(owner, pet, definition);
         }
     }
 
@@ -76,8 +86,31 @@ public final class PetCoreControllerTask implements Runnable {
         pet.setFallDistance(0.0F);
         pet.setGravity(true);
         if (pet.isInsideVehicle()) pet.leaveVehicle();
-        if (pet instanceof Mob mob) mob.setTarget(null);
+        if (pet instanceof Mob mob && !hasPlayerPassenger(pet)) mob.setTarget(null);
         pet.setAI(shouldUsePathfinder(definition));
+    }
+
+    private void stabilizeRiddenPet(LivingEntity pet) {
+        setInvisible(pet, false);
+        pet.setCustomNameVisible(true);
+        pet.setRemoveWhenFarAway(false);
+        pet.setPersistent(true);
+        pet.setCanPickupItems(false);
+        pet.setCollidable(false);
+        pet.setSilent(config.silentPets());
+        pet.setGlowing(config.glowEnabled());
+        pet.setFireTicks(0);
+        pet.setFallDistance(0.0F);
+        pet.setGravity(true);
+        pet.setAI(false);
+        if (pet instanceof Mob mob) {
+            mob.setTarget(null);
+            try { mob.getPathfinder().stopPathfinding(); } catch (Throwable ignored) { }
+        }
+    }
+
+    private boolean hasPlayerPassenger(LivingEntity pet) {
+        return !pet.getPassengers().isEmpty() && pet.getPassengers().get(0) instanceof Player;
     }
 
     private void follow(Player owner, LivingEntity pet, PetDefinition definition) {
@@ -129,12 +162,7 @@ public final class PetCoreControllerTask implements Runnable {
             }
         }
         if (!pathfinderUsed && distance > FOLLOW_DISTANCE) {
-            Vector velocity = target.toVector().subtract(pet.getLocation().toVector());
-            if (velocity.lengthSquared() > 0.01D) {
-                velocity.normalize().multiply(FALLBACK_SPEED);
-                velocity.setY(clamp(velocity.getY(), -0.15D, 0.20D));
-                pet.setVelocity(velocity);
-            }
+            moveWithVelocity(pet, target, FALLBACK_SPEED);
         }
         markMoved(pet);
         PetMovementDebug.remember(owner.getUniqueId(), pathfinderUsed ? "pathfinder follow" : "fallback velocity follow", target, true, pathfinderUsed, "none");
@@ -168,10 +196,35 @@ public final class PetCoreControllerTask implements Runnable {
         return base.add(side).add(back);
     }
 
+    private void acquireTargetIfNeeded(Player owner, VelioraPet active, PetDefinition definition) {
+        if (definition == null || !config.combatEnabled() || ownerNotCombat(owner) || definition.aquaticPet() || definition.flyingPet()) return;
+        if (active.targetUuid() != null) {
+            Entity current = Bukkit.getEntity(active.targetUuid());
+            if (current instanceof LivingEntity living && !living.isDead() && living.isValid() && isAllowedTarget(living) && living.getWorld().equals(owner.getWorld()) && living.getLocation().distanceSquared(owner.getLocation()) <= AUTO_TARGET_RADIUS * AUTO_TARGET_RADIUS) {
+                return;
+            }
+            active.targetUuid(null);
+        }
+        LivingEntity best = null;
+        double bestScore = Double.MAX_VALUE;
+        for (Entity entity : owner.getWorld().getNearbyEntities(owner.getLocation(), AUTO_TARGET_RADIUS, 8.0D, AUTO_TARGET_RADIUS)) {
+            if (!(entity instanceof LivingEntity candidate)) continue;
+            if (!isAllowedTarget(candidate)) continue;
+            if (!manager.redProtectCompat().canMovePet(owner, active.entity().getLocation(), candidate.getLocation())) continue;
+            double score = candidate.getLocation().distanceSquared(owner.getLocation());
+            if (candidate instanceof Mob mob && mob.getTarget() != null && mob.getTarget().getUniqueId().equals(owner.getUniqueId())) score -= 80.0D;
+            if (score < bestScore) {
+                bestScore = score;
+                best = candidate;
+            }
+        }
+        if (best != null) active.targetUuid(best.getUniqueId());
+    }
+
     private void combat(Player owner, VelioraPet active, PetDefinition definition) {
         if (definition == null || !config.combatEnabled() || ownerNotCombat(owner) || active.targetUuid() == null) return;
         Entity targetEntity = Bukkit.getEntity(active.targetUuid());
-        if (!(targetEntity instanceof LivingEntity target) || target.isDead() || !target.isValid() || target instanceof Player || target.getScoreboardTags().contains(PET_TAG)) {
+        if (!(targetEntity instanceof LivingEntity target) || target.isDead() || !target.isValid() || !isAllowedTarget(target)) {
             active.targetUuid(null);
             return;
         }
@@ -180,26 +233,64 @@ public final class PetCoreControllerTask implements Runnable {
         if (!manager.redProtectCompat().canMovePet(owner, pet.getLocation(), target.getLocation())) { active.targetUuid(null); return; }
         double distance = pet.getLocation().distance(target.getLocation());
         if (distance > 18.0D) { active.targetUuid(null); return; }
+        face(pet, target.getLocation());
         if (distance > config.attackRange()) {
             if (shouldUsePathfinder(definition) && pet instanceof Mob mob) {
                 try { mob.getPathfinder().moveTo(target.getLocation(), PATHFINDER_SPEED); return; } catch (Throwable ignored) { }
             }
-            Vector velocity = target.getLocation().toVector().subtract(pet.getLocation().toVector());
-            if (velocity.lengthSquared() > 0.01D) {
-                velocity.normalize().multiply(FALLBACK_SPEED);
-                velocity.setY(clamp(velocity.getY(), -0.15D, 0.20D));
-                pet.setVelocity(velocity);
-            }
+            moveWithVelocity(pet, target.getLocation(), COMBAT_SPEED);
             return;
         }
         long now = System.currentTimeMillis();
         if (now - active.lastAttackMillis() < config.attackCooldownSeconds() * 1000L) return;
-        target.damage(Math.max(0.0D, definition.damage() * config.petDamageMultiplier()), owner);
+        double damage = Math.max(0.5D, definition.damage() * config.petDamageMultiplier());
+        target.damage(damage, owner);
         active.lastAttackMillis(now);
         OwnedPet owned = manager.playerData(owner.getUniqueId()).get(active.petId());
         if (owned != null) {
             owned.addExp(2, config.maxLevel());
             manager.data().save(owner.getUniqueId());
+        }
+    }
+
+    private boolean isAllowedTarget(LivingEntity target) {
+        if (target == null || target instanceof Player || target.getScoreboardTags().contains(PET_TAG)) return false;
+        if (!config.allowAttackPassive() && !(target instanceof Monster)) return false;
+        return true;
+    }
+
+    private void moveWithVelocity(LivingEntity pet, Location target, double speed) {
+        Vector velocity = target.toVector().subtract(pet.getLocation().toVector());
+        if (velocity.lengthSquared() <= 0.01D) return;
+        velocity.normalize().multiply(speed);
+        if (shouldStepUp(pet, velocity.clone().setY(0.0D))) {
+            velocity.setY(0.42D);
+        } else {
+            velocity.setY(clamp(velocity.getY(), -0.15D, 0.28D));
+        }
+        pet.setVelocity(velocity);
+    }
+
+    private boolean shouldStepUp(LivingEntity pet, Vector direction) {
+        if (!pet.isOnGround() || direction.lengthSquared() < 0.01D) return false;
+        direction.normalize();
+        Location front = pet.getLocation().clone().add(direction.multiply(0.85D));
+        return front.getBlock().getType().isSolid()
+                && !front.clone().add(0.0D, 1.0D, 0.0D).getBlock().getType().isSolid()
+                && !front.clone().add(0.0D, 2.0D, 0.0D).getBlock().getType().isSolid();
+    }
+
+    private void face(LivingEntity pet, Location target) {
+        Vector diff = target.toVector().subtract(pet.getLocation().toVector());
+        if (diff.lengthSquared() < 0.01D) return;
+        float yaw = (float) Math.toDegrees(Math.atan2(-diff.getX(), diff.getZ()));
+        try {
+            pet.setRotation(yaw, 0.0F);
+        } catch (Throwable ignored) {
+            Location location = pet.getLocation();
+            location.setYaw(yaw);
+            location.setPitch(0.0F);
+            pet.teleport(location);
         }
     }
 
@@ -210,8 +301,11 @@ public final class PetCoreControllerTask implements Runnable {
             case "COW", "SHEEP", "PIG", "CHICKEN", "RABBIT", "TURTLE", "GOAT", "CAMEL",
                     "HORSE", "DONKEY", "MULE", "LLAMA", "TRADER_LLAMA",
                     "FOX", "PANDA", "CAT", "WOLF", "FROG", "AXOLOTL", "ARMADILLO", "SNIFFER",
-                    "MOOSHROOM", "MUSHROOM_COW",
-                    "VILLAGER", "WANDERING_TRADER", "STRIDER",
+                    "MOOSHROOM", "MUSHROOM_COW", "IRON_GOLEM", "SNOW_GOLEM", "RAVAGER",
+                    "ZOMBIE", "HUSK", "DROWNED", "ZOMBIE_VILLAGER", "SLIME", "MAGMA_CUBE",
+                    "SKELETON", "STRAY", "BOGGED", "SPIDER", "CAVE_SPIDER", "ENDERMAN",
+                    "PILLAGER", "VINDICATOR", "EVOKER", "PIGLIN", "PIGLIN_BRUTE",
+                    "VILLAGER", "WANDERING_TRADER", "STRIDER", "WARDEN",
                     "SKELETON_HORSE", "ZOMBIE_HORSE" -> true;
             default -> false;
         };
