@@ -59,6 +59,7 @@ public final class PetCoreControllerTask implements Runnable {
                 continue;
             }
             PetDefinition definition = config.pets().get(active.petId());
+            normalizeVisualAge(owner, active, definition, pet);
             if (hasPlayerPassenger(pet)) {
                 stabilizeRiddenPet(pet);
                 active.targetUuid(null);
@@ -70,6 +71,48 @@ public final class PetCoreControllerTask implements Runnable {
             acquireTargetIfNeeded(owner, active, definition);
             combat(owner, active, definition);
             if (active.targetUuid() == null) follow(owner, pet, definition);
+        }
+    }
+
+    private void normalizeVisualAge(Player owner, VelioraPet active, PetDefinition definition, LivingEntity pet) {
+        if (definition == null || pet == null) return;
+        OwnedPet owned = manager.playerData(owner.getUniqueId()).get(active.petId());
+        if (owned == null) return;
+        String id = active.petId() == null ? "" : active.petId().toLowerCase();
+        boolean shouldStayBaby = id.startsWith("baby_") || id.startsWith("mini_");
+        boolean adultLevelReached = owned.level() >= definition.adultLevel();
+        if (adultLevelReached && !shouldStayBaby) {
+            tryAdult(pet);
+        } else {
+            tryBaby(pet);
+        }
+    }
+
+    private void tryAdult(LivingEntity pet) {
+        try {
+            Method method = pet.getClass().getMethod("setAdult");
+            method.invoke(pet);
+            return;
+        } catch (Exception ignored) {
+        }
+        try {
+            Method method = pet.getClass().getMethod("setBaby", boolean.class);
+            method.invoke(pet, false);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void tryBaby(LivingEntity pet) {
+        try {
+            Method method = pet.getClass().getMethod("setBaby", boolean.class);
+            method.invoke(pet, true);
+            return;
+        } catch (Exception ignored) {
+        }
+        try {
+            Method method = pet.getClass().getMethod("setBaby");
+            method.invoke(pet);
+        } catch (Exception ignored) {
         }
     }
 
