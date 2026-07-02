@@ -2,8 +2,6 @@ settings:
   enabled: true
   spawn:
     enabled: true
-    # Boss baru aktif setelah /boss set <nama> dipakai.
-    # Jika interval 60, jadwal otomatis mengikuti jam real-time WIB/Asia Jakarta.
     interval-minutes: 60
     retry-minutes: 5
     despawn-minutes: 35
@@ -12,26 +10,23 @@ settings:
     announce-despawn: true
     allow-multiple-active: false
     require-spawn-point: true
-    # Jangan terlalu banyak notif. Cukup 5 menit dan 1 menit sebelum spawn.
     warning-times-minutes: [5, 1]
   boss-size:
-    # Ukuran boss random setiap spawn. Butuh MC/Paper 1.20.5+ yang support Attribute SCALE.
     random-enabled: true
-    min: 4.0
-    max: 7.0
+    min: 3.2
+    max: 6.0
   combat:
-    # Dibuat lebih tahan untuk dikeroyok banyak player.
     armor: 18.0
     armor-toughness: 12.0
     knockback-resistance: 0.85
     health-scale-by-nearby-players: true
-    health-per-player-multiplier: 0.20
-    max-health-multiplier: 2.75
+    health-per-player-multiplier: 0.18
+    max-health-multiplier: 2.35
 
 rarity-chance:
-  common: 45.0
-  rare: 27.0
-  epic: 16.0
+  common: 42.0
+  rare: 28.0
+  epic: 18.0
   legendary: 9.0
   mythic: 3.0
 
@@ -76,125 +71,155 @@ bosses:
     entity: HUSK
     display-name: '&2Rotten Colossus'
     rarity: COMMON
-    health: 5000
+    health: 4800
     damage: 5.0
-    scale: 4.0
+    scale: 3.4
     skills: [GROUND_SLAM, SUMMON_MINIONS]
     rewards:
-      money: { enabled: true, min: 10000, max: 25000 }
+      money: { enabled: true, min: 4000, max: 9000 }
+  moss_warden:
+    entity: ZOMBIE
+    display-name: '&aMoss Warden'
+    rarity: COMMON
+    health: 5200
+    damage: 5.0
+    scale: 3.5
+    skills: [POISON_CLOUD, SUMMON_MINIONS]
+    rewards:
+      money: { enabled: true, min: 4500, max: 10000 }
   forest_beast:
     entity: RAVAGER
     display-name: '&aForest Beast'
     rarity: RARE
-    health: 7500
+    health: 7200
     damage: 7.0
-    scale: 5.0
+    scale: 4.4
     skills: [GROUND_SLAM, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 25000, max: 50000 }
+      money: { enabled: true, min: 9000, max: 18000 }
   infernal_butcher:
     entity: VINDICATOR
     display-name: '&cInfernal Butcher'
     rarity: RARE
     health: 7200
     damage: 7.0
-    scale: 5.0
+    scale: 4.2
     skills: [GROUND_SLAM, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 25000, max: 50000 }
+      money: { enabled: true, min: 9000, max: 18000 }
   deep_drowned_king:
     entity: DROWNED
     display-name: '&3Deep Drowned King'
     rarity: RARE
     health: 7600
     damage: 7.0
-    scale: 5.0
+    scale: 4.2
     skills: [PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 25000, max: 50000 }
+      money: { enabled: true, min: 9500, max: 19000 }
+  sand_revenant:
+    entity: HUSK
+    display-name: '&eSand Revenant'
+    rarity: RARE
+    health: 7800
+    damage: 7.0
+    scale: 4.1
+    skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS]
+    rewards:
+      money: { enabled: true, min: 9500, max: 19000 }
   cave_titan:
     entity: RAVAGER
     display-name: '&7Cave Titan'
     rarity: EPIC
     health: 10500
     damage: 8.0
-    scale: 6.0
+    scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 50000, max: 100000 }
+      money: { enabled: true, min: 18000, max: 35000 }
   ancient_warden:
     entity: WARDEN
     display-name: '&9Ancient Warden'
     rarity: EPIC
-    health: 11500
+    health: 11200
     damage: 9.0
-    scale: 6.0
+    scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 50000, max: 100000 }
+      money: { enabled: true, min: 19000, max: 36000 }
   abyss_brute:
     entity: PIGLIN_BRUTE
     display-name: '&5Abyss Brute'
     rarity: EPIC
-    health: 11000
+    health: 10800
     damage: 9.0
-    scale: 6.0
+    scale: 4.8
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 50000, max: 100000 }
+      money: { enabled: true, min: 19000, max: 36000 }
   crystal_evoker:
     entity: EVOKER
     display-name: '&dCrystal Evoker'
     rarity: LEGENDARY
-    health: 15000
+    health: 14500
     damage: 10.0
-    scale: 7.0
+    scale: 5.4
     skills: [FIRE_BOMB, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 75000, max: 150000 }
+      money: { enabled: true, min: 35000, max: 65000 }
   namazu_earthshaker:
     entity: RAVAGER
     display-name: '&6Namazu Earthshaker'
     rarity: LEGENDARY
-    health: 16500
+    health: 16000
     damage: 11.0
-    scale: 7.0
+    scale: 5.6
     skills: [GROUND_SLAM, FIRE_BOMB, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 75000, max: 150000 }
+      money: { enabled: true, min: 38000, max: 70000 }
   soul_reaper:
     entity: WITHER_SKELETON
     display-name: '&8Soul Reaper'
     rarity: LEGENDARY
-    health: 15500
+    health: 15000
     damage: 10.0
-    scale: 7.0
+    scale: 5.4
     skills: [PULL_AURA, POISON_CLOUD, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 75000, max: 150000 }
+      money: { enabled: true, min: 35000, max: 65000 }
   void_executioner:
     entity: WITHER_SKELETON
     display-name: '&5Void Executioner'
     rarity: MYTHIC
-    health: 23000
+    health: 22500
     damage: 13.0
-    scale: 7.0
+    scale: 6.0
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 100000, max: 150000 }
+      money: { enabled: true, min: 60000, max: 100000 }
+  eclipse_warden:
+    entity: WARDEN
+    display-name: '&0Eclipse Warden'
+    rarity: MYTHIC
+    health: 24000
+    damage: 13.0
+    scale: 6.0
+    skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, POISON_CLOUD, RAGE_MODE]
+    rewards:
+      money: { enabled: true, min: 65000, max: 110000 }
 
 skills:
   enabled: true
-  cooldown-seconds: 11
+  cooldown-seconds: 9
   random-skill: true
   default: [GROUND_SLAM, SUMMON_MINIONS, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
   damage:
-    ground-slam: 7.0
-    fire-bomb: 9.0
+    ground-slam: 6.0
+    fire-bomb: 7.0
   summon:
-    max-minions: 14
-    minions-per-cast: 4
-    types: [ZOMBIE, HUSK, DROWNED, ZOMBIFIED_PIGLIN]
+    max-minions: 12
+    minions-per-cast: 3
+    types: [ZOMBIE, HUSK, DROWNED, ZOMBIFIED_PIGLIN, SKELETON]
 
 protection:
   respect-worldguard: false
@@ -203,27 +228,27 @@ protection:
   allow-boss-damage-in-protected-region: true
 
 rewards:
-  min-damage-to-reward: 25.0
-  min-damage-contribution-percent: 5.0
-  reward-cooldown-seconds: 60
+  min-damage-to-reward: 35.0
+  min-damage-contribution-percent: 8.0
+  reward-cooldown-seconds: 90
   default-money:
     enabled: true
-    min: 10000
-    max: 150000
+    min: 4000
+    max: 110000
   top-damage-bonus:
-    enabled: false
-    first: { min: 0, max: 0 }
-    second: { min: 0, max: 0 }
-    third: { min: 0, max: 0 }
+    enabled: true
+    first: { min: 3000, max: 8000 }
+    second: { min: 1500, max: 5000 }
+    third: { min: 750, max: 2500 }
   money-total-cap:
     enabled: true
-    max-per-player: 150000
+    max-per-player: 110000
   materials:
     common: { diamond: 0, ancient-debris: 0 }
-    rare: { diamond: 1, ancient-debris: 0 }
-    epic: { diamond: 2, ancient-debris: 0 }
-    legendary: { diamond: 3, ancient-debris: 1 }
-    mythic: { diamond: 4, ancient-debris: 2 }
+    rare: { diamond: 0, ancient-debris: 0 }
+    epic: { diamond: 1, ancient-debris: 0 }
+    legendary: { diamond: 1, ancient-debris: 0 }
+    mythic: { diamond: 2, ancient-debris: 1 }
 
 effects:
   spawn:
@@ -232,7 +257,7 @@ effects:
     subtitle: '&7Boss %rarity% muncul di &f%world%'
     sound: ENTITY_WARDEN_ROAR
     particle: SOUL
-    particle-count: 150
+    particle-count: 120
   death:
     sound: UI_TOAST_CHALLENGE_COMPLETE
     particle: TOTEM_OF_UNDYING
@@ -247,7 +272,7 @@ messages:
   spawn-set: '%prefix% &aSpawn boss &f%name% &aberhasil diset. Jadwal boss sekarang aktif dan mengikuti WIB setiap 1 jam.'
   reload-success: '%prefix% &aVelioraBoss berhasil direload.'
   stop-success: '%prefix% &aBoss aktif berhasil dihentikan.'
-  no-active-boss: '%prefix% &eTidak ada boss aktif.'
+  no-active-boss: '%prefix% &cBelum ada spawn point boss. Gunakan &f/boss set <nama>&c dulu.'
   no-spawn-point: '%prefix% &cBelum ada spawn point boss. Gunakan &f/boss set <nama>&c dulu. Notif dan timer boss belum aktif.'
   top-damage-header: '&cTop Damage Boss:'
   reward-received: '%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.'
