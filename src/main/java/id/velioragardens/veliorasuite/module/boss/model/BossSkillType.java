@@ -9,7 +9,7 @@ public enum BossSkillType {
     PULL_AURA,
     POISON_CLOUD,
     LIGHTNING_CHAIN,
-    FEAR_PULSE,
+    SHADOW_PULSE,
     HEAL_PULSE,
     SOUL_CAGE,
     RAGE_MODE;
