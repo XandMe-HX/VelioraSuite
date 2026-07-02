@@ -108,12 +108,12 @@ public final class PetConfigManager {
 
     public double scalePerLevel() { return Math.max(0.0D, number("leveling.scale-per-level", 0.003D)); }
     public double maxScaleBonus() { return Math.max(0.0D, number("leveling.max-scale-bonus", 0.15D)); }
-    public boolean combatEnabled() { return bool("combat.enabled", false); }
+    public boolean combatEnabled() { return bool("combat.enabled", true); }
     public double attackRange() { return Math.max(1.0D, number("combat.attack-range", 3.0D)); }
-    public int attackCooldownSeconds() { return Math.max(1, integer("combat.attack-cooldown-seconds", 2)); }
+    public int attackCooldownSeconds() { return Math.max(1, integer("combat.attack-cooldown-seconds", 1)); }
     public boolean allowAttackPassive() { return bool("combat.allow-attack-passive", false); }
     public boolean allowAttackPlayers() { return false; }
-    public double petDamageMultiplier() { return Math.max(0.0D, number("combat.pet-damage-multiplier", 0.0D)); }
+    public double petDamageMultiplier() { return Math.max(0.0D, number("combat.pet-damage-multiplier", 1.0D)); }
 
     public boolean auraEnabled() { return bool("cosmetic.aura-enabled", true); }
     public int auraIntervalSeconds() { return Math.max(3, integer("cosmetic.aura-interval-seconds", 5)); }
