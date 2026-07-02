@@ -32,8 +32,7 @@ public final class SecurityModule implements VelioraModule {
     @Override
     public void enable() {
         enabled = true;
-        registerCommand("vsecurity", "VelioraSecurity");
-        registerCommand("vxray", "VelioraOreWatch");
+        registerCommand();
         listener = new SecurityListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
@@ -45,9 +44,7 @@ public final class SecurityModule implements VelioraModule {
             HandlerList.unregisterAll(listener);
             listener = null;
         }
-        if (manager != null) manager.saveOreWatchData();
-        registerDisabledCommand("vsecurity", "VelioraSecurity");
-        registerDisabledCommand("vxray", "VelioraOreWatch");
+        registerDisabledCommand();
     }
 
     @Override
@@ -61,10 +58,10 @@ public final class SecurityModule implements VelioraModule {
         return enabled;
     }
 
-    private void registerCommand(String commandName, String moduleName) {
-        PluginCommand command = plugin.getCommand(commandName);
+    private void registerCommand() {
+        PluginCommand command = plugin.getCommand("vsecurity");
         if (command == null) {
-            plugin.getLogger().warning("Command /" + commandName + " tidak ditemukan di plugin.yml.");
+            plugin.getLogger().warning("Command /vsecurity tidak ditemukan di plugin.yml.");
             return;
         }
         SecurityCommand securityCommand = new SecurityCommand(manager);
@@ -72,10 +69,10 @@ public final class SecurityModule implements VelioraModule {
         command.setTabCompleter(securityCommand);
     }
 
-    private void registerDisabledCommand(String commandName, String moduleName) {
-        PluginCommand command = plugin.getCommand(commandName);
+    private void registerDisabledCommand() {
+        PluginCommand command = plugin.getCommand("vsecurity");
         if (command == null) return;
-        DisabledCommand disabledCommand = new DisabledCommand(plugin, moduleName);
+        DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraSecurity");
         command.setExecutor(disabledCommand);
         command.setTabCompleter(disabledCommand);
     }
