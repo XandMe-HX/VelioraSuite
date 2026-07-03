@@ -24,6 +24,9 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String commandName = command.getName().toLowerCase(Locale.ROOT);
+        if (label.equalsIgnoreCase("valt") || label.equalsIgnoreCase("altguard") || label.equalsIgnoreCase("valts")) {
+            return handleAltCommand(sender, args);
+        }
         if (commandName.equals("vxray") || label.equalsIgnoreCase("vxray") || label.equalsIgnoreCase("vorewatch") || label.equalsIgnoreCase("orecheck")) {
             return handleOreCommand(sender, args);
         }
@@ -54,6 +57,9 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
                 manager.sendAlerts(sender);
                 return true;
             }
+            case "alt", "alts", "altguard" -> {
+                return handleAltCommand(sender, Arrays.copyOfRange(args, 1, args.length));
+            }
             case "reload" -> {
                 if (!manager.getConfigManager().hasReload(sender)) {
                     manager.sendNoPermission(sender);
@@ -68,6 +74,32 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
         }
+    }
+
+    private boolean handleAltCommand(CommandSender sender, String[] args) {
+        if (args.length == 0 || args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("guide")) {
+            manager.sendAltHelp(sender);
+            return true;
+        }
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "check", "info", "ip" -> {
+                if (args.length < 2) sender.sendMessage("§8[§cVelioraAltGuard§8] §cGunakan §f/valt check <player>§c.");
+                else manager.sendAltCheck(sender, args[1]);
+            }
+            case "list", "top", "ips" -> manager.sendAltList(sender);
+            case "alerts", "alert" -> manager.sendAltAlerts(sender);
+            case "trust", "whitelist" -> {
+                if (args.length < 2) sender.sendMessage("§8[§cVelioraAltGuard§8] §cGunakan §f/valt trust <player>§c.");
+                else manager.altTrust(sender, args[1], true);
+            }
+            case "untrust", "unwhitelist" -> {
+                if (args.length < 2) sender.sendMessage("§8[§cVelioraAltGuard§8] §cGunakan §f/valt untrust <player>§c.");
+                else manager.altTrust(sender, args[1], false);
+            }
+            default -> manager.sendAltHelp(sender);
+        }
+        return true;
     }
 
     private boolean handleOreCommand(CommandSender sender, String[] args) {
@@ -230,6 +262,11 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         String commandName = command.getName().toLowerCase(Locale.ROOT);
+        if (alias.equalsIgnoreCase("valt") || alias.equalsIgnoreCase("altguard") || alias.equalsIgnoreCase("valts")) {
+            if (!manager.getConfigManager().hasAdmin(sender)) return new ArrayList<>();
+            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "check", "list", "alerts", "trust", "untrust")), args[0]);
+            return new ArrayList<>();
+        }
         if (commandName.equals("vxray") || alias.equalsIgnoreCase("vxray") || alias.equalsIgnoreCase("vorewatch") || alias.equalsIgnoreCase("orecheck")) {
             if (!manager.getConfigManager().hasAdmin(sender)) return new ArrayList<>();
             if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "guide", "status", "check", "logs", "review", "evidence", "suspects", "top", "alerts", "allreport", "clear-log", "reset", "exempt", "unexempt", "reload")), args[0]);
@@ -239,7 +276,7 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length != 1) return new ArrayList<>();
         List<String> options = new ArrayList<>();
-        if (manager.getConfigManager().hasAdmin(sender)) options.addAll(Arrays.asList("help", "status"));
+        if (manager.getConfigManager().hasAdmin(sender)) options.addAll(Arrays.asList("help", "status", "alt"));
         if (manager.getConfigManager().hasAlerts(sender)) options.add("alerts");
         if (manager.getConfigManager().hasReload(sender)) options.add("reload");
         return filter(options, args[0]);
