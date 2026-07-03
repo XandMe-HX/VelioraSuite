@@ -1,0 +1,38 @@
+settings:
+  enabled: true
+  reconnect-grace-minutes: 10
+  top-size: 10
+
+permissions:
+  use: 'veliorasuite.playtime.use'
+  top: 'veliorasuite.playtime.top'
+  reload: 'veliorasuite.playtime.reload'
+
+messages:
+  prefix: '&8[&bVelioraPlaytime&8] '
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  reload-success: '%prefix% &aVelioraPlaytime berhasil direload.'
+  top-header: '&8&m--------------------------------'
+  top-title: '&b&lTop Playtime Session'
+  top-line: '&7%rank%. &f%player% &8- &a%time%'
+  top-empty: '%prefix% &7Belum ada data playtime.'
+  top-footer: '&8&m--------------------------------'
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraPlaytime'
+    - '&f/playtime me &7- Lihat sesi online kamu.'
+    - '&f/playtime top &7- Leaderboard sesi online terlama.'
+    - '&f/playtime reload &7- Reload config playtime.'
+    - '&7Placeholder scoreboard: &f%playtime% &7atau &f%veliorasuite_playtime%'
+    - '&7DC/offline masih bisa lanjut kalau balik sebelum 10 menit.'
+    - '&8&m--------------------------------'
+  me:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraPlaytime'
+    - '&7Player: &f%player%'
+    - '&7Sesi sekarang: &a%current%'
+    - '&7Sesi terakhir: &f%last%'
+    - '&7Rekor sesi: &e%best%'
+    - '&7Jika DC/offline, sesi lanjut kalau balik sebelum &f10 menit&7.'
+    - '&8&m--------------------------------'
