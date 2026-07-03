@@ -32,6 +32,14 @@ public final class SecurityListener implements Listener {
             return;
         }
         manager.scheduleOreDigest(event.getPlayer(), 60L);
+        sendAdminQuickAccess(event.getPlayer());
+    }
+
+    private void sendAdminQuickAccess(org.bukkit.entity.Player player) {
+        if (!manager.getConfigManager().hasAdmin(player)) return;
+        player.sendMessage("§8[§6VelioraAdmin§8] §eAdmin tools aktif. Buka §f/cmdadmin §euntuk panduan lengkap.");
+        player.sendMessage("§8[§6VelioraAdmin§8] §7Security cepat: §f/valt alerts §8| §f/valt list §8| §f/vxray alerts §8| §f/vsecurity status");
+        player.sendMessage("§8[§6VelioraAdmin§8] §7Jika ada masalah penting/private, arahkan player ke Owner. Jangan spam, cukup laporan rapi.");
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
