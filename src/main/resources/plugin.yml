@@ -183,3 +183,15 @@ permissions:
     default: false
   veliorasuite.kits.premium.3:
     default: false
+  veliorasuite.kits.premium.4:
+    default: false
+  veliorasuite.kits.premium.5:
+    default: false
+  veliorasuite.security.admin:
+    default: op
+  veliorasuite.security.alerts:
+    default: op
+  veliorasuite.security.reload:
+    default: op
+  veliorasuite.security.bypass:
+    default: op
