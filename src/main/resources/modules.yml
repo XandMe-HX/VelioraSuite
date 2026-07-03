@@ -14,3 +14,4 @@ modules:
   pets: true
   security: true
   chat: true
+  playtime: true
