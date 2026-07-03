@@ -33,7 +33,7 @@ public final class ModuleManager {
         for (VelioraModule module : modules.values()) {
             String name = normalize(module.getName());
 
-            if (!plugin.getConfigManager().isModuleEnabled(name)) {
+            if (!plugin.getConfigManager().isModuleEnabled(name) && !isNewDefaultEnabledModule(name)) {
                 plugin.getLogger().info("Module disabled from modules.yml: " + name);
                 continue;
             }
@@ -94,6 +94,10 @@ public final class ModuleManager {
 
     public int getEnabledCount() {
         return activeModules.size();
+    }
+
+    private boolean isNewDefaultEnabledModule(String name) {
+        return name.equals("playtime");
     }
 
     private String normalize(String name) {
