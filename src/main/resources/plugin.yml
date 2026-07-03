@@ -74,7 +74,7 @@ commands:
   vsecurity:
     description: Manage VelioraSecurity.
     usage: /vsecurity <help|status|alerts|reload|alt>
-    aliases: [vsec, security, valt, valts, altguard]
+    aliases: [vsec, security, vxray, vorewatch, orecheck, valt, valts, altguard]
     permission: veliorasuite.security.admin
   vskills:
     description: Manage VelioraSkills.
