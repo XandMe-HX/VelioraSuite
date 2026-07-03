@@ -46,10 +46,37 @@ settings:
   auto-reply:
     # Auto bantuan berbasis kata kunci. Bukan AI API, tapi bot pintar ringan agar member tidak tanya berulang.
     enabled: true
-    cooldown-seconds: 30
-    delay-ticks: 20
+    cooldown-seconds: 0
+    delay-ticks: 16
     prefix: '&8[&aVelioraGuide&8] '
+    priority-replies: [social, owner_help, urgent_help]
     replies:
+      social:
+        triggers: ['sepi', 'sendirian', 'gabut', 'bosen', 'bosan', 'temenin', 'ada yang main', 'mabar', 'main bareng', 'ramein dong', 'ngobrol dong']
+        lines:
+          - '&fAku temenin kok. Coba mulai dari hal kecil dulu: &b/rtp &7-> cari tempat enak -> claim -> bangun base.'
+          - '&7Kalau mau mabar, ajak player lain baik-baik di chat. Veliora Gardens dibuat biar suasananya santai dan asik.'
+          - '&7Biar gak gabut, coba target hari ini: kumpulin uang, naikin pet, atau ikut boss kalau sudah siap.'
+      greeting:
+        triggers: ['halo', 'hai', 'hello', 'hi', 'pagi', 'siang', 'sore', 'malam', 'assalamualaikum', 'p']
+        lines:
+          - '&fHalo, selamat datang di &bVeliora Gardens&f.'
+          - '&7Butuh arah? Ketik &b/vguide&7. Mau mulai survival? Pakai &b/rtp&7 dulu.'
+      thanks:
+        triggers: ['makasih', 'terima kasih', 'thx', 'thanks', 'ty', 'sip makasih', 'oke makasih']
+        lines:
+          - '&fSama-sama. Main santai aja, jaga chat tetap sopan, dan nikmati Veliora Gardens.'
+      owner_help:
+        triggers: ['owner', 'admin', 'staff', 'butuh owner', 'hubungi owner', 'private owner', 'pm owner', 'mau ngomong owner']
+        lines:
+          - '&fKalau masalah biasa, tulis jelas di grup/server chat agar staff bisa bantu.'
+          - '&7Kalau masalah pribadi/private, hubungi Owner secara langsung dengan kronologi yang rapi.'
+          - '&7Kalau penting dan butuh cepat, boleh telepon Owner sekali saja. Jangan spam karena Owner juga bisa sedang sibuk.'
+      urgent_help:
+        triggers: ['penting', 'urgent', 'darurat server', 'masalah penting', 'butuh cepat', 'server error parah', 'uang hilang', 'rank belum masuk']
+        lines:
+          - '&fKalau ini penting, segera hubungi Owner/Staff dengan bukti, nama player, jam kejadian, dan kronologi singkat.'
+          - '&7Untuk hal private, langsung ke Owner. Kalau butuh cepat, telepon sekali saja dan jangan spam.'
       guide:
         triggers: ['panduan', 'cara main', 'bingung', 'command apa', 'fitur server', 'guide', 'vguide', 'mulai dari mana', 'awal main', 'command awal']
         lines:
@@ -122,6 +149,11 @@ settings:
         lines:
           - '&fInfo boss aktif dan lokasi: &b/boss status&f.'
           - '&7Reward boss mengikuti damage kontribusi, jadi ikut hit boss biar dapat hadiah.'
+      fishing:
+        triggers: ['fishing', 'mancing', 'ikan', 'jual ikan', 'fish bag', 'ikan mahal', 'reward ikan']
+        lines:
+          - '&fFitur mancing bisa dipakai untuk santai cari ikan dan koleksi.'
+          - '&7Reward ikan sudah dibuat lebih seimbang agar ekonomi server tetap enak dimainkan.'
       gacha:
         triggers: ['gacha', 'key', 'kunci', 'crate', 'buka crate', 'kunci gacha', 'pet gacha']
         lines:
