@@ -94,13 +94,18 @@ settings:
       features:
         triggers: ['semua fitur', 'fitur apa aja', 'fitur lengkap', 'daftar fitur', 'server ini ada apa', 'veliora fitur']
         lines:
-          - '&fFitur utama: &bGuide, Rank, Quest, Boss, Pet, Gacha, Shop, RTP, Claim, Report, Fishing, dan Chat Protection&f.'
+          - '&fFitur utama: &bGuide, Rank, Quest, Boss, Pet, Gacha, Shop, RTP, Claim, Report, Fishing, Security, dan Chat Protection&f.'
           - '&7Mulai dari &b/vguide&7, lalu cek &b/vproduct&7 untuk detail fitur server.'
       rules:
         triggers: ['rules', 'aturan', 'peraturan', 'boleh apa aja', 'dilarang apa', 'sopan', 'toxic']
         lines:
           - '&fBaca aturan server lewat &b/vrules&f.'
-          - '&7Dilarang cheat, grief, toxic berlebihan, spam, exploit bug, dan merusak ekonomi server.'
+          - '&7Dilarang cheat, grief, toxic berlebihan, spam, exploit bug, alt farming, dan merusak ekonomi server.'
+      public_security:
+        triggers: ['server public', 'public server', 'server aman', 'keamanan server', 'anti cheat server', 'takut cheater', 'banyak cheater']
+        lines:
+          - '&fVeliora Gardens punya sistem security untuk bantu menjaga server tetap aman dan nyaman.'
+          - '&7Kalau melihat cheat, xray, exploit, atau akun mencurigakan, gunakan &b/report <player> <alasan>&7.'
       owner_help:
         triggers: ['owner', 'admin', 'staff', 'butuh owner', 'hubungi owner', 'private owner', 'pm owner', 'mau ngomong owner']
         lines:
@@ -112,6 +117,11 @@ settings:
         lines:
           - '&fKalau ini penting, segera hubungi Owner/Staff dengan bukti, nama player, jam kejadian, dan kronologi singkat.'
           - '&7Untuk hal private, langsung ke Owner. Kalau butuh cepat, telepon sekali saja dan jangan spam.'
+      admin_report_help:
+        triggers: ['cara lapor admin', 'lapor admin', 'admin bantu', 'staff bantu', 'mau lapor staff', 'mau lapor owner', 'server bermasalah']
+        lines:
+          - '&fUntuk laporan biasa, gunakan &b/report <player|bug> <alasan>&f agar staff bisa cek rapi.'
+          - '&7Kalau butuh private, langsung hubungi Owner. Sertakan bukti, jam kejadian, nama player, dan kronologi singkat.'
       rank:
         triggers: ['rank', 'vip', 'harga rank', 'benefit rank', 'beli rank', 'donate', 'donasi', 'diskon rank', 'rank diskon']
         lines:
@@ -157,6 +167,16 @@ settings:
         lines:
           - '&fLaporkan bug/player dengan &b/report <player|bug> <alasan>&f.'
           - '&7Sertakan bukti, waktu kejadian, lokasi, dan nama player agar staff lebih mudah mengecek.'
+      altguard:
+        triggers: ['akun double', 'akun ganda', 'akun alt', 'alt account', 'akun kedua', 'akun tuyul', 'double akun', 'akun banyak', 'satu ip', '1 ip', 'akun serumah']
+        lines:
+          - '&cSetiap koneksi/IP dibatasi agar ekonomi server tetap sehat.'
+          - '&7Satu IP boleh normal, dua akun akan dipantau, tiga akun ke atas bisa diblokir. Kalau satu rumah main bareng, lapor Owner/Staff dulu.'
+      economy_abuse:
+        triggers: ['pay alt', 'transfer alt', 'transfer akun kedua', 'memperkaya akun', 'uang dari alt', 'duit dari alt', 'akun utama', 'akun farming']
+        lines:
+          - '&cDilarang memakai akun tambahan untuk mengambil reward/kit/uang lalu transfer ke akun utama.'
+          - '&7Transfer mencurigakan bisa diblokir dan akun terkait bisa direview oleh admin.'
       anticheat:
         triggers: ['cheat', 'cheater', 'xray', 'anti xray', 'antixray', 'orewatch', 'hack', 'hacker', 'killaura', 'kill aura', 'fly hack', 'nuker', 'auto mine', 'baritone', 'reach', 'aimbot']
         lines:
@@ -214,7 +234,7 @@ settings:
         triggers: ['cara kaya', 'cari uang', 'uang cepat', 'duit cepat', 'cara dapet uang', 'uang susah']
         lines:
           - '&fCari uang yang aman: jual item di &b/shop&f, mancing, quest, boss, dan farming.'
-          - '&7Jangan pakai bug/dupe. Ekonomi server dibuat pelan tapi stabil biar seru dimainkan lama.'
+          - '&7Jangan pakai bug/dupe/alt farming. Ekonomi server dibuat pelan tapi stabil biar seru dimainkan lama.'
       kit:
         triggers: ['kit', 'starter', 'kit starter', 'ambil kit', 'peralatan awal']
         lines:
