@@ -55,6 +55,16 @@ settings:
         lines:
           - '&fButuh panduan? Ketik &b/vguide &7untuk menu utama server.'
           - '&7Cek juga &b/vrules&7, &b/vrank&7, &b/vproduct&7, &b/quests&7, dan &b/pet&7.'
+      features:
+        triggers: ['semua fitur', 'fitur apa aja', 'fitur lengkap', 'daftar fitur', 'server ini ada apa', 'veliora fitur']
+        lines:
+          - '&fFitur utama: &bGuide, Rank, Quest, Boss, Pet, Gacha, Shop, RTP, Claim, Report, dan Chat Protection&f.'
+          - '&7Mulai dari &b/vguide&7, lalu cek &b/vproduct&7 untuk detail fitur server.'
+      rules:
+        triggers: ['rules', 'aturan', 'peraturan', 'boleh apa aja', 'dilarang apa', 'sopan', 'toxic']
+        lines:
+          - '&fBaca aturan server lewat &b/vrules&f.'
+          - '&7Dilarang cheat, grief, toxic berlebihan, spam, exploit bug, dan merusak ekonomi server.'
       rank:
         triggers: ['rank', 'vip', 'harga rank', 'benefit rank', 'beli rank', 'donate', 'donasi', 'diskon rank', 'rank diskon']
         lines:
@@ -81,10 +91,32 @@ settings:
           - '&fUntuk claim area/base, cek panduan di &b/vguide 5&f.'
           - '&7Urutan aman: &b/rtp &7-> cari lokasi -> claim -> &b/sethome base&7.'
       report:
-        triggers: ['lapor', 'report', 'bug', 'player nakal', 'cheater', 'error', 'stuck', 'ada bug', 'ketemu bug']
+        triggers: ['lapor', 'report', 'bug', 'player nakal', 'cheater', 'error', 'stuck', 'ada bug', 'ketemu bug', 'melaporkan player', 'lapor player']
         lines:
           - '&fLaporkan bug/player dengan &b/report <player|bug> <alasan>&f.'
-          - '&7Staff/OP online akan menerima notifikasi report.'
+          - '&7Sertakan bukti, waktu kejadian, dan lokasi agar staff lebih mudah mengecek.'
+      anticheat:
+        triggers: ['cheat', 'cheater', 'xray', 'anti xray', 'antixray', 'orewatch', 'hack', 'hacker', 'killaura', 'kill aura', 'fly hack', 'nuker', 'auto mine', 'baritone', 'reach', 'aimbot']
+        lines:
+          - '&cCheat, xray, exploit, dan client ilegal dilarang keras di Veliora Gardens.'
+          - '&7Sistem security memonitor pola mining dan perilaku mencurigakan. Jika melihat pelanggaran, gunakan &b/report <player> <alasan>&7.'
+          - '&7Jika terkena tindakan dan merasa salah, hubungi Owner/Staff dengan kronologi yang jelas.'
+      xray_appeal:
+        triggers: ['kena xray', 'dituduh xray', 'bukan xray', 'banding xray', 'appeal xray', 'ban xray', 'kebanned xray', 'kena ban xray']
+        lines:
+          - '&fJika merasa salah terdeteksi, hubungi Owner/Staff untuk review.'
+          - '&7Siapkan kronologi mining: world/lokasi, tools/enchant, potion/beacon, rute mining, dan siapa yang ikut.'
+          - '&7Jangan memakai akun lain sebelum proses review selesai.'
+      bug_exploit:
+        triggers: ['dupe', 'duplikasi', 'exploit', 'bug uang', 'bug shop', 'bug harga', 'kesalahan harga', 'bug reward']
+        lines:
+          - '&cMemanfaatkan bug, dupe, atau kesalahan harga dilarang keras.'
+          - '&7Laporkan lewat &b/report bug <alasan>&7. Pelapor bug valid bisa dipertimbangkan mendapat reward.'
+      payment:
+        triggers: ['transfer', 'tf', 'bayar rank', 'nomor owner', 'wa owner', 'whatsapp owner', 'beli vip', 'beli item']
+        lines:
+          - '&fPembayaran hanya lewat kontak resmi Owner yang tertera di pengumuman server.'
+          - '&7Transfer ke pihak yang tidak berkewajiban tidak menjadi tanggung jawab server.'
       boss:
         triggers: ['boss', 'dungeon', 'boss dimana', 'boss kapan', 'boss hilang', 'boss ga muncul', 'reward boss']
         lines:
