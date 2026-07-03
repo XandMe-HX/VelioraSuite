@@ -71,10 +71,8 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleOreCommand(CommandSender sender, String[] args) {
-        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
-            manager.sendOreHelp(sender);
-            sender.sendMessage("§7Tambahan: §f/vxray clear-log <no|all> §7hapus alert yang sudah dilihat.");
-            sender.sendMessage("§7Review banding: §f/vxray review <player> §7tampilkan check + logs sekaligus.");
+        if (args.length == 0 || args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("guide")) {
+            sendDetailedOreHelp(sender);
             return true;
         }
 
@@ -108,23 +106,23 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
                 else clearOreAlert(sender, args[1]);
             }
             case "check" -> {
-                if (args.length < 2) manager.sendOreHelp(sender);
+                if (args.length < 2) sendDetailedOreHelp(sender);
                 else manager.sendOreCheck(sender, args[1]);
             }
             case "logs" -> {
-                if (args.length < 2) manager.sendOreHelp(sender);
+                if (args.length < 2) sendDetailedOreHelp(sender);
                 else manager.sendOreLogs(sender, args[1]);
             }
             case "reset" -> {
-                if (args.length < 2) manager.sendOreHelp(sender);
+                if (args.length < 2) sendDetailedOreHelp(sender);
                 else manager.resetOre(sender, args[1]);
             }
             case "exempt" -> {
-                if (args.length < 2) manager.sendOreHelp(sender);
+                if (args.length < 2) sendDetailedOreHelp(sender);
                 else manager.exemptOre(sender, args[1], true);
             }
             case "unexempt" -> {
-                if (args.length < 2) manager.sendOreHelp(sender);
+                if (args.length < 2) sendDetailedOreHelp(sender);
                 else manager.exemptOre(sender, args[1], false);
             }
             case "reload" -> {
@@ -134,9 +132,42 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
                     manager.sendReloadSuccess(sender);
                 }
             }
-            default -> manager.sendOreHelp(sender);
+            default -> sendDetailedOreHelp(sender);
         }
         return true;
+    }
+
+    private void sendDetailedOreHelp(CommandSender sender) {
+        if (!manager.getConfigManager().hasAdmin(sender)) {
+            manager.sendNoPermission(sender);
+            return;
+        }
+        sender.sendMessage("§8&m--------------------------------");
+        sender.sendMessage("§c§lVelioraOreWatch Help");
+        sender.sendMessage("§7Mode: §fMonitoring mining ore, bukan item inventory.");
+        sender.sendMessage("§7Tidak menghitung item dari shop, gacha, trade, kit, reward, atau pemberian teman.");
+        sender.sendMessage("§8&m--------------------------------");
+        sender.sendMessage("§f/vxray help §8- §7Buka panduan command ini.");
+        sender.sendMessage("§f/vxray status §8- §7Cek status monitor ore.");
+        sender.sendMessage("§f/vxray alerts §8- §7Lihat alert terbaru yang perlu dicek.");
+        sender.sendMessage("§f/vxray allreport §8- §7Tampilkan semua report tidak normal.");
+        sender.sendMessage("§f/vxray suspects §8- §7Daftar player paling mencurigakan.");
+        sender.sendMessage("§f/vxray check <player> §8- §7Cek angka ore 5/15/60 menit.");
+        sender.sendMessage("§f/vxray logs <player> §8- §7Lihat ore terakhir yang dimining.");
+        sender.sendMessage("§f/vxray review <player> §8- §7Check + logs + pertanyaan banding.");
+        sender.sendMessage("§f/vxray clear-log <no> §8- §7Hapus alert nomor tertentu setelah dicek.");
+        sender.sendMessage("§f/vxray clear-log all §8- §7Hapus semua alert yang sudah dicek.");
+        sender.sendMessage("§f/vxray reset <player> §8- §7Reset data mining player.");
+        sender.sendMessage("§f/vxray exempt <player> §8- §7Bypass player dari monitor.");
+        sender.sendMessage("§f/vxray unexempt <player> §8- §7Hapus bypass player.");
+        sender.sendMessage("§f/vxray reload §8- §7Reload config security.");
+        sender.sendMessage("§8&m--------------------------------");
+        sender.sendMessage("§eAlur review yang disarankan:");
+        sender.sendMessage("§71. §f/vxray alerts §7untuk lihat alert.");
+        sender.sendMessage("§72. §f/vxray review <player> §7untuk cek data + logs.");
+        sender.sendMessage("§73. Cocokkan jawaban player dengan data mining.");
+        sender.sendMessage("§74. Jika sudah selesai: §f/vxray clear-log <no>§7.");
+        sender.sendMessage("§8&m--------------------------------");
     }
 
     @SuppressWarnings("unchecked")
@@ -201,7 +232,7 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
         String commandName = command.getName().toLowerCase(Locale.ROOT);
         if (commandName.equals("vxray") || alias.equalsIgnoreCase("vxray") || alias.equalsIgnoreCase("vorewatch") || alias.equalsIgnoreCase("orecheck")) {
             if (!manager.getConfigManager().hasAdmin(sender)) return new ArrayList<>();
-            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "status", "check", "logs", "review", "evidence", "suspects", "top", "alerts", "allreport", "clear-log", "reset", "exempt", "unexempt", "reload")), args[0]);
+            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "guide", "status", "check", "logs", "review", "evidence", "suspects", "top", "alerts", "allreport", "clear-log", "reset", "exempt", "unexempt", "reload")), args[0]);
             if (args.length == 2 && args[0].equalsIgnoreCase("clear-log")) return filter(new ArrayList<>(Arrays.asList("1", "2", "3", "all")), args[1]);
             return new ArrayList<>();
         }
