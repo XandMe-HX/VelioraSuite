@@ -12,7 +12,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -95,9 +94,21 @@ public final class FishingConfigManager {
     public FishDefinition getFishDefinition(String id) { return id == null ? null : fishDefinitions.get(id.toLowerCase(Locale.ROOT)); }
     public Map<FishRarity, Double> getRarityChances() { return rarityChances; }
 
-    public int minPrice(FishRarity rarity) { return Math.max(0, integer(rarityPath("settings.price", rarity, ".min"), fallbackMinPrice(rarity))); }
-    public int maxPrice(FishRarity rarity) { return Math.max(minPrice(rarity), integer(rarityPath("settings.price", rarity, ".max"), fallbackMaxPrice(rarity))); }
-    public int maxFinalPrice(FishRarity rarity) { return Math.max(maxPrice(rarity), integer(rarityPath("settings.price", rarity, ".max-final"), fallbackFinalMaxPrice(rarity))); }
+    public int minPrice(FishRarity rarity) {
+        int configured = integer(rarityPath("settings.price", rarity, ".min"), fallbackMinPrice(rarity));
+        return clamp(configured, 0, fallbackMinPrice(rarity));
+    }
+
+    public int maxPrice(FishRarity rarity) {
+        int configured = integer(rarityPath("settings.price", rarity, ".max"), fallbackMaxPrice(rarity));
+        return Math.max(minPrice(rarity), clamp(configured, 0, fallbackMaxPrice(rarity)));
+    }
+
+    public int maxFinalPrice(FishRarity rarity) {
+        int configured = integer(rarityPath("settings.price", rarity, ".max-final"), fallbackFinalMaxPrice(rarity));
+        return Math.max(maxPrice(rarity), clamp(configured, 0, fallbackFinalMaxPrice(rarity)));
+    }
+
     public int randomPrice(FishRarity rarity) { int min = minPrice(rarity); int max = maxPrice(rarity); return max <= min ? min : ThreadLocalRandom.current().nextInt(min, max + 1); }
 
     public boolean isVanillaFish(Material material) {
@@ -106,13 +117,13 @@ public final class FishingConfigManager {
 
     private void loadRarityChances() {
         rarityChances.clear();
-        rarityChances.put(FishRarity.TRASH, number("settings.rarity-chance.trash", 20.0D));
-        rarityChances.put(FishRarity.VANILLA, number("settings.rarity-chance.vanilla", 15.0D));
-        rarityChances.put(FishRarity.COMMON, number("settings.rarity-chance.common", 55.0D));
-        rarityChances.put(FishRarity.ORNAMENTAL, number("settings.rarity-chance.ornamental", 3.0D));
-        rarityChances.put(FishRarity.EPIC, number(rarityPath("settings.rarity-chance", FishRarity.EPIC, ""), 2.5D));
-        rarityChances.put(FishRarity.LEGENDARY, number("settings.rarity-chance.legendary", 0.20D));
-        rarityChances.put(FishRarity.MITOLOGI, number("settings.rarity-chance.mitologi", 0.05D));
+        rarityChances.put(FishRarity.TRASH, number("settings.rarity-chance.trash", 28.0D));
+        rarityChances.put(FishRarity.VANILLA, number("settings.rarity-chance.vanilla", 22.0D));
+        rarityChances.put(FishRarity.COMMON, number("settings.rarity-chance.common", 46.0D));
+        rarityChances.put(FishRarity.ORNAMENTAL, number("settings.rarity-chance.ornamental", 2.5D));
+        rarityChances.put(FishRarity.EPIC, number(rarityPath("settings.rarity-chance", FishRarity.EPIC, ""), 1.2D));
+        rarityChances.put(FishRarity.LEGENDARY, number("settings.rarity-chance.legendary", 0.08D));
+        rarityChances.put(FishRarity.MITOLOGI, number("settings.rarity-chance.mitologi", 0.02D));
     }
 
     private void loadFishDefinitions() {
@@ -132,6 +143,8 @@ public final class FishingConfigManager {
         FishRarity rarity = FishRarity.fromKey(section.getString("rarity", "COMMON"));
         Material material = material(section.getString("material", fallbackMaterial(rarity).name()), fallbackMaterial(rarity));
         Material fallback = material(section.getString("head.fallback-material", material.name()), material);
+        int safeMin = clamp(section.getInt("price.min", minPrice(rarity)), 0, minPrice(rarity));
+        int safeMax = Math.max(safeMin, clamp(section.getInt("price.max", maxPrice(rarity)), 0, maxPrice(rarity)));
         return new FishDefinition(
                 id.toLowerCase(Locale.ROOT),
                 section.getString("name", id),
@@ -139,8 +152,8 @@ public final class FishingConfigManager {
                 material,
                 Math.max(0.1D, section.getDouble("weight.min", fallbackMinWeight(rarity))),
                 Math.max(0.1D, section.getDouble("weight.max", fallbackMaxWeight(rarity))),
-                Math.max(0, section.getInt("price.min", minPrice(rarity))),
-                Math.max(0, section.getInt("price.max", maxPrice(rarity))),
+                safeMin,
+                safeMax,
                 section.getString("origin", "VelioraFishing"),
                 section.getString("region", "Veliora"),
                 section.getBoolean("head.enabled", rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI),
@@ -163,31 +176,11 @@ public final class FishingConfigManager {
         fishDefinitions.put(id, new FishDefinition(id, name, rarity, material, minWeight, maxWeight, minPrice(rarity), maxPrice(rarity), origin, region, rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI, "", Material.TROPICAL_FISH));
     }
 
-    private int fallbackSpam(FishRarity rarity) {
-        return switch (rarity) {
-            case TRASH -> 0;
-            case VANILLA -> 5;
-            case COMMON -> 10;
-            case ORNAMENTAL -> 20;
-            case EPIC -> 25;
-            case LEGENDARY -> 50;
-            case MITOLOGI -> 100;
-        };
-    }
-
-    private double fallbackSeconds(FishRarity rarity) {
-        return switch (rarity) {
-            case TRASH -> 0.0D;
-            case VANILLA -> 5.0D;
-            case COMMON, ORNAMENTAL, EPIC -> 10.0D;
-            case LEGENDARY -> 25.0D;
-            case MITOLOGI -> 30.0D;
-        };
-    }
-
-    private int fallbackMinPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 10; case COMMON -> 50; case ORNAMENTAL -> 100; case EPIC -> 500; case LEGENDARY -> 10000; case MITOLOGI -> 50000; }; }
-    private int fallbackMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 50; case COMMON -> 100; case ORNAMENTAL -> 500; case EPIC -> 1000; case LEGENDARY -> 50000; case MITOLOGI -> 150000; }; }
-    private int fallbackFinalMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 50; case COMMON -> 100; case ORNAMENTAL -> 500; case EPIC -> 1000; case LEGENDARY -> 50000; case MITOLOGI -> 500000; }; }
+    private int fallbackSpam(FishRarity rarity) { return switch (rarity) { case TRASH -> 0; case VANILLA -> 5; case COMMON -> 10; case ORNAMENTAL -> 22; case EPIC -> 35; case LEGENDARY -> 65; case MITOLOGI -> 120; }; }
+    private double fallbackSeconds(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 12.0D; case EPIC -> 14.0D; case LEGENDARY -> 28.0D; case MITOLOGI -> 35.0D; }; }
+    private int fallbackMinPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 5; case COMMON -> 10; case ORNAMENTAL -> 30; case EPIC -> 150; case LEGENDARY -> 1500; case MITOLOGI -> 8000; }; }
+    private int fallbackMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 15; case COMMON -> 25; case ORNAMENTAL -> 120; case EPIC -> 450; case LEGENDARY -> 7000; case MITOLOGI -> 25000; }; }
+    private int fallbackFinalMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 15; case COMMON -> 25; case ORNAMENTAL -> 120; case EPIC -> 450; case LEGENDARY -> 7000; case MITOLOGI -> 35000; }; }
     private double fallbackMinWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.1D; case VANILLA -> 0.5D; case COMMON -> 1.0D; case ORNAMENTAL -> 0.2D; case EPIC -> 10.0D; case LEGENDARY -> 10.0D; case MITOLOGI -> 100.0D; }; }
     private double fallbackMaxWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 1.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 3.0D; case EPIC -> 200.0D; case LEGENDARY -> 1000.0D; case MITOLOGI -> 2500.0D; }; }
     private Material fallbackMaterial(FishRarity rarity) { return switch (rarity) { case TRASH -> Material.LEATHER_BOOTS; case VANILLA, COMMON -> Material.COD; case ORNAMENTAL -> Material.TROPICAL_FISH; case EPIC -> Material.SALMON; case LEGENDARY, MITOLOGI -> Material.PLAYER_HEAD; }; }
@@ -198,14 +191,8 @@ public final class FishingConfigManager {
     private Sound sound(String name, Sound fallback) { try { return Sound.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
     private Particle particle(String name, Particle fallback) { try { return Particle.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
     private int inventorySize(int size) { return size <= 0 ? 54 : Math.min(54, ((size + 8) / 9) * 9); }
-    private String rarityPath(String base, FishRarity rarity, String suffix) {
-        String primary = base + "." + rarity.key() + suffix;
-        if (rarity == FishRarity.EPIC && config != null) {
-            String legacy = base + ".rare" + suffix;
-            if (!config.contains(primary) && config.contains(legacy)) return legacy;
-        }
-        return primary;
-    }
+    private String rarityPath(String base, FishRarity rarity, String suffix) { String primary = base + "." + rarity.key() + suffix; if (rarity == FishRarity.EPIC && config != null) { String legacy = base + ".rare" + suffix; if (!config.contains(primary) && config.contains(legacy)) return legacy; } return primary; }
+    private int clamp(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
     private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
     private boolean bool(String path, boolean fallback) { return config == null || !config.contains(path) ? fallback : config.getBoolean(path, fallback); }
     private int integer(String path, int fallback) { return config == null || !config.contains(path) ? fallback : config.getInt(path, fallback); }
