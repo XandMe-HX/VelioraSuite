@@ -41,7 +41,8 @@ public final class BossConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String prefix() { return str("messages.prefix", "&8[&cVelioraBoss&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
-    public int intervalMinutes() { return Math.max(60, integer("settings.spawn.interval-minutes", 60)); }
+    public boolean realtimeHourlySpawnEnabled() { return bool("settings.spawn.realtime-hourly.enabled", true); }
+    public int intervalMinutes() { return realtimeHourlySpawnEnabled() ? 60 : Math.max(1, integer("settings.spawn.interval-minutes", 60)); }
     public int spawnRetryMinutes() { return Math.max(1, integer("settings.spawn.retry-minutes", 5)); }
     public int despawnMinutes() { return Math.max(1, integer("settings.spawn.despawn-minutes", 25)); }
     public boolean announceSpawn() { return bool("settings.spawn.announce-spawn", true); }
@@ -74,7 +75,7 @@ public final class BossConfigManager {
     public double fireBombDamage() { return number("skills.damage.fire-bomb", 8.0D); }
     public int maxMinions() { return Math.max(0, integer("skills.summon.max-minions", 8)); }
     public int minionsPerCast() { return Math.max(1, integer("skills.summon.minions-per-cast", 3)); }
-    public List<String> minionTypes() { List<String> list = config.getStringList("skills.summon.types"); return list.isEmpty() ? List.of("ZOMBIE", "HUSK", "DROWNED", "ZOMBIFIED_PIGLIN") : list; }
+    public List<String> minionTypes() { List<String> list = config == null ? List.of() : config.getStringList("skills.summon.types"); return list.isEmpty() ? List.of("ZOMBIE", "HUSK", "DROWNED", "ZOMBIFIED_PIGLIN") : list; }
     public List<BossSkillType> defaultSkills() { return parseSkills(config == null ? List.of() : config.getStringList("skills.default")); }
     public boolean arenaEnabled() { return bool("arena.enabled", true); }
     public double arenaRadius() { return Math.max(5.0D, number("arena.radius", 45.0D)); }
@@ -102,7 +103,7 @@ public final class BossConfigManager {
     public double minDamageToReward() { return number("rewards.min-damage-to-reward", 20.0D); }
     public double minDamageContributionPercent() { return clamp(number("rewards.min-damage-contribution-percent", 5.0D), 0.0D, 100.0D); }
     public long rewardCooldownMillis() { return Math.max(0L, (long) integer("rewards.reward-cooldown-seconds", 60)) * 1000L; }
-    public int rewardMaterial(BossRarity rarity, String key) { return Math.max(0, config.getInt("rewards.materials." + rarity.name().toLowerCase(Locale.ROOT) + "." + key, 0)); }
+    public int rewardMaterial(BossRarity rarity, String key) { return Math.max(0, config == null ? 0 : config.getInt("rewards.materials." + rarity.name().toLowerCase(Locale.ROOT) + "." + key, 0)); }
     public boolean defaultMoneyEnabled() { return bool("rewards.default-money.enabled", true); }
     public long defaultMoneyMin() { return clampMoney(integer("rewards.default-money.min", 10_000)); }
     public long defaultMoneyMax() { return clampMoney(integer("rewards.default-money.max", 150_000)); }
@@ -129,7 +130,7 @@ public final class BossConfigManager {
     private void loadRarityChance() { rarityChance.clear(); for (BossRarity rarity : BossRarity.values()) rarityChance.put(rarity, Math.max(0.0D, number("rarity-chance." + rarity.name().toLowerCase(Locale.ROOT), defaultChance(rarity)))); }
     private void loadBosses() {
         bosses.clear();
-        ConfigurationSection section = config.getConfigurationSection("bosses");
+        ConfigurationSection section = config == null ? null : config.getConfigurationSection("bosses");
         if (section == null) return;
         for (String id : section.getKeys(false)) {
             ConfigurationSection boss = section.getConfigurationSection(id);
