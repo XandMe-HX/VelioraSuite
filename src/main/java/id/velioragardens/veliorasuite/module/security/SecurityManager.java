@@ -29,6 +29,7 @@ public final class SecurityManager {
     private final SecurityJoinProtectionManager joinProtectionManager;
     private final SecurityCommandProtectionManager commandProtectionManager;
     private final SecurityTabProtectionManager tabProtectionManager;
+    private final SecurityAltGuard altGuard;
 
     private final Map<UUID, List<OreRecord>> oreRecords = new HashMap<>();
     private final Map<UUID, String> oreNames = new HashMap<>();
@@ -45,15 +46,18 @@ public final class SecurityManager {
         this.joinProtectionManager = new SecurityJoinProtectionManager(configManager, riskManager);
         this.commandProtectionManager = new SecurityCommandProtectionManager(configManager, riskManager);
         this.tabProtectionManager = new SecurityTabProtectionManager(configManager, commandProtectionManager);
+        this.altGuard = new SecurityAltGuard(plugin, configManager);
     }
 
     public void load() {
         configManager.load();
+        altGuard.load();
         plugin.getLogger().info("VelioraSecurity loaded.");
     }
 
     public void reload() {
         configManager.load();
+        altGuard.load();
         alertManager.clearCooldowns();
         joinProtectionManager.clear();
     }
@@ -67,6 +71,15 @@ public final class SecurityManager {
         alertIfNeeded(decision);
         return decision;
     }
+
+    public String checkAltJoin(Player player) { return altGuard.onJoin(player); }
+    public void handleAltQuit(Player player) { altGuard.onQuit(player); }
+    public boolean checkAltPay(Player player, String commandLine) { return altGuard.onPayCommand(player, commandLine); }
+    public void sendAltHelp(CommandSender sender) { altGuard.sendHelp(sender); }
+    public void sendAltCheck(CommandSender sender, String name) { altGuard.sendCheck(sender, name); }
+    public void sendAltList(CommandSender sender) { altGuard.sendList(sender); }
+    public void sendAltAlerts(CommandSender sender) { altGuard.sendAlerts(sender); }
+    public void altTrust(CommandSender sender, String name, boolean value) { altGuard.trust(sender, name, value); }
 
     public SecurityDecision checkCommand(Player player, String commandLine) {
         SecurityDecision decision = commandProtectionManager.check(player, commandLine);
@@ -109,6 +122,7 @@ public final class SecurityManager {
                 "&f/vsecurity status &7- Cek status security.",
                 "&f/vsecurity alerts &7- Lihat alert terbaru.",
                 "&f/vsecurity reload &7- Reload config.",
+                "&f/valt help &7- Cek akun ganda dan abuse ekonomi.",
                 "&8&m--------------------------------"
         )), Map.of());
     }
