@@ -71,6 +71,11 @@ commands:
     description: Manage VelioraChat.
     usage: /veliorachat <help|status|reload>
     aliases: [vchat, vc]
+  playtime:
+    description: Show Veliora session time.
+    usage: /playtime <me|top|reload>
+    aliases: [vplaytime]
+    permission: veliorasuite.playtime.use
   vsecurity:
     description: Manage VelioraSecurity.
     usage: /vsecurity <help|status|alerts|reload|alt>
@@ -116,12 +121,12 @@ commands:
     permission: veliorasuite.pets.use
   register:
     description: Register Veliora account.
-    usage: /register <password> <password confirm>
+    usage: /register <key> <key confirm>
     aliases: [reg]
     permission: veliorasuite.loginsecurity.use
   login:
     description: Login Veliora account.
-    usage: /login <password>
+    usage: /login <key>
     aliases: [l]
     permission: veliorasuite.loginsecurity.use
   changepass:
@@ -131,7 +136,7 @@ commands:
     permission: veliorasuite.loginsecurity.use
   unregister:
     description: Unregister Veliora account.
-    usage: /unregister <password>
+    usage: /unregister <key>
     permission: veliorasuite.loginsecurity.use
   logout:
     description: Logout Veliora account.
@@ -187,6 +192,12 @@ permissions:
     default: false
   veliorasuite.kits.premium.5:
     default: false
+  veliorasuite.playtime.use:
+    default: true
+  veliorasuite.playtime.top:
+    default: true
+  veliorasuite.playtime.reload:
+    default: op
   veliorasuite.security.admin:
     default: op
   veliorasuite.security.alerts:
