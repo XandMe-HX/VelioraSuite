@@ -74,6 +74,7 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
             manager.sendOreHelp(sender);
             sender.sendMessage("§7Tambahan: §f/vxray clear-log <no|all> §7hapus alert yang sudah dilihat.");
+            sender.sendMessage("§7Review banding: §f/vxray review <player> §7tampilkan check + logs sekaligus.");
             return true;
         }
 
@@ -83,6 +84,25 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
             case "alerts" -> manager.sendOreAlerts(sender);
             case "suspects", "top" -> manager.sendOreSuspects(sender);
             case "allreport" -> manager.sendOreAllReport(sender);
+            case "review", "evidence", "bukti" -> {
+                if (args.length < 2) sender.sendMessage("§8[§cVelioraOreWatch§8] §cGunakan §f/vxray review <player>§c.");
+                else {
+                    sender.sendMessage("§8&m--------------------------------");
+                    sender.sendMessage("§c§lVelioraOreWatch Review");
+                    sender.sendMessage("§7Data ini untuk mencocokkan cerita player dengan hasil sistem.");
+                    sender.sendMessage("§8&m--------------------------------");
+                    manager.sendOreCheck(sender, args[1]);
+                    manager.sendOreLogs(sender, args[1]);
+                    sender.sendMessage("§8&m--------------------------------");
+                    sender.sendMessage("§ePertanyaan banding yang disarankan:");
+                    sender.sendMessage("§7- World dan lokasi mining terakhir di mana?");
+                    sender.sendMessage("§7- Pakai tools/enchant apa?");
+                    sender.sendMessage("§7- Ada beacon/potion atau tidak?");
+                    sender.sendMessage("§7- Mining sendiri atau bersama siapa?");
+                    sender.sendMessage("§7- Rute mining dari mana ke mana?");
+                    sender.sendMessage("§8&m--------------------------------");
+                }
+            }
             case "clear-log", "clearlog", "clear" -> {
                 if (args.length < 2) sender.sendMessage("§8[§cVelioraOreWatch§8] §cGunakan §f/vxray clear-log <no|all>§c. Nomor mengikuti urutan §f/vxray alerts§c dari atas ke bawah.");
                 else clearOreAlert(sender, args[1]);
@@ -181,7 +201,7 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
         String commandName = command.getName().toLowerCase(Locale.ROOT);
         if (commandName.equals("vxray") || alias.equalsIgnoreCase("vxray") || alias.equalsIgnoreCase("vorewatch") || alias.equalsIgnoreCase("orecheck")) {
             if (!manager.getConfigManager().hasAdmin(sender)) return new ArrayList<>();
-            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "status", "check", "logs", "suspects", "top", "alerts", "allreport", "clear-log", "reset", "exempt", "unexempt", "reload")), args[0]);
+            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "status", "check", "logs", "review", "evidence", "suspects", "top", "alerts", "allreport", "clear-log", "reset", "exempt", "unexempt", "reload")), args[0]);
             if (args.length == 2 && args[0].equalsIgnoreCase("clear-log")) return filter(new ArrayList<>(Arrays.asList("1", "2", "3", "all")), args[1]);
             return new ArrayList<>();
         }
