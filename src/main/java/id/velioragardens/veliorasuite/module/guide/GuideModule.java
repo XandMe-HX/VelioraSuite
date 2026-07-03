@@ -107,7 +107,7 @@ public final class GuideModule implements VelioraModule {
     }
 
     private static final class AdminCommand implements CommandExecutor, TabCompleter {
-        private static final int MAX_PAGE = 8;
+        private static final int MAX_PAGE = 10;
 
         @Override
         public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -146,9 +146,10 @@ public final class GuideModule implements VelioraModule {
                     send(sender, "&8- &b/cmdadmin <page> &7- buka panduan admin.");
                     send(sender, "&8- &b/veliorasuite reload &7- reload semua module.");
                     send(sender, "&8- &b/vguide reload &7- reload guide player.");
-                    send(sender, "&8- &b/vchat reload &7- reload chat filter dan auto reply.");
+                    send(sender, "&8- &b/vchat reload &7- reload chat dan AI reply.");
                     send(sender, "&8- &b/vsecurity status &7- cek security server.");
-                    send(sender, "&8- &b/vsecurity alerts &7- lihat alert security.");
+                    send(sender, "&8- &b/valt help &7- panduan AltGuard.");
+                    send(sender, "&8- &b/vxray help &7- panduan OreWatch.");
                 }
                 case 2 -> {
                     send(sender, "&6&lLogin Security");
@@ -184,6 +185,7 @@ public final class GuideModule implements VelioraModule {
                     send(sender, "&8- &b/reports close <id> &7- tutup laporan.");
                     send(sender, "&8- &b/reports reopen <id> &7- buka lagi laporan.");
                     send(sender, "&8- &b/report bug <alasan> &7- test laporan bug.");
+                    send(sender, "&8- &7Jika private/penting, arahkan player ke Owner.");
                 }
                 case 6 -> {
                     send(sender, "&6&lKits, Team, Trader, Fishing");
@@ -203,12 +205,34 @@ public final class GuideModule implements VelioraModule {
                     send(sender, "&8- &7Hati-hati jangan kasih &cop&7 sembarang player.");
                 }
                 case 8 -> {
-                    send(sender, "&6&lChecklist Saat Ada Bug");
-                    send(sender, "&8- &f1. &7Cek console error merah.");
-                    send(sender, "&8- &f2. &7Coba reload module terkait, bukan /reload server.");
-                    send(sender, "&8- &f3. &7Kalau masih error, restart full server.");
-                    send(sender, "&8- &f4. &7Backup file config sebelum edit besar.");
-                    send(sender, "&8- &f5. &7Kirim log error ke owner/developer.");
+                    send(sender, "&6&lVelioraAltGuard");
+                    send(sender, "&8- &b/valt help &7- panduan akun ganda.");
+                    send(sender, "&8- &b/valt list &7- IP dengan 2+ akun.");
+                    send(sender, "&8- &b/valt check <player> &7- cek akun utama dan alt.");
+                    send(sender, "&8- &b/valt alerts &7- alert akun ganda dan /pay.");
+                    send(sender, "&8- &b/valt trust <player> &7- whitelist rumah/keluarga.");
+                    send(sender, "&8- &b/valt untrust <player> &7- hapus whitelist.");
+                    send(sender, "&8- &7Rule: 1 normal, 2 alert, 3 ban, 5 ban-ip.");
+                }
+                case 9 -> {
+                    send(sender, "&6&lOreWatch / Xray Review");
+                    send(sender, "&8- &b/vxray help &7- panduan xray monitor.");
+                    send(sender, "&8- &b/vxray alerts &7- alert mining mencurigakan.");
+                    send(sender, "&8- &b/vxray review <player> &7- check + logs + pertanyaan.");
+                    send(sender, "&8- &b/vxray check <player> &7- angka ore 5/15/60 menit.");
+                    send(sender, "&8- &b/vxray logs <player> &7- ore terakhir.");
+                    send(sender, "&8- &b/vxray clear-log <no|all> &7- hapus alert selesai.");
+                    send(sender, "&8- &7Beli/shop/reward/teman tidak dihitung, hanya mining ore.");
+                }
+                case 10 -> {
+                    send(sender, "&6&lChecklist Admin Saat Ada Masalah");
+                    send(sender, "&8- &f1. &7Buka &b/cmdadmin &7untuk command terkait.");
+                    send(sender, "&8- &f2. &7Cek &b/valt alerts &7dan &b/vxray alerts&7.");
+                    send(sender, "&8- &f3. &7Cek console error merah.");
+                    send(sender, "&8- &f4. &7Reload module terkait, jangan /reload server.");
+                    send(sender, "&8- &f5. &7Kalau masih error, restart full server.");
+                    send(sender, "&8- &f6. &7Kirim log jelas ke Owner/Developer.");
+                    send(sender, "&8- &7Admin/OP akan dapat notif cepat saat join.");
                 }
                 default -> { }
             }
