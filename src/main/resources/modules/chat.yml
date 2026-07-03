@@ -46,62 +46,68 @@ settings:
   auto-reply:
     # Auto bantuan berbasis kata kunci. Bukan AI API, tapi bot pintar ringan agar member tidak tanya berulang.
     enabled: true
-    cooldown-seconds: 35
+    cooldown-seconds: 30
     delay-ticks: 20
     prefix: '&8[&aVelioraGuide&8] '
     replies:
       guide:
-        triggers: ['panduan', 'cara main', 'bingung', 'command apa', 'fitur server', 'guide', 'vguide', 'mulai dari mana']
+        triggers: ['panduan', 'cara main', 'bingung', 'command apa', 'fitur server', 'guide', 'vguide', 'mulai dari mana', 'awal main', 'command awal']
         lines:
           - '&fButuh panduan? Ketik &b/vguide &7untuk menu utama server.'
-          - '&7Cek juga &b/vrules&7, &b/vrank&7, &b/vproduct&7, dan &b/quests&7.'
+          - '&7Cek juga &b/vrules&7, &b/vrank&7, &b/vproduct&7, &b/quests&7, dan &b/pet&7.'
       rank:
-        triggers: ['rank', 'vip', 'harga rank', 'benefit rank', 'beli rank', 'donate', 'donasi']
+        triggers: ['rank', 'vip', 'harga rank', 'benefit rank', 'beli rank', 'donate', 'donasi', 'diskon rank', 'rank diskon']
         lines:
           - '&fInfo rank ada di &b/vrank&f.'
-          - '&7Pakai &b/vrank 2&7 sampai &b/vrank 13 &7untuk detail harga dan benefit.'
+          - '&7Untuk pembelian resmi, hubungi Owner yang tertera di pengumuman server.'
       product:
-        triggers: ['produk', 'product', 'fitur', 'plugin', 'vproduct', 'vporduct', 'server ada apa']
+        triggers: ['produk', 'product', 'fitur', 'plugin', 'vproduct', 'vporduct', 'server ada apa', 'apa aja fiturnya']
         lines:
           - '&fDaftar fitur dan produk server ada di &b/vproduct&f.'
           - '&7Kalau typo &b/vporduct&7 juga tetap diarahkan ke product.'
       home:
-        triggers: ['sethome', 'cara set home', 'home tidak bisa', 'home pin', 'teleport home', 'cara pulang']
+        triggers: ['sethome', 'cara set home', 'home tidak bisa', 'home pin', 'teleport home', 'cara pulang', 'cara balik base']
         lines:
           - '&fBuat home: &b/sethome <nama>&f. Teleport: &b/home <nama>&f.'
           - '&7Contoh: &b/sethome base &7lalu &b/home base&7.'
       quest:
-        triggers: ['quest', 'misi', 'level quest', 'cara quest', 'quest jalan sendiri', 'pilih quest', 'mana quest']
+        triggers: ['quest', 'misi', 'level quest', 'cara quest', 'quest jalan sendiri', 'pilih quest', 'mana quest', 'quest ga jalan']
         lines:
           - '&fQuest harus dipilih dulu lewat &b/quests&f atau &b/quests start <category>&f.'
           - '&7Quest memakai Mana dan tidak jalan sendiri kalau belum dipilih.'
       claim:
-        triggers: ['claim', 'claim land', 'cara claim', 'base aman', 'grief', 'lahan', 'protect base']
+        triggers: ['claim', 'claimland', 'claim land', 'cara claim', 'cara claimland', 'cara claim area', 'base aman', 'grief', 'lahan', 'protect base', 'kenapa ga bisa claim']
         lines:
           - '&fUntuk claim area/base, cek panduan di &b/vguide 5&f.'
-          - '&7Jangan lupa sethome di base setelah claim: &b/sethome base&7.'
+          - '&7Urutan aman: &b/rtp &7-> cari lokasi -> claim -> &b/sethome base&7.'
       report:
-        triggers: ['lapor', 'report', 'bug', 'player nakal', 'cheater', 'error', 'stuck']
+        triggers: ['lapor', 'report', 'bug', 'player nakal', 'cheater', 'error', 'stuck', 'ada bug', 'ketemu bug']
         lines:
           - '&fLaporkan bug/player dengan &b/report <player|bug> <alasan>&f.'
           - '&7Staff/OP online akan menerima notifikasi report.'
       boss:
-        triggers: ['boss', 'dungeon', 'boss dimana', 'boss kapan', 'boss hilang', 'boss ga muncul']
+        triggers: ['boss', 'dungeon', 'boss dimana', 'boss kapan', 'boss hilang', 'boss ga muncul', 'reward boss']
         lines:
           - '&fInfo boss aktif dan lokasi: &b/boss status&f.'
-          - '&7Boss muncul sesuai jadwal dan lokasi dungeon yang sudah diset staff.'
+          - '&7Reward boss mengikuti damage kontribusi, jadi ikut hit boss biar dapat hadiah.'
       gacha:
-        triggers: ['gacha', 'key', 'kunci', 'crate', 'buka crate', 'kunci gacha']
+        triggers: ['gacha', 'key', 'kunci', 'crate', 'buka crate', 'kunci gacha', 'pet gacha']
         lines:
           - '&fInfo gacha/key cek &b/vproduct&f atau tanya staff kalau key belum masuk.'
           - '&7Pegang key lalu klik crate yang sesuai warnanya.'
+      pet:
+        triggers: ['pet', 'pets', 'cara pet', 'pet kecil', 'pet ga jalan', 'pet tidak jalan', 'pet ride', 'naik pet', 'pet makan', 'pet feed', 'pet gacha', 'pet summon']
+        lines:
+          - '&fMenu pet: &b/pet&f. Lihat pet kamu: &b/pet list&f. Panggil pet: &b/pet summon <id>&f.'
+          - '&7Naik pet: &b/pet ride&7. Kalau pet tidak jalan, coba turun lalu naik lagi atau lapor staff.'
+          - '&7Beri makan pet pakai makanan yang sesuai agar level dan ukurannya naik.'
       rtp:
-        triggers: ['rtp', 'random teleport', 'cari tempat', 'survival mulai', 'kemana dulu']
+        triggers: ['rtp', 'random teleport', 'cari tempat', 'survival mulai', 'kemana dulu', 'tempat survival']
         lines:
           - '&fCari tempat survival pakai &b/rtp&f, lalu claim dan sethome di base.'
           - '&7Urutan aman: &b/rtp &7-> claim -> &b/sethome base&7.'
       shop:
-        triggers: ['shop', 'jual item', 'sell', 'uang', 'cara jual', 'balance', 'duit']
+        triggers: ['shop', 'jual item', 'sell', 'uang', 'cara jual', 'balance', 'duit', 'harga jual', 'harga beli']
         lines:
           - '&fBuka shop pakai &b/shop&f, jual item pakai &b/sell&f atau menu shop.'
           - '&7Cek uang: &b/balance&7. Transfer: &b/pay <nama> <jumlah>&7.'
@@ -111,10 +117,15 @@ settings:
           - '&fAmbil kit awal lewat &b/kits starter&f atau buka menu &b/kits&f.'
           - '&7Kit hanya bisa diambil sesuai cooldown/rules server.'
       login:
-        triggers: ['login', 'register', 'daftar', 'password', 'blindness', 'buta']
+        triggers: ['login', 'register', 'daftar', 'password', 'blindness', 'buta', 'lupa password', 'reset password']
         lines:
           - '&fDaftar: &b/register <password> <confirm>&f. Login: &b/login <password>&f.'
-          - '&7Kalau layar masih gelap setelah login, relog atau lapor staff.'
+          - '&7Kalau lupa password, hubungi Owner/Staff untuk reset.'
+      lag:
+        triggers: ['lag', 'patah patah', 'fps drop', 'server lag', 'ngelag', 'hp kentang']
+        lines:
+          - '&fKalau terasa lag, coba turunkan render distance dan matikan shader berat dulu.'
+          - '&7Server dibuat ramah HP kentang, tapi area ramai/mob banyak tetap bisa berat.'
 
   anti-repeat:
     enabled: true
@@ -135,26 +146,17 @@ settings:
     reduce-repeated-letters: true
     blocked-words:
       - 'contohbadword'
-      - 'anjing'
       - 'anjg'
       - 'ajg'
-      - 'anj'
       - 'bangsat'
       - 'goblok'
       - 'tolol'
       - 'bego'
       - 'idiot'
       - 'bodoh'
-      - 'kontol'
       - 'kntl'
-      - 'memek'
       - 'mmk'
-      - 'ngentot'
       - 'ngntt'
-      - 'peler'
-      - 'pepek'
-      - 'babi'
-      - 'taik'
       - 'jancok'
       - 'jancuk'
       - 'kampret'
@@ -165,12 +167,6 @@ settings:
       - 'btch'
       - 'bastard'
       - 'asshole'
-      - 'dick'
-      - 'pussy'
-      - 'cunt'
-      - 'motherfucker'
-      - 'whore'
-      - 'slut'
       - 'dumbass'
     blocked-patterns: []
 
