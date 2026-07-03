@@ -73,7 +73,7 @@ public final class KitsManager {
         if (enabledKits.isEmpty()) {
             sender.sendMessage(configManager.color(configManager.getMessage("list-empty", "%prefix% &cTidak ada kit aktif.")));
         } else {
-            String format = configManager.getMessage("list-format", "&7- &f%kit_display% &8(&7%kit_id%&8) &7Cooldown: &f%cooldown%");
+            String format = configManager.getMessage("list-format", "&7- &f%kit_display% &8(&7%kit_id%&8) &7Cooldown: &f%cooldown% &8| &7Harga: &a$%price%");
             for (Kit kit : enabledKits) sender.sendMessage(configManager.color(applyPlaceholders(format, getKitPlaceholders(kit))));
         }
         sender.sendMessage(configManager.color(configManager.getMessage("list-footer", "&8&m--------------------------------")));
@@ -123,6 +123,11 @@ public final class KitsManager {
         dataManager.setLastClaim(player.getUniqueId(), kit.getId(), System.currentTimeMillis());
         if (freeClaim) dataManager.setClaimedFree(player.getUniqueId(), kit.getId(), true);
         if (armorReplaced) send(player, "kit-armor-replaced", "%prefix% &eArmor lama kamu dipindahkan ke inventory.", Map.of());
+        if (freeClaim && kit.getPremiumLevel() > 0) {
+            send(player, "premium-first-claim-free", "%prefix% &aPremium kit &f%kit% &aberhasil diambil gratis 1x. Claim berikutnya bayar &f$%price%&a.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(effectivePrice(kit))));
+        } else if (freeClaim) {
+            send(player, "kit-first-claim-free", "%prefix% &aKit &f%kit% &aberhasil diambil gratis 1x.", Map.of("%kit%", kit.getId()));
+        }
         if (armorEquipped) {
             send(player, "kit-claimed-equipped", "%prefix% &aKit &f%kit% &aberhasil diclaim. Armor otomatis dipakai.", Map.of("%kit%", kit.getId()));
         } else {
@@ -143,12 +148,12 @@ public final class KitsManager {
     public void buyKit(Player player, String kitId) {
         Kit kit = getUsableKit(player, kitId);
         if (kit == null) return;
-        if (!kit.isBuyEnabled()) {
+        if (!effectiveBuyEnabled(kit)) {
             send(player, "buy-not-required", "%prefix% &cKit ini tidak perlu dibeli.", Map.of("%kit%", kit.getId()));
             return;
         }
         if (!kit.isOneTimePurchase()) {
-            send(player, "buy-each-claim", "%prefix% &cKit ini dibayar setiap claim. Gunakan &f/kits claim %kit%&c.", Map.of("%kit%", kit.getId()));
+            send(player, "buy-each-claim", "%prefix% &cKit ini dibayar setiap claim. Gunakan &f/kits claim %kit%&c.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(effectivePrice(kit))));
             return;
         }
         if (dataManager.hasPurchased(player.getUniqueId(), kit.getId())) {
@@ -157,7 +162,7 @@ public final class KitsManager {
         }
         if (!chargePlayer(player, kit)) return;
         dataManager.setPurchased(player.getUniqueId(), kit.getId());
-        send(player, "kit-bought", "%prefix% &aKamu berhasil membeli kit &f%kit% &adengan harga &f$%price%&a.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(kit.getPrice())));
+        send(player, "kit-bought", "%prefix% &aKamu berhasil membeli kit &f%kit% &adengan harga &f$%price%&a.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(effectivePrice(kit))));
     }
 
     public void giveFirstJoinKit(Player player) {
@@ -171,7 +176,7 @@ public final class KitsManager {
         if (configManager.isBlockClaimWhenInventoryFull() && rewardManager.getMissingSlots(player, kit) > 0) return;
         rewardManager.giveKit(player, kit, configManager.isDropExtraItems());
         dataManager.setLastClaim(player.getUniqueId(), kit.getId(), System.currentTimeMillis());
-        if (kit.isFirstClaimFree()) dataManager.setClaimedFree(player.getUniqueId(), kit.getId(), true);
+        if (isFirstClaimFreeEffective(kit)) dataManager.setClaimedFree(player.getUniqueId(), kit.getId(), true);
         dataManager.setFirstJoinGiven(player.getUniqueId(), true);
         send(player, "first-join-given", "%prefix% &aKamu menerima first join kit &f%kit%&a.", Map.of("%kit%", kit.getId()));
     }
@@ -179,9 +184,11 @@ public final class KitsManager {
     public String getStatusKey(Player player, Kit kit) {
         if (!hasKitPermission(player, kit)) return "locked-permission";
         if (!hasPremiumPermission(player, kit)) return "locked-premium";
-        if (kit.isBuyEnabled() && kit.isOneTimePurchase() && !dataManager.hasPurchased(player.getUniqueId(), kit.getId()) && !player.hasPermission(configManager.getBypassPricePermission()) && !player.hasPermission(configManager.getAdminPermission())) return "need-buy";
+        if (isFreeClaimAvailable(player, kit)) return "available";
         if (cooldownManager.isOnCooldown(player.getUniqueId(), kit) && !player.hasPermission(configManager.getBypassCooldownPermission()) && !player.hasPermission(configManager.getAdminPermission())) return "cooldown";
-        if (kit.isBuyEnabled() && kit.isOneTimePurchase() && dataManager.hasPurchased(player.getUniqueId(), kit.getId())) return "bought";
+        if (effectiveBuyEnabled(kit) && kit.isOneTimePurchase() && !dataManager.hasPurchased(player.getUniqueId(), kit.getId()) && !player.hasPermission(configManager.getBypassPricePermission()) && !player.hasPermission(configManager.getAdminPermission())) return "need-buy";
+        if (effectiveBuyEnabled(kit) && !kit.isOneTimePurchase() && !player.hasPermission(configManager.getBypassPricePermission()) && !player.hasPermission(configManager.getAdminPermission())) return "need-buy";
+        if (effectiveBuyEnabled(kit) && kit.isOneTimePurchase() && dataManager.hasPurchased(player.getUniqueId(), kit.getId())) return "bought";
         return "available";
     }
 
@@ -228,29 +235,49 @@ public final class KitsManager {
     }
 
     private String getPremiumPermission(Kit kit) { return configManager.getPremiumPermissionPrefix() + kit.getPremiumLevel(); }
-    private boolean isFreeClaimAvailable(Player player, Kit kit) { return kit.isFirstClaimFree() && !dataManager.hasClaimedFree(player.getUniqueId(), kit.getId()); }
+
+    private boolean isFreeClaimAvailable(Player player, Kit kit) {
+        return isFirstClaimFreeEffective(kit) && !dataManager.hasClaimedFree(player.getUniqueId(), kit.getId());
+    }
+
+    private boolean isFirstClaimFreeEffective(Kit kit) {
+        return kit.isFirstClaimFree() || kit.getPremiumLevel() > 0;
+    }
+
+    private boolean effectiveBuyEnabled(Kit kit) {
+        return kit.isBuyEnabled() || kit.getPremiumLevel() > 0;
+    }
+
+    private double effectivePrice(Kit kit) {
+        if (kit.getPremiumLevel() <= 0) return kit.getPrice();
+        int level = Math.max(1, Math.min(5, kit.getPremiumLevel()));
+        return level * 10000.0D;
+    }
 
     private boolean handlePriceBeforeClaim(Player player, Kit kit, boolean freeClaim) {
-        if (!kit.isBuyEnabled() || freeClaim || player.hasPermission(configManager.getBypassPricePermission()) || player.hasPermission(configManager.getAdminPermission())) return true;
+        if (!effectiveBuyEnabled(kit) || freeClaim || player.hasPermission(configManager.getBypassPricePermission()) || player.hasPermission(configManager.getAdminPermission())) return true;
         if (kit.isOneTimePurchase()) {
             if (dataManager.hasPurchased(player.getUniqueId(), kit.getId())) return true;
-            send(player, "need-buy", "%prefix% &cKit ini harus dibeli dulu. Gunakan &f/kits buy %kit%&c.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(kit.getPrice())));
+            send(player, "need-buy", "%prefix% &cKit ini harus dibeli dulu. Gunakan &f/kits buy %kit%&c. Harga: &f$%price%&c.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(effectivePrice(kit))));
             return false;
         }
         return chargePlayer(player, kit);
     }
 
     private boolean chargePlayer(Player player, Kit kit) {
-        if (kit.getPrice() <= 0.0D || !configManager.isEconomyEnabled()) return true;
+        double price = effectivePrice(kit);
+        if (price <= 0.0D || !configManager.isEconomyEnabled()) return true;
         if (!purchaseManager.hasEconomy()) {
             send(player, "vault-not-found", "%prefix% &cEconomy belum tersedia, pembelian kit tidak bisa digunakan.", Map.of());
             return false;
         }
-        if (!purchaseManager.hasEnough(player, kit.getPrice())) {
-            send(player, "not-enough-money", "%prefix% &cUang kamu kurang. Butuh &f$%price%&c.", Map.of("%price%", formatPrice(kit.getPrice())));
+        if (!purchaseManager.hasEnough(player, price)) {
+            send(player, "not-enough-money", "%prefix% &cUang kamu kurang. Butuh &f$%price%&c.", Map.of("%price%", formatPrice(price)));
             return false;
         }
-        return purchaseManager.withdraw(player, kit.getPrice());
+        boolean charged = purchaseManager.withdraw(player, price);
+        if (charged) send(player, "kit-paid-claim", "%prefix% &aKamu membayar &f$%price% &auntuk claim kit &f%kit%&a.", Map.of("%price%", formatPrice(price), "%kit%", kit.getId()));
+        return charged;
     }
 
     private Map<String, String> getKitPlaceholders(Kit kit) { return getKitPlaceholders(kit, cooldownManager.formatTime(kit.getCooldownMillis())); }
@@ -262,7 +289,7 @@ public final class KitsManager {
                 "%kit_display%", getKitDisplayName(kit),
                 "%display_name%", getKitDisplayName(kit),
                 "%cooldown%", cooldown,
-                "%price%", formatPrice(kit.getPrice()),
+                "%price%", formatPrice(effectivePrice(kit)),
                 "%premium_level%", String.valueOf(kit.getPremiumLevel()),
                 "%premium_permission%", getPremiumPermission(kit)
         );
