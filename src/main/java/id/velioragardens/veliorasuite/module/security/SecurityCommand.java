@@ -5,8 +5,11 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -70,6 +73,7 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
     private boolean handleOreCommand(CommandSender sender, String[] args) {
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
             manager.sendOreHelp(sender);
+            sender.sendMessage("§7Tambahan: §f/vxray clear-log <no|all> §7hapus alert yang sudah dilihat.");
             return true;
         }
 
@@ -79,6 +83,10 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
             case "alerts" -> manager.sendOreAlerts(sender);
             case "suspects", "top" -> manager.sendOreSuspects(sender);
             case "allreport" -> manager.sendOreAllReport(sender);
+            case "clear-log", "clearlog", "clear" -> {
+                if (args.length < 2) sender.sendMessage("§8[§cVelioraOreWatch§8] §cGunakan §f/vxray clear-log <no|all>§c. Nomor mengikuti urutan §f/vxray alerts§c dari atas ke bawah.");
+                else clearOreAlert(sender, args[1]);
+            }
             case "check" -> {
                 if (args.length < 2) manager.sendOreHelp(sender);
                 else manager.sendOreCheck(sender, args[1]);
@@ -111,13 +119,71 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
+    private void clearOreAlert(CommandSender sender, String input) {
+        if (!manager.getConfigManager().hasAdmin(sender)) {
+            manager.sendNoPermission(sender);
+            return;
+        }
+        try {
+            Field field = SecurityManager.class.getDeclaredField("oreAlerts");
+            field.setAccessible(true);
+            List<Object> alerts = (List<Object>) field.get(manager);
+            if (input.equalsIgnoreCase("all")) {
+                int amount = alerts.size();
+                alerts.clear();
+                sender.sendMessage("§8[§cVelioraOreWatch§8] §aBerhasil menghapus §f" + amount + " §aalert yang sudah dilihat.");
+                return;
+            }
+            int number;
+            try {
+                number = Integer.parseInt(input);
+            } catch (NumberFormatException exception) {
+                sender.sendMessage("§8[§cVelioraOreWatch§8] §cNomor tidak valid. Contoh: §f/vxray clear-log 1§c.");
+                return;
+            }
+            List<Object> sorted = new ArrayList<>(alerts);
+            sorted.sort(Comparator.comparingInt(this::scoreOf).reversed());
+            if (number < 1 || number > sorted.size()) {
+                sender.sendMessage("§8[§cVelioraOreWatch§8] §cAlert nomor §f" + number + " §ctidak ada. Cek §f/vxray alerts§c dulu.");
+                return;
+            }
+            Object removed = sorted.get(number - 1);
+            alerts.remove(removed);
+            sender.sendMessage("§8[§cVelioraOreWatch§8] §aAlert nomor §f" + number + " §auntuk §f" + nameOf(removed) + " §asudah dihapus.");
+        } catch (Exception exception) {
+            sender.sendMessage("§8[§cVelioraOreWatch§8] §cGagal menghapus alert: §f" + exception.getMessage());
+        }
+    }
+
+    private int scoreOf(Object report) {
+        try {
+            Method method = report.getClass().getDeclaredMethod("score");
+            method.setAccessible(true);
+            return (int) method.invoke(report);
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    private String nameOf(Object report) {
+        try {
+            Method method = report.getClass().getDeclaredMethod("name");
+            method.setAccessible(true);
+            return String.valueOf(method.invoke(report));
+        } catch (Exception ignored) {
+            return "unknown";
+        }
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         String commandName = command.getName().toLowerCase(Locale.ROOT);
         if (commandName.equals("vxray") || alias.equalsIgnoreCase("vxray") || alias.equalsIgnoreCase("vorewatch") || alias.equalsIgnoreCase("orecheck")) {
-            if (args.length != 1) return new ArrayList<>();
             if (!manager.getConfigManager().hasAdmin(sender)) return new ArrayList<>();
-            return filter(new ArrayList<>(Arrays.asList("help", "status", "check", "logs", "suspects", "top", "alerts", "allreport", "reset", "exempt", "unexempt", "reload")), args[0]);
+            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "status", "check", "logs", "suspects", "top", "alerts", "allreport", "clear-log", "reset", "exempt", "unexempt", "reload")), args[0]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("clear-log")) return filter(new ArrayList<>(Arrays.asList("1", "2", "3", "all")), args[1]);
+            return new ArrayList<>();
         }
 
         if (args.length != 1) return new ArrayList<>();
