@@ -36,25 +36,87 @@ public final class BossRewardManager {
         List<BossDamageTracker.Entry> top = tracker.top();
         double totalDamage = top.stream().mapToDouble(BossDamageTracker.Entry::damage).sum();
         Bukkit.broadcastMessage(config.color(config.message("top-damage-header", "&cTop Damage Boss:")));
+        
+        // Display top 3 contributors
         for (int i = 0; i < Math.min(3, top.size()); i++) {
             BossDamageTracker.Entry entry = top.get(i);
             Player player = Bukkit.getPlayer(entry.uuid());
             String name = player == null ? entry.uuid().toString().substring(0, 8) : player.getName();
             Bukkit.broadcastMessage(config.color("&7" + (i + 1) + ". &f" + name + " &7- &c" + String.format("%.1f", entry.damage()) + " damage"));
         }
+        
+        // Distribute rewards based on damage contribution
         for (int i = 0; i < top.size(); i++) {
             BossDamageTracker.Entry entry = top.get(i);
             Player player = Bukkit.getPlayer(entry.uuid());
             if (!eligible(player, deathLocation, entry.damage(), totalDamage, definition.id())) continue;
-            long main = mainMoney(definition);
-            long bonus = i < 3 ? topBonus(i) : 0L;
-            long total = main + bonus;
-            if (config.moneyTotalCapEnabled()) total = Math.min(total, config.moneyTotalCapMax());
-            if (total > 0 && deposit(player, total)) player.sendMessage(config.color(config.message("reward-money-total", "%prefix% &aTotal reward uang boss kamu: &e%money%").replace("%money%", String.valueOf(total))));
+            
+            // Calculate reward based on damage contribution and rank
+            long reward = calculateDamageBasedReward(i, entry.damage(), totalDamage, definition);
+            
+            if (reward > 0 && deposit(player, reward)) {
+                player.sendMessage(config.color(config.message("reward-money-total", 
+                    "%prefix% &aTotal reward uang boss kamu: &e%money%")
+                    .replace("%money%", String.format("%,d", reward))));
+            }
+            
             giveBalancedItems(player, definition.rarity(), i);
             rewardCooldown.put(cooldownKey(player.getUniqueId(), definition.id()), System.currentTimeMillis());
-            player.sendMessage(config.color(config.message("reward-received", "%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.").replace("%damage%", String.format("%.1f", entry.damage()))));
+            player.sendMessage(config.color(config.message("reward-received", 
+                "%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.")
+                .replace("%damage%", String.format("%.1f", entry.damage())))));
         }
+    }
+
+    /**
+     * Calculate reward based on damage contribution
+     * Rank 1: max 20.000
+     * Rank 2: ~12.000
+     * Rank 3: ~8.000
+     * Rank 4-10: ~2.000-5.000
+     * Rest: small reward
+     */
+    private long calculateDamageBasedReward(int rankIndex, double damageDealt, double totalDamage, BossDefinition definition) {
+        if (totalDamage <= 0.0D) return 0L;
+        
+        double damagePercent = damageDealt / totalDamage * 100.0D;
+        
+        // Calculate base reward for this boss
+        long mainReward = mainMoney(definition);
+        
+        long reward;
+        
+        if (rankIndex == 0) {
+            // Top damager gets max 20.000 (or configured max)
+            reward = Math.min(20_000L, mainReward);
+        } else if (rankIndex == 1) {
+            // 2nd place gets ~60% of top reward
+            reward = Math.min(12_000L, (mainReward * 60) / 100);
+        } else if (rankIndex == 2) {
+            // 3rd place gets ~40% of top reward
+            reward = Math.min(8_000L, (mainReward * 40) / 100);
+        } else if (rankIndex <= 9) {
+            // Rank 4-10: scale based on damage percentage
+            // Map damage percent to 2.000-5.000 range
+            long minReward = 2_000L;
+            long maxReward = 5_000L;
+            long scaledReward = minReward + (long) ((damagePercent / 5.0D) * (maxReward - minReward));
+            reward = Math.min(maxReward, Math.max(minReward, scaledReward));
+        } else {
+            // Rank 11+: small reward (500-2000) only if damage percent > 0.5%
+            if (damagePercent > 0.5D) {
+                reward = Math.min(2_000L, Math.max(500L, (long) (damagePercent * 100)));
+            } else {
+                reward = 0L; // No reward for minimal damage
+            }
+        }
+        
+        // Apply cap if enabled
+        if (config.moneyTotalCapEnabled()) {
+            reward = Math.min(reward, config.moneyTotalCapMax());
+        }
+        
+        return Math.max(0L, reward);
     }
 
     private boolean eligible(Player player, Location deathLocation, double damage, double totalDamage, String bossId) {
@@ -77,11 +139,6 @@ public final class BossRewardManager {
     private long mainMoney(BossDefinition definition) {
         if (!config.bossMoneyEnabled(definition)) return 0L;
         return randomMoney(config.bossMoneyMin(definition), config.bossMoneyMax(definition));
-    }
-
-    private long topBonus(int rankIndex) {
-        if (!config.topDamageBonusEnabled()) return 0L;
-        return randomMoney(config.topBonusMin(rankIndex), config.topBonusMax(rankIndex));
     }
 
     private long randomMoney(long min, long max) {
