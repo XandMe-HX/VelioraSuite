@@ -108,13 +108,6 @@ public final class PlaytimeManager {
         return playerData == null ? 0L : playerData.lastSessionMillis;
     }
 
-    public String playerName(UUID uuid) {
-        Player online = Bukkit.getPlayer(uuid);
-        if (online != null) return online.getName();
-        PlaytimePlayerData playerData = players.get(uuid);
-        return playerData == null ? "Unknown" : playerData.name;
-    }
-
     public List<PlaytimeEntry> top(int limit) {
         cleanupExpiredPending();
         List<PlaytimeEntry> entries = new ArrayList<>();
@@ -148,8 +141,8 @@ public final class PlaytimeManager {
         PlaytimePlayerData playerData = players.computeIfAbsent(uuid, PlaytimePlayerData::new);
         playerData.name = player.getName();
         playerData.lastSeen = now;
-        long start = activeStart.remove(uuid) == null ? now : activeStart.remove(uuid);
-        playerData.pendingStart = start;
+        Long start = activeStart.remove(uuid);
+        playerData.pendingStart = start == null ? now : start;
         playerData.pendingDisconnectedAt = now;
     }
 
