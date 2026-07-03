@@ -8,6 +8,7 @@ import org.bukkit.entity.LivingEntity;
 import java.util.Locale;
 
 public final class PetScaleHelper {
+    private static final double MIN_VISIBLE_PET_SCALE = 0.65D;
     private final VelioraSuite plugin;
     private boolean warned;
 
@@ -17,7 +18,13 @@ public final class PetScaleHelper {
         Attribute attribute = attribute("SCALE", "GENERIC_SCALE");
         if (attribute == null || entity.getAttribute(attribute) == null) { warnOnce(); return; }
         AttributeInstance instance = entity.getAttribute(attribute);
-        instance.setBaseValue(scale);
+        instance.setBaseValue(normalizePetScale(scale));
+    }
+
+    private double normalizePetScale(double scale) {
+        if (scale <= 0.0D) return MIN_VISIBLE_PET_SCALE;
+        if (scale < MIN_VISIBLE_PET_SCALE) return MIN_VISIBLE_PET_SCALE;
+        return Math.min(2.5D, scale);
     }
 
     private Attribute attribute(String... names) {
