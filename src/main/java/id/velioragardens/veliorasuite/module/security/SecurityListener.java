@@ -9,6 +9,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public final class SecurityListener implements Listener {
 
@@ -25,7 +26,17 @@ public final class SecurityListener implements Listener {
             event.getPlayer().kickPlayer(manager.denyMessage(decision));
             return;
         }
+        String altKick = manager.checkAltJoin(event.getPlayer());
+        if (altKick != null && !altKick.isBlank()) {
+            event.getPlayer().kickPlayer(altKick);
+            return;
+        }
         manager.scheduleOreDigest(event.getPlayer(), 60L);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onQuit(PlayerQuitEvent event) {
+        manager.handleAltQuit(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -34,6 +45,10 @@ public final class SecurityListener implements Listener {
         if (decision.blocked()) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(manager.denyMessage(decision));
+            return;
+        }
+        if (manager.checkAltPay(event.getPlayer(), event.getMessage())) {
+            event.setCancelled(true);
             return;
         }
         String lower = event.getMessage().toLowerCase();
