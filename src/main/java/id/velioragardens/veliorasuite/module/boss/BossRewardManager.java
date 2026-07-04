@@ -33,20 +33,32 @@ public final class BossRewardManager {
     }
 
     public void distribute(BossDefinition definition, Location deathLocation, BossDamageTracker tracker) {
+        cleanupRewardCooldowns();
         List<BossDamageTracker.Entry> top = tracker.top();
         double totalDamage = top.stream().mapToDouble(BossDamageTracker.Entry::damage).sum();
         
         if (totalDamage <= 0.0D) return;
-        
-        // Display leaderboard with damage percentage
+
+        Map<UUID, Long> plannedRewards = new HashMap<>();
+        for (int i = 0; i < top.size(); i++) {
+            BossDamageTracker.Entry entry = top.get(i);
+            Player player = Bukkit.getPlayer(entry.uuid());
+            double damagePercent = (entry.damage() / totalDamage) * 100.0D;
+            long reward = eligible(player, deathLocation, entry.damage(), totalDamage, definition.id()) && damagePercent >= config.minDamageContributionPercent()
+                    ? calculateRankBasedReward(i, damagePercent)
+                    : 0L;
+            plannedRewards.put(entry.uuid(), reward);
+        }
+
         Bukkit.broadcastMessage(config.color("&8&m--------------------------------"));
         Bukkit.broadcastMessage(config.color("&c&lTop Damage"));
         for (int i = 0; i < Math.min(3, top.size()); i++) {
             BossDamageTracker.Entry entry = top.get(i);
-            OfflinePlayer player = Bukkit.getOfflinePlayer(entry.uuid());
-            String playerName = player.getName() == null ? entry.uuid().toString().substring(0, 8) : player.getName();
+            String playerName = offlineName(entry.uuid());
             double damagePercent = (entry.damage() / totalDamage) * 100.0D;
-            Bukkit.broadcastMessage(config.color("&7#" + (i + 1) + " &f" + playerName + " &8| &7Damage: &f" + String.format("%.0f", damagePercent) + "%"));
+            Bukkit.broadcastMessage(config.color("&7#" + (i + 1) + " &f" + playerName));
+            Bukkit.broadcastMessage(config.color("&f" + String.format("%.0f", damagePercent) + "%"));
+            Bukkit.broadcastMessage(config.color("&7Reward &e" + formatMoney(plannedRewards.getOrDefault(entry.uuid(), 0L))));
         }
         Bukkit.broadcastMessage(config.color("&8&m--------------------------------"));
         
@@ -58,13 +70,11 @@ public final class BossRewardManager {
             
             double damagePercent = (entry.damage() / totalDamage) * 100.0D;
             
-            // Require minimum 2% damage contribution
-            if (damagePercent < 2.0D) {
+            if (damagePercent < config.minDamageContributionPercent()) {
                 continue;
             }
             
-            // Calculate reward based on rank
-            long reward = calculateRankBasedReward(i);
+            long reward = plannedRewards.getOrDefault(entry.uuid(), 0L);
             
             if (reward > 0 && deposit(player, reward)) {
                 player.sendMessage(config.color(config.message("reward-money-total", 
@@ -76,39 +86,24 @@ public final class BossRewardManager {
             rewardCooldown.put(cooldownKey(player.getUniqueId(), definition.id()), System.currentTimeMillis());
             player.sendMessage(config.color(config.message("reward-received", 
                 "%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.")
-                .replace("%damage%", String.format("%.1f", entry.damage())))));
+                .replace("%damage%", String.format("%.1f", entry.damage()))));
         }
     }
 
     /**
-     * Calculate reward based on rank with random variation
-     * Rank 1: 10.000 - 20.000
-     * Rank 2: 5.000 - 8.000
-     * Rank 3: 3.000 - 5.000
-     * Rank 4-10: 1.000 - 2.500
-     * Rank 11+: 250 - 750
+     * Calculate reward based on rank with config-driven random variation.
+     * Defaults preserve the old hardcoded values to avoid accidental inflation.
      */
-    private long calculateRankBasedReward(int rankIndex) {
-        long min, max;
-        
-        if (rankIndex == 0) {
-            min = 10_000L;
-            max = 20_000L;
-        } else if (rankIndex == 1) {
-            min = 5_000L;
-            max = 8_000L;
-        } else if (rankIndex == 2) {
-            min = 3_000L;
-            max = 5_000L;
-        } else if (rankIndex <= 9) {
-            min = 1_000L;
-            max = 2_500L;
-        } else {
-            min = 250L;
-            max = 750L;
-        }
-        
-        return min + (long) Math.floor(random.nextDouble() * (max - min + 1));
+    private long calculateRankBasedReward(int rankIndex, double damagePercent) {
+        long min = config.rankMoneyMin(rankIndex);
+        long max = Math.max(min, config.rankMoneyMax(rankIndex));
+        long span = max - min;
+        long randomPart = (long) Math.floor(random.nextDouble() * (span * 0.85D + 1.0D));
+        long contributionPart = Math.round(span * Math.min(0.15D, Math.max(0.0D, damagePercent) / 100.0D * 0.15D));
+        long reward = Math.min(max, min + randomPart + contributionPart);
+        if (rankIndex == 0) reward = Math.min(reward, 20_000L);
+        if (config.moneyTotalCapEnabled()) reward = Math.min(reward, config.moneyTotalCapMax());
+        return reward;
     }
 
     private boolean eligible(Player player, Location deathLocation, double damage, double totalDamage, String bossId) {
@@ -126,6 +121,12 @@ public final class BossRewardManager {
 
     private String cooldownKey(UUID uuid, String bossId) { return uuid + ":" + bossId; }
 
+    private void cleanupRewardCooldowns() {
+        long ttl = Math.max(60_000L, config.rewardCooldownMillis());
+        long cutoff = System.currentTimeMillis() - ttl;
+        rewardCooldown.values().removeIf(lastRewardAt -> lastRewardAt < cutoff);
+    }
+
     private void giveBalancedItems(Player player, BossRarity rarity, int rankIndex) {
         // Removed Diamond and Netherite Scrap to prevent economy inflation
         give(player, Material.BREAD, rarity == BossRarity.COMMON ? 8 : 0);
@@ -136,6 +137,15 @@ public final class BossRewardManager {
     }
 
     private int randomRange(int min, int max) { return min + random.nextInt(Math.max(1, max - min + 1)); }
+
+    private String offlineName(UUID uuid) {
+        OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
+        return player.getName() == null ? uuid.toString().substring(0, 8) : player.getName();
+    }
+
+    private String formatMoney(long value) {
+        return String.format("%,d", value).replace(',', '.');
+    }
 
     private void give(Player player, Material material, int amount) {
         if (amount <= 0) return;
