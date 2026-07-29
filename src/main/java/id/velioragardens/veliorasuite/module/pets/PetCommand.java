@@ -41,7 +41,23 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
             case "info" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } manager.sendInfo(player, args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "active"); }
             case "summon" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } if (args.length < 2) { player.sendMessage(config.color(config.message("pet-summon-usage", "%prefix% &eGunakan: &f/pet summon <pet>"))); return true; } manager.summon(player, args[1].toLowerCase(Locale.ROOT)); }
             case "dismiss" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } manager.dismiss(player, true); }
-            case "storage" -> { if (!has(player, "veliorasuite.pets.storage")) { noPerm(player); return true; } manager.openStorage(player); }
+            case "storage" -> {
+                if (args.length == 1) {
+                    if (!has(player, "veliorasuite.pets.storage")) { noPerm(player); return true; }
+                    manager.openStorage(player);
+                    return true;
+                }
+                if (!has(player, "veliorasuite.pets.storage.others") && !has(player, "veliorasuite.pets.admin")) {
+                    noPerm(player);
+                    return true;
+                }
+                Player target = Bukkit.getPlayerExact(args[1]);
+                if (target == null) {
+                    player.sendMessage(config.color(config.prefix() + "&cPlayer tidak online."));
+                    return true;
+                }
+                manager.openStorageReadOnly(player, target);
+            }
             case "rename" -> { if (!has(player, "veliorasuite.pets.rename")) { noPerm(player); return true; } if (args.length < 3) { player.sendMessage("/pet rename <pet|active> <nama>"); return true; } manager.rename(player, args[1].toLowerCase(Locale.ROOT), join(args, 2)); }
             case "feed" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } handleFeed(player, args); }
             case "ride" -> { if (!has(player, "veliorasuite.pets.use")) { noPerm(player); return true; } return true; }
@@ -98,6 +114,15 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
         List<String> result = new ArrayList<>();
         if (args.length == 1) {
             for (String option : List.of("shop", "gacha", "list", "info", "summon", "dismiss", "storage", "rename", "feed", "ride", "reload", "give", "remove")) if (option.startsWith(args[0].toLowerCase(Locale.ROOT))) result.add(option);
+            return result;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("storage")) {
+            if (has(sender, "veliorasuite.pets.storage.others") || has(sender, "veliorasuite.pets.admin")) {
+                String lower = args[1].toLowerCase(Locale.ROOT);
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (player.getName().toLowerCase(Locale.ROOT).startsWith(lower)) result.add(player.getName());
+                }
+            }
             return result;
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("summon") || args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("feed") || args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("ride"))) {

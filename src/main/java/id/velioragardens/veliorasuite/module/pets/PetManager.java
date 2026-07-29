@@ -122,17 +122,13 @@ public final class PetManager implements Listener {
     public void openList(Player player) { guiManager.openList(player); }
 
     public void openStorage(Player player) {
-        VelioraPet active = activePets.get(player.getUniqueId());
-        PlayerPetData pdata = data.get(player.getUniqueId());
-        String petId = active != null ? active.petId() : pdata.lastPet();
-        if (petId == null || (!config.allowStorageWithoutActive() && active == null)) {
-            player.sendMessage(config.color(config.message("no-active-pet", "%prefix% &cTidak ada pet aktif.")));
-            return;
-        }
-        PetDefinition definition = config.pets().get(petId.toLowerCase(Locale.ROOT));
-        OwnedPet owned = pdata.get(petId);
-        if (definition == null || owned == null) return;
-        guiManager.openStorage(player, definition, owned);
+        returnStorageOverflow(player);
+        guiManager.openStorage(player, player.getUniqueId(), player.getName(), false);
+    }
+
+    public void openStorageReadOnly(Player viewer, Player owner) {
+        guiManager.openStorage(viewer, owner.getUniqueId(), owner.getName(), true);
+        viewer.sendMessage(config.color(config.prefix() + "&7Membuka shared pet storage milik &f" + owner.getName() + " &7(read-only)."));
     }
 
     public boolean buy(Player player, String petId) {
@@ -399,7 +395,25 @@ public final class PetManager implements Listener {
         if (owned.cooldownUntil() > System.currentTimeMillis()) player.sendMessage(config.color("&7Cooldown: &c" + timeLeft(owned.cooldownUntil())));
     }
 
-    public void saveStorage(Player player, String petId, Inventory inventory) { data.saveStorage(player.getUniqueId(), petId, inventory.getContents()); }
+    public void saveStorage(UUID ownerUuid, Inventory inventory) {
+        data.saveStorage(ownerUuid, inventory.getContents());
+    }
+
+    private void returnStorageOverflow(Player player) {
+        List<ItemStack> overflow = data.loadStorageOverflow(player.getUniqueId());
+        if (overflow.isEmpty()) return;
+
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(overflow.toArray(ItemStack[]::new));
+        data.saveStorageOverflow(player.getUniqueId(), new ArrayList<>(leftovers.values()));
+
+        int returnedStacks = overflow.size() - leftovers.size();
+        if (returnedStacks > 0) {
+            player.sendMessage(config.color(config.prefix() + "&a" + returnedStacks + " stack dari storage pet lama dikembalikan ke inventory kamu."));
+        }
+        if (!leftovers.isEmpty()) {
+            player.sendMessage(config.color(config.prefix() + "&eInventory kamu penuh. Sisa " + leftovers.size() + " stack masih tersimpan aman dan akan dicoba lagi saat /pet storage dibuka."));
+        }
+    }
 
     public void setTarget(Player player, LivingEntity target) {
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;

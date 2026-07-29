@@ -51,6 +51,7 @@ public final class PetsModule implements VelioraModule {
     @Override
     public void disable() {
         enabled = false;
+        if (guiManager != null) guiManager.saveAndCloseOpenStorages();
         if (quietTask != null) quietTask.cancel();
         if (coreControllerTask != null) coreControllerTask.cancel();
         quietTask = null;
