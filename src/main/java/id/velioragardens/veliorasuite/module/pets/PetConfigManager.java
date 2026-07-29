@@ -77,7 +77,7 @@ public final class PetConfigManager {
     public boolean allowAquaticPets() { return bool("settings.allow-aquatic-pets", false); }
     public boolean allowAxolotlGroundPet() { return bool("settings.allow-axolotl-ground-pet", true); }
     public boolean economyEnabled() { return bool("settings.economy.enabled", true); }
-    public long gachaPrice() { return 25_000L; }
+    public long gachaPrice() { return config == null ? 25_000L : Math.max(0L, config.getLong("settings.economy.gacha-price", 25_000L)); }
     public int maxLevel() { return Math.max(1, integer("settings.max-level", 50)); }
     public int duplicateExp() { return Math.max(0, integer("settings.duplicate-exp", 50)); }
     public int maxFeedAmount() { return Math.max(1, integer("feeding.max-feed-amount", 64)); }
@@ -87,7 +87,7 @@ public final class PetConfigManager {
     public boolean usePathfinderFollow() { return bool("settings.follow.use-pathfinder", true); }
     public boolean allowFlyingPets() { return false; }
     public boolean flyingSafeMode() { return true; }
-    public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", false); }
+    public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", true); }
     public int storageSize(PetRarity rarity) { return PetDataManager.SHARED_STORAGE_SIZE; }
 
     public boolean ridingEnabled() { return bool("riding.enabled", true); }
@@ -235,7 +235,7 @@ public final class PetConfigManager {
     private double maxSkillBonus(PetSkillType type) { return switch (type) { case QUEST_MONEY -> 0.03D; case FISHING_LUCK -> 0.02D; case PET_DAMAGE -> 0.05D; default -> 0.0D; }; }
     private double defaultChance(PetRarity rarity) { return switch (rarity) { case COMMON -> 65.0D; case RARE -> 25.0D; case EPIC -> 8.0D; case LEGENDARY -> 2.0D; case MYTHIC -> 0.0D; }; }
     private long defaultPrice(PetRarity rarity) { return switch (rarity) { case COMMON -> 25_000L; case RARE -> 50_000L; case EPIC -> 100_000L; case LEGENDARY -> 175_000L; case MYTHIC -> 250_000L; }; }
-    private long balancedPrice(PetRarity rarity, long configured) { long target = defaultPrice(rarity); return Math.max(25_000L, Math.min(250_000L, target)); }
+    private long balancedPrice(PetRarity rarity, long configured) { return Math.max(0L, configured); }
     private double defaultDamage(PetRarity rarity) { return 0.0D; }
     private int defaultFeedExp(PetRarity rarity) { return switch (rarity) { case COMMON -> 20; case RARE -> 25; case EPIC -> 35; case LEGENDARY -> 45; case MYTHIC -> 60; }; }
     private Material defaultFood(PetRarity rarity) { return switch (rarity) { case COMMON -> Material.APPLE; case RARE -> Material.COOKED_CHICKEN; case EPIC -> Material.GOLDEN_CARROT; case LEGENDARY -> Material.GOLDEN_APPLE; case MYTHIC -> Material.ENCHANTED_GOLDEN_APPLE; }; }

@@ -1,0 +1,147 @@
+settings:
+  enabled: true
+  prefix: '&8[&aVelioraQuest&8] '
+  # Quest wajib dipilih dulu dan memakai Mana dari VelioraSkills.
+  require-skills-mana: true
+  debug-mana: false
+  gui:
+    enabled: true
+    title: '&8Veliora Quest'
+    size: 54
+  bossbar:
+    enabled: true
+    title: '&f%quest% &7- &a%progress%&7/&a%target% &8(&e%percent%%&8)'
+    color: GREEN
+    style: SEGMENTED_10
+    hide-when-complete: true
+    # Supaya bossbar quest tidak nyangkut terus di layar.
+    # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
+    auto-hide-seconds: 8
+  progression:
+    # Mode manual: player harus pilih quest dulu lewat /quests atau /quests start <category>.
+    # Mining/kill/farming/fishing tidak akan mengganti quest sendiri.
+    # Setelah quest selesai, player harus pilih lagi untuk lanjut level berikutnya dan bayar Mana lagi.
+    completions-per-level: 1
+    max-level: 100
+    auto-start-on-progress: false
+    auto-restart-after-claim: false
+  rewards:
+    # Anti-inflasi: reward uang naik pelan dan tetap ada batas maksimal.
+    give-mana-on-complete: false
+    mana-reward: 0
+    base-money: 1000
+    money-increase-per-level: 125
+    max-money: 17500
+  starter:
+    enabled: true
+    reminder-enabled: true
+    reminder-interval-seconds: 900
+    claim-land-commands: ['/claim', '/lands claim', '/land claim', '/claimland']
+    set-home-commands: ['/sethome', '/home set']
+    starter-kit-commands: ['/kits claim starter', '/kit starter', '/kits starter']
+
+categories:
+  woodcutting:
+    enabled: true
+    display-name: '&dWeekly / Special'
+    icon: NETHER_STAR
+    base-target: 192
+    target-increase-per-level: 110
+    materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
+  mining:
+    enabled: true
+    display-name: '&7Mining'
+    icon: IRON_PICKAXE
+    base-target: 128
+    target-increase-per-level: 80
+    materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE, ANCIENT_DEBRIS]
+  farmer:
+    enabled: true
+    display-name: '&eFarming'
+    icon: WHEAT
+    base-target: 96
+    target-increase-per-level: 58
+    harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, SUGAR_CANE, MELON, PUMPKIN, COCOA, NETHER_WART]
+    plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
+    count-hoe-farmland: true
+  chef:
+    enabled: true
+    display-name: '&bDaily'
+    icon: CLOCK
+    base-target: 32
+    target-increase-per-level: 20
+    cooked-items: [COOKED_BEEF, COOKED_CHICKEN, COOKED_MUTTON, COOKED_PORKCHOP, COOKED_COD, COOKED_SALMON, BAKED_POTATO, DRIED_KELP]
+  monster_hunter:
+    enabled: true
+    display-name: '&cMonster Hunter'
+    icon: IRON_SWORD
+    base-target: 28
+    target-increase-per-level: 14
+    entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER, VINDICATOR, EVOKER, RAVAGER, BREEZE, BOGGED]
+  animal_hunter:
+    enabled: true
+    display-name: '&fAnimal'
+    icon: COOKED_CHICKEN
+    base-target: 28
+    target-increase-per-level: 13
+    entities: [COW, SHEEP, CHICKEN, PIG, RABBIT, COD, SALMON, PUFFERFISH, TROPICAL_FISH]
+  fishing:
+    enabled: true
+    display-name: '&bFishing'
+    icon: FISHING_ROD
+    base-target: 20
+    target-increase-per-level: 12
+
+permissions:
+  use: 'veliorasuite.quest.use'
+  admin: 'veliorasuite.quest.admin'
+  reload: 'veliorasuite.quest.reload'
+  bypass-mana: 'veliorasuite.quest.bypassmana'
+  reset: 'veliorasuite.quest.reset'
+
+messages:
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  reload-success: '%prefix% &aVelioraQuest berhasil direload.'
+  quest-started: '%prefix% &aQuest &f%quest% &adimulai. Mana terpakai: &f%mana_cost%&a. Selesaikan targetnya dulu.'
+  quest-progress: '%prefix% &eProgress &f%quest%&e: &f%progress%&7/&f%target%&e.'
+  quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.'
+  quest-auto-completed: '%prefix% &aQuest &f%quest% &aselesai. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Pilih quest lagi untuk lanjut dan memakai Mana lagi.'
+  quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money%&a. Pilih quest lagi untuk lanjut level berikutnya.'
+  quest-level-up: '%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.'
+  quest-auto-restarted: '%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.'
+  quest-max-level: '%prefix% &6Quest &f%quest% &6sudah mencapai level maksimal &f100&6.'
+  quest-not-active: '%prefix% &cQuest ini belum aktif. Pilih dulu lewat &f/quests&c atau &f/quests start <category>&c.'
+  quest-already-active: '%prefix% &cQuest ini sedang aktif.'
+  quest-not-ready: '%prefix% &cQuest ini belum selesai.'
+  quest-disabled: '%prefix% &cQuest ini sedang dinonaktifkan.'
+  mana-not-enough: '%prefix% &cMana kamu tidak cukup. Butuh &f%mana_cost% &cMana untuk mulai quest ini.'
+  skills-not-found: '%prefix% &cMana system belum aktif. Aktifkan module VelioraSkills dulu.'
+  vault-not-found: '%prefix% &eVault economy belum aktif, reward money dilewati.'
+  quest-cancelled: '%prefix% &eQuest &f%quest% &edibatalkan. Mana yang sudah dipakai tidak dikembalikan.'
+  starter-reminder:
+    - '&8&m--------------------------------'
+    - '&a&lStarter Quest'
+    - '&7Selesaikan tugas awal supaya progres awalmu aman:'
+    - '&fClaim Land: &e%claim_land% &7- Tutorial ada di TikTok &f@velioragardensofficial'
+    - '&fSet Home: &e%set_home% &7- Gunakan &f/sethome &7di base kamu.'
+    - '&fAmbil Kit Starter: &e%starter_kit% &7- Gunakan &f/kits starter'
+    - '&8&m--------------------------------'
+  help:
+    - '&8&m--------------------------------'
+    - '&a&lVelioraQuest'
+    - '&f/quests &7- Buka GUI quest dan pilih quest.'
+    - '&f/quests progress &7- Cek progress quest aktif.'
+    - '&f/quests start <category> &7- Mulai quest manual dan memakai Mana.'
+    - '&f/quests claim <category> &7- Claim manual untuk data lama yang stuck.'
+    - '&f/quests cancel <category> &7- Batalkan quest.'
+    - '&8&m--------------------------------'
+  status:
+    - '&8&m--------------------------------'
+    - '&a&lVelioraQuest Status'
+    - '&7Enabled: &f%enabled%'
+    - '&7Skills Mana: &f%skills_mana%'
+    - '&7Vault: &f%vault%'
+    - '&7Categories: &f%categories%'
+    - '&7Players Data: &f%players%'
+    - '&8&m--------------------------------'

@@ -1,0 +1,193 @@
+package id.velioragardens.veliorasuite.module.quest;
+
+import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.EntityType;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+public final class QuestConfigManager {
+
+    private final VelioraSuite plugin;
+    private FileConfiguration config;
+
+    public QuestConfigManager(VelioraSuite plugin) {
+        this.plugin = plugin;
+    }
+
+    public void load() {
+        plugin.saveResourceIfNotExists("modules/quest.yml");
+        File file = new File(plugin.getDataFolder(), "modules/quest.yml");
+        this.config = YamlConfiguration.loadConfiguration(file);
+    }
+
+    public boolean isEnabled() { return bool("settings.enabled", true); }
+    public String getPrefix() { return str("settings.prefix", "&8[&aVelioraQuest&8] "); }
+    public boolean isRequireSkillsMana() { return bool("settings.require-skills-mana", true); }
+    public boolean isDebugMana() { return bool("settings.debug-mana", false); }
+    public boolean isGuiEnabled() { return bool("settings.gui.enabled", true); }
+    public String getGuiTitle() { return str("settings.gui.title", "&8Veliora Quest"); }
+    public int getGuiSize() { int size = integer("settings.gui.size", 54); return size <= 0 ? 54 : Math.min(54, ((size + 8) / 9) * 9); }
+    public boolean isBossBarEnabled() { return bool("settings.bossbar.enabled", true); }
+    public String getBossBarTitle() { return str("settings.bossbar.title", "&f%quest% &7- &a%progress%&7/&a%target% &8(&e%percent%%&8)"); }
+    public BarColor getBossBarColor() { return bossBarColor(str("settings.bossbar.color", "GREEN")); }
+    public BarStyle getBossBarStyle() { return bossBarStyle(str("settings.bossbar.style", "SEGMENTED_10")); }
+    public boolean isBossBarHideWhenComplete() { return bool("settings.bossbar.hide-when-complete", true); }
+    public int getBossBarAutoHideSeconds() { return Math.max(0, integer("settings.bossbar.auto-hide-seconds", 8)); }
+    public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 1)); }
+    public int getMaxLevel() { return Math.max(1, integer("settings.progression.max-level", 100)); }
+    public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", false); }
+    public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", false); }
+    public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", false); }
+    public int getManaReward() { return Math.max(0, integer("settings.rewards.mana-reward", 0)); }
+    public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 1000)); }
+    public int getMoneyIncreasePerLevel() { return Math.max(0, integer("settings.rewards.money-increase-per-level", integer("settings.rewards.money-increase-per-tier", 150))); }
+    public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }
+    public boolean isStarterEnabled() { return bool("settings.starter.enabled", true); }
+    public boolean isStarterReminderEnabled() { return bool("settings.starter.reminder-enabled", true); }
+    public int getStarterReminderIntervalSeconds() { return Math.max(900, integer("settings.starter.reminder-interval-seconds", 900)); }
+    public List<String> getClaimLandCommands() { return commandList("settings.starter.claim-land-commands", List.of("/claim", "/lands claim", "/land claim", "/claimland")); }
+    public List<String> getSetHomeCommands() { return commandList("settings.starter.set-home-commands", List.of("/sethome", "/home set")); }
+    public List<String> getStarterKitCommands() { return commandList("settings.starter.starter-kit-commands", List.of("/kits claim starter", "/kit starter", "/kits starter")); }
+
+    public boolean isCategoryEnabled(QuestCategory category) { return bool("categories." + category.key() + ".enabled", true); }
+    public String getCategoryDisplayName(QuestCategory category) { return str("categories." + category.key() + ".display-name", fallbackDisplayName(category)); }
+    public Material getCategoryIcon(QuestCategory category) { return material(str("categories." + category.key() + ".icon", fallbackIcon(category).name()), fallbackIcon(category)); }
+    public int getBaseTarget(QuestCategory category) { return Math.max(1, integer("categories." + category.key() + ".base-target", fallbackBaseTarget(category))); }
+    public int getTargetIncreasePerLevel(QuestCategory category) { return Math.max(0, integer("categories." + category.key() + ".target-increase-per-level", fallbackTargetIncrease(category))); }
+
+    public int calculateTarget(QuestCategory category, int level) {
+        int cappedLevel = Math.max(1, Math.min(level, getMaxLevel()));
+        double levelIndex = cappedLevel - 1.0D;
+        double hardMultiplier = 1.0D + (levelIndex * 0.28D) + (Math.pow(levelIndex / 10.0D, 2.0D) * 0.65D);
+        long target = Math.round((getBaseTarget(category) * hardMultiplier) + (levelIndex * getTargetIncreasePerLevel(category)));
+        return (int) Math.max(1L, Math.min(200000L, target));
+    }
+
+    public int calculateRewardMoney(int level) {
+        int cappedLevel = Math.max(1, Math.min(level, getMaxLevel()));
+        long reward = Math.round(getBaseMoney()
+                + ((cappedLevel - 1L) * (long) getMoneyIncreasePerLevel())
+                + (Math.sqrt(cappedLevel) * 350.0D));
+        return (int) Math.max(0L, Math.min(getMaxMoneyReward(), reward));
+    }
+
+    public boolean isCountHoeFarmland() { return bool("categories.farmer.count-hoe-farmland", true); }
+
+    public Set<Material> getMaterials(QuestCategory category, String node) {
+        List<String> names = config == null ? List.of() : config.getStringList("categories." + category.key() + "." + node);
+        if (names.isEmpty()) names = fallbackMaterials(category, node);
+        Set<Material> result = new LinkedHashSet<>();
+        for (String name : names) {
+            Material material = material(name, null);
+            if (material != null) result.add(material);
+        }
+        return result;
+    }
+
+    public Set<EntityType> getEntities(QuestCategory category) {
+        List<String> names = config == null ? List.of() : config.getStringList("categories." + category.key() + ".entities");
+        if (names.isEmpty()) names = fallbackEntities(category);
+        Set<EntityType> result = new LinkedHashSet<>();
+        for (String name : names) {
+            try { result.add(EntityType.valueOf(name.trim().toUpperCase(Locale.ROOT))); } catch (Exception ignored) { }
+        }
+        return result;
+    }
+
+    public String getUsePermission() { return str("permissions.use", "veliorasuite.quest.use"); }
+    public String getAdminPermission() { return str("permissions.admin", "veliorasuite.quest.admin"); }
+    public String getReloadPermission() { return str("permissions.reload", "veliorasuite.quest.reload"); }
+    public String getBypassManaPermission() { return str("permissions.bypass-mana", "veliorasuite.quest.bypassmana"); }
+    public String getResetPermission() { return str("permissions.reset", "veliorasuite.quest.reset"); }
+    public boolean hasUse(CommandSender sender) { return sender.hasPermission(getUsePermission()) || hasAdmin(sender); }
+    public boolean hasAdmin(CommandSender sender) { return sender.hasPermission(getAdminPermission()) || sender.isOp(); }
+    public boolean hasReload(CommandSender sender) { return sender.hasPermission(getReloadPermission()) || hasAdmin(sender); }
+    public boolean hasBypassMana(CommandSender sender) { return sender.hasPermission(getBypassManaPermission()) || hasAdmin(sender); }
+    public boolean hasReset(CommandSender sender) { return sender.hasPermission(getResetPermission()) || hasAdmin(sender); }
+
+    public String message(String path, String fallback) { return str("messages." + path, fallback).replace("%prefix%", getPrefix()); }
+    public List<String> messageList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList("messages." + path); return list.isEmpty() ? fallback : list; }
+    public String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }
+
+    private Material material(String name, Material fallback) { Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
+    private List<String> commandList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList(path); return list.isEmpty() ? fallback : list; }
+    private String str(String path, String fallback) { return config == null || !config.contains(path) ? fallback : config.getString(path, fallback); }
+    private boolean bool(String path, boolean fallback) { return config == null || !config.contains(path) ? fallback : config.getBoolean(path, fallback); }
+    private int integer(String path, int fallback) { return config == null || !config.contains(path) ? fallback : config.getInt(path, fallback); }
+    private BarColor bossBarColor(String value) { try { return BarColor.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return BarColor.GREEN; } }
+    private BarStyle bossBarStyle(String value) { try { return BarStyle.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return BarStyle.SEGMENTED_10; } }
+
+    private String fallbackDisplayName(QuestCategory category) {
+        return switch (category) {
+            case WOODCUTTING -> "&aWoodcutting";
+            case MINING -> "&7Mining";
+            case FARMER -> "&eFarmer";
+            case CHEF -> "&6Chef";
+            case MONSTER_HUNTER -> "&cMonster Hunter";
+            case ANIMAL_HUNTER -> "&fAnimal Hunter";
+            case FISHING -> "&bFishing";
+        };
+    }
+
+    private Material fallbackIcon(QuestCategory category) {
+        return switch (category) {
+            case WOODCUTTING -> Material.OAK_LOG;
+            case MINING -> Material.IRON_PICKAXE;
+            case FARMER -> Material.WHEAT;
+            case CHEF -> Material.COOKED_BEEF;
+            case MONSTER_HUNTER -> Material.IRON_SWORD;
+            case ANIMAL_HUNTER -> Material.COOKED_CHICKEN;
+            case FISHING -> Material.FISHING_ROD;
+        };
+    }
+
+    private int fallbackBaseTarget(QuestCategory category) {
+        return switch (category) {
+            case WOODCUTTING -> 192;
+            case MINING -> 96;
+            case FARMER -> 96;
+            case CHEF -> 32;
+            case MONSTER_HUNTER, ANIMAL_HUNTER -> 25;
+            case FISHING -> 20;
+        };
+    }
+
+    private int fallbackTargetIncrease(QuestCategory category) {
+        return switch (category) {
+            case WOODCUTTING -> 96;
+            case MINING -> 64;
+            case FARMER -> 48;
+            case CHEF -> 18;
+            case MONSTER_HUNTER, ANIMAL_HUNTER -> 12;
+            case FISHING -> 10;
+        };
+    }
+
+    private List<String> fallbackMaterials(QuestCategory category, String node) {
+        if (category == QuestCategory.WOODCUTTING) return List.of("OAK_LOG", "SPRUCE_LOG", "BIRCH_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG", "MANGROVE_LOG", "CHERRY_LOG", "STRIPPED_OAK_LOG", "STRIPPED_SPRUCE_LOG", "STRIPPED_BIRCH_LOG", "STRIPPED_JUNGLE_LOG", "STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG", "STRIPPED_MANGROVE_LOG", "STRIPPED_CHERRY_LOG");
+        if (category == QuestCategory.MINING) return List.of("STONE", "COBBLESTONE", "DEEPSLATE", "COAL_ORE", "DEEPSLATE_COAL_ORE", "COPPER_ORE", "DEEPSLATE_COPPER_ORE", "IRON_ORE", "DEEPSLATE_IRON_ORE", "GOLD_ORE", "DEEPSLATE_GOLD_ORE", "REDSTONE_ORE", "DEEPSLATE_REDSTONE_ORE", "LAPIS_ORE", "DEEPSLATE_LAPIS_ORE", "DIAMOND_ORE", "DEEPSLATE_DIAMOND_ORE", "EMERALD_ORE", "DEEPSLATE_EMERALD_ORE", "ANCIENT_DEBRIS");
+        if (category == QuestCategory.FARMER && node.equals("plant-materials")) return List.of("WHEAT_SEEDS", "CARROT", "POTATO", "BEETROOT_SEEDS", "SUGAR_CANE", "MELON_SEEDS", "PUMPKIN_SEEDS", "COCOA_BEANS", "NETHER_WART");
+        if (category == QuestCategory.FARMER) return List.of("WHEAT", "CARROTS", "POTATOES", "BEETROOTS", "SUGAR_CANE", "MELON", "PUMPKIN", "COCOA", "NETHER_WART");
+        if (category == QuestCategory.CHEF) return List.of("COOKED_BEEF", "COOKED_CHICKEN", "COOKED_MUTTON", "COOKED_PORKCHOP", "COOKED_COD", "COOKED_SALMON", "BAKED_POTATO", "DRIED_KELP");
+        return new ArrayList<>();
+    }
+
+    private List<String> fallbackEntities(QuestCategory category) {
+        if (category == QuestCategory.MONSTER_HUNTER) return List.of("ZOMBIE", "SKELETON", "SPIDER", "CREEPER", "ENDERMAN", "WITCH", "DROWNED", "HUSK", "STRAY", "SLIME", "PHANTOM", "PILLAGER", "VINDICATOR", "EVOKER", "RAVAGER", "BREEZE", "BOGGED");
+        if (category == QuestCategory.ANIMAL_HUNTER) return List.of("COW", "SHEEP", "CHICKEN", "PIG", "RABBIT", "COD", "SALMON", "PUFFERFISH", "TROPICAL_FISH");
+        return List.of();
+    }
+}
