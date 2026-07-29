@@ -61,6 +61,7 @@ sections:
           - '&8- &fKembali spawn: &b/spawn'
           - '&8- &fCari tempat survival: &b/rtp'
           - '&8- &fBuka toko server: &b/shop'
+          - '&8- &fBuka skill FTB: &b/velioraftb &7atau &b/ftb'
           - '&8- &fLihat skill: &b/skills &7atau &b/sk'
           - '&8- &fLihat halaman lain: &b/vguide <page>'
       2:
@@ -86,16 +87,18 @@ sections:
           - '&8- &b/baltop &7- top saldo.'
           - '&8- &b/pay <nama> <jumlah> &7- kirim uang.'
       4:
-        title: '&6&lSkill dan Fishing'
+        title: '&6&lSkill, FTB, dan Fishing'
         lines:
-          - '&6&lSkill dan Fishing'
+          - '&6&lSkill, FTB, dan Fishing'
           - '&8&m--------------------------------'
           - '&8- &b/skills &7- buka menu skill.'
           - '&8- &b/sk &7- alias menu skill.'
-          - '&8- &7Naikkan skill dengan aktivitas survival.'
-          - '&8- &7Fishing tetap memakai mekanik vanilla.'
-          - '&8- &7Ikuti event fishing jika tersedia.'
-          - '&8- &7Reward dibuat aman untuk ekonomi server.'
+          - '&8- &b/velioraftb &7- buka menu skill FTB.'
+          - '&8- &b/ftb &7- alias cepat VelioraFTB.'
+          - '&8- &7Farmer: panen crop dan tanam ulang.'
+          - '&8- &7Tree Feller: tebang satu pohon rapi.'
+          - '&8- &7Vein Miner: tambang ore tersambung.'
+          - '&8- &7Gunakan Shift saat fitur FTB aktif.'
       5:
         title: '&6&lClaim dan Skin'
         lines:
@@ -129,6 +132,7 @@ sections:
           - '&8- &b/pay <nama> <jumlah> &7- kirim uang.'
           - '&8- &b/sell &7- jual item.'
           - '&8- &b/skills &7- buka skill.'
+          - '&8- &b/ftb &7- buka Farmer, Tree Feller, Vein Miner.'
 
   rules:
     display-name: 'Rules Server'
