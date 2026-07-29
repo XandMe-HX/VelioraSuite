@@ -79,14 +79,14 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&8&m--------------------------------"));
         sender.sendMessage(color("&a&lVelioraSuite Modules"));
 
-        if (!plugin.getConfig().isConfigurationSection("modules")) {
-            sender.sendMessage(color("&7Belum ada section modules di config.yml."));
+        if (plugin.getConfigManager().getConfiguredModuleNames().isEmpty()) {
+            sender.sendMessage(color("&7Belum ada section modules di modules.yml."));
             sender.sendMessage(color("&8&m--------------------------------"));
             return;
         }
 
-        for (String moduleName : plugin.getConfig().getConfigurationSection("modules").getKeys(false)) {
-            boolean enabled = plugin.getConfig().getBoolean("modules." + moduleName, false);
+        for (String moduleName : plugin.getConfigManager().getConfiguredModuleNames()) {
+            boolean enabled = plugin.getConfigManager().isModuleEnabled(moduleName);
             String status = enabled ? "&aON" : "&cOFF";
 
             sender.sendMessage(color("&7- &f" + moduleName + " &8: " + status));
