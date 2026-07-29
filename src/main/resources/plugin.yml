@@ -1,0 +1,228 @@
+name: VelioraSuite
+version: 1.2.0
+main: id.velioragardens.veliorasuite.VelioraSuite
+api-version: '1.21'
+author: XandMe
+description: Clean modular plugin suite for Veliora Gardens.
+
+softdepend:
+  - Vault
+  - PlaceholderAPI
+  - LuckPerms
+  - Essentials
+  - EconomyShopGUI
+  - RedProtect
+  - SkinsRestorer
+  - GSit
+  - Geyser-Spigot
+  - floodgate
+
+commands:
+  veliorasuite:
+    description: Main command for VelioraSuite.
+    usage: /veliorasuite
+    aliases: [vsuite, vs]
+    permission: veliorasuite.admin
+  velioraguide:
+    description: Open Veliora guide pages.
+    usage: /velioraguide [page|reload]
+    aliases: [vguide, vpanduan, panduan]
+    permission: veliorasuite.guide.use
+  cmdadmin:
+    description: Open Veliora admin command guide.
+    usage: /cmdadmin [page]
+    aliases: [admincmd, vadmincmd]
+    permission: veliorasuite.guide.admin
+  veliorarules:
+    description: Open Veliora rules pages.
+    usage: /veliorarules [page]
+    aliases: [vrules, rules]
+    permission: veliorasuite.guide.use
+  velioraproduct:
+    description: Open Veliora product pages.
+    usage: /velioraproduct [page]
+    aliases: [vproduct, vporduct, produk, product]
+    permission: veliorasuite.guide.use
+  veliorarank:
+    description: Open Veliora rank guide.
+    usage: /veliorarank [page]
+    aliases: [vrank, rank]
+    permission: veliorasuite.guide.use
+  velioraannouncement:
+    description: Manage Veliora announcements.
+    usage: /velioraannouncement <help|status|list|reload|send>
+    aliases: [vannounce, vann, va]
+  kits:
+    description: Open Veliora kits.
+    usage: /kits <help|open|list|claim|preview|buy|cooldown|reload>
+    aliases: [veliorakits, vkits]
+  report:
+    description: Create a VelioraReport report.
+    usage: /report <player|bug> <reason>
+    aliases: [vreport]
+  reports:
+    description: Manage VelioraReport reports.
+    usage: /reports <list|view|close|reopen|reload>
+    aliases: [vreports]
+  team:
+    description: Manage VelioraTeam.
+    usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|delete|info|reload>
+  veliorachat:
+    description: Manage VelioraChat.
+    usage: /veliorachat <help|status|reload>
+    aliases: [vchat, vc]
+  playtime:
+    description: Show Veliora session time.
+    usage: /playtime <me|top|reload>
+    aliases: [vplaytime]
+    permission: veliorasuite.playtime.use
+  vsecurity:
+    description: Manage VelioraSecurity.
+    usage: /vsecurity <help|status|alerts|reload|alt>
+    aliases: [vsec, security, vxray, vorewatch, orecheck, valt, valts, altguard]
+    permission: veliorasuite.security.admin
+  vskills:
+    description: Manage VelioraSkills.
+    usage: /vskills <help|status|reload|mana>
+    aliases: [vski, vmana]
+    permission: veliorasuite.skills.use
+  quests:
+    description: Open and manage VelioraQuest.
+    usage: /quests <gui|progress|start|claim|cancel|reload|status>
+    aliases: [q, vquest]
+    permission: veliorasuite.quest.use
+  fish:
+    description: Open and manage VelioraFishing.
+    usage: /fish <help|bag|sell|collection|top|reload>
+    aliases:
+      - vfish
+      - vfishing
+    permission: veliorasuite.fishing.use
+  trader:
+    description: Show VelioraTrader status.
+    usage: /trader [spawn|riset|reload]
+    aliases:
+      - vtrader
+      - vtrade
+    permission: veliorasuite.trader.use
+  boss:
+    description: Manage VelioraBoss.
+    usage: /boss <set|spawn|stop|reload|list|info|top>
+    aliases:
+      - vboss
+    permission: veliorasuite.boss.use
+  pet:
+    description: Open and manage VelioraPets.
+    usage: /pet <shop|gacha|list|info|debug|summon|dismiss|storage|rename|feed|ride|reload|give|remove>
+    aliases:
+      - pets
+      - vpet
+      - vpets
+    permission: veliorasuite.pets.use
+  register:
+    description: Register Veliora account.
+    usage: /register <key> <key confirm>
+    aliases: [reg]
+    permission: veliorasuite.loginsecurity.use
+  login:
+    description: Login Veliora account.
+    usage: /login <key>
+    aliases: [l]
+    permission: veliorasuite.loginsecurity.use
+  changepass:
+    description: Change Veliora account key.
+    usage: /changepass <old> <new>
+    aliases: [changepassword]
+    permission: veliorasuite.loginsecurity.use
+  unregister:
+    description: Unregister Veliora account.
+    usage: /unregister <key>
+    permission: veliorasuite.loginsecurity.use
+  logout:
+    description: Logout Veliora account.
+    usage: /logout
+    permission: veliorasuite.loginsecurity.use
+  risetpw:
+    description: Owner account reset command.
+    usage: /risetpw <playername>
+    aliases: [resetpw]
+  cpowner:
+    description: Owner account change command.
+    usage: /cpowner <playername> <new>
+  loginsecurity:
+    description: Manage VelioraLoginSecurity.
+    usage: /loginsecurity <help|reload|status>
+    aliases: [vlogsec, vlogin]
+    permission: veliorasuite.loginsecurity.admin
+
+permissions:
+  veliorasuite.admin:
+    default: op
+  veliorasuite.bypass:
+    default: op
+  veliorasuite.guide.use:
+    default: true
+  veliorasuite.guide.admin:
+    default: op
+  veliorasuite.announcement.admin:
+    default: op
+  veliorasuite.announcement.reload:
+    default: op
+  veliorasuite.announcement.send:
+    default: op
+  veliorasuite.announcement.status:
+    default: op
+  veliorasuite.kits.use:
+    default: true
+  veliorasuite.kits.admin:
+    default: op
+  veliorasuite.kits.reload:
+    default: op
+  veliorasuite.kits.bypasscooldown:
+    default: op
+  veliorasuite.kits.bypassprice:
+    default: op
+  veliorasuite.kits.premium.1:
+    default: false
+  veliorasuite.kits.premium.2:
+    default: false
+  veliorasuite.kits.premium.3:
+    default: false
+  veliorasuite.kits.premium.4:
+    default: false
+  veliorasuite.kits.premium.5:
+    default: false
+  veliorasuite.playtime.use:
+    default: true
+  veliorasuite.playtime.top:
+    default: true
+  veliorasuite.playtime.reload:
+    default: op
+  veliorasuite.security.admin:
+    default: op
+  veliorasuite.security.alerts:
+    default: op
+  veliorasuite.security.reload:
+    default: op
+  veliorasuite.security.bypass:
+    default: op
+  veliorasuite.pets.use:
+    default: true
+  veliorasuite.pets.shop:
+    default: true
+  veliorasuite.pets.gacha:
+    default: true
+  veliorasuite.pets.storage:
+    default: true
+  veliorasuite.pets.storage.others:
+    default: op
+  veliorasuite.pets.rename:
+    default: true
+  veliorasuite.pets.reload:
+    default: op
+  veliorasuite.pets.give:
+    default: op
+  veliorasuite.pets.remove:
+    default: op
+  veliorasuite.pets.admin:
+    default: op

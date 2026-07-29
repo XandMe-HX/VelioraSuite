@@ -41,8 +41,13 @@ public final class ModuleManager {
             try {
                 module.load();
                 module.enable();
-                activeModules.add(name);
-                plugin.getLogger().info("Module enabled: " + name);
+                if (module.isEnabled()) {
+                    activeModules.add(name);
+                    plugin.getLogger().info("Module enabled: " + name);
+                } else {
+                    activeModules.remove(name);
+                    plugin.getLogger().info("Module loaded but disabled by its own config: " + name);
+                }
             } catch (Exception exception) {
                 activeModules.remove(name);
                 plugin.getLogger().severe("Gagal enable module " + name + ": " + exception.getMessage());
@@ -57,6 +62,10 @@ public final class ModuleManager {
 
         for (VelioraModule module : reversedModules) {
             String name = normalize(module.getName());
+
+            if (!activeModules.contains(name)) {
+                continue;
+            }
 
             try {
                 module.disable();

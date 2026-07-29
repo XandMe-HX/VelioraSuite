@@ -13,8 +13,10 @@ import id.velioragardens.veliorasuite.module.guide.GuideModule;
 import id.velioragardens.veliorasuite.module.kits.KitsModule;
 import id.velioragardens.veliorasuite.module.loginsecurity.LoginSecurityModule;
 import id.velioragardens.veliorasuite.module.pets.PetsModule;
+import id.velioragardens.veliorasuite.module.playtime.PlaytimeModule;
 import id.velioragardens.veliorasuite.module.quest.QuestModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
+import id.velioragardens.veliorasuite.module.security.SecurityModule;
 import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.trader.TraderModule;
@@ -83,12 +85,14 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new KitsModule(this));
         moduleManager.register(new ReportModule(this));
         moduleManager.register(new ChatModule(this));
+        moduleManager.register(new PlaytimeModule(this));
+        moduleManager.register(new SecurityModule(this));
         moduleManager.register(new FishingModule(this));
         moduleManager.register(new SkillsModule(this));
         moduleManager.register(new QuestModule(this));
         moduleManager.register(new TraderModule(this));
         moduleManager.register(new BossModule(this));
-        moduleManager.register(new PetsModule(this));        
+        moduleManager.register(new PetsModule(this));
     }
 
     private void registerCoreCommand() {

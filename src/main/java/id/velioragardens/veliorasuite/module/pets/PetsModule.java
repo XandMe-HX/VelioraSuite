@@ -56,11 +56,11 @@ public final class PetsModule implements VelioraModule {
         if (coreControllerTask != null) coreControllerTask.cancel();
         quietTask = null;
         coreControllerTask = null;
-        HandlerList.unregisterAll(manager);
-        HandlerList.unregisterAll(guiManager);
-        HandlerList.unregisterAll(safetyListener);
-        HandlerList.unregisterAll(safeModeGuardListener);
-        HandlerList.unregisterAll(redProtectGuardListener);
+        if (manager != null) HandlerList.unregisterAll(manager);
+        if (guiManager != null) HandlerList.unregisterAll(guiManager);
+        if (safetyListener != null) HandlerList.unregisterAll(safetyListener);
+        if (safeModeGuardListener != null) HandlerList.unregisterAll(safeModeGuardListener);
+        if (redProtectGuardListener != null) HandlerList.unregisterAll(redProtectGuardListener);
         if (manager != null) manager.shutdown();
         registerDisabledCommand();
     }

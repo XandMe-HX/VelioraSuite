@@ -1,0 +1,177 @@
+settings:
+  enabled: true
+  prefix: '&8[&bVelioraFishing&8] '
+
+  rarity-chance:
+    trash: 20.0
+    vanilla: 15.0
+    common: 55.0
+    ornamental: 3.0
+    epic: 2.5
+    legendary: 0.20
+    mitologi: 0.05
+
+  price:
+    trash: {min: 1, max: 1, max-final: 1}
+    vanilla: {min: 10, max: 50, max-final: 50}
+    common: {min: 50, max: 100, max-final: 100}
+    ornamental: {min: 100, max: 500, max-final: 500}
+    epic: {min: 500, max: 1000, max-final: 1000}
+    legendary: {min: 10000, max: 50000, max-final: 50000}
+    mitologi: {min: 50000, max: 150000, max-final: 500000}
+
+  minigame:
+    enabled: true
+    trigger-chance: 100.0
+    mode: SPAM_CLICK
+    click-cooldown-ms: 40
+    show-title: true
+    remove-vanilla-caught-entity: true
+    difficulty:
+      trash: {enabled: false, spam-needed: 0, seconds: 0.0}
+      vanilla: {enabled: true, spam-needed: 5, seconds: 5.0}
+      common: {enabled: true, spam-needed: 10, seconds: 10.0}
+      ornamental: {enabled: true, spam-needed: 20, seconds: 10.0}
+      epic: {enabled: true, spam-needed: 25, seconds: 10.0}
+      legendary: {enabled: true, spam-needed: 50, seconds: 25.0}
+      mitologi: {enabled: true, spam-needed: 100, seconds: 30.0}
+
+  sell-gui:
+    enabled: true
+    title: '&8VelioraFishing Sell'
+    size: 54
+    allow-vanilla-fish: true
+
+  bag:
+    enabled: true
+    title: '&8Fish Bag'
+    size: 54
+    auto-store:
+      enabled: false
+      rarities: [ORNAMENTAL, EPIC, LEGENDARY, MITOLOGI]
+
+  collection:
+    title: '&8Fish Collection'
+    size: 54
+
+  top:
+    limit: 5
+    gui-enabled: false
+
+  quest-integration:
+    enabled: true
+
+effects:
+  ornamental: {enabled: true, sound: ENTITY_EXPERIENCE_ORB_PICKUP, particle: HAPPY_VILLAGER, amount: 10}
+  epic: {enabled: true, sound: ENTITY_PLAYER_LEVELUP, particle: ENCHANT, amount: 20}
+  legendary: {enabled: true, sound: UI_TOAST_CHALLENGE_COMPLETE, particle: TOTEM_OF_UNDYING, amount: 35, broadcast: true}
+  mitologi: {enabled: true, sound: ENTITY_ENDER_DRAGON_GROWL, particle: DRAGON_BREATH, amount: 60, visual-lightning: true, broadcast: true}
+
+permissions:
+  use: 'veliorasuite.fishing.use'
+  sell: 'veliorasuite.fishing.sell'
+  bag: 'veliorasuite.fishing.bag'
+  top: 'veliorasuite.fishing.top'
+  admin: 'veliorasuite.fishing.admin'
+  reload: 'veliorasuite.fishing.reload'
+
+fish:
+  old_boot: {name: 'Old Boot', rarity: TRASH, material: LEATHER_BOOTS, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: LEATHER_BOOTS}}
+  broken_fishing_rod: {name: 'Broken Fishing Rod', rarity: TRASH, material: FISHING_ROD, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: FISHING_ROD}}
+  rusty_can: {name: 'Rusty Can', rarity: TRASH, material: IRON_NUGGET, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: IRON_NUGGET}}
+  seaweed: {name: 'Seaweed', rarity: TRASH, material: KELP, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: KELP}}
+  driftwood: {name: 'Driftwood', rarity: TRASH, material: STICK, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: STICK}}
+  broken_bottle: {name: 'Broken Bottle', rarity: TRASH, material: GLASS_BOTTLE, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: GLASS_BOTTLE}}
+  mud_ball: {name: 'Mud Ball', rarity: TRASH, material: MUD, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: MUD}}
+  torn_net: {name: 'Torn Net', rarity: TRASH, material: STRING, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: STRING}}
+  wet_paper: {name: 'Wet Paper', rarity: TRASH, material: PAPER, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: PAPER}}
+  crab_shell: {name: 'Crab Shell', rarity: TRASH, material: NAUTILUS_SHELL, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: NAUTILUS_SHELL}}
+
+  vanilla_cod: {name: 'Cod', rarity: VANILLA, material: COD, origin: 'Vanilla', region: 'Ocean', weight: {min: 0.5, max: 4.0}, price: {min: 10, max: 50}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  vanilla_salmon: {name: 'Salmon', rarity: VANILLA, material: SALMON, origin: 'Vanilla', region: 'Ocean', weight: {min: 1.0, max: 8.0}, price: {min: 10, max: 50}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  vanilla_tropical_fish: {name: 'Tropical Fish', rarity: VANILLA, material: TROPICAL_FISH, origin: 'Vanilla', region: 'Ocean', weight: {min: 0.2, max: 2.0}, price: {min: 10, max: 50}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  vanilla_pufferfish: {name: 'Pufferfish', rarity: VANILLA, material: PUFFERFISH, origin: 'Vanilla', region: 'Ocean', weight: {min: 0.4, max: 3.0}, price: {min: 10, max: 50}, head: {enabled: false, texture-base64: '', fallback-material: PUFFERFISH}}
+
+  tilapia: {name: 'Tilapia', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Sungai', weight: {min: 1.0, max: 8.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  lele: {name: 'Lele', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Sungai', weight: {min: 1.0, max: 12.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  gurame: {name: 'Gurame', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Danau', weight: {min: 1.0, max: 10.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  nila_merah: {name: 'Nila Merah', rarity: COMMON, material: SALMON, origin: 'VelioraFishing', region: 'Danau', weight: {min: 0.8, max: 7.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  mujair: {name: 'Mujair', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Rawa', weight: {min: 0.8, max: 6.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  patin: {name: 'Patin', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Sungai', weight: {min: 2.0, max: 15.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  bandeng: {name: 'Bandeng', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Pantai', weight: {min: 1.0, max: 8.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  bawal: {name: 'Bawal', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Danau', weight: {min: 1.0, max: 9.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  tenggiri_muda: {name: 'Tenggiri Muda', rarity: COMMON, material: SALMON, origin: 'VelioraFishing', region: 'Laut', weight: {min: 3.0, max: 18.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  kerapu_kecil: {name: 'Kerapu Kecil', rarity: COMMON, material: COD, origin: 'VelioraFishing', region: 'Karang', weight: {min: 1.5, max: 10.0}, price: {min: 50, max: 100}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+
+  koi_veliora: {name: 'Koi Veliora', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Kolam', weight: {min: 0.3, max: 2.5}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  cupang_halfmoon: {name: 'Cupang Halfmoon', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Kolam', weight: {min: 0.05, max: 0.3}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  guppy_neon: {name: 'Guppy Neon', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Kolam', weight: {min: 0.05, max: 0.2}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  discus_blue: {name: 'Discus Blue', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Akuarium', weight: {min: 0.1, max: 0.8}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  angelfish_gold: {name: 'Angelfish Gold', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Akuarium', weight: {min: 0.1, max: 0.7}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  goldfish_oranda: {name: 'Goldfish Oranda', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Kolam', weight: {min: 0.2, max: 1.2}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  flowerhorn: {name: 'Flowerhorn', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Akuarium', weight: {min: 0.5, max: 2.0}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  rainbowfish: {name: 'Rainbowfish', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Sungai Tropis', weight: {min: 0.1, max: 0.6}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  mandarin_fish: {name: 'Mandarin Fish', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Karang', weight: {min: 0.1, max: 0.5}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  clownfish: {name: 'Clownfish', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Karang', weight: {min: 0.1, max: 0.6}, price: {min: 100, max: 500}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+
+  bluefin_tuna: {name: 'Bluefin Tuna', rarity: EPIC, material: SALMON, origin: 'VelioraFishing', region: 'Laut Dalam', weight: {min: 20.0, max: 180.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  mahi_mahi: {name: 'Mahi Mahi', rarity: EPIC, material: SALMON, origin: 'VelioraFishing', region: 'Laut', weight: {min: 10.0, max: 60.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  giant_grouper: {name: 'Giant Grouper', rarity: EPIC, material: COD, origin: 'VelioraFishing', region: 'Karang Dalam', weight: {min: 30.0, max: 220.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  napoleon_wrasse: {name: 'Napoleon Wrasse', rarity: EPIC, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Karang', weight: {min: 20.0, max: 190.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  sturgeon: {name: 'Sturgeon', rarity: EPIC, material: COD, origin: 'VelioraFishing', region: 'Sungai Tua', weight: {min: 15.0, max: 150.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  golden_trout: {name: 'Golden Trout', rarity: EPIC, material: SALMON, origin: 'VelioraFishing', region: 'Gunung', weight: {min: 2.0, max: 15.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  electric_eel: {name: 'Electric Eel', rarity: EPIC, material: COD, origin: 'VelioraFishing', region: 'Rawa', weight: {min: 5.0, max: 25.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  oarfish: {name: 'Oarfish', rarity: EPIC, material: SALMON, origin: 'VelioraFishing', region: 'Laut Dalam', weight: {min: 30.0, max: 270.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  moonfish: {name: 'Moonfish', rarity: EPIC, material: COD, origin: 'VelioraFishing', region: 'Laut Malam', weight: {min: 10.0, max: 80.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: COD}}
+  black_marlin: {name: 'Black Marlin', rarity: EPIC, material: SALMON, origin: 'VelioraFishing', region: 'Laut Dalam', weight: {min: 50.0, max: 400.0}, price: {min: 500, max: 1000}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+
+  arwana_super_red: {name: 'Arwana Super Red', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Legenda', weight: {min: 10.0, max: 60.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  golden_dragonfish: {name: 'Golden Dragonfish', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Legenda', weight: {min: 30.0, max: 180.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  crystal_koi: {name: 'Crystal Koi', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Kolam Legenda', weight: {min: 5.0, max: 35.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  ancient_coelacanth: {name: 'Ancient Coelacanth', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Laut Purba', weight: {min: 50.0, max: 300.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  storm_marlin: {name: 'Storm Marlin', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Badai', weight: {min: 100.0, max: 700.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  sunfire_salmon: {name: 'Sunfire Salmon', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Sungai Api', weight: {min: 20.0, max: 120.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  moonlight_sturgeon: {name: 'Moonlight Sturgeon', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Danau Bulan', weight: {min: 40.0, max: 260.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  obsidian_eel: {name: 'Obsidian Eel', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Gua Lava', weight: {min: 10.0, max: 80.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  royal_grouper: {name: 'Royal Grouper', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Karang Raja', weight: {min: 60.0, max: 350.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  skyfin_tuna: {name: 'Skyfin Tuna', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Langit Laut', weight: {min: 80.0, max: 500.0}, price: {min: 10000, max: 50000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+
+  bahamut: {name: 'Bahamut', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Mitologi', weight: {min: 500.0, max: 2500.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  leviathan: {name: 'Leviathan', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Samudra Mitologi', weight: {min: 800.0, max: 5000.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  jormungandr: {name: 'Jormungandr', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Laut Dunia', weight: {min: 1000.0, max: 7000.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  kraken_spawn: {name: 'Kraken Spawn', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Palung Abyss', weight: {min: 300.0, max: 2000.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  poseidon_carp: {name: 'Poseidon Carp', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Kuil Laut', weight: {min: 100.0, max: 900.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  hydra_eel: {name: 'Hydra Eel', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Rawa Mitologi', weight: {min: 200.0, max: 1500.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  azure_dragonfish: {name: 'Azure Dragonfish', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Langit Timur', weight: {min: 150.0, max: 1200.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  phoenix_fish: {name: 'Phoenix Fish', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Sungai Api Abadi', weight: {min: 50.0, max: 500.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  celestial_whale: {name: 'Celestial Whale', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Galaksi Laut', weight: {min: 2000.0, max: 12000.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  abyss_emperor: {name: 'Abyss Emperor', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Abyss', weight: {min: 700.0, max: 4500.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+
+messages:
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
+  reload-success: '%prefix% &aVelioraFishing berhasil direload.'
+  main-info: '%prefix% &bGunakan &f/fish bag&b, &f/fish sell&b, &f/fish collection&b, dan &f/fish top&b.'
+  catch-success: '%prefix% &aKamu mendapatkan %rarity_color%%fish% &7(&f%weight%&7) senilai &a%price%&7.'
+  bag-auto-store: '%prefix% &b%fish% &7masuk ke Fish Bag.'
+  bag-empty: '%prefix% &eFish Bag kamu kosong.'
+  vault-not-found: '%prefix% &eVault economy belum aktif, sell dibatalkan.'
+  legendary-broadcast: '%prefix% &6%player% mendapatkan ikan Legendary: &f%fish% &7(&f%weight%&7)!'
+  mitologi-broadcast: '%prefix% &c%player% mendapatkan ikan Mitologi: &f%fish% &7(&f%weight%&7)!'
+  minigame-start: '%prefix% &eTarikan kuat! Spam klik untuk menarik ikan!'
+  minigame-success: '%prefix% &aBerhasil menarik ikan!'
+  minigame-fail: '%prefix% &cIkan lepas.'
+  sell-empty: '%prefix% &eTidak ada ikan yang bisa dijual.'
+  sell-success: '%prefix% &aBerhasil menjual &f%amount% &aikan seharga &f%money%&a.'
+  top-header: '%prefix% &bTop Fishing'
+  top-empty: '%prefix% &eBelum ada data fishing.'
+  help:
+    - '&8&m--------------------------------'
+    - '&b&lVelioraFishing'
+    - '&f/fish &7- Buka GUI fishing.'
+    - '&f/fish bag &7- Buka Fish Bag.'
+    - '&f/fish sell &7- Jual ikan.'
+    - '&f/fish collection &7- Buka koleksi ikan.'
+    - '&f/fish top &7- Leaderboard fishing.'
+    - '&f/fish reload &7- Reload config.'
+    - '&8&m--------------------------------'
