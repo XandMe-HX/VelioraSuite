@@ -77,7 +77,7 @@ public final class PetConfigManager {
     public boolean allowAquaticPets() { return bool("settings.allow-aquatic-pets", false); }
     public boolean allowAxolotlGroundPet() { return bool("settings.allow-axolotl-ground-pet", true); }
     public boolean economyEnabled() { return bool("settings.economy.enabled", true); }
-    public long gachaPrice() { return 50_000L; }
+    public long gachaPrice() { return 25_000L; }
     public int maxLevel() { return Math.max(1, integer("settings.max-level", 50)); }
     public int duplicateExp() { return Math.max(0, integer("settings.duplicate-exp", 50)); }
     public int maxFeedAmount() { return Math.max(1, integer("feeding.max-feed-amount", 64)); }
@@ -88,7 +88,7 @@ public final class PetConfigManager {
     public boolean allowFlyingPets() { return false; }
     public boolean flyingSafeMode() { return true; }
     public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", false); }
-    public int storageSize(PetRarity rarity) { return Math.max(9, integer("storage.size." + rarity.name().toLowerCase(Locale.ROOT), defaultStorage(rarity))); }
+    public int storageSize(PetRarity rarity) { return PetDataManager.SHARED_STORAGE_SIZE; }
 
     public boolean ridingEnabled() { return bool("riding.enabled", true); }
     public boolean ridingRequireAdult() { return bool("riding.require-adult", true); }
@@ -192,18 +192,18 @@ public final class PetConfigManager {
     }
 
     private void addBuiltinAnimalPets() {
-        addBuiltin("wolf", "&fWolf", "WOLF", "BONE", PetRarity.COMMON, 0.55D, 50_000L, false, 10, "BONE", 20);
-        addBuiltin("cat", "&eCat", "CAT", "COD", PetRarity.COMMON, 0.50D, 50_000L, false, 10, "COD", 20);
-        addBuiltin("fox", "&6Fox", "FOX", "SWEET_BERRIES", PetRarity.COMMON, 0.50D, 50_000L, false, 10, "SWEET_BERRIES", 20);
-        addBuiltin("rabbit", "&fRabbit", "RABBIT", "CARROT", PetRarity.COMMON, 0.42D, 50_000L, false, 10, "CARROT", 20);
-        addBuiltin("panda", "&aPanda", "PANDA", "BAMBOO", PetRarity.RARE, 0.65D, 100_000L, true, 10, "BAMBOO", 25);
-        addBuiltin("axolotl", "&dAxolotl", "AXOLOTL", "TROPICAL_FISH_BUCKET", PetRarity.RARE, 0.55D, 100_000L, false, 10, "TROPICAL_FISH", 25);
-        addBuiltin("chicken", "&fChicken", "CHICKEN", "FEATHER", PetRarity.COMMON, 0.45D, 50_000L, false, 10, "WHEAT_SEEDS", 20);
-        addBuiltin("cow", "&fCow", "COW", "WHEAT", PetRarity.COMMON, 0.60D, 50_000L, true, 10, "WHEAT", 20);
-        addBuiltin("sheep", "&fSheep", "SHEEP", "WHITE_WOOL", PetRarity.COMMON, 0.55D, 50_000L, true, 10, "WHEAT", 20);
-        addBuiltin("pig", "&dPig", "PIG", "CARROT", PetRarity.COMMON, 0.55D, 50_000L, true, 10, "CARROT", 20);
-        addBuiltin("mooshroom", "&cMooshroom Cow", "MUSHROOM_COW", "RED_MUSHROOM", PetRarity.RARE, 0.60D, 100_000L, true, 10, "WHEAT", 25);
-        addBuiltin("sniffer", "&6Sniffer", "SNIFFER", "SNIFFER_EGG", PetRarity.EPIC, 0.75D, 200_000L, true, 15, "TORCHFLOWER_SEEDS", 35);
+        addBuiltin("wolf", "&fWolf", "WOLF", "BONE", PetRarity.COMMON, 0.55D, 25_000L, false, 10, "BONE", 20);
+        addBuiltin("cat", "&eCat", "CAT", "COD", PetRarity.COMMON, 0.50D, 25_000L, false, 10, "COD", 20);
+        addBuiltin("fox", "&6Fox", "FOX", "SWEET_BERRIES", PetRarity.COMMON, 0.50D, 25_000L, false, 10, "SWEET_BERRIES", 20);
+        addBuiltin("rabbit", "&fRabbit", "RABBIT", "CARROT", PetRarity.COMMON, 0.42D, 25_000L, false, 10, "CARROT", 20);
+        addBuiltin("panda", "&aPanda", "PANDA", "BAMBOO", PetRarity.RARE, 0.65D, 50_000L, true, 10, "BAMBOO", 25);
+        addBuiltin("axolotl", "&dAxolotl", "AXOLOTL", "TROPICAL_FISH_BUCKET", PetRarity.RARE, 0.55D, 50_000L, false, 10, "TROPICAL_FISH", 25);
+        addBuiltin("chicken", "&fChicken", "CHICKEN", "FEATHER", PetRarity.COMMON, 0.45D, 25_000L, false, 10, "WHEAT_SEEDS", 20);
+        addBuiltin("cow", "&fCow", "COW", "WHEAT", PetRarity.COMMON, 0.60D, 25_000L, true, 10, "WHEAT", 20);
+        addBuiltin("sheep", "&fSheep", "SHEEP", "WHITE_WOOL", PetRarity.COMMON, 0.55D, 25_000L, true, 10, "WHEAT", 20);
+        addBuiltin("pig", "&dPig", "PIG", "CARROT", PetRarity.COMMON, 0.55D, 25_000L, true, 10, "CARROT", 20);
+        addBuiltin("mooshroom", "&cMooshroom Cow", "MUSHROOM_COW", "RED_MUSHROOM", PetRarity.RARE, 0.60D, 50_000L, true, 10, "WHEAT", 25);
+        addBuiltin("sniffer", "&6Sniffer", "SNIFFER", "SNIFFER_EGG", PetRarity.EPIC, 0.75D, 100_000L, true, 15, "TORCHFLOWER_SEEDS", 35);
     }
 
     private void addBuiltin(String id, String display, String entity, String icon, PetRarity rarity, double scale, long price, boolean rideable, int adultLevel, String food, int feedExp) {
@@ -234,10 +234,9 @@ public final class PetConfigManager {
     private boolean defaultRideable(EntityType type) { return type != null && RIDEABLE_ENTITY_NAMES.contains(type.name()); }
     private double maxSkillBonus(PetSkillType type) { return switch (type) { case QUEST_MONEY -> 0.03D; case FISHING_LUCK -> 0.02D; case PET_DAMAGE -> 0.05D; default -> 0.0D; }; }
     private double defaultChance(PetRarity rarity) { return switch (rarity) { case COMMON -> 65.0D; case RARE -> 25.0D; case EPIC -> 8.0D; case LEGENDARY -> 2.0D; case MYTHIC -> 0.0D; }; }
-    private long defaultPrice(PetRarity rarity) { return switch (rarity) { case COMMON -> 50_000L; case RARE -> 100_000L; case EPIC -> 200_000L; case LEGENDARY -> 350_000L; case MYTHIC -> 500_000L; }; }
-    private long balancedPrice(PetRarity rarity, long configured) { long target = defaultPrice(rarity); return Math.max(50_000L, Math.min(500_000L, target)); }
+    private long defaultPrice(PetRarity rarity) { return switch (rarity) { case COMMON -> 25_000L; case RARE -> 50_000L; case EPIC -> 100_000L; case LEGENDARY -> 175_000L; case MYTHIC -> 250_000L; }; }
+    private long balancedPrice(PetRarity rarity, long configured) { long target = defaultPrice(rarity); return Math.max(25_000L, Math.min(250_000L, target)); }
     private double defaultDamage(PetRarity rarity) { return 0.0D; }
-    private int defaultStorage(PetRarity rarity) { return switch (rarity) { case COMMON, RARE -> 9; case EPIC, LEGENDARY -> 18; case MYTHIC -> 27; }; }
     private int defaultFeedExp(PetRarity rarity) { return switch (rarity) { case COMMON -> 20; case RARE -> 25; case EPIC -> 35; case LEGENDARY -> 45; case MYTHIC -> 60; }; }
     private Material defaultFood(PetRarity rarity) { return switch (rarity) { case COMMON -> Material.APPLE; case RARE -> Material.COOKED_CHICKEN; case EPIC -> Material.GOLDEN_CARROT; case LEGENDARY -> Material.GOLDEN_APPLE; case MYTHIC -> Material.ENCHANTED_GOLDEN_APPLE; }; }
     private Material material(String raw, Material fallback) { Material material = Material.matchMaterial(raw == null ? "" : raw.toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
