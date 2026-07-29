@@ -104,6 +104,11 @@ public final class BossManager implements Listener {
         data.load();
         sentWarnings.clear();
         lastRetargetAt = 0L;
+        if (!config.isEnabled()) {
+            stopActive(false);
+            return;
+        }
+        refreshActiveBoss();
         scheduleNextSpawn();
     }
 
@@ -296,7 +301,10 @@ public final class BossManager implements Listener {
     }
 
     private void tick() {
-        if (!config.isEnabled() || !config.isSpawnEnabled()) return;
+        if (!config.isEnabled()) {
+            if (isActive()) stopActive(false);
+            return;
+        }
         if (config.requireSpawnPoint() && data.spawnPoints().isEmpty()) {
             if (nextSpawnAt != 0L) {
                 nextSpawnAt = 0L;
@@ -320,6 +328,7 @@ public final class BossManager implements Listener {
             if (System.currentTimeMillis() >= despawnAt) stopActive(true);
             return;
         }
+        if (!config.isSpawnEnabled()) return;
         sendSpawnWarnings();
         if (System.currentTimeMillis() >= nextSpawnAt) {
             boolean spawned = spawn(randomDefinition(), randomSpawnPoint(), true);
@@ -508,6 +517,34 @@ public final class BossManager implements Listener {
         return Math.max(baseHealth, baseHealth * multiplier);
     }
 
+    /** Applies changed boss.yml values to the currently spawned boss without deleting it. */
+    private void refreshActiveBoss() {
+        if (!isActive() || activeDefinition == null) return;
+
+        BossDefinition refreshed = config.bosses().get(activeDefinition.id());
+        if (refreshed == null) {
+            plugin.getLogger().warning("VelioraBoss: boss aktif '" + activeDefinition.id() + "' tidak ada lagi di modules/boss.yml; boss dihentikan.");
+            stopActive(false);
+            return;
+        }
+
+        double oldMaxHealth = Math.max(1.0D, activeBoss.getMaxHealth());
+        double healthPercent = Math.max(0.0D, Math.min(1.0D, activeBoss.getHealth() / oldMaxHealth));
+        activeDefinition = refreshed;
+        activeBoss.setCustomName(config.color(refreshed.displayName()));
+        activeBoss.getPersistentDataContainer().set(bossNameKey, PersistentDataType.STRING, org.bukkit.ChatColor.stripColor(config.color(refreshed.displayName())));
+        activeBoss.getPersistentDataContainer().set(bossRarityKey, PersistentDataType.STRING, refreshed.rarity().name());
+
+        double refreshedHealth = calculateSpawnHealth(refreshed.health(), activeBoss.getLocation());
+        scaleHelper.setMaxHealth(activeBoss, refreshedHealth);
+        activeBoss.setHealth(Math.max(0.1D, Math.min(activeBoss.getMaxHealth(), refreshedHealth * healthPercent)));
+        scaleHelper.applyCombatDefense(activeBoss, config.bossArmor(), config.bossArmorToughness(), config.bossKnockbackResistance());
+        scaleHelper.apply(activeBoss, calculateSpawnScale(refreshed));
+        bossBarManager.create(refreshed);
+        skillManager.start(refreshed);
+        retarget(true);
+    }
+
     private void rescheduleSpawnRetry(String reason) {
         nextSpawnAt = System.currentTimeMillis() + (config.spawnRetryMinutes() * 60_000L);
         sentWarnings.clear();
@@ -551,7 +588,7 @@ public final class BossManager implements Listener {
     }
 
     private void scheduleNextSpawn() {
-        if (config.requireSpawnPoint() && data.spawnPoints().isEmpty()) {
+        if (!config.isSpawnEnabled() || (config.requireSpawnPoint() && data.spawnPoints().isEmpty())) {
             nextSpawnAt = 0L;
             sentWarnings.clear();
             return;

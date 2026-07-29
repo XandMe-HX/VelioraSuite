@@ -17,7 +17,7 @@ public final class BossScaleHelper {
     }
 
     public void apply(LivingEntity entity, double scale) {
-        if (entity == null || scale <= 1.0D) return;
+        if (entity == null) return;
         Attribute attribute = scaleAttribute();
         if (attribute == null) {
             warnScaleOnce();
@@ -28,7 +28,7 @@ public final class BossScaleHelper {
             warnScaleOnce();
             return;
         }
-        instance.setBaseValue(scale);
+        instance.setBaseValue(Math.max(0.0625D, scale));
     }
 
     public void setMaxHealth(LivingEntity entity, double health) {

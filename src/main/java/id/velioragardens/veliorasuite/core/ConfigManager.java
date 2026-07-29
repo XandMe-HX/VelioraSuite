@@ -5,7 +5,10 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class ConfigManager {
 
@@ -21,7 +24,9 @@ public final class ConfigManager {
             "quest",
             "boss",
             "security",
-            "chat"
+            "chat",
+            "trader",
+            "pets"
     );
 
     private final VelioraSuite plugin;
@@ -65,5 +70,16 @@ public final class ConfigManager {
         }
 
         return modulesConfig != null && modulesConfig.getBoolean("modules." + moduleName.toLowerCase(), false);
+    }
+
+    /**
+     * Returns the module names from the same file used by {@link #isModuleEnabled(String)}.
+     * Keeping this here prevents commands from accidentally reading the root config.yml.
+     */
+    public Set<String> getConfiguredModuleNames() {
+        if (modulesConfig == null || !modulesConfig.isConfigurationSection("modules")) {
+            return Collections.emptySet();
+        }
+        return Collections.unmodifiableSet(new LinkedHashSet<>(modulesConfig.getConfigurationSection("modules").getKeys(false)));
     }
 }
