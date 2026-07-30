@@ -14,6 +14,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,9 +40,22 @@ public final class TraderConfigManager {
         plugin.saveResourceIfNotExists("modules/trader.yml");
         File file = new File(plugin.getDataFolder(), "modules/trader.yml");
         config = YamlConfiguration.loadConfiguration(file);
+        mergeBundledDefaults(file);
         loadLocations();
         loadCampBlocks();
         loadTradePool();
+    }
+
+    private void mergeBundledDefaults(File file) {
+        try (InputStream input = plugin.getResource("modules/trader.yml")) {
+            if (input == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
+            config.setDefaults(defaults);
+            config.options().copyDefaults(true);
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraTrader: gagal memperbarui default trader.yml: " + exception.getMessage());
+        }
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }

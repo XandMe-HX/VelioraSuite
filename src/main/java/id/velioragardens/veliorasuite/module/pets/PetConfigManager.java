@@ -14,6 +14,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
@@ -66,7 +67,9 @@ public final class PetConfigManager {
 
     public void load() {
         plugin.saveResourceIfNotExists("modules/pets.yml");
-        config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/pets.yml"));
+        File file = new File(plugin.getDataFolder(), "modules/pets.yml");
+        config = YamlConfiguration.loadConfiguration(file);
+        pruneUnsupportedPets(file);
         loadChances();
         loadPets();
     }
@@ -146,6 +149,28 @@ public final class PetConfigManager {
     private void loadChances() {
         chances.clear();
         for (PetRarity rarity : PetRarity.values()) chances.put(rarity, Math.max(0.0D, number("gacha.chance." + rarity.name().toLowerCase(Locale.ROOT), defaultChance(rarity))));
+    }
+
+    private void pruneUnsupportedPets(File file) {
+        ConfigurationSection section = config.getConfigurationSection("pets");
+        if (section == null) return;
+        boolean changed = false;
+        for (String id : Set.copyOf(section.getKeys(false))) {
+            String path = "pets." + id;
+            String rawEntity = config.getString(path + ".entity", "");
+            EntityType type = entityType(rawEntity);
+            boolean aquaticDisabled = type != null && defaultAquatic(type) && !allowAquaticPets() && !isAxolotlGround(type);
+            if (isBlacklistedPet(id, rawEntity) || (type != null && !isSafeAnimalType(type)) || aquaticDisabled) {
+                config.set(path, null);
+                changed = true;
+            }
+        }
+        if (!changed) return;
+        try {
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraPets: gagal membersihkan pet lama dari pets.yml: " + exception.getMessage());
+        }
     }
 
     private void loadPets() {
