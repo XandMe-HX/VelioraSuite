@@ -436,8 +436,6 @@ public final class BossManager implements Listener {
         activeBoss.teleport(arenaCenter);
         arenaCenter.getWorld().spawnParticle(Particle.PORTAL, arenaCenter, 60, 1.5D, 1.0D, 1.5D, 0.1D);
         arenaCenter.getWorld().playSound(arenaCenter, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.8F);
-        String message = config.color(config.message("boss-return-arena", "%prefix% &e%boss% kembali ke arena!").replace("%boss%", activeDefinition == null ? "Boss" : config.color(activeDefinition.displayName())));
-        for (Player player : arenaCenter.getWorld().getPlayers()) if (horizontalDistance(player.getLocation(), arenaCenter) <= config.arenaRadius()) player.sendMessage(message);
         retarget(true);
     }
 

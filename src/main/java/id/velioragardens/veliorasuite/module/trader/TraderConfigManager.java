@@ -44,7 +44,9 @@ public final class TraderConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&6VelioraTrader&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
-    public int getIntervalMinutes() { return Math.max(1, integer("settings.spawn.interval-minutes", 1440)); }
+    public int getIntervalHours() { return Math.max(1, integer("settings.spawn.interval-hours", 3)); }
+    public int getAnchorHour() { return Math.floorMod(integer("settings.spawn.anchor-hour", 1), 24); }
+    public String getTimezone() { return str("settings.spawn.timezone", "Asia/Jakarta"); }
     public int getActiveMinutes() { return Math.max(1, integer("settings.spawn.active-minutes", 30)); }
     public int getReminderMinutes() { return Math.max(1, integer("settings.spawn.reminder-minutes", 10)); }
     public boolean isRandomFromConfigLocations() { return bool("settings.spawn.random-from-config-locations", true); }
@@ -97,7 +99,8 @@ public final class TraderConfigManager {
     public List<Integer> getTradeSlots() { List<Integer> slots = config == null ? List.of() : config.getIntegerList("gui.trade-slots"); return slots.isEmpty() ? List.of(10, 11, 13, 15, 16) : slots; }
     public int getCloseSlot() { return integer("gui.close-slot", 26); }
 
-    public int getRandomItemsPerSpawn() { return Math.max(1, integer("settings.trade.random-items-per-spawn", 5)); }
+    public int getRandomItemsPerSpawn() { return 1; }
+    public long getMaxMoneyPrice() { return Math.max(0L, Math.min(500_000L, config == null ? 500_000L : config.getLong("settings.trade.max-money-price", 500_000L))); }
     public String getStockMode() { return str("settings.trade.stock-mode", "GLOBAL"); }
     public int getDefaultStock() { return Math.max(1, integer("settings.trade.default-stock", 1)); }
     public int getPerPlayerLimit() { return Math.max(1, integer("settings.trade.per-player-limit", 1)); }
@@ -189,7 +192,7 @@ public final class TraderConfigManager {
                     Math.max(0, item.getInt("fishing-luck-bonus", 0)),
                     item.getBoolean("unrepairable", true),
                     paymentType,
-                    Math.max(0L, item.getLong("payment.money", 0L)),
+                    Math.min(getMaxMoneyPrice(), Math.max(0L, item.getLong("payment.money", 0L))),
                     fish
             ));
         }

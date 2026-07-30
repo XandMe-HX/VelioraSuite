@@ -3,7 +3,9 @@ settings:
   prefix: '&8[&6VelioraTrader&8] '
   spawn:
     enabled: true
-    interval-minutes: 1440
+    interval-hours: 3
+    anchor-hour: 1
+    timezone: Asia/Jakarta
     active-minutes: 30
     reminder-minutes: 10
     random-from-config-locations: true
@@ -21,7 +23,8 @@ settings:
         y: 72
         z: -220
   trade:
-    random-items-per-spawn: 5
+    random-items-per-spawn: 1
+    max-money-price: 500000
     stock-mode: GLOBAL
     default-stock: 1
     per-player-limit: 1
@@ -165,7 +168,7 @@ trade-pool:
       - DURABILITY:3
     payment:
       type: MONEY
-      money: 5000000
+      money: 500000
       fish:
         enabled: false
         requirements: []
@@ -187,7 +190,7 @@ trade-pool:
       - DURABILITY:3
     payment:
       type: MONEY
-      money: 5000000
+      money: 500000
       fish:
         enabled: false
         requirements: []
@@ -208,7 +211,7 @@ trade-pool:
       - DURABILITY:3
     payment:
       type: MONEY
-      money: 3000000
+      money: 475000
       fish:
         enabled: false
         requirements: []
@@ -229,7 +232,7 @@ trade-pool:
       - DURABILITY:3
     payment:
       type: MONEY
-      money: 1000000
+      money: 350000
       fish:
         enabled: false
         requirements: []
@@ -250,7 +253,163 @@ trade-pool:
       - LOOT_BONUS_BLOCKS:3
     payment:
       type: MONEY
-      money: 2000000
+      money: 450000
+      fish:
+        enabled: false
+        requirements: []
+  aether_pickaxe:
+    material: NETHERITE_PICKAXE
+    name: '&bAether Pickaxe'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Pickaxe langka untuk penjelajah tambang.'
+    enchantments:
+      - DIG_SPEED:5
+      - LOOT_BONUS_BLOCKS:3
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 500000
+      fish:
+        enabled: false
+        requirements: []
+  silk_touch_relic:
+    material: DIAMOND_PICKAXE
+    name: '&dSilk Touch Relic'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Relik tambang dengan sentuhan halus.'
+    enchantments:
+      - SILK_TOUCH:1
+      - DIG_SPEED:5
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 425000
+      fish:
+        enabled: false
+        requirements: []
+  ancient_mace:
+    material: MACE
+    name: '&6Ancient Mace'
+    amount: 1
+    stock: 1
+    custom-damage: 14
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Mace kuno dari reruntuhan Veliora.'
+    enchantments:
+      - DENSITY:4
+      - BREACH:3
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 500000
+      fish:
+        enabled: false
+        requirements: []
+  guardian_shield:
+    material: SHIELD
+    name: '&9Guardian Shield'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Perisai peninggalan penjaga Veliora.'
+    enchantments:
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 225000
+      fish:
+        enabled: false
+        requirements: []
+  windwalker_boots:
+    material: DIAMOND_BOOTS
+    name: '&bWindwalker Boots'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Sepatu langka untuk perjalanan jauh.'
+    enchantments:
+      - PROTECTION_ENVIRONMENTAL:4
+      - PROTECTION_FALL:4
+      - DEPTH_STRIDER:3
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 375000
+      fish:
+        enabled: false
+        requirements: []
+  skybound_wings:
+    material: ELYTRA
+    name: '&dSkybound Wings'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: true
+    lore:
+      - '&7Sayap langka milik pengembara langit.'
+    enchantments:
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 500000
+      fish:
+        enabled: false
+        requirements: []
+  ocean_crown:
+    material: TURTLE_HELMET
+    name: '&3Ocean Crown'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 10
+    unrepairable: true
+    lore:
+      - '&7Mahkota penjelajah laut.'
+      - '&7Fishing luck bonus: &f+10%'
+    enchantments:
+      - OXYGEN:3
+      - WATER_WORKER:1
+      - PROTECTION_ENVIRONMENTAL:4
+      - DURABILITY:3
+    payment:
+      type: MONEY
+      money: 325000
+      fish:
+        enabled: false
+        requirements: []
+  enchanted_shulker:
+    material: PURPLE_SHULKER_BOX
+    name: '&5Enchanted Shulker'
+    amount: 1
+    stock: 1
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Penyimpanan langka dari Veliora Trader.'
+    enchantments: []
+    payment:
+      type: MONEY
+      money: 275000
       fish:
         enabled: false
         requirements: []

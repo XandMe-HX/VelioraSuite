@@ -9,6 +9,8 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +36,7 @@ public final class TraderSpawnManager {
 
     public void start() {
         stop();
-        long fallback = System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L;
-        nextSpawnAt = dataManager.getNextSpawnAt(fallback);
+        nextSpawnAt = nextAlignedSpawn(System.currentTimeMillis(), true);
         dataManager.saveNextSpawnAt(nextSpawnAt);
         task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L * 5L);
     }
@@ -54,7 +55,7 @@ public final class TraderSpawnManager {
     }
 
     public void scheduleNextFromNow() {
-        nextSpawnAt = System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L;
+        nextSpawnAt = nextAlignedSpawn(System.currentTimeMillis(), false);
         dataManager.saveNextSpawnAt(nextSpawnAt);
     }
 
@@ -114,6 +115,26 @@ public final class TraderSpawnManager {
         if (now >= nextSpawnAt) {
             Location location = findSpawnLocation();
             if (!traderManager.spawn(location)) scheduleNextFromNow();
+        }
+    }
+
+    private long nextAlignedSpawn(long nowMillis, boolean includeActiveWindow) {
+        return TraderSchedule.nextSpawn(
+                nowMillis,
+                zoneId(),
+                configManager.getIntervalHours(),
+                configManager.getAnchorHour(),
+                configManager.getActiveMinutes(),
+                includeActiveWindow
+        );
+    }
+
+    private ZoneId zoneId() {
+        try {
+            return ZoneId.of(configManager.getTimezone());
+        } catch (DateTimeException exception) {
+            plugin.getLogger().warning("VelioraTrader: timezone tidak valid, memakai Asia/Jakarta: " + configManager.getTimezone());
+            return ZoneId.of("Asia/Jakarta");
         }
     }
 

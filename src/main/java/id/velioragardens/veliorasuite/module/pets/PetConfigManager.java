@@ -159,15 +159,15 @@ public final class PetConfigManager {
         String normalizedId = id.toLowerCase(Locale.ROOT);
         String path = "pets." + id;
         String rawEntity = config.getString(path + ".entity", "");
-        if (isBlacklistedPet(normalizedId, rawEntity)) { plugin.getLogger().warning("VelioraPets: skip blacklisted pet: " + id + " / " + rawEntity); return; }
+        if (isBlacklistedPet(normalizedId, rawEntity)) return;
         EntityType type = entityType(rawEntity);
         if (type == null) { plugin.getLogger().warning("VelioraPets: skip invalid or unavailable entity for pet " + id + ": " + rawEntity); return; }
-        if (!isSafeAnimalType(type)) { plugin.getLogger().warning("VelioraPets: skip non-animal safe pet: " + id + " / " + rawEntity); return; }
+        if (!isSafeAnimalType(type)) return;
 
         boolean flyingPet = false;
         boolean aquatic = config.getBoolean(path + ".aquatic", defaultAquatic(type));
         if (isAxolotlGround(type)) aquatic = false;
-        if (aquatic && !allowAquaticPets() && !isAxolotlGround(type)) { plugin.getLogger().warning("VelioraPets: skip aquatic pet karena settings.allow-aquatic-pets false: " + type + " for " + id); return; }
+        if (aquatic && !allowAquaticPets() && !isAxolotlGround(type)) return;
 
         PetRarity rarity = PetRarity.from(config.getString(path + ".rarity", "COMMON"));
         Material food = material(config.getString(path + ".food.material", defaultFood(rarity).name()), defaultFood(rarity));
