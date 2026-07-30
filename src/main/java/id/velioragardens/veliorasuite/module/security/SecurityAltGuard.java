@@ -34,7 +34,6 @@ public final class SecurityAltGuard {
     private final SecurityConfigManager config;
     private final File file;
     private final Map<UUID, AltAccount> accounts = new HashMap<>();
-    private final Map<UUID, Long> sessionStart = new HashMap<>();
     private final Set<UUID> trusted = new HashSet<>();
     private final List<String> alerts = new ArrayList<>();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -47,7 +46,6 @@ public final class SecurityAltGuard {
 
     public void load() {
         accounts.clear();
-        sessionStart.clear();
         trusted.clear();
         if (!file.exists()) {
             save();
@@ -66,7 +64,6 @@ public final class SecurityAltGuard {
                     account.ipRaw = acc.getString(key + ".ip-raw", "");
                     account.firstSeen = acc.getLong(key + ".first-seen", 0L);
                     account.lastSeen = acc.getLong(key + ".last-seen", 0L);
-                    account.playMillis = acc.getLong(key + ".play-millis", 0L);
                     account.loginCount = acc.getInt(key + ".login-count", 0);
                     account.payIn = acc.getDouble(key + ".pay-in", 0.0D);
                     account.payOut = acc.getDouble(key + ".pay-out", 0.0D);
@@ -96,7 +93,6 @@ public final class SecurityAltGuard {
                 data.set(path + ".ip-raw", account.ipRaw);
                 data.set(path + ".first-seen", account.firstSeen);
                 data.set(path + ".last-seen", account.lastSeen);
-                data.set(path + ".play-millis", account.playMillis);
                 data.set(path + ".login-count", account.loginCount);
                 data.set(path + ".pay-in", account.payIn);
                 data.set(path + ".pay-out", account.payOut);
@@ -123,7 +119,6 @@ public final class SecurityAltGuard {
         if (account.firstSeen <= 0L) account.firstSeen = now;
         account.lastSeen = now;
         account.loginCount++;
-        sessionStart.put(player.getUniqueId(), now);
         save();
 
         List<AltAccount> group = groupByHash(ipHash);
@@ -138,10 +133,8 @@ public final class SecurityAltGuard {
 
     public void onQuit(Player player) {
         if (player == null) return;
-        Long start = sessionStart.remove(player.getUniqueId());
         AltAccount account = accounts.get(player.getUniqueId());
-        if (start != null && account != null) {
-            account.playMillis += Math.max(0L, System.currentTimeMillis() - start);
+        if (account != null) {
             account.lastSeen = System.currentTimeMillis();
             save();
         }
@@ -256,11 +249,11 @@ public final class SecurityAltGuard {
         sender.sendMessage(color(""));
         sender.sendMessage(color("&7IP Hash: &f" + ipHash));
         sender.sendMessage(color("&7Total akun: &f" + total));
-        sender.sendMessage(color("&7Akun utama: &f" + (main == null ? "unknown" : main.name) + " &8(&7Playtime &f" + (main == null ? "0m" : time(totalPlayMillis(main))) + "&8)"));
+        sender.sendMessage(color("&7Akun utama: &f" + (main == null ? "unknown" : main.name)));
         sender.sendMessage(color("&7Akun lain:"));
-        for (AltAccount account : sortedByPlaytime(group)) {
+        for (AltAccount account : sortedByLoginCount(group)) {
             if (main != null && main.uuid.equals(account.uuid)) continue;
-            sender.sendMessage(color("&8- &f" + account.name + " &7UUID &f" + account.uuid + " &8| &7Playtime &f" + time(totalPlayMillis(account)) + " &8| &7Login &f" + account.loginCount + " &8| &7/pay blocked &f" + account.blockedPay));
+            sender.sendMessage(color("&8- &f" + account.name + " &7UUID &f" + account.uuid + " &8| &7Login &f" + account.loginCount + " &8| &7/pay blocked &f" + account.blockedPay));
         }
         sender.sendMessage(color(""));
         sender.sendMessage(color("&7Action: &f" + action));
@@ -324,18 +317,11 @@ public final class SecurityAltGuard {
     }
 
     private AltAccount mainAccount(List<AltAccount> group) {
-        return group.stream().max(Comparator.comparingLong(this::totalPlayMillis)).orElse(null);
+        return group.stream().max(Comparator.comparingInt(account -> account.loginCount)).orElse(null);
     }
 
-    private List<AltAccount> sortedByPlaytime(List<AltAccount> group) {
-        return group.stream().sorted(Comparator.comparingLong(this::totalPlayMillis).reversed()).toList();
-    }
-
-    private long totalPlayMillis(AltAccount account) {
-        long total = account.playMillis;
-        Long start = sessionStart.get(account.uuid);
-        if (start != null) total += Math.max(0L, System.currentTimeMillis() - start);
-        return total;
+    private List<AltAccount> sortedByLoginCount(List<AltAccount> group) {
+        return group.stream().sorted(Comparator.comparingInt((AltAccount account) -> account.loginCount).reversed()).toList();
     }
 
     private AltAccount findByName(String name) {
@@ -388,14 +374,6 @@ public final class SecurityAltGuard {
         try { return Double.parseDouble(raw.replace(",", "").replace("_", "")); } catch (Exception ignored) { return 0.0D; }
     }
 
-    private String time(long millis) {
-        long seconds = Math.max(0L, millis / 1000L);
-        long hours = seconds / 3600L;
-        long minutes = (seconds % 3600L) / 60L;
-        if (hours > 0L) return hours + "h " + minutes + "m";
-        return minutes + "m";
-    }
-
     private String color(String text) { return config.color(text); }
     private void noPermission(CommandSender sender) { sender.sendMessage(config.color(config.message("no-permission", "%prefix% &cKamu tidak punya izin."))); }
 
@@ -407,7 +385,6 @@ public final class SecurityAltGuard {
         private String ipRaw = "";
         private long firstSeen;
         private long lastSeen;
-        private long playMillis;
         private int loginCount;
         private double payIn;
         private double payOut;

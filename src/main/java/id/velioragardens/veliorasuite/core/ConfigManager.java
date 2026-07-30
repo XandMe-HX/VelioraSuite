@@ -19,7 +19,6 @@ public final class ConfigManager {
             "kits",
             "report",
             "announcement",
-            "playtime",
             "fishing",
             "skills",
             "quest",
