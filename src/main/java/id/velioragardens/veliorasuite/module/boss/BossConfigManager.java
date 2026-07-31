@@ -39,6 +39,7 @@ public final class BossConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/boss.yml");
         config = YamlConfiguration.loadConfiguration(file);
         migrateBalanceV2(file);
+        migrateBossBarV3(file);
         migrateNotificationDefaults(file);
         loadRarityChance();
         loadBosses();
@@ -69,6 +70,22 @@ public final class BossConfigManager {
             if (!(entry.getValue() instanceof ConfigurationSection)) {
                 config.set(path + "." + entry.getKey(), entry.getValue());
             }
+        }
+    }
+
+    /** Upgrades the old BossBar display once, so existing servers do not retain stale bossbar settings. */
+    private void migrateBossBarV3(File file) {
+        if (config.getInt("settings.bossbar-version", 0) >= 3) return;
+        try (InputStream input = plugin.getResource("modules/boss.yml")) {
+            if (input == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
+            copySection(defaults, "bossbar", true);
+            config.set("bossbar-radius", defaults.getDouble("bossbar-radius", 120.0D));
+            config.set("settings.bossbar-version", 3);
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: BossBar config v3 diterapkan.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menerapkan BossBar config v3: " + exception.getMessage());
         }
     }
 
