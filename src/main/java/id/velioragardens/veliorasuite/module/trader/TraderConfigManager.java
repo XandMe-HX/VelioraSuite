@@ -41,6 +41,7 @@ public final class TraderConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/trader.yml");
         config = YamlConfiguration.loadConfiguration(file);
         mergeBundledDefaults(file);
+        migrateConfig(file);
         loadLocations();
         loadCampBlocks();
         loadTradePool();
@@ -55,6 +56,18 @@ public final class TraderConfigManager {
             config.save(file);
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraTrader: gagal memperbarui default trader.yml: " + exception.getMessage());
+        }
+    }
+
+    private void migrateConfig(File file) {
+        int version = config.getInt("settings.config-version", 1);
+        if (version >= 2) return;
+        config.set("settings.trade.random-items-per-spawn", 5);
+        config.set("settings.config-version", 2);
+        try {
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraTrader: gagal memigrasikan trader.yml: " + exception.getMessage());
         }
     }
 
@@ -116,7 +129,10 @@ public final class TraderConfigManager {
     public List<Integer> getTradeSlots() { List<Integer> slots = config == null ? List.of() : config.getIntegerList("gui.trade-slots"); return slots.isEmpty() ? List.of(10, 11, 13, 15, 16) : slots; }
     public int getCloseSlot() { return integer("gui.close-slot", 26); }
 
-    public int getRandomItemsPerSpawn() { return 1; }
+    public int getRandomItemsPerSpawn() {
+        int configured = integer("settings.trade.random-items-per-spawn", 5);
+        return Math.max(1, Math.min(getTradeSlots().size(), configured));
+    }
     public long getMaxMoneyPrice() { return Math.max(0L, Math.min(500_000L, config == null ? 500_000L : config.getLong("settings.trade.max-money-price", 500_000L))); }
     public String getStockMode() { return str("settings.trade.stock-mode", "GLOBAL"); }
     public int getDefaultStock() { return Math.max(1, integer("settings.trade.default-stock", 1)); }
