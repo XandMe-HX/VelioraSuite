@@ -193,7 +193,9 @@ public final class TraderManager {
     private List<TraderTradeItem> selectRandomItems() {
         List<TraderTradeItem> pool = new ArrayList<>(configManager.getTradePool());
         Collections.shuffle(pool);
-        return pool.isEmpty() ? List.of() : List.of(pool.get(0));
+        if (pool.isEmpty()) return List.of();
+        int amount = Math.min(configManager.getRandomItemsPerSpawn(), pool.size());
+        return List.copyOf(pool.subList(0, amount));
     }
 
     private void broadcast(String path, String fallback) {
