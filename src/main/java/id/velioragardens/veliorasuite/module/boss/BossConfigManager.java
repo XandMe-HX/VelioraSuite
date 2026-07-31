@@ -16,6 +16,9 @@ import org.bukkit.entity.EntityType;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -35,9 +38,38 @@ public final class BossConfigManager {
         plugin.saveResourceIfNotExists("modules/boss.yml");
         File file = new File(plugin.getDataFolder(), "modules/boss.yml");
         config = YamlConfiguration.loadConfiguration(file);
+        migrateBalanceV2(file);
         migrateNotificationDefaults(file);
         loadRarityChance();
         loadBosses();
+    }
+
+    /** Applies the approved boss rebalance once while preserving schedule, arena, and custom messages. */
+    private void migrateBalanceV2(File file) {
+        if (config.getInt("settings.balance-version", 0) >= 2) return;
+        try (InputStream input = plugin.getResource("modules/boss.yml")) {
+            if (input == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
+            for (String path : List.of("settings.combat", "bosses", "skills", "rewards")) {
+                copySection(defaults, path, !path.equals("bosses"));
+            }
+            config.set("settings.balance-version", 2);
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: balance config v2 diterapkan (HP, skill, mace, dan reward team).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menerapkan balance config v2: " + exception.getMessage());
+        }
+    }
+
+    private void copySection(FileConfiguration source, String path, boolean clearExisting) {
+        ConfigurationSection section = source.getConfigurationSection(path);
+        if (section == null) return;
+        if (clearExisting) config.set(path, null);
+        for (Map.Entry<String, Object> entry : section.getValues(true).entrySet()) {
+            if (!(entry.getValue() instanceof ConfigurationSection)) {
+                config.set(path + "." + entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     /** Adds new optimization options to existing server configs without replacing user settings. */
@@ -85,6 +117,7 @@ public final class BossConfigManager {
     public boolean healthScalingEnabled() { return bool("settings.combat.health-scale-by-nearby-players", true); }
     public double healthPerPlayerMultiplier() { return Math.max(0.0D, number("settings.combat.health-per-player-multiplier", 0.20D)); }
     public double maxHealthMultiplier() { return Math.max(1.0D, number("settings.combat.max-health-multiplier", 2.75D)); }
+    public double maceDamageMultiplier() { return clamp(number("settings.combat.mace-damage-multiplier", 0.40D), 0.0D, 1.0D); }
     public boolean spawnTitleEnabled() { return bool("effects.spawn.title-enabled", true); }
     public String spawnTitle() { return str("effects.spawn.title", "&c%boss%"); }
     public String spawnSubtitle() { return str("effects.spawn.subtitle", "&7Boss %rarity% muncul di &f%world%"); }
@@ -95,9 +128,17 @@ public final class BossConfigManager {
     public BarStyle bossBarStyle() { return barStyle(str("bossbar.style", "SEGMENTED_20")); }
     public double bossBarRadius() { return Math.max(120.0D, number("bossbar-radius", 120.0D)); }
     public boolean skillsEnabled() { return bool("skills.enabled", true); }
-    public int skillCooldownSeconds() { return Math.max(3, integer("skills.cooldown-seconds", 14)); }
-    public double groundSlamDamage() { return Math.max(9.0D, number("skills.damage.ground-slam", 9.0D)); }
-    public double fireBombDamage() { return Math.max(11.0D, number("skills.damage.fire-bomb", 11.0D)); }
+    public int skillCooldownSeconds() { return Math.max(3, integer("skills.cooldown-seconds", 12)); }
+    public int skillTelegraphTicks() { return Math.max(10, integer("skills.telegraph-ticks", 26)); }
+    public double groundSlamDamage() { return Math.max(0.0D, number("skills.damage.ground-slam", 6.0D)); }
+    public double fireBombDamage() { return Math.max(0.0D, number("skills.damage.fire-bomb", 7.0D)); }
+    public double lightningChainDamage() { return Math.max(0.0D, number("skills.damage.lightning-chain", 6.0D)); }
+    public double shadowPulseDamage() { return Math.max(0.0D, number("skills.damage.shadow-pulse", 5.0D)); }
+    public double soulCageDamage() { return Math.max(0.0D, number("skills.damage.soul-cage", 4.0D)); }
+    public double rageThreshold() { return clamp(number("skills.rage.health-threshold", 0.30D), 0.05D, 0.90D); }
+    public double rageDamageMultiplier() { return Math.max(1.0D, number("skills.rage.damage-multiplier", 1.18D)); }
+    public double rageHealPercentPerCast() { return clamp(number("skills.rage.heal-percent-per-cast", 0.005D), 0.0D, 0.05D); }
+    public double healPulsePercent() { return clamp(number("skills.heal-pulse.max-health-percent", 0.0125D), 0.0D, 0.10D); }
     public int maxMinions() { return Math.max(0, integer("skills.summon.max-minions", 8)); }
     public int minionsPerCast() { return Math.max(1, integer("skills.summon.minions-per-cast", 3)); }
     public List<String> minionTypes() { List<String> list = config == null ? List.of() : config.getStringList("skills.summon.types"); return list.isEmpty() ? List.of("ZOMBIE", "HUSK", "DROWNED", "ZOMBIFIED_PIGLIN") : list; }
@@ -140,6 +181,10 @@ public final class BossConfigManager {
     public long topBonusMax(int rankIndex) { return clampMoney(integer("rewards.top-damage-bonus." + rankKey(rankIndex) + ".max", defaultTopMax(rankIndex))); }
     public boolean moneyTotalCapEnabled() { return bool("rewards.money-total-cap.enabled", true); }
     public long moneyTotalCapMax() { return clampMoney(integer("rewards.money-total-cap.max-per-player", 150_000)); }
+    public boolean teamBonusEnabled() { return bool("rewards.team-bonus.enabled", true); }
+    public int teamBonusMinimumMembers() { return Math.max(2, integer("rewards.team-bonus.minimum-eligible-members", 2)); }
+    public long teamBonusPoolMin() { return clampMoney(integer("rewards.team-bonus.pool.min", 1_500)); }
+    public long teamBonusPoolMax() { return Math.max(teamBonusPoolMin(), clampMoney(integer("rewards.team-bonus.pool.max", 3_000))); }
     public boolean preventBlockDamage() { return bool("protection.prevent-block-damage", true); }
     public boolean allowBossDamageInProtectedRegion() { return bool("protection.allow-boss-damage-in-protected-region", true); }
     public Map<String, BossDefinition> bosses() { return bosses; }
@@ -171,7 +216,7 @@ public final class BossConfigManager {
     private List<BossSkillType> parseSkills(List<String> raw) { List<BossSkillType> skills = new ArrayList<>(); for (String value : raw) { BossSkillType skill = BossSkillType.from(value); if (skill != null && !skills.contains(skill)) skills.add(skill); } if (skills.isEmpty()) skills.addAll(List.of(BossSkillType.GROUND_SLAM, BossSkillType.SUMMON_MINIONS, BossSkillType.FIRE_BOMB, BossSkillType.PULL_AURA, BossSkillType.POISON_CLOUD, BossSkillType.RAGE_MODE)); return skills; }
     private boolean isAllowedBossType(EntityType type) { return switch (type) { case WARDEN, RAVAGER, ZOMBIE, HUSK, DROWNED, PIGLIN_BRUTE, WITHER_SKELETON, VINDICATOR, EVOKER -> true; default -> false; }; }
     private double defaultChance(BossRarity rarity) { return switch (rarity) { case COMMON -> 45.0D; case RARE -> 27.0D; case EPIC -> 16.0D; case LEGENDARY -> 9.0D; case MYTHIC -> 3.0D; }; }
-    private double minimumDamage(BossRarity rarity) { return switch (rarity) { case COMMON -> 8.0D; case RARE -> 10.0D; case EPIC -> 13.0D; case LEGENDARY -> 16.0D; case MYTHIC -> 19.0D; }; }
+    private double minimumDamage(BossRarity rarity) { return switch (rarity) { case COMMON -> 7.0D; case RARE -> 8.0D; case EPIC -> 9.0D; case LEGENDARY -> 10.0D; case MYTHIC -> 11.0D; }; }
     private String rankKey(int rankIndex) { return rankIndex == 0 ? "first" : rankIndex == 1 ? "second" : "third"; }
     private int defaultTopMin(int rankIndex) { return rankIndex == 0 ? 0 : 0; }
     private int defaultTopMax(int rankIndex) { return rankIndex == 0 ? 0 : 0; }
