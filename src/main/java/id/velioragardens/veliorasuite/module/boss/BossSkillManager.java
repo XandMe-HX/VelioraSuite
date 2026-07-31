@@ -258,3 +258,4 @@ public final class BossSkillManager {
         if (location == null || location.getWorld() == null) return List.of();
         return manager.nearbyTargetPlayers(location, horizontalRadius);
     }
+}
