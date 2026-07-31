@@ -135,7 +135,8 @@ public final class BossSkillManager {
         Location target = targets.isEmpty() ? boss.getLocation().clone().add(random.nextInt(9) - 4, 0, random.nextInt(9) - 4) : targets.get(random.nextInt(targets.size())).getLocation();
         target.getWorld().spawnParticle(Particle.FLAME, target, 40, 1.5D, 0.4D, 1.5D, 0.05D);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            target.getWorld().createExplosion(target, 2.0F, false, false, boss);
+            target.getWorld().spawnParticle(Particle.EXPLOSION, target, 1);
+            target.getWorld().playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 1.0F, 1.0F);
             for (Player player : nearbyPlayers(target, 4.0D)) player.damage(config.fireBombDamage() * outgoingDamageMultiplier());
         }, 30L);
     }
@@ -257,4 +258,3 @@ public final class BossSkillManager {
         if (location == null || location.getWorld() == null) return List.of();
         return manager.nearbyTargetPlayers(location, horizontalRadius);
     }
-}
