@@ -32,6 +32,11 @@ public final class BossRewardManager {
         this.config = config;
     }
 
+    private void notifyPlayers(String message) {
+        if (!config.playerNotificationsEnabled()) return;
+        for (Player player : Bukkit.getOnlinePlayers()) player.sendMessage(message);
+    }
+
     public void distribute(BossDefinition definition, Location deathLocation, BossDamageTracker tracker) {
         cleanupRewardCooldowns();
         List<BossDamageTracker.Entry> top = tracker.top();
@@ -50,17 +55,17 @@ public final class BossRewardManager {
             plannedRewards.put(entry.uuid(), reward);
         }
 
-        Bukkit.broadcastMessage(config.color("&8&m--------------------------------"));
-        Bukkit.broadcastMessage(config.color("&c&lTop Damage"));
+        notifyPlayers(config.color("&8&m--------------------------------"));
+        notifyPlayers(config.color("&c&lTop Damage"));
         for (int i = 0; i < Math.min(3, top.size()); i++) {
             BossDamageTracker.Entry entry = top.get(i);
             String playerName = offlineName(entry.uuid());
             double damagePercent = (entry.damage() / totalDamage) * 100.0D;
-            Bukkit.broadcastMessage(config.color("&7#" + (i + 1) + " &f" + playerName));
-            Bukkit.broadcastMessage(config.color("&f" + String.format("%.0f", damagePercent) + "%"));
-            Bukkit.broadcastMessage(config.color("&7Reward &e" + formatMoney(plannedRewards.getOrDefault(entry.uuid(), 0L))));
+            notifyPlayers(config.color("&7#" + (i + 1) + " &f" + playerName));
+            notifyPlayers(config.color("&f" + String.format("%.0f", damagePercent) + "%"));
+            notifyPlayers(config.color("&7Reward &e" + formatMoney(plannedRewards.getOrDefault(entry.uuid(), 0L))));
         }
-        Bukkit.broadcastMessage(config.color("&8&m--------------------------------"));
+        notifyPlayers(config.color("&8&m--------------------------------"));
         
         // Distribute rewards based on damage contribution
         for (int i = 0; i < top.size(); i++) {

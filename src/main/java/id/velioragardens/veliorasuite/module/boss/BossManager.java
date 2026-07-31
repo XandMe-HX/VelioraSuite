@@ -209,12 +209,12 @@ public final class BossManager implements Listener {
 
     public void stopActive(boolean message) {
         if (activeBoss == null && activeDefinition == null) {
-            if (message) Bukkit.broadcastMessage(config.color(config.message("no-active-boss", "%prefix% &eTidak ada boss aktif.")));
+            if (message) notifyPlayers(config.color(config.message("no-active-boss", "%prefix% &eTidak ada boss aktif.")));
             clearRuntime();
             return;
         }
         if (activeBoss != null && !activeBoss.isDead()) activeBoss.remove();
-        if (message && activeDefinition != null) Bukkit.broadcastMessage(config.color(config.message("boss-despawn", "%prefix% &e%boss% menghilang.").replace("%boss%", config.color(activeDefinition.displayName()))));
+        if (message && activeDefinition != null) notifyPlayers(config.color(config.message("boss-despawn", "%prefix% &e%boss% menghilang.").replace("%boss%", config.color(activeDefinition.displayName()))));
         clearRuntime();
         scheduleNextSpawn();
     }
@@ -268,7 +268,7 @@ public final class BossManager implements Listener {
     public void onDeath(EntityDeathEvent event) {
         if (activeBoss == null || !event.getEntity().getUniqueId().equals(activeBoss.getUniqueId())) return;
         Location death = event.getEntity().getLocation();
-        if (config.announceDeath()) Bukkit.broadcastMessage(config.color(config.message("boss-death", "%prefix% &a%boss% berhasil dikalahkan!").replace("%boss%", config.color(activeDefinition.displayName()))));
+        if (config.announceDeath()) notifyPlayers(config.color(config.message("boss-death", "%prefix% &a%boss% berhasil dikalahkan!").replace("%boss%", config.color(activeDefinition.displayName()))));
         death.getWorld().playSound(death, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
         rewardManager.distribute(activeDefinition, death, damageTracker);
         for (BossDamageTracker.Entry entry : damageTracker.top()) {
@@ -329,6 +329,9 @@ public final class BossManager implements Listener {
             return;
         }
         if (!config.isSpawnEnabled()) return;
+        // Do not create entities or send schedule warnings while the server is empty.
+        // Keep the expired schedule intact so the next online player receives the boss immediately.
+        if (config.skipSpawnWhenNoPlayers() && Bukkit.getOnlinePlayers().isEmpty()) return;
         sendSpawnWarnings();
         if (System.currentTimeMillis() >= nextSpawnAt) {
             boolean spawned = spawn(randomDefinition(), randomSpawnPoint(), true);
@@ -377,11 +380,11 @@ public final class BossManager implements Listener {
         bossBarManager.create(definition);
         damageTracker.clear();
         skillManager.start(definition);
-        plugin.getLogger().info("VelioraBoss spawned: " + definition.id() + " health=" + (int) spawnHealth + " size=" + String.format(Locale.US, "%.2f", spawnScale));
+        notifyConsole("spawned: " + definition.id() + " health=" + (int) spawnHealth + " size=" + String.format(Locale.US, "%.2f", spawnScale));
         location.getWorld().playSound(location, config.sound("effects.spawn.sound", "ENTITY_WARDEN_ROAR"), 1.0F, 0.8F);
         location.getWorld().spawnParticle(config.particle("effects.spawn.particle", "SOUL"), location, config.spawnParticleCount(), 3.0D, 1.7D, 3.0D, 0.07D);
         if (config.spawnTitleEnabled()) sendSpawnTitle(definition, location);
-        if (announce && config.announceSpawn()) Bukkit.broadcastMessage(config.color(config.message("boss-spawn", "%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!")
+        if (announce && config.announceSpawn()) notifyPlayers(config.color(config.message("boss-spawn", "%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!")
                 .replace("%boss%", config.color(definition.displayName()))
                 .replace("%world%", location.getWorld().getName())
                 .replace("%x%", String.valueOf(location.getBlockX()))
@@ -458,7 +461,7 @@ public final class BossManager implements Listener {
             if (millis <= minute * 60_000L) {
                 String key = "boss-warning-" + minute;
                 String fallback = minute == 1 ? "%prefix% &cBoss akan muncul dalam &f1 menit&c!" : "%prefix% &eBoss akan muncul dalam &f" + minute + " menit&e!";
-                Bukkit.broadcastMessage(config.color(config.message(key, fallback)));
+                notifyPlayers(config.color(config.message(key, fallback)));
                 sentWarnings.add(minute);
             }
         }
@@ -546,11 +549,20 @@ public final class BossManager implements Listener {
     private void rescheduleSpawnRetry(String reason) {
         nextSpawnAt = System.currentTimeMillis() + (config.spawnRetryMinutes() * 60_000L);
         sentWarnings.clear();
-        plugin.getLogger().warning("VelioraBoss: " + reason + ", retry dalam " + config.spawnRetryMinutes() + " menit. Cek spawn point, world, dan entity boss.");
+        notifyConsole(reason + ", retry dalam " + config.spawnRetryMinutes() + " menit. Cek spawn point, world, dan entity boss.");
     }
 
     private void infoLine(CommandSender sender, String key, String value) {
         sender.sendMessage(config.color(config.message("boss-info-line", "&7%key%: &f%value%").replace("%key%", key).replace("%value%", value)));
+    }
+
+    private void notifyPlayers(String message) {
+        if (!config.playerNotificationsEnabled()) return;
+        for (Player player : Bukkit.getOnlinePlayers()) player.sendMessage(message);
+    }
+
+    private void notifyConsole(String message) {
+        if (config.consoleNotificationsEnabled()) plugin.getLogger().info("VelioraBoss: " + message);
     }
 
     private String skillText(BossDefinition boss) {

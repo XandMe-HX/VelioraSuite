@@ -87,7 +87,10 @@ public final class BossSkillManager {
         PotionEffectType resistance = PotionEffectType.getByName("DAMAGE_RESISTANCE");
         if (speed != null) boss.addPotionEffect(new PotionEffect(speed, 20 * 60, 0));
         if (resistance != null) boss.addPotionEffect(new PotionEffect(resistance, 20 * 60, 0));
-        plugin.getServer().broadcastMessage(config.color("&c" + boss.getCustomName() + " &cmemasuki Rage Mode!"));
+        if (config.playerNotificationsEnabled()) {
+            String message = config.color("&c" + boss.getCustomName() + " &cmemasuki Rage Mode!");
+            for (Player player : plugin.getServer().getOnlinePlayers()) player.sendMessage(message);
+        }
     }
 
     private void groundSlam(LivingEntity boss) {

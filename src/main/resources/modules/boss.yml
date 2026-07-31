@@ -8,9 +8,16 @@ settings:
     announce-spawn: true
     announce-death: true
     announce-despawn: true
+    # Jika tidak ada player online, jadwal ditahan dan boss baru spawn saat ada player.
+    skip-when-no-players: true
     allow-multiple-active: false
     require-spawn-point: true
     warning-times-minutes: [5, 1]
+  notifications:
+    # Pesan boss ke player (spawn, mati, despawn, dan peringatan jadwal).
+    players: true
+    # Log aktivitas normal boss ke console. Nonaktifkan agar console tidak spam.
+    console: false
   boss-size:
     random-enabled: true
     min: 3.2

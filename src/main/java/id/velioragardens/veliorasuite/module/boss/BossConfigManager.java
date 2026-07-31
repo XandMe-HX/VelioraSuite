@@ -15,6 +15,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -34,8 +35,29 @@ public final class BossConfigManager {
         plugin.saveResourceIfNotExists("modules/boss.yml");
         File file = new File(plugin.getDataFolder(), "modules/boss.yml");
         config = YamlConfiguration.loadConfiguration(file);
+        migrateNotificationDefaults(file);
         loadRarityChance();
         loadBosses();
+    }
+
+    /** Adds new optimization options to existing server configs without replacing user settings. */
+    private void migrateNotificationDefaults(File file) {
+        boolean changed = false;
+        changed |= addDefault("settings.spawn.skip-when-no-players", true);
+        changed |= addDefault("settings.notifications.players", true);
+        changed |= addDefault("settings.notifications.console", false);
+        if (!changed) return;
+        try {
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menambahkan pengaturan notifikasi baru ke boss.yml.");
+        }
+    }
+
+    private boolean addDefault(String path, Object value) {
+        if (config.contains(path)) return false;
+        config.set(path, value);
+        return true;
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
@@ -48,6 +70,9 @@ public final class BossConfigManager {
     public boolean announceSpawn() { return bool("settings.spawn.announce-spawn", true); }
     public boolean announceDeath() { return bool("settings.spawn.announce-death", true); }
     public boolean announceDespawn() { return bool("settings.spawn.announce-despawn", true); }
+    public boolean skipSpawnWhenNoPlayers() { return bool("settings.spawn.skip-when-no-players", true); }
+    public boolean playerNotificationsEnabled() { return bool("settings.notifications.players", true); }
+    public boolean consoleNotificationsEnabled() { return bool("settings.notifications.console", false); }
     public boolean allowMultiple() { return bool("settings.spawn.allow-multiple-active", false); }
     public boolean requireSpawnPoint() { return bool("settings.spawn.require-spawn-point", true); }
     public List<Integer> warningTimesMinutes() { List<Integer> list = config == null ? List.of() : config.getIntegerList("settings.spawn.warning-times-minutes"); return list.isEmpty() ? List.of(5, 1) : list; }
