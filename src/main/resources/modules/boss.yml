@@ -1,6 +1,8 @@
 settings:
   enabled: true
   balance-version: 2
+  # Memaksa tampilan BossBar lama ikut diperbarui sekali pada server yang sudah berjalan.
+  bossbar-version: 3
   spawn:
     enabled: true
     interval-minutes: 60
@@ -43,7 +45,7 @@ rarity-chance:
 
 bossbar:
   enabled: true
-  title: '&c%boss% &7- &f%health%&7/&f%max_health% HP &8| &e%time%'
+  title: '&5&l%boss% &8» &f%health%&7/&f%max_health% &c❤ &8| &e%time%'
   color-by-rarity: true
   style: SEGMENTED_20
 bossbar-radius: 120
