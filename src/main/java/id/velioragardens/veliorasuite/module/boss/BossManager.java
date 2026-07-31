@@ -7,6 +7,7 @@ import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
 import id.velioragardens.veliorasuite.module.boss.model.BossSpawnPoint;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -255,13 +256,19 @@ public final class BossManager implements Listener {
         if (damagedBoss) {
             Player player = damager(event.getDamager());
             if (player != null) {
+                if (player.getInventory().getItemInMainHand().getType() == Material.MACE) {
+                    event.setDamage(event.getDamage() * config.maceDamageMultiplier());
+                }
                 damageTracker.add(player, event.getFinalDamage());
                 data.addDamage(player, event.getFinalDamage());
                 if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
             }
             return;
         }
-        if (damagerBoss) event.setDamage(activeDefinition == null ? event.getDamage() : activeDefinition.damage());
+        if (damagerBoss) {
+            double damage = activeDefinition == null ? event.getDamage() : activeDefinition.damage();
+            event.setDamage(damage * skillManager.outgoingDamageMultiplier());
+        }
     }
 
     @EventHandler

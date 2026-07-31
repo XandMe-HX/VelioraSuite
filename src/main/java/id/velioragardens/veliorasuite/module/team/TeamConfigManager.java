@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -23,6 +24,20 @@ public final class TeamConfigManager {
         plugin.saveResourceIfNotExists("modules/team.yml");
         File file = new File(plugin.getDataFolder(), "modules/team.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        migrateBalanceV2(file);
+    }
+
+    private void migrateBalanceV2(File file) {
+        if (config.getInt("settings.balance-version", 0) >= 2) return;
+        config.set("settings.create-cost", 50_000D);
+        config.set("settings.upgrade-cost", 50_000D);
+        config.set("settings.balance-version", 2);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraTeam: harga create dan upgrade diperbarui menjadi 50.000.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraTeam: gagal menyimpan migrasi harga: " + exception.getMessage());
+        }
     }
 
     public boolean isEnabled() {
@@ -34,7 +49,7 @@ public final class TeamConfigManager {
     }
 
     public double getCreateCost() {
-        return Math.max(0D, getDouble("settings.create-cost", 250000D));
+        return Math.max(0D, getDouble("settings.create-cost", 50000D));
     }
 
     public int getDefaultMaxMembers() {
@@ -42,7 +57,7 @@ public final class TeamConfigManager {
     }
 
     public double getUpgradeCost() {
-        return Math.max(0D, getDouble("settings.upgrade-cost", 500000D));
+        return Math.max(0D, getDouble("settings.upgrade-cost", 50000D));
     }
 
     public int getUpgradeAddMembers() {

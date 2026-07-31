@@ -3,6 +3,8 @@ package id.velioragardens.veliorasuite.module.boss;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.boss.model.BossDefinition;
 import id.velioragardens.veliorasuite.module.boss.model.BossRarity;
+import id.velioragardens.veliorasuite.module.team.TeamModule;
+import id.velioragardens.veliorasuite.module.team.model.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -13,7 +15,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -41,18 +45,31 @@ public final class BossRewardManager {
         cleanupRewardCooldowns();
         List<BossDamageTracker.Entry> top = tracker.top();
         double totalDamage = top.stream().mapToDouble(BossDamageTracker.Entry::damage).sum();
-        
         if (totalDamage <= 0.0D) return;
 
-        Map<UUID, Long> plannedRewards = new HashMap<>();
-        for (int i = 0; i < top.size(); i++) {
-            BossDamageTracker.Entry entry = top.get(i);
+        Map<UUID, RewardPlan> plans = new LinkedHashMap<>();
+        Map<String, List<UUID>> eligibleByTeam = new LinkedHashMap<>();
+        for (int rankIndex = 0; rankIndex < top.size(); rankIndex++) {
+            BossDamageTracker.Entry entry = top.get(rankIndex);
             Player player = Bukkit.getPlayer(entry.uuid());
             double damagePercent = (entry.damage() / totalDamage) * 100.0D;
-            long reward = eligible(player, deathLocation, entry.damage(), totalDamage, definition.id()) && damagePercent >= config.minDamageContributionPercent()
-                    ? calculateRankBasedReward(i, damagePercent)
-                    : 0L;
-            plannedRewards.put(entry.uuid(), reward);
+            if (!eligible(player, deathLocation, entry.damage(), definition.id())
+                    || damagePercent < config.minDamageContributionPercent()) continue;
+
+            Team team = findTeam(entry.uuid());
+            String teamName = team == null ? "" : team.getName();
+            long personal = calculatePersonalReward(definition, rankIndex, damagePercent);
+            plans.put(entry.uuid(), new RewardPlan(player, entry, rankIndex, damagePercent, personal, teamName));
+            if (!teamName.isBlank()) eligibleByTeam.computeIfAbsent(teamName, ignored -> new ArrayList<>()).add(entry.uuid());
+        }
+
+        Map<UUID, Long> teamBonuses = calculateTeamBonuses(eligibleByTeam);
+        Map<UUID, Long> plannedRewards = new HashMap<>();
+        for (Map.Entry<UUID, RewardPlan> entry : plans.entrySet()) {
+            long reward = entry.getValue().personalReward() + teamBonuses.getOrDefault(entry.getKey(), 0L);
+            if (reward > 0L) reward = Math.max(500L, reward);
+            if (config.moneyTotalCapEnabled()) reward = Math.min(reward, config.moneyTotalCapMax());
+            plannedRewards.put(entry.getKey(), reward);
         }
 
         notifyPlayers(config.color("&8&m--------------------------------"));
@@ -67,53 +84,78 @@ public final class BossRewardManager {
         }
         notifyPlayers(config.color("&8&m--------------------------------"));
         
-        // Distribute rewards based on damage contribution
-        for (int i = 0; i < top.size(); i++) {
-            BossDamageTracker.Entry entry = top.get(i);
-            Player player = Bukkit.getPlayer(entry.uuid());
-            if (!eligible(player, deathLocation, entry.damage(), totalDamage, definition.id())) continue;
-            
-            double damagePercent = (entry.damage() / totalDamage) * 100.0D;
-            
-            if (damagePercent < config.minDamageContributionPercent()) {
-                continue;
-            }
-            
-            long reward = plannedRewards.getOrDefault(entry.uuid(), 0L);
-            
+        for (Map.Entry<UUID, RewardPlan> entry : plans.entrySet()) {
+            RewardPlan plan = entry.getValue();
+            Player player = plan.player();
+            if (player == null || !player.isOnline()) continue;
+            long reward = plannedRewards.getOrDefault(entry.getKey(), 0L);
             if (reward > 0 && deposit(player, reward)) {
-                player.sendMessage(config.color(config.message("reward-money-total", 
+                player.sendMessage(config.color(config.message("reward-money-total",
                     "%prefix% &aTotal reward uang boss kamu: &e%money%")
                     .replace("%money%", String.format("%,d", reward))));
             }
-            
-            giveBalancedItems(player, definition.rarity(), i);
+
+            long teamBonus = teamBonuses.getOrDefault(entry.getKey(), 0L);
+            if (teamBonus > 0L) {
+                player.sendMessage(config.color(config.message("reward-team-bonus",
+                                "%prefix% &bBonus team &f%team%&b: &e%money% &7(dibagi ke anggota yang mencapai 10% damage).")
+                        .replace("%team%", plan.teamName())
+                        .replace("%money%", formatMoney(teamBonus))));
+            }
+
+            giveBalancedItems(player, definition.rarity(), plan.rankIndex());
             rewardCooldown.put(cooldownKey(player.getUniqueId(), definition.id()), System.currentTimeMillis());
-            player.sendMessage(config.color(config.message("reward-received", 
+            player.sendMessage(config.color(config.message("reward-received",
                 "%prefix% &aKamu mendapat reward boss karena memberi &f%damage% &adamage.")
-                .replace("%damage%", String.format("%.1f", entry.damage()))));
+                .replace("%damage%", String.format("%.1f", plan.entry().damage()))));
         }
     }
 
-    /**
-     * Calculate reward based on rank with config-driven random variation.
-     * Defaults preserve the old hardcoded values to avoid accidental inflation.
-     */
-    private long calculateRankBasedReward(int rankIndex, double damagePercent) {
-        long min = config.topBonusMin(rankIndex);
-        long max = Math.max(min, config.topBonusMax(rankIndex));
-        long span = max - min;
-        long randomPart = (long) Math.floor(random.nextDouble() * (span * 0.85D + 1.0D));
-        long contributionPart = Math.round(span * Math.min(0.15D, Math.max(0.0D, damagePercent) / 100.0D * 0.15D));
-        long reward = Math.min(max, min + randomPart + contributionPart);
-        if (rankIndex == 0) reward = Math.min(reward, 10_000L);
-        if (config.moneyTotalCapEnabled()) reward = Math.min(reward, config.moneyTotalCapMax());
+    private long calculatePersonalReward(BossDefinition definition, int rankIndex, double damagePercent) {
+        if (!config.bossMoneyEnabled(definition)) return 0L;
+        long min = config.bossMoneyMin(definition);
+        long max = Math.max(min, config.bossMoneyMax(definition));
+        long base = randomMoney(min, max);
+        double contributionScale = 0.75D + Math.min(0.25D, Math.max(0.0D, damagePercent) / 100.0D);
+        long reward = Math.round(base * contributionScale);
+        if (config.topDamageBonusEnabled() && rankIndex < 3) {
+            reward += randomMoney(config.topBonusMin(rankIndex), config.topBonusMax(rankIndex));
+        }
         return reward;
     }
 
-    private boolean eligible(Player player, Location deathLocation, double damage, double totalDamage, String bossId) {
+    private Map<UUID, Long> calculateTeamBonuses(Map<String, List<UUID>> eligibleByTeam) {
+        Map<UUID, Long> result = new HashMap<>();
+        if (!config.teamBonusEnabled()) return result;
+        for (List<UUID> members : eligibleByTeam.values()) {
+            if (members.size() < config.teamBonusMinimumMembers()) continue;
+            long pool = randomMoney(config.teamBonusPoolMin(), config.teamBonusPoolMax());
+            long share = Math.max(1L, pool / members.size());
+            for (UUID uuid : members) result.put(uuid, share);
+        }
+        return result;
+    }
+
+    private Team findTeam(UUID uuid) {
+        if (plugin.getModuleManager() == null) return null;
+        return plugin.getModuleManager().getModule("team")
+                .filter(TeamModule.class::isInstance)
+                .map(TeamModule.class::cast)
+                .filter(TeamModule::isEnabled)
+                .map(TeamModule::getTeamManager)
+                .map(manager -> manager.getDataManager().getTeamByPlayer(uuid))
+                .orElse(null);
+    }
+
+    private long randomMoney(long min, long max) {
+        long safeMin = Math.max(0L, min);
+        long safeMax = Math.max(safeMin, max);
+        return safeMin == safeMax ? safeMin : safeMin + random.nextLong(safeMax - safeMin + 1L);
+    }
+
+    private boolean eligible(Player player, Location deathLocation, double damage, String bossId) {
         if (player == null || !player.isOnline()) return false;
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return true;
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return false;
         if (deathLocation != null && deathLocation.getWorld() != null) {
             if (!player.getWorld().equals(deathLocation.getWorld())) return false;
             if (player.getLocation().distanceSquared(deathLocation) > 80.0D * 80.0D) return false;
@@ -179,4 +221,7 @@ public final class BossRewardManager {
         vaultWarned = true;
         plugin.getLogger().warning("VelioraBoss: Vault economy tidak aktif, reward money di-skip.");
     }
+
+    private record RewardPlan(Player player, BossDamageTracker.Entry entry, int rankIndex,
+                              double damagePercent, long personalReward, String teamName) { }
 }
