@@ -1,4 +1,5 @@
 settings:
+  config-version: 2
   enabled: true
   prefix: '&8[&6VelioraTrader&8] '
   spawn:
@@ -23,7 +24,7 @@ settings:
         y: 72
         z: -220
   trade:
-    random-items-per-spawn: 1
+    random-items-per-spawn: 5
     max-money-price: 500000
     stock-mode: GLOBAL
     default-stock: 1
@@ -473,6 +474,96 @@ trade-pool:
           - fish-id: ''
             rarity: EPIC
             amount: 3
+  builder_supply:
+    material: SCAFFOLDING
+    name: '&eBuilder Supply x64'
+    amount: 64
+    stock: 5
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Hadiah pasti, bukan undian.'
+      - '&7Cocok untuk proyek bangunan dan eksplorasi.'
+    enchantments: []
+    payment:
+      type: MONEY
+      money: 12000
+      fish:
+        enabled: false
+        requirements: []
+  mining_supply:
+    material: TORCH
+    name: '&6Mining Supply x64'
+    amount: 64
+    stock: 5
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Hadiah pasti, bukan undian.'
+      - '&7Penerangan untuk tambang dan gua.'
+    enchantments: []
+    payment:
+      type: MONEY
+      money: 8000
+      fish:
+        enabled: false
+        requirements: []
+  explorer_supply:
+    material: COOKED_BEEF
+    name: '&cExplorer Supply x32'
+    amount: 32
+    stock: 5
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Hadiah pasti, bukan undian.'
+      - '&7Bekal perjalanan untuk player baru.'
+    enchantments: []
+    payment:
+      type: MONEY
+      money: 10000
+      fish:
+        enabled: false
+        requirements: []
+  experience_supply:
+    material: EXPERIENCE_BOTTLE
+    name: '&aExperience Supply x32'
+    amount: 32
+    stock: 3
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Hadiah pasti, bukan undian.'
+      - '&7Untuk membantu enchanting dan repair.'
+    enchantments: []
+    payment:
+      type: MONEY
+      money: 25000
+      fish:
+        enabled: false
+        requirements: []
+  ender_supply:
+    material: ENDER_PEARL
+    name: '&5Ender Supply x16'
+    amount: 16
+    stock: 3
+    custom-damage: 0
+    fishing-luck-bonus: 0
+    unrepairable: false
+    lore:
+      - '&7Hadiah pasti, bukan undian.'
+      - '&7Mobilitas praktis dengan hasil yang jelas.'
+    enchantments: []
+    payment:
+      type: MONEY
+      money: 20000
+      fish:
+        enabled: false
+        requirements: []
 
 messages:
   force-spawn-success: '%prefix% &aTrader berhasil dispawn untuk test.'
