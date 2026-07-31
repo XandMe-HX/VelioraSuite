@@ -8,9 +8,16 @@ settings:
     announce-spawn: true
     announce-death: true
     announce-despawn: true
+    # Jika tidak ada player online, jadwal ditahan dan boss baru spawn saat ada player.
+    skip-when-no-players: true
     allow-multiple-active: false
     require-spawn-point: true
     warning-times-minutes: [5, 1]
+  notifications:
+    # Pesan boss ke player (spawn, mati, despawn, dan peringatan jadwal).
+    players: true
+    # Log aktivitas normal boss ke console. Nonaktifkan agar console tidak spam.
+    console: false
   boss-size:
     random-enabled: true
     min: 3.2
@@ -35,17 +42,17 @@ bossbar:
   title: '&c%boss% &7- &f%health%&7/&f%max_health% HP &8| &e%time%'
   color-by-rarity: true
   style: SEGMENTED_20
-bossbar-radius: 80
+bossbar-radius: 120
 
 arena:
   enabled: true
-  radius: 55
-  target-radius: 55
+  radius: 90
+  target-radius: 90
   leash-to-spawn: true
   teleport-back-if-far: true
-  teleport-back-distance: 70
+  teleport-back-distance: 110
   teleport-back-if-below-spawn-y: true
-  below-y-offset: 12
+  below-y-offset: 28
   remove-minion-outside-radius: true
 
 targeting:
@@ -54,8 +61,8 @@ targeting:
   include-adventure: true
   include-creative: false
   include-spectator: false
-  target-radius-horizontal: 72
-  target-radius-vertical: 40
+  target-radius-horizontal: 110
+  target-radius-vertical: 72
   retarget-interval-seconds: 2
   force-target-nearest: true
   ignore-line-of-sight: true
@@ -72,7 +79,7 @@ bosses:
     display-name: '&2Rotten Colossus'
     rarity: COMMON
     health: 4800
-    damage: 5.0
+    damage: 8.0
     scale: 3.4
     skills: [GROUND_SLAM, SUMMON_MINIONS]
     rewards:
@@ -82,7 +89,7 @@ bosses:
     display-name: '&aMoss Warden'
     rarity: COMMON
     health: 5200
-    damage: 5.0
+    damage: 8.0
     scale: 3.5
     skills: [POISON_CLOUD, SUMMON_MINIONS]
     rewards:
@@ -92,7 +99,7 @@ bosses:
     display-name: '&aForest Beast'
     rarity: RARE
     health: 7200
-    damage: 7.0
+    damage: 10.0
     scale: 4.4
     skills: [GROUND_SLAM, POISON_CLOUD, RAGE_MODE]
     rewards:
@@ -102,7 +109,7 @@ bosses:
     display-name: '&cInfernal Butcher'
     rarity: RARE
     health: 7200
-    damage: 7.0
+    damage: 10.0
     scale: 4.2
     skills: [GROUND_SLAM, SUMMON_MINIONS, RAGE_MODE]
     rewards:
@@ -112,7 +119,7 @@ bosses:
     display-name: '&3Deep Drowned King'
     rarity: RARE
     health: 7600
-    damage: 7.0
+    damage: 10.0
     scale: 4.2
     skills: [PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
@@ -122,7 +129,7 @@ bosses:
     display-name: '&eSand Revenant'
     rarity: RARE
     health: 7800
-    damage: 7.0
+    damage: 10.0
     scale: 4.1
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS]
     rewards:
@@ -132,7 +139,7 @@ bosses:
     display-name: '&7Cave Titan'
     rarity: EPIC
     health: 10500
-    damage: 8.0
+    damage: 12.0
     scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
@@ -142,7 +149,7 @@ bosses:
     display-name: '&9Ancient Warden'
     rarity: EPIC
     health: 11200
-    damage: 9.0
+    damage: 13.0
     scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
@@ -152,7 +159,7 @@ bosses:
     display-name: '&5Abyss Brute'
     rarity: EPIC
     health: 10800
-    damage: 9.0
+    damage: 13.0
     scale: 4.8
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, RAGE_MODE]
     rewards:
@@ -162,7 +169,7 @@ bosses:
     display-name: '&dCrystal Evoker'
     rarity: LEGENDARY
     health: 14500
-    damage: 10.0
+    damage: 15.0
     scale: 5.4
     skills: [FIRE_BOMB, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
@@ -172,7 +179,7 @@ bosses:
     display-name: '&6Namazu Earthshaker'
     rarity: LEGENDARY
     health: 16000
-    damage: 11.0
+    damage: 16.0
     scale: 5.6
     skills: [GROUND_SLAM, FIRE_BOMB, SUMMON_MINIONS, RAGE_MODE]
     rewards:
@@ -182,7 +189,7 @@ bosses:
     display-name: '&8Soul Reaper'
     rarity: LEGENDARY
     health: 15000
-    damage: 10.0
+    damage: 15.0
     scale: 5.4
     skills: [PULL_AURA, POISON_CLOUD, SUMMON_MINIONS, RAGE_MODE]
     rewards:
@@ -192,7 +199,7 @@ bosses:
     display-name: '&5Void Executioner'
     rarity: MYTHIC
     health: 22500
-    damage: 13.0
+    damage: 19.0
     scale: 6.0
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
@@ -202,7 +209,7 @@ bosses:
     display-name: '&0Eclipse Warden'
     rarity: MYTHIC
     health: 24000
-    damage: 13.0
+    damage: 19.0
     scale: 6.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, POISON_CLOUD, RAGE_MODE]
     rewards:
@@ -214,8 +221,8 @@ skills:
   random-skill: true
   default: [GROUND_SLAM, SUMMON_MINIONS, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
   damage:
-    ground-slam: 6.0
-    fire-bomb: 7.0
+    ground-slam: 9.0
+    fire-bomb: 11.0
   summon:
     max-minions: 12
     minions-per-cast: 3
@@ -289,4 +296,3 @@ messages:
   boss-top-line: '&7%rank%. &f%player% &8- &c%damage% damage'
   boss-warning-5: '%prefix% &eBoss akan muncul dalam &f5 menit&e.'
   boss-warning-1: '%prefix% &cBoss akan muncul dalam &f1 menit&c.'
-  boss-return-arena: '%prefix% &e%boss% kembali ke arena.'

@@ -177,7 +177,6 @@ public final class TraderManager {
     private void cleanupPersistedActiveState() {
         if (!dataManager.hasActive() && dataManager.loadCampBackup().isEmpty()) return;
         cleanupActiveTrader(true);
-        dataManager.saveNextSpawnAt(System.currentTimeMillis() + configManager.getIntervalMinutes() * 60_000L);
     }
 
     private void cleanupActiveTrader(boolean restoreBlocks) {
@@ -194,10 +193,7 @@ public final class TraderManager {
     private List<TraderTradeItem> selectRandomItems() {
         List<TraderTradeItem> pool = new ArrayList<>(configManager.getTradePool());
         Collections.shuffle(pool);
-        int amount = Math.min(configManager.getRandomItemsPerSpawn(), pool.size());
-        List<TraderTradeItem> selected = new ArrayList<>();
-        for (int i = 0; i < amount; i++) selected.add(pool.get(i));
-        return selected;
+        return pool.isEmpty() ? List.of() : List.of(pool.get(0));
     }
 
     private void broadcast(String path, String fallback) {
