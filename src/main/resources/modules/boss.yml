@@ -33,8 +33,10 @@ settings:
     health-scale-by-nearby-players: false
     health-per-player-multiplier: 0.18
     max-health-multiplier: 2.35
-    # Mace hanya memberikan 40% damage normal ke boss (reduksi 60%).
-    mace-damage-multiplier: 0.40
+    # Damage masuk dihitung ke HP virtual agar boss 30K-60K tidak mentok limit health entity Minecraft.
+    virtual-damage-multiplier: 0.15
+    # Mace hanya memberikan 25% damage normal sebelum pengali HP virtual diterapkan.
+    mace-damage-multiplier: 0.25
 
 rarity-chance:
   common: 42.0

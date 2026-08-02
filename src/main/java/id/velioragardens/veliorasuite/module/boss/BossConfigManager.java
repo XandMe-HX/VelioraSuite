@@ -134,7 +134,8 @@ public final class BossConfigManager {
     public boolean healthScalingEnabled() { return bool("settings.combat.health-scale-by-nearby-players", true); }
     public double healthPerPlayerMultiplier() { return Math.max(0.0D, number("settings.combat.health-per-player-multiplier", 0.20D)); }
     public double maxHealthMultiplier() { return Math.max(1.0D, number("settings.combat.max-health-multiplier", 2.75D)); }
-    public double maceDamageMultiplier() { return clamp(number("settings.combat.mace-damage-multiplier", 0.40D), 0.0D, 1.0D); }
+    public double maceDamageMultiplier() { return Math.min(0.25D, clamp(number("settings.combat.mace-damage-multiplier", 0.25D), 0.0D, 1.0D)); }
+    public double virtualDamageMultiplier() { return clamp(number("settings.combat.virtual-damage-multiplier", 0.15D), 0.01D, 1.0D); }
     public boolean spawnTitleEnabled() { return bool("effects.spawn.title-enabled", true); }
     public String spawnTitle() { return str("effects.spawn.title", "&c%boss%"); }
     public String spawnSubtitle() { return str("effects.spawn.subtitle", "&7Boss %rarity% muncul di &f%world%"); }

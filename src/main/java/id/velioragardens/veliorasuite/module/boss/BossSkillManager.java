@@ -85,7 +85,7 @@ public final class BossSkillManager {
 
     private void maybeRage(LivingEntity boss) {
         if (rageMode) return;
-        if (boss.getHealth() > boss.getMaxHealth() * config.rageThreshold()) return;
+        if (manager.activeBossHealthPercent() > config.rageThreshold()) return;
         rageMode = true;
         boss.setGlowing(true);
         PotionEffectType speed = PotionEffectType.getByName("SPEED");
@@ -225,8 +225,7 @@ public final class BossSkillManager {
 
     private void healBoss(LivingEntity boss, double maxHealthPercent) {
         if (boss == null || boss.isDead() || maxHealthPercent <= 0.0D) return;
-        double healed = Math.min(boss.getMaxHealth(), boss.getHealth() + boss.getMaxHealth() * maxHealthPercent);
-        boss.setHealth(healed);
+        manager.healActiveBoss(maxHealthPercent);
     }
 
     private boolean isCurrentBoss(LivingEntity boss) {
