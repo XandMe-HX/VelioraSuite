@@ -1,0 +1,33 @@
+settings:
+  enabled: true
+  prefix: '&8[&bAdminMonitor&8] '
+  staff-permission: 'veliorasuite.staff'
+  admin-permission: 'veliorasuite.adminmonitor.admin'
+  notify-permission: 'veliorasuite.adminmonitor.notify'
+  keep-days: 30
+  track:
+    login: true
+    logout: true
+    commands: true
+    world-change: true
+    teleport: true
+    gamemode: true
+    flight: true
+  notify:
+    console: true
+    owner-chat: true
+    discord-webhook: false
+    discord-webhook-url: ''
+  sensitive-commands:
+    - '/login'
+    - '/l'
+    - '/register'
+    - '/reg'
+    - '/changepass'
+    - '/cpowner'
+    - '/risetpw'
+
+messages:
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  player-not-found: '%prefix% &cStaff &f%player% &ctidak ditemukan di log.'
+  reload-success: '%prefix% &aAdminMonitor berhasil direload.'

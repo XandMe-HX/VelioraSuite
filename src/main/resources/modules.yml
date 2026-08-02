@@ -1,5 +1,6 @@
 modules:
   core: true
+  adminmonitor: true
   guide: true
   loginsecurity: true
   team: true

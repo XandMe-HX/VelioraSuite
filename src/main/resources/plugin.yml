@@ -18,6 +18,11 @@ softdepend:
   - floodgate
 
 commands:
+  adminmonitor:
+    description: Monitor aktivitas staff Veliora.
+    usage: /adminmonitor <help|online|log|today|reload>
+    aliases: [amonitor, staffactivity, adminlog]
+    permission: veliorasuite.adminmonitor.admin
   veliorasuite:
     description: Main command for VelioraSuite.
     usage: /veliorasuite
@@ -151,6 +156,13 @@ commands:
     permission: veliorasuite.loginsecurity.admin
 
 permissions:
+  veliorasuite.staff:
+    description: Menandai akun staff yang perlu diaudit AdminMonitor.
+    default: false
+  veliorasuite.adminmonitor.admin:
+    default: op
+  veliorasuite.adminmonitor.notify:
+    default: op
   veliorasuite.admin:
     default: op
   veliorasuite.bypass:
