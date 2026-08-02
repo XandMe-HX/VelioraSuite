@@ -6,6 +6,7 @@ import id.velioragardens.veliorasuite.core.HookManager;
 import id.velioragardens.veliorasuite.core.MessageManager;
 import id.velioragardens.veliorasuite.core.ModuleManager;
 import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
+import id.velioragardens.veliorasuite.module.adminmonitor.AdminMonitorModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
 import id.velioragardens.veliorasuite.module.chat.ChatModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
@@ -77,6 +78,7 @@ public final class VelioraSuite extends JavaPlugin {
     }
 
     private void registerModules() {
+        moduleManager.register(new AdminMonitorModule(this));
         moduleManager.register(new GuideModule(this));
         moduleManager.register(new AnnouncementModule(this));
         moduleManager.register(new LoginSecurityModule(this));
