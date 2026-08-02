@@ -30,6 +30,7 @@ public final class SecurityManager {
     private final SecurityCommandProtectionManager commandProtectionManager;
     private final SecurityTabProtectionManager tabProtectionManager;
     private final SecurityAltGuard altGuard;
+    private final SpawnerGuardManager spawnerGuardManager;
 
     private final Map<UUID, List<OreRecord>> oreRecords = new HashMap<>();
     private final Map<UUID, String> oreNames = new HashMap<>();
@@ -47,23 +48,34 @@ public final class SecurityManager {
         this.commandProtectionManager = new SecurityCommandProtectionManager(configManager, riskManager);
         this.tabProtectionManager = new SecurityTabProtectionManager(configManager, commandProtectionManager);
         this.altGuard = new SecurityAltGuard(plugin, configManager);
+        this.spawnerGuardManager = new SpawnerGuardManager(plugin, configManager);
     }
 
     public void load() {
         configManager.load();
         altGuard.load();
+        spawnerGuardManager.load();
         plugin.getLogger().info("VelioraSecurity loaded.");
     }
 
     public void reload() {
         configManager.load();
         altGuard.load();
+        spawnerGuardManager.load();
         alertManager.clearCooldowns();
         joinProtectionManager.clear();
     }
 
     public SecurityConfigManager getConfigManager() { return configManager; }
     public SecurityTabProtectionManager getTabProtectionManager() { return tabProtectionManager; }
+
+    public boolean handleSpawnerPlace(Player player, Block block, org.bukkit.inventory.ItemStack item) {
+        return spawnerGuardManager.handlePlace(player, block, item);
+    }
+
+    public void handleSpawnerBreak(Block block) { spawnerGuardManager.handleBreak(block); }
+    public void handleSpawnerRemoved(Block block) { spawnerGuardManager.handleBreak(block); }
+    public void rollbackSpawnerPlace(Player player, Block block) { spawnerGuardManager.rollbackPlace(player, block); }
 
     public SecurityDecision checkJoin(Player player) {
         oreNames.put(player.getUniqueId(), player.getName());

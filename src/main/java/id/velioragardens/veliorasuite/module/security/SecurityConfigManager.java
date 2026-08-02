@@ -90,6 +90,11 @@ public final class SecurityConfigManager {
     public boolean isAiAdvisoryOnly() { return bool("settings.ai-detection.advisory-only", true); }
     public boolean isAiAutoBanAllowed() { return bool("settings.ai-detection.allow-auto-ban", false); }
 
+    public boolean isSpawnerGuardEnabled() { return bool("settings.spawner-guard.enabled", true); }
+    public int getSpawnerLimitPerPlayer() { return Math.max(1, integer("settings.spawner-guard.limit-per-player", 1)); }
+    public boolean isSpawnerGuardConsumeBlockedItem() { return bool("settings.spawner-guard.consume-blocked-spawner", true); }
+    public int getSpawnerGuardAlertCooldownSeconds() { return Math.max(0, integer("settings.spawner-guard.alert-cooldown-seconds", 10)); }
+
     public String getAdminPermission() { return str("permissions.admin", "veliorasuite.security.admin"); }
     public String getReloadPermission() { return str("permissions.reload", "veliorasuite.security.reload"); }
     public String getAlertsPermission() { return str("permissions.alerts", "veliorasuite.security.alerts"); }
