@@ -6,6 +6,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -65,14 +67,35 @@ public final class SecurityListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
+        if (!manager.handleSpawnerPlace(event.getPlayer(), event.getBlockPlaced(), event.getItemInHand())) {
+            event.setCancelled(true);
+            return;
+        }
         manager.trackOrePlace(event.getPlayer(), event.getBlock());
+    }
+
+    /** A later protection plugin may still cancel a valid placement after the guard reserved its slot. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onBlockPlaceResult(BlockPlaceEvent event) {
+        if (event.isCancelled()) manager.rollbackSpawnerPlace(event.getPlayer(), event.getBlockPlaced());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
+        manager.handleSpawnerBreak(event.getBlock());
         manager.trackOreBreak(event.getPlayer(), event.getBlock());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        event.blockList().forEach(manager::handleSpawnerRemoved);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        event.blockList().forEach(manager::handleSpawnerRemoved);
     }
 
     @EventHandler
