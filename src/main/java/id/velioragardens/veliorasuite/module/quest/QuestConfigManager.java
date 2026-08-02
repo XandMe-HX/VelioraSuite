@@ -12,6 +12,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ public final class QuestConfigManager {
         plugin.saveResourceIfNotExists("modules/quest.yml");
         File file = new File(plugin.getDataFolder(), "modules/quest.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        migrateLegacyWoodcuttingDisplay(file);
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
@@ -121,6 +123,20 @@ public final class QuestConfigManager {
     public String message(String path, String fallback) { return str("messages." + path, fallback).replace("%prefix%", getPrefix()); }
     public List<String> messageList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList("messages." + path); return list.isEmpty() ? fallback : list; }
     public String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }
+
+    /** Migrates the old placeholder category so existing server configs show the real tree-cutting quest. */
+    private void migrateLegacyWoodcuttingDisplay(File file) {
+        if (config == null || !"&dWeekly / Special".equals(config.getString("categories.woodcutting.display-name"))) return;
+        config.set("categories.woodcutting.display-name", "&6Tebang Kayu");
+        config.set("categories.woodcutting.icon", "IRON_AXE");
+        config.set("categories.woodcutting.base-target", 96);
+        config.set("categories.woodcutting.target-increase-per-level", 56);
+        try {
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal memigrasikan tampilan quest tebang kayu: " + exception.getMessage());
+        }
+    }
 
     private Material material(String name, Material fallback) { Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
     private List<String> commandList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList(path); return list.isEmpty() ? fallback : list; }

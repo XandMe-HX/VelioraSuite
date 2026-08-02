@@ -43,10 +43,10 @@ settings:
 categories:
   woodcutting:
     enabled: true
-    display-name: '&dWeekly / Special'
-    icon: NETHER_STAR
-    base-target: 192
-    target-increase-per-level: 110
+    display-name: '&6Tebang Kayu'
+    icon: IRON_AXE
+    base-target: 96
+    target-increase-per-level: 56
     materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
   mining:
     enabled: true

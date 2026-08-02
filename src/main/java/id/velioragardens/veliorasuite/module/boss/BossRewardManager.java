@@ -112,16 +112,11 @@ public final class BossRewardManager {
     }
 
     private long calculatePersonalReward(BossDefinition definition, int rankIndex, double damagePercent) {
-        if (!config.bossMoneyEnabled(definition)) return 0L;
-        long min = config.bossMoneyMin(definition);
-        long max = Math.max(min, config.bossMoneyMax(definition));
-        long base = randomMoney(min, max);
-        double contributionScale = 0.75D + Math.min(0.25D, Math.max(0.0D, damagePercent) / 100.0D);
-        long reward = Math.round(base * contributionScale);
-        if (config.topDamageBonusEnabled() && rankIndex < 3) {
-            reward += randomMoney(config.topBonusMin(rankIndex), config.topBonusMax(rankIndex));
-        }
-        return reward;
+        // Guaranteed fallback: old boss.yml files may not contain reward values,
+        // which previously made a 100% contributor receive 0 money.
+        long contributionReward = 400L + Math.round(Math.max(0.0D, Math.min(100.0D, damagePercent)) * 10.0D);
+        long rankBonus = rankIndex == 0 ? 600L : rankIndex == 1 ? 300L : rankIndex == 2 ? 100L : 0L;
+        return Math.min(2_000L, contributionReward + rankBonus);
     }
 
     private Map<UUID, Long> calculateTeamBonuses(Map<String, List<UUID>> eligibleByTeam) {
@@ -158,12 +153,11 @@ public final class BossRewardManager {
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return false;
         if (deathLocation != null && deathLocation.getWorld() != null) {
             if (!player.getWorld().equals(deathLocation.getWorld())) return false;
-            if (player.getLocation().distanceSquared(deathLocation) > 80.0D * 80.0D) return false;
+            // A valid contributor may be knocked away right before the boss dies.
+            if (player.getLocation().distanceSquared(deathLocation) > 128.0D * 128.0D) return false;
         }
         if (damage < config.minDamageToReward()) return false;
-        long last = rewardCooldown.getOrDefault(cooldownKey(player.getUniqueId(), bossId), 0L);
-        long cooldown = config.rewardCooldownMillis();
-        return cooldown <= 0L || System.currentTimeMillis() - last >= cooldown;
+        return true;
     }
 
     private String cooldownKey(UUID uuid, String bossId) { return uuid + ":" + bossId; }
