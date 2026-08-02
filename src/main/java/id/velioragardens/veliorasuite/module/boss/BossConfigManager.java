@@ -15,6 +15,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -34,8 +38,75 @@ public final class BossConfigManager {
         plugin.saveResourceIfNotExists("modules/boss.yml");
         File file = new File(plugin.getDataFolder(), "modules/boss.yml");
         config = YamlConfiguration.loadConfiguration(file);
+        migrateBalanceV2(file);
+        migrateBossBarV3(file);
+        migrateNotificationDefaults(file);
         loadRarityChance();
         loadBosses();
+    }
+
+    /** Applies the approved boss rebalance once while preserving schedule, arena, and custom messages. */
+    private void migrateBalanceV2(File file) {
+        if (config.getInt("settings.balance-version", 0) >= 2) return;
+        try (InputStream input = plugin.getResource("modules/boss.yml")) {
+            if (input == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
+            for (String path : List.of("settings.combat", "bosses", "skills", "rewards")) {
+                copySection(defaults, path, !path.equals("bosses"));
+            }
+            config.set("settings.balance-version", 2);
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: balance config v2 diterapkan (HP, skill, mace, dan reward team).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menerapkan balance config v2: " + exception.getMessage());
+        }
+    }
+
+    private void copySection(FileConfiguration source, String path, boolean clearExisting) {
+        ConfigurationSection section = source.getConfigurationSection(path);
+        if (section == null) return;
+        if (clearExisting) config.set(path, null);
+        for (Map.Entry<String, Object> entry : section.getValues(true).entrySet()) {
+            if (!(entry.getValue() instanceof ConfigurationSection)) {
+                config.set(path + "." + entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    /** Upgrades the old BossBar display once, so existing servers do not retain stale bossbar settings. */
+    private void migrateBossBarV3(File file) {
+        if (config.getInt("settings.bossbar-version", 0) >= 3) return;
+        try (InputStream input = plugin.getResource("modules/boss.yml")) {
+            if (input == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
+            copySection(defaults, "bossbar", true);
+            config.set("bossbar-radius", defaults.getDouble("bossbar-radius", 120.0D));
+            config.set("settings.bossbar-version", 3);
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: BossBar config v3 diterapkan.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menerapkan BossBar config v3: " + exception.getMessage());
+        }
+    }
+
+    /** Adds new optimization options to existing server configs without replacing user settings. */
+    private void migrateNotificationDefaults(File file) {
+        boolean changed = false;
+        changed |= addDefault("settings.spawn.skip-when-no-players", true);
+        changed |= addDefault("settings.notifications.players", true);
+        changed |= addDefault("settings.notifications.console", false);
+        if (!changed) return;
+        try {
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menambahkan pengaturan notifikasi baru ke boss.yml.");
+        }
+    }
+
+    private boolean addDefault(String path, Object value) {
+        if (config.contains(path)) return false;
+        config.set(path, value);
+        return true;
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
@@ -48,6 +119,9 @@ public final class BossConfigManager {
     public boolean announceSpawn() { return bool("settings.spawn.announce-spawn", true); }
     public boolean announceDeath() { return bool("settings.spawn.announce-death", true); }
     public boolean announceDespawn() { return bool("settings.spawn.announce-despawn", true); }
+    public boolean skipSpawnWhenNoPlayers() { return bool("settings.spawn.skip-when-no-players", true); }
+    public boolean playerNotificationsEnabled() { return bool("settings.notifications.players", true); }
+    public boolean consoleNotificationsEnabled() { return bool("settings.notifications.console", false); }
     public boolean allowMultiple() { return bool("settings.spawn.allow-multiple-active", false); }
     public boolean requireSpawnPoint() { return bool("settings.spawn.require-spawn-point", true); }
     public List<Integer> warningTimesMinutes() { List<Integer> list = config == null ? List.of() : config.getIntegerList("settings.spawn.warning-times-minutes"); return list.isEmpty() ? List.of(5, 1) : list; }
@@ -57,10 +131,10 @@ public final class BossConfigManager {
     public double bossArmor() { return Math.max(0.0D, number("settings.combat.armor", 18.0D)); }
     public double bossArmorToughness() { return Math.max(0.0D, number("settings.combat.armor-toughness", 12.0D)); }
     public double bossKnockbackResistance() { return clamp(number("settings.combat.knockback-resistance", 0.85D), 0.0D, 1.0D); }
-    public double maceDamageMultiplier() { return clamp(number("settings.combat.mace-damage-multiplier", 0.35D), 0.0D, 1.0D); }
     public boolean healthScalingEnabled() { return bool("settings.combat.health-scale-by-nearby-players", true); }
     public double healthPerPlayerMultiplier() { return Math.max(0.0D, number("settings.combat.health-per-player-multiplier", 0.20D)); }
     public double maxHealthMultiplier() { return Math.max(1.0D, number("settings.combat.max-health-multiplier", 2.75D)); }
+    public double maceDamageMultiplier() { return clamp(number("settings.combat.mace-damage-multiplier", 0.40D), 0.0D, 1.0D); }
     public boolean spawnTitleEnabled() { return bool("effects.spawn.title-enabled", true); }
     public String spawnTitle() { return str("effects.spawn.title", "&c%boss%"); }
     public String spawnSubtitle() { return str("effects.spawn.subtitle", "&7Boss %rarity% muncul di &f%world%"); }
@@ -69,40 +143,39 @@ public final class BossConfigManager {
     public String bossBarTitle() { return str("bossbar.title", "&c%boss% &7- &f%health%&7/&f%max_health% HP &8| &e%time%"); }
     public boolean colorBossBarByRarity() { return bool("bossbar.color-by-rarity", true); }
     public BarStyle bossBarStyle() { return barStyle(str("bossbar.style", "SEGMENTED_20")); }
-    public double bossBarRadius() { return Math.max(0.0D, number("bossbar-radius", 80.0D)); }
+    public double bossBarRadius() { return Math.max(120.0D, number("bossbar-radius", 120.0D)); }
     public boolean skillsEnabled() { return bool("skills.enabled", true); }
-    public int skillCooldownSeconds() { return Math.max(3, integer("skills.cooldown-seconds", 14)); }
-    public double groundSlamDamage() { return number("skills.damage.ground-slam", 6.0D); }
-    public double fireBombDamage() { return number("skills.damage.fire-bomb", 8.0D); }
+    public int skillCooldownSeconds() { return Math.max(3, integer("skills.cooldown-seconds", 12)); }
+    public int skillTelegraphTicks() { return Math.max(10, integer("skills.telegraph-ticks", 26)); }
+    public double groundSlamDamage() { return Math.max(0.0D, number("skills.damage.ground-slam", 6.0D)); }
+    public double fireBombDamage() { return Math.max(0.0D, number("skills.damage.fire-bomb", 7.0D)); }
     public double lightningChainDamage() { return Math.max(0.0D, number("skills.damage.lightning-chain", 6.0D)); }
     public double shadowPulseDamage() { return Math.max(0.0D, number("skills.damage.shadow-pulse", 5.0D)); }
     public double soulCageDamage() { return Math.max(0.0D, number("skills.damage.soul-cage", 4.0D)); }
-    public boolean regenerationEnabled() { return bool("skills.regeneration.enabled", true); }
-    public int regenerationIntervalSeconds() { return Math.max(1, integer("skills.regeneration.interval-seconds", 30)); }
-    public double regenerationPercent() { return clamp(number("skills.regeneration.percent", 3.0D), 0.0D, 100.0D); }
-    public double healPulsePercent() { return clamp(number("skills.heal-pulse.percent", 3.0D), 0.0D, 100.0D); }
-    public int lightningChainMaxTargets() { return Math.max(1, integer("skills.lightning-chain.max-targets", 3)); }
-    public int soulCageDurationSeconds() { return Math.max(1, integer("skills.soul-cage.duration-seconds", 5)); }
+    public double rageThreshold() { return clamp(number("skills.rage.health-threshold", 0.30D), 0.05D, 0.90D); }
+    public double rageDamageMultiplier() { return Math.max(1.0D, number("skills.rage.damage-multiplier", 1.18D)); }
+    public double rageHealPercentPerCast() { return clamp(number("skills.rage.heal-percent-per-cast", 0.005D), 0.0D, 0.05D); }
+    public double healPulsePercent() { return clamp(number("skills.heal-pulse.max-health-percent", 0.0125D), 0.0D, 0.10D); }
     public int maxMinions() { return Math.max(0, integer("skills.summon.max-minions", 8)); }
     public int minionsPerCast() { return Math.max(1, integer("skills.summon.minions-per-cast", 3)); }
     public List<String> minionTypes() { List<String> list = config == null ? List.of() : config.getStringList("skills.summon.types"); return list.isEmpty() ? List.of("ZOMBIE", "HUSK", "DROWNED", "ZOMBIFIED_PIGLIN") : list; }
     public List<BossSkillType> defaultSkills() { return parseSkills(config == null ? List.of() : config.getStringList("skills.default")); }
     public boolean arenaEnabled() { return bool("arena.enabled", true); }
-    public double arenaRadius() { return Math.max(5.0D, number("arena.radius", 45.0D)); }
-    public double targetRadius() { return Math.max(5.0D, number("arena.target-radius", 45.0D)); }
+    public double arenaRadius() { return Math.max(90.0D, number("arena.radius", 90.0D)); }
+    public double targetRadius() { return Math.max(90.0D, number("arena.target-radius", 90.0D)); }
     public boolean leashToSpawn() { return bool("arena.leash-to-spawn", true); }
     public boolean teleportBackIfFar() { return bool("arena.teleport-back-if-far", true); }
-    public double teleportBackDistance() { return Math.max(arenaRadius(), number("arena.teleport-back-distance", 55.0D)); }
+    public double teleportBackDistance() { return Math.max(110.0D, Math.max(arenaRadius(), number("arena.teleport-back-distance", 110.0D))); }
     public boolean teleportBackIfBelowSpawnY() { return bool("arena.teleport-back-if-below-spawn-y", true); }
-    public double belowYOffset() { return Math.max(1.0D, number("arena.below-y-offset", 12.0D)); }
+    public double belowYOffset() { return Math.max(28.0D, number("arena.below-y-offset", 28.0D)); }
     public boolean removeMinionOutsideRadius() { return bool("arena.remove-minion-outside-radius", true); }
     public boolean targetingEnabled() { return bool("targeting.enabled", true); }
     public boolean targetingIncludeSurvival() { return bool("targeting.include-survival", true); }
     public boolean targetingIncludeAdventure() { return bool("targeting.include-adventure", true); }
     public boolean targetingIncludeCreative() { return bool("targeting.include-creative", false); }
     public boolean targetingIncludeSpectator() { return bool("targeting.include-spectator", false); }
-    public double targetingRadiusHorizontal() { return Math.max(1.0D, number("targeting.target-radius-horizontal", 64.0D)); }
-    public double targetingRadiusVertical() { return Math.max(1.0D, number("targeting.target-radius-vertical", 32.0D)); }
+    public double targetingRadiusHorizontal() { return Math.max(110.0D, number("targeting.target-radius-horizontal", 110.0D)); }
+    public double targetingRadiusVertical() { return Math.max(72.0D, number("targeting.target-radius-vertical", 72.0D)); }
     public int retargetIntervalSeconds() { return Math.max(1, integer("targeting.retarget-interval-seconds", 3)); }
     public boolean forceTargetNearest() { return bool("targeting.force-target-nearest", true); }
     public boolean ignoreLineOfSight() { return bool("targeting.ignore-line-of-sight", true); }
@@ -125,6 +198,10 @@ public final class BossConfigManager {
     public long topBonusMax(int rankIndex) { return clampMoney(integer("rewards.top-damage-bonus." + rankKey(rankIndex) + ".max", defaultTopMax(rankIndex))); }
     public boolean moneyTotalCapEnabled() { return bool("rewards.money-total-cap.enabled", true); }
     public long moneyTotalCapMax() { return clampMoney(integer("rewards.money-total-cap.max-per-player", 150_000)); }
+    public boolean teamBonusEnabled() { return bool("rewards.team-bonus.enabled", true); }
+    public int teamBonusMinimumMembers() { return Math.max(2, integer("rewards.team-bonus.minimum-eligible-members", 2)); }
+    public long teamBonusPoolMin() { return clampMoney(integer("rewards.team-bonus.pool.min", 1_500)); }
+    public long teamBonusPoolMax() { return Math.max(teamBonusPoolMin(), clampMoney(integer("rewards.team-bonus.pool.max", 3_000))); }
     public boolean preventBlockDamage() { return bool("protection.prevent-block-damage", true); }
     public boolean allowBossDamageInProtectedRegion() { return bool("protection.allow-boss-damage-in-protected-region", true); }
     public Map<String, BossDefinition> bosses() { return bosses; }
@@ -149,12 +226,14 @@ public final class BossConfigManager {
             if (!isAllowedBossType(type)) { plugin.getLogger().warning("VelioraBoss: entity boss tidak aman/terbang atau tidak dipakai lagi, skip: " + type); continue; }
             BossRarity rarity = BossRarity.from(boss.getString("rarity", "COMMON"));
             List<BossSkillType> skills = parseSkills(boss.getStringList("skills"));
-            bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(id.toLowerCase(Locale.ROOT), type, boss.getString("display-name", id), rarity, Math.max(1.0D, boss.getDouble("health", 5000.0D)), Math.max(0.0D, boss.getDouble("damage", 4.0D)), Math.max(0.0625D, boss.getDouble("scale", 4.0D)), skills.isEmpty() ? defaultSkills() : skills));
+            double damage = Math.max(minimumDamage(rarity), boss.getDouble("damage", minimumDamage(rarity)));
+            bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(id.toLowerCase(Locale.ROOT), type, boss.getString("display-name", id), rarity, Math.max(1.0D, boss.getDouble("health", 5000.0D)), damage, Math.max(0.0625D, boss.getDouble("scale", 4.0D)), skills.isEmpty() ? defaultSkills() : skills));
         }
     }
-    private List<BossSkillType> parseSkills(List<String> raw) { List<BossSkillType> skills = new ArrayList<>(); for (String value : raw) { BossSkillType skill = BossSkillType.from(value); if (skill != null && !skills.contains(skill)) skills.add(skill); } if (skills.isEmpty()) skills.addAll(List.of(BossSkillType.GROUND_SLAM, BossSkillType.SUMMON_MINIONS, BossSkillType.FIRE_BOMB, BossSkillType.PULL_AURA, BossSkillType.POISON_CLOUD, BossSkillType.LIGHTNING_CHAIN, BossSkillType.SHADOW_PULSE, BossSkillType.SOUL_CAGE, BossSkillType.RAGE_MODE)); return skills; }
+    private List<BossSkillType> parseSkills(List<String> raw) { List<BossSkillType> skills = new ArrayList<>(); for (String value : raw) { BossSkillType skill = BossSkillType.from(value); if (skill != null && !skills.contains(skill)) skills.add(skill); } if (skills.isEmpty()) skills.addAll(List.of(BossSkillType.GROUND_SLAM, BossSkillType.SUMMON_MINIONS, BossSkillType.FIRE_BOMB, BossSkillType.PULL_AURA, BossSkillType.POISON_CLOUD, BossSkillType.RAGE_MODE)); return skills; }
     private boolean isAllowedBossType(EntityType type) { return switch (type) { case WARDEN, RAVAGER, ZOMBIE, HUSK, DROWNED, PIGLIN_BRUTE, WITHER_SKELETON, VINDICATOR, EVOKER -> true; default -> false; }; }
     private double defaultChance(BossRarity rarity) { return switch (rarity) { case COMMON -> 45.0D; case RARE -> 27.0D; case EPIC -> 16.0D; case LEGENDARY -> 9.0D; case MYTHIC -> 3.0D; }; }
+    private double minimumDamage(BossRarity rarity) { return switch (rarity) { case COMMON -> 7.0D; case RARE -> 8.0D; case EPIC -> 9.0D; case LEGENDARY -> 10.0D; case MYTHIC -> 11.0D; }; }
     private String rankKey(int rankIndex) { return rankIndex == 0 ? "first" : rankIndex == 1 ? "second" : "third"; }
     private int defaultTopMin(int rankIndex) { return rankIndex == 0 ? 0 : 0; }
     private int defaultTopMax(int rankIndex) { return rankIndex == 0 ? 0 : 0; }

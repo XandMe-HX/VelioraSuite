@@ -18,9 +18,7 @@ import org.bukkit.entity.Mob;
 import org.bukkit.entity.PiglinAbstract;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -42,7 +40,6 @@ import java.util.Set;
 public final class BossManager implements Listener {
 
     private static final ZoneId JAKARTA_ZONE = ZoneId.of("Asia/Jakarta");
-    private static final double NATIVE_HEALTH_CAP = 1024.0D;
 
     private final VelioraSuite plugin;
     private final BossConfigManager config;
@@ -65,8 +62,6 @@ public final class BossManager implements Listener {
     private BossDefinition activeDefinition;
     private Location lastKnownLocation;
     private Location arenaCenter;
-    private double activeHealth;
-    private double activeMaxHealth;
     private long nextSpawnAt;
     private long despawnAt;
     private long lastRetargetAt;
@@ -125,15 +120,6 @@ public final class BossManager implements Listener {
     public NamespacedKey getMinionOwnerKey() { return minionOwnerKey; }
     public Location getLastKnownLocation() { return lastKnownLocation; }
     public Location getArenaCenter() { return arenaCenter; }
-    public double getActiveHealth() { return Math.max(0.0D, activeHealth); }
-    public double getActiveMaxHealth() { return Math.max(1.0D, activeMaxHealth); }
-
-    public boolean healActiveBoss(double percent) {
-        if (!isActive() || percent <= 0.0D || activeHealth >= activeMaxHealth) return false;
-        activeHealth = Math.min(activeMaxHealth, activeHealth + (activeMaxHealth * percent / 100.0D));
-        syncNativeHealth();
-        return true;
-    }
 
     public void setSpawnPoint(Player player, String name) {
         data.setSpawnPoint(BossSpawnPoint.from(name.toLowerCase(Locale.ROOT), player.getLocation()));
@@ -224,12 +210,12 @@ public final class BossManager implements Listener {
 
     public void stopActive(boolean message) {
         if (activeBoss == null && activeDefinition == null) {
-            if (message) Bukkit.broadcastMessage(config.color(config.message("no-active-boss", "%prefix% &eTidak ada boss aktif.")));
+            if (message) notifyPlayers(config.color(config.message("no-active-boss", "%prefix% &eTidak ada boss aktif.")));
             clearRuntime();
             return;
         }
         if (activeBoss != null && !activeBoss.isDead()) activeBoss.remove();
-        if (message && activeDefinition != null) Bukkit.broadcastMessage(config.color(config.message("boss-despawn", "%prefix% &e%boss% menghilang.").replace("%boss%", config.color(activeDefinition.displayName()))));
+        if (message && activeDefinition != null) notifyPlayers(config.color(config.message("boss-despawn", "%prefix% &e%boss% menghilang.").replace("%boss%", config.color(activeDefinition.displayName()))));
         clearRuntime();
         scheduleNextSpawn();
     }
@@ -242,8 +228,8 @@ public final class BossManager implements Listener {
                     .replace("%x%", String.valueOf(activeBoss.getLocation().getBlockX()))
                     .replace("%y%", String.valueOf(activeBoss.getLocation().getBlockY()))
                     .replace("%z%", String.valueOf(activeBoss.getLocation().getBlockZ()))
-                    .replace("%health%", String.valueOf((int) Math.ceil(activeHealth)))
-                    .replace("%max_health%", String.valueOf((int) Math.ceil(activeMaxHealth)))));
+                    .replace("%health%", String.valueOf((int) Math.ceil(activeBoss.getHealth())))
+                    .replace("%max_health%", String.valueOf((int) Math.ceil(activeBoss.getMaxHealth())))));
             sender.sendMessage(config.color("&7Rarity: &f" + activeDefinition.rarity().displayName() + " &8| &7Despawn: &f" + timeLeft(despawnAt)));
             sender.sendMessage(config.color(config.message("top-damage-header", "&cTop Damage Boss:")));
             sender.sendMessage(config.color("&f" + damageTracker.topText(5)));
@@ -257,7 +243,7 @@ public final class BossManager implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         boolean damagedBoss = activeBoss != null && event.getEntity().getUniqueId().equals(activeBoss.getUniqueId());
         boolean damagedMinion = event.getEntity().getScoreboardTags().contains("velioraboss_minion");
@@ -269,40 +255,27 @@ public final class BossManager implements Listener {
         }
         if (damagedBoss) {
             Player player = damager(event.getDamager());
-            double virtualDamage = Math.max(0.0D, event.getFinalDamage());
             if (player != null) {
-                if (event.getDamager() instanceof Player
-                        && player.getInventory().getItemInMainHand().getType() == Material.MACE) {
-                    virtualDamage *= config.maceDamageMultiplier();
+                if (player.getInventory().getItemInMainHand().getType() == Material.MACE) {
+                    event.setDamage(event.getDamage() * config.maceDamageMultiplier());
                 }
-            }
-            event.setCancelled(true);
-            double appliedDamage = reduceActiveHealth(virtualDamage);
-            if (player != null && appliedDamage > 0.0D) {
-                damageTracker.add(player, appliedDamage);
-                data.addDamage(player, appliedDamage);
+                damageTracker.add(player, event.getFinalDamage());
+                data.addDamage(player, event.getFinalDamage());
                 if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
             }
-            if (appliedDamage > 0.0D) showVirtualDamage();
             return;
         }
-        if (damagerBoss) event.setDamage(activeDefinition == null ? event.getDamage() : activeDefinition.damage());
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onEnvironmentDamage(EntityDamageEvent event) {
-        if (event instanceof EntityDamageByEntityEvent) return;
-        if (activeBoss == null || !event.getEntity().getUniqueId().equals(activeBoss.getUniqueId())) return;
-        event.setCancelled(true);
-        double appliedDamage = reduceActiveHealth(Math.max(0.0D, event.getFinalDamage()));
-        if (appliedDamage > 0.0D) showVirtualDamage();
+        if (damagerBoss) {
+            double damage = activeDefinition == null ? event.getDamage() : activeDefinition.damage();
+            event.setDamage(damage * skillManager.outgoingDamageMultiplier());
+        }
     }
 
     @EventHandler
     public void onDeath(EntityDeathEvent event) {
         if (activeBoss == null || !event.getEntity().getUniqueId().equals(activeBoss.getUniqueId())) return;
         Location death = event.getEntity().getLocation();
-        if (config.announceDeath()) Bukkit.broadcastMessage(config.color(config.message("boss-death", "%prefix% &a%boss% berhasil dikalahkan!").replace("%boss%", config.color(activeDefinition.displayName()))));
+        if (config.announceDeath()) notifyPlayers(config.color(config.message("boss-death", "%prefix% &a%boss% berhasil dikalahkan!").replace("%boss%", config.color(activeDefinition.displayName()))));
         death.getWorld().playSound(death, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
         rewardManager.distribute(activeDefinition, death, damageTracker);
         for (BossDamageTracker.Entry entry : damageTracker.top()) {
@@ -358,11 +331,14 @@ public final class BossManager implements Listener {
             enforceArena();
             // FIX 3: Always retarget every tick to keep boss in combat state (immune to EAR deactivation)
             retarget(false);
-            bossBarManager.tick(activeDefinition, activeBoss, activeHealth, activeMaxHealth, despawnAt);
+            bossBarManager.tick(activeDefinition, activeBoss, despawnAt);
             if (System.currentTimeMillis() >= despawnAt) stopActive(true);
             return;
         }
         if (!config.isSpawnEnabled()) return;
+        // Do not create entities or send schedule warnings while the server is empty.
+        // Keep the expired schedule intact so the next online player receives the boss immediately.
+        if (config.skipSpawnWhenNoPlayers() && Bukkit.getOnlinePlayers().isEmpty()) return;
         sendSpawnWarnings();
         if (System.currentTimeMillis() >= nextSpawnAt) {
             boolean spawned = spawn(randomDefinition(), randomSpawnPoint(), true);
@@ -404,21 +380,18 @@ public final class BossManager implements Listener {
         }
         double spawnHealth = calculateSpawnHealth(definition.health(), location);
         double spawnScale = calculateSpawnScale(definition);
-        activeMaxHealth = Math.max(1.0D, spawnHealth);
-        activeHealth = activeMaxHealth;
-        scaleHelper.setMaxHealth(living, Math.min(NATIVE_HEALTH_CAP, activeMaxHealth));
-        syncNativeHealth();
+        scaleHelper.setMaxHealth(living, spawnHealth);
         scaleHelper.applyCombatDefense(living, config.bossArmor(), config.bossArmorToughness(), config.bossKnockbackResistance());
         scaleHelper.apply(living, spawnScale);
         if (living instanceof Mob mob) mob.setTarget(findBestTarget(location));
         bossBarManager.create(definition);
         damageTracker.clear();
         skillManager.start(definition);
-        plugin.getLogger().info("VelioraBoss spawned: " + definition.id() + " health=" + (int) spawnHealth + " size=" + String.format(Locale.US, "%.2f", spawnScale));
+        notifyConsole("spawned: " + definition.id() + " health=" + (int) spawnHealth + " size=" + String.format(Locale.US, "%.2f", spawnScale));
         location.getWorld().playSound(location, config.sound("effects.spawn.sound", "ENTITY_WARDEN_ROAR"), 1.0F, 0.8F);
         location.getWorld().spawnParticle(config.particle("effects.spawn.particle", "SOUL"), location, config.spawnParticleCount(), 3.0D, 1.7D, 3.0D, 0.07D);
         if (config.spawnTitleEnabled()) sendSpawnTitle(definition, location);
-        if (announce && config.announceSpawn()) Bukkit.broadcastMessage(config.color(config.message("boss-spawn", "%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!")
+        if (announce && config.announceSpawn()) notifyPlayers(config.color(config.message("boss-spawn", "%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!")
                 .replace("%boss%", config.color(definition.displayName()))
                 .replace("%world%", location.getWorld().getName())
                 .replace("%x%", String.valueOf(location.getBlockX()))
@@ -473,8 +446,6 @@ public final class BossManager implements Listener {
         activeBoss.teleport(arenaCenter);
         arenaCenter.getWorld().spawnParticle(Particle.PORTAL, arenaCenter, 60, 1.5D, 1.0D, 1.5D, 0.1D);
         arenaCenter.getWorld().playSound(arenaCenter, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.8F);
-        String message = config.color(config.message("boss-return-arena", "%prefix% &e%boss% kembali ke arena!").replace("%boss%", activeDefinition == null ? "Boss" : config.color(activeDefinition.displayName())));
-        for (Player player : arenaCenter.getWorld().getPlayers()) if (horizontalDistance(player.getLocation(), arenaCenter) <= config.arenaRadius()) player.sendMessage(message);
         retarget(true);
     }
 
@@ -497,7 +468,7 @@ public final class BossManager implements Listener {
             if (millis <= minute * 60_000L) {
                 String key = "boss-warning-" + minute;
                 String fallback = minute == 1 ? "%prefix% &cBoss akan muncul dalam &f1 menit&c!" : "%prefix% &eBoss akan muncul dalam &f" + minute + " menit&e!";
-                Bukkit.broadcastMessage(config.color(config.message(key, fallback)));
+                notifyPlayers(config.color(config.message(key, fallback)));
                 sentWarnings.add(minute);
             }
         }
@@ -565,17 +536,16 @@ public final class BossManager implements Listener {
             return;
         }
 
-        double healthPercent = Math.max(0.0D, Math.min(1.0D, activeHealth / Math.max(1.0D, activeMaxHealth)));
+        double oldMaxHealth = Math.max(1.0D, activeBoss.getMaxHealth());
+        double healthPercent = Math.max(0.0D, Math.min(1.0D, activeBoss.getHealth() / oldMaxHealth));
         activeDefinition = refreshed;
         activeBoss.setCustomName(config.color(refreshed.displayName()));
         activeBoss.getPersistentDataContainer().set(bossNameKey, PersistentDataType.STRING, org.bukkit.ChatColor.stripColor(config.color(refreshed.displayName())));
         activeBoss.getPersistentDataContainer().set(bossRarityKey, PersistentDataType.STRING, refreshed.rarity().name());
 
         double refreshedHealth = calculateSpawnHealth(refreshed.health(), activeBoss.getLocation());
-        activeMaxHealth = Math.max(1.0D, refreshedHealth);
-        activeHealth = Math.max(0.1D, activeMaxHealth * healthPercent);
-        scaleHelper.setMaxHealth(activeBoss, Math.min(NATIVE_HEALTH_CAP, activeMaxHealth));
-        syncNativeHealth();
+        scaleHelper.setMaxHealth(activeBoss, refreshedHealth);
+        activeBoss.setHealth(Math.max(0.1D, Math.min(activeBoss.getMaxHealth(), refreshedHealth * healthPercent)));
         scaleHelper.applyCombatDefense(activeBoss, config.bossArmor(), config.bossArmorToughness(), config.bossKnockbackResistance());
         scaleHelper.apply(activeBoss, calculateSpawnScale(refreshed));
         bossBarManager.create(refreshed);
@@ -586,11 +556,20 @@ public final class BossManager implements Listener {
     private void rescheduleSpawnRetry(String reason) {
         nextSpawnAt = System.currentTimeMillis() + (config.spawnRetryMinutes() * 60_000L);
         sentWarnings.clear();
-        plugin.getLogger().warning("VelioraBoss: " + reason + ", retry dalam " + config.spawnRetryMinutes() + " menit. Cek spawn point, world, dan entity boss.");
+        notifyConsole(reason + ", retry dalam " + config.spawnRetryMinutes() + " menit. Cek spawn point, world, dan entity boss.");
     }
 
     private void infoLine(CommandSender sender, String key, String value) {
         sender.sendMessage(config.color(config.message("boss-info-line", "&7%key%: &f%value%").replace("%key%", key).replace("%value%", value)));
+    }
+
+    private void notifyPlayers(String message) {
+        if (!config.playerNotificationsEnabled()) return;
+        for (Player player : Bukkit.getOnlinePlayers()) player.sendMessage(message);
+    }
+
+    private void notifyConsole(String message) {
+        if (config.consoleNotificationsEnabled()) plugin.getLogger().info("VelioraBoss: " + message);
     }
 
     private String skillText(BossDefinition boss) {
@@ -605,30 +584,6 @@ public final class BossManager implements Listener {
         return null;
     }
 
-    private double reduceActiveHealth(double damage) {
-        if (!isActive() || damage <= 0.0D || activeHealth <= 0.0D) return 0.0D;
-        double applied = Math.min(activeHealth, damage);
-        activeHealth -= applied;
-        return applied;
-    }
-
-    private void showVirtualDamage() {
-        if (activeBoss == null || activeBoss.isDead()) return;
-        if (activeHealth <= 0.0D) {
-            activeBoss.setHealth(0.0D);
-            return;
-        }
-        syncNativeHealth();
-        activeBoss.playHurtAnimation(0.0F);
-    }
-
-    private void syncNativeHealth() {
-        if (activeBoss == null || activeBoss.isDead() || activeHealth <= 0.0D) return;
-        double ratio = Math.max(0.0D, Math.min(1.0D, activeHealth / Math.max(1.0D, activeMaxHealth)));
-        double nativeHealth = Math.max(0.1D, activeBoss.getMaxHealth() * ratio);
-        activeBoss.setHealth(Math.min(activeBoss.getMaxHealth(), nativeHealth));
-    }
-
     private void clearRuntime() {
         skillManager.stop();
         skillManager.cleanupMinions();
@@ -637,8 +592,6 @@ public final class BossManager implements Listener {
         activeBoss = null;
         activeDefinition = null;
         arenaCenter = null;
-        activeHealth = 0.0D;
-        activeMaxHealth = 0.0D;
         despawnAt = 0L;
         lastRetargetAt = 0L;
     }

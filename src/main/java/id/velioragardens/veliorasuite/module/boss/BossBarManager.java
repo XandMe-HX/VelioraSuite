@@ -25,17 +25,17 @@ public final class BossBarManager {
         bar.setVisible(true);
     }
 
-    public void tick(BossDefinition definition, LivingEntity boss, double health, double maxHealth, long despawnAt) {
+    public void tick(BossDefinition definition, LivingEntity boss, long despawnAt) {
         if (bar == null || boss == null || boss.isDead()) return;
-        double safeHealth = Math.max(0.0D, health);
-        double safeMax = Math.max(1.0D, maxHealth);
+        double health = Math.max(0.0D, boss.getHealth());
+        double max = Math.max(1.0D, boss.getMaxHealth());
         String title = config.bossBarTitle()
                 .replace("%boss%", config.color(definition.displayName()))
-                .replace("%health%", String.valueOf((int) Math.ceil(safeHealth)))
-                .replace("%max_health%", String.valueOf((int) Math.ceil(safeMax)))
+                .replace("%health%", String.valueOf((int) Math.ceil(health)))
+                .replace("%max_health%", String.valueOf((int) Math.ceil(max)))
                 .replace("%time%", timeLeft(despawnAt));
         bar.setTitle(config.color(title));
-        bar.setProgress(Math.max(0.0D, Math.min(1.0D, safeHealth / safeMax)));
+        bar.setProgress(Math.max(0.0D, Math.min(1.0D, health / max)));
         updatePlayers(boss.getLocation());
     }
 
