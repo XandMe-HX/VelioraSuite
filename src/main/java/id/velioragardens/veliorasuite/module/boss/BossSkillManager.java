@@ -28,7 +28,8 @@ public final class BossSkillManager {
     private final BossConfigManager config;
     private final BossManager manager;
     private final Random random = new Random();
-    private BukkitTask task;
+    private BukkitTask skillTask;
+    private BukkitTask regenerationTask;
     private BossDefinition definition;
     private boolean rageMode;
 
@@ -42,13 +43,27 @@ public final class BossSkillManager {
         stop();
         this.definition = definition;
         rageMode = false;
-        if (!config.skillsEnabled()) return;
-        task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::castRandomSkill, 20L * config.skillCooldownSeconds(), 20L * config.skillCooldownSeconds());
+        if (config.skillsEnabled()) {
+            skillTask = plugin.getServer().getScheduler().runTaskTimer(
+                    plugin,
+                    this::castRandomSkill,
+                    20L * config.skillCooldownSeconds(),
+                    20L * config.skillCooldownSeconds());
+        }
+        if (config.regenerationEnabled()) {
+            regenerationTask = plugin.getServer().getScheduler().runTaskTimer(
+                    plugin,
+                    this::regenerateBoss,
+                    20L * config.regenerationIntervalSeconds(),
+                    20L * config.regenerationIntervalSeconds());
+        }
     }
 
     public void stop() {
-        if (task != null) task.cancel();
-        task = null;
+        if (skillTask != null) skillTask.cancel();
+        if (regenerationTask != null) regenerationTask.cancel();
+        skillTask = null;
+        regenerationTask = null;
         definition = null;
         rageMode = false;
     }
@@ -64,7 +79,6 @@ public final class BossSkillManager {
         LivingEntity boss = manager.getActiveBoss();
         if (boss == null || boss.isDead() || definition == null) return;
         if (definition.skills().contains(BossSkillType.RAGE_MODE)) maybeRage(boss);
-        if (rageMode) healBoss(boss, config.rageHealPercentPerCast());
         List<BossSkillType> usable = new ArrayList<>();
         for (BossSkillType skill : definition.skills()) if (skill != BossSkillType.RAGE_MODE) usable.add(skill);
         if (usable.isEmpty()) return;
@@ -77,32 +91,28 @@ public final class BossSkillManager {
             case POISON_CLOUD -> poisonCloud(boss);
             case LIGHTNING_CHAIN -> lightningChain(boss);
             case SHADOW_PULSE -> shadowPulse(boss);
-            case HEAL_PULSE -> healPulse(boss);
+            case HEAL_PULSE -> healBoss(boss, config.healPulsePercent(), true);
             case SOUL_CAGE -> soulCage(boss);
             case RAGE_MODE -> maybeRage(boss);
         }
     }
 
+    private void regenerateBoss() {
+        LivingEntity boss = manager.getActiveBoss();
+        if (boss == null || boss.isDead()) return;
+        healBoss(boss, config.regenerationPercent(), false);
+    }
+
     private void maybeRage(LivingEntity boss) {
         if (rageMode) return;
-        if (boss.getHealth() > boss.getMaxHealth() * config.rageThreshold()) return;
+        if (manager.getActiveHealth() > manager.getActiveMaxHealth() * 0.30D) return;
         rageMode = true;
         boss.setGlowing(true);
         PotionEffectType speed = PotionEffectType.getByName("SPEED");
         PotionEffectType resistance = PotionEffectType.getByName("DAMAGE_RESISTANCE");
         if (speed != null) boss.addPotionEffect(new PotionEffect(speed, 20 * 60, 0));
         if (resistance != null) boss.addPotionEffect(new PotionEffect(resistance, 20 * 60, 0));
-        healBoss(boss, config.healPulsePercent());
-        boss.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, boss.getLocation().add(0.0D, 1.0D, 0.0D), 90, 2.5D, 1.2D, 2.5D, 0.05D);
-        boss.getWorld().playSound(boss.getLocation(), Sound.ENTITY_WARDEN_ROAR, 1.3F, 0.65F);
-        if (config.playerNotificationsEnabled()) {
-            String message = config.color("&c" + boss.getCustomName() + " &cmemasuki Rage Mode! &7Damage meningkat dan boss mulai memulihkan HP.");
-            for (Player player : nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal())) player.sendMessage(message);
-        }
-    }
-
-    public double outgoingDamageMultiplier() {
-        return rageMode ? config.rageDamageMultiplier() : 1.0D;
+        plugin.getServer().broadcastMessage(config.color("&c" + boss.getCustomName() + " &cmemasuki Rage Mode!"));
     }
 
     private void groundSlam(LivingEntity boss) {
@@ -110,7 +120,7 @@ public final class BossSkillManager {
         location.getWorld().spawnParticle(Particle.CLOUD, location, 60, 3.0D, 0.4D, 3.0D, 0.05D);
         location.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0F, 0.8F);
         for (Player player : nearbyPlayers(location, 6.0D)) {
-            player.damage(config.groundSlamDamage() * outgoingDamageMultiplier());
+            player.damage(config.groundSlamDamage(), boss);
             Vector knock = player.getLocation().toVector().subtract(location.toVector()).normalize().multiply(1.2D).setY(0.55D);
             player.setVelocity(knock);
         }
@@ -135,9 +145,8 @@ public final class BossSkillManager {
         Location target = targets.isEmpty() ? boss.getLocation().clone().add(random.nextInt(9) - 4, 0, random.nextInt(9) - 4) : targets.get(random.nextInt(targets.size())).getLocation();
         target.getWorld().spawnParticle(Particle.FLAME, target, 40, 1.5D, 0.4D, 1.5D, 0.05D);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            target.getWorld().spawnParticle(Particle.EXPLOSION, target, 1);
-            target.getWorld().playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 1.0F, 1.0F);
-            for (Player player : nearbyPlayers(target, 4.0D)) player.damage(config.fireBombDamage() * outgoingDamageMultiplier());
+            target.getWorld().createExplosion(target, 2.0F, false, false, boss);
+            for (Player player : nearbyPlayers(target, 4.0D)) player.damage(config.fireBombDamage(), boss);
         }, 30L);
     }
 
@@ -161,81 +170,51 @@ public final class BossSkillManager {
         }
     }
 
-    /** Arena-wide ranged counter with a visible warning before damage lands. */
     private void lightningChain(LivingEntity boss) {
-        List<Player> targets = new ArrayList<>(nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal()));
+        List<Player> targets = nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal());
         if (targets.isEmpty()) return;
-        boss.getWorld().playSound(boss.getLocation(), Sound.ENTITY_WARDEN_SONIC_CHARGE, 1.0F, 1.15F);
-        for (Player player : targets) {
-            player.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, player.getLocation().add(0.0D, 1.0D, 0.0D), 18, 0.7D, 0.9D, 0.7D, 0.03D);
+        targets.sort((left, right) -> Double.compare(
+                left.getLocation().distanceSquared(boss.getLocation()),
+                right.getLocation().distanceSquared(boss.getLocation())));
+        int limit = Math.min(config.lightningChainMaxTargets(), targets.size());
+        for (int i = 0; i < limit; i++) {
+            Player target = targets.get(i);
+            target.getWorld().strikeLightningEffect(target.getLocation());
+            target.damage(config.lightningChainDamage(), boss);
         }
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (!isCurrentBoss(boss)) return;
-            for (Player player : targets) {
-                if (!isValidDelayedTarget(player)) continue;
-                player.getWorld().strikeLightningEffect(player.getLocation());
-                player.damage(config.lightningChainDamage() * outgoingDamageMultiplier());
-            }
-        }, config.skillTelegraphTicks());
     }
 
-    /** Scary arena pulse that reaches bow users but only deals moderate damage. */
     private void shadowPulse(LivingEntity boss) {
-        Location center = boss.getLocation();
-        center.getWorld().playSound(center, Sound.ENTITY_WITHER_AMBIENT, 1.0F, 0.55F);
-        center.getWorld().spawnParticle(Particle.PORTAL, center.clone().add(0.0D, 1.0D, 0.0D), 140, 4.0D, 1.2D, 4.0D, 0.25D);
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (!isCurrentBoss(boss)) return;
-            for (Player player : nearbyPlayers(center, config.targetingRadiusHorizontal())) {
-                player.getWorld().spawnParticle(Particle.SOUL, player.getLocation(), 24, 0.8D, 0.5D, 0.8D, 0.04D);
-                player.damage(config.shadowPulseDamage() * outgoingDamageMultiplier());
-                Vector pull = boss.getLocation().toVector().subtract(player.getLocation().toVector());
-                if (pull.lengthSquared() > 0.01D) player.setVelocity(pull.normalize().multiply(0.35D).setY(0.18D));
-            }
-        }, config.skillTelegraphTicks());
-    }
-
-    /** Marks every arena participant, then briefly slows and damages them. */
-    private void soulCage(LivingEntity boss) {
-        List<Player> targets = new ArrayList<>(nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal()));
-        if (targets.isEmpty()) return;
-        boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, 1.0F, 0.8F);
-        for (Player player : targets) {
-            player.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, player.getLocation().add(0.0D, 0.8D, 0.0D), 28, 1.2D, 0.9D, 1.2D, 0.02D);
+        Location location = boss.getLocation();
+        location.getWorld().spawnParticle(Particle.SOUL, location, 90, 5.0D, 1.2D, 5.0D, 0.08D);
+        location.getWorld().playSound(location, Sound.ENTITY_WARDEN_SONIC_BOOM, 0.8F, 0.7F);
+        PotionEffectType darkness = PotionEffectType.getByName("DARKNESS");
+        for (Player player : nearbyPlayers(location, 8.0D)) {
+            player.damage(config.shadowPulseDamage(), boss);
+            if (darkness != null) player.addPotionEffect(new PotionEffect(darkness, 60, 0));
+            Vector knock = player.getLocation().toVector().subtract(location.toVector()).normalize().multiply(0.75D).setY(0.25D);
+            player.setVelocity(knock);
         }
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (!isCurrentBoss(boss)) return;
-            PotionEffectType slow = PotionEffectType.getByName("SLOWNESS");
-            if (slow == null) slow = PotionEffectType.getByName("SLOW");
-            for (Player player : targets) {
-                if (!isValidDelayedTarget(player)) continue;
-                player.damage(config.soulCageDamage() * outgoingDamageMultiplier());
-                if (slow != null) player.addPotionEffect(new PotionEffect(slow, 60, 0));
-            }
-        }, config.skillTelegraphTicks());
     }
 
-    private void healPulse(LivingEntity boss) {
-        boss.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, boss.getLocation().add(0.0D, 1.0D, 0.0D), 55, 1.6D, 1.0D, 1.6D, 0.04D);
-        boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.9F, 0.75F);
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (isCurrentBoss(boss)) healBoss(boss, config.healPulsePercent());
-        }, config.skillTelegraphTicks());
+    private void soulCage(LivingEntity boss) {
+        Player target = targetNear(boss.getLocation());
+        if (target == null) return;
+        Location center = target.getLocation().clone();
+        center.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, center, 80, 2.0D, 1.2D, 2.0D, 0.04D);
+        center.getWorld().playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.9F, 0.6F);
+        target.damage(config.soulCageDamage(), boss);
+        PotionEffectType slowness = PotionEffectType.getByName("SLOWNESS");
+        PotionEffectType weakness = PotionEffectType.getByName("WEAKNESS");
+        int duration = config.soulCageDurationSeconds() * 20;
+        if (slowness != null) target.addPotionEffect(new PotionEffect(slowness, duration, 1));
+        if (weakness != null) target.addPotionEffect(new PotionEffect(weakness, duration, 0));
     }
 
-    private void healBoss(LivingEntity boss, double maxHealthPercent) {
-        if (boss == null || boss.isDead() || maxHealthPercent <= 0.0D) return;
-        double healed = Math.min(boss.getMaxHealth(), boss.getHealth() + boss.getMaxHealth() * maxHealthPercent);
-        boss.setHealth(healed);
-    }
-
-    private boolean isCurrentBoss(LivingEntity boss) {
-        LivingEntity active = manager.getActiveBoss();
-        return active != null && !active.isDead() && active.getUniqueId().equals(boss.getUniqueId());
-    }
-
-    private boolean isValidDelayedTarget(Player player) {
-        return player != null && player.isOnline() && !player.isDead() && manager.isPlayerInsideArena(player);
+    private void healBoss(LivingEntity boss, double percent, boolean showEffect) {
+        if (!manager.healActiveBoss(percent) || !showEffect) return;
+        boss.getWorld().spawnParticle(Particle.HEART, boss.getLocation().add(0.0D, 1.5D, 0.0D), 20, 1.0D, 1.0D, 1.0D, 0.05D);
+        boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 0.8F, 1.3F);
     }
 
     private int countMinions(Location center) {
