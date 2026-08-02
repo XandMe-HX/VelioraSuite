@@ -284,26 +284,27 @@ protection:
   allow-boss-damage-in-protected-region: true
 
 rewards:
-  min-damage-to-reward: 35.0
-  min-damage-contribution-percent: 10.0
-  reward-cooldown-seconds: 90
+  # Peserta yang benar-benar ikut melawan menerima item dan uang kecil.
+  min-damage-to-reward: 1.0
+  min-damage-contribution-percent: 1.0
+  reward-cooldown-seconds: 0
   default-money:
     enabled: true
-    min: 500
-    max: 6500
+    min: 400
+    max: 2000
   top-damage-bonus:
     enabled: true
-    first: { min: 1000, max: 2500 }
-    second: { min: 750, max: 1500 }
-    third: { min: 500, max: 1000 }
+    first: { min: 600, max: 600 }
+    second: { min: 300, max: 300 }
+    third: { min: 100, max: 100 }
   team-bonus:
-    enabled: true
-    # Bonus hanya aktif jika minimal dua anggota team sama-sama mencapai 10% damage.
+    enabled: false
+    # Uang bonus team dimatikan; hadiah utama adalah item untuk setiap peserta.
     minimum-eligible-members: 2
-    pool: { min: 1500, max: 3000 }
+    pool: { min: 0, max: 0 }
   money-total-cap:
     enabled: true
-    max-per-player: 10000
+    max-per-player: 2000
   materials:
     common: { diamond: 0, ancient-debris: 0 }
     rare: { diamond: 0, ancient-debris: 0 }
@@ -328,7 +329,7 @@ messages:
   boss-spawn: '%prefix% &c%boss% &7muncul di dungeon. &f/boss status &7untuk lokasi.'
   boss-death: '%prefix% &a%boss% berhasil dikalahkan!'
   boss-despawn: '%prefix% &e%boss% menghilang.'
-  reward-team-bonus: '%prefix% &bBonus team &f%team%&b: &e%money% &7(dibagi ke anggota yang mencapai 10% damage).'
+  reward-team-bonus: '%prefix% &bBonus team &f%team%&b: &e%money%'
   boss-next: '%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.'
   boss-active: '%prefix% &cBoss aktif: &f%boss% &7di &f%world% %x% %y% %z%&7. HP: &f%health%/%max_health%'
   spawn-set: '%prefix% &aSpawn boss &f%name% &aberhasil diset. Jadwal boss sekarang aktif dan mengikuti WIB setiap 1 jam.'

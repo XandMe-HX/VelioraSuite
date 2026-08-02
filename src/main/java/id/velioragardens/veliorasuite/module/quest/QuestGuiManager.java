@@ -81,7 +81,10 @@ public final class QuestGuiManager implements Listener {
             lore.add("&7Level: &f" + progress.getLevel());
             lore.add("&7Progress: &f" + progress.getCurrentProgress() + "/" + progress.getCurrentTarget());
             lore.add("&7Reward Money: &a" + progress.getCurrentRewardMoney());
-            lore.add("&7Reward Mana: &b+" + manager.getConfigManager().getManaReward());
+            lore.add("&7Mana untuk mulai: &b" + manager.getSkillsHook().getQuestManaCost(progress.getLevel()));
+            if (manager.getConfigManager().isGiveManaOnComplete() && manager.getConfigManager().getManaReward() > 0) {
+                lore.add("&7Reward Max Mana: &b+" + manager.getConfigManager().getManaReward());
+            }
             lore.add("&7Reward Item: &fAman / non-OP");
             lore.add("&7Status: &f" + progress.getState().name());
             lore.add(" ");
