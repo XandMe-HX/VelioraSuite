@@ -46,6 +46,11 @@ settings:
     endpoint: ''
     timeout-ms: 1500
     advisory-only: true
+  spawner-guard:
+    enabled: true
+    limit-per-player: 1
+    consume-blocked-spawner: true
+    alert-cooldown-seconds: 10
   command-protection:
     enabled: true
     max-command-length: 160
@@ -66,3 +71,5 @@ messages:
   command-invalid: '%prefix% &cCommand tidak valid.'
   suspicious-join-kick: '%prefix% &cTerlalu banyak akun berbeda dari koneksi yang sama. Coba lagi sebentar.'
   rejoin-delay-kick: '%prefix% &eKoneksi kamu terlalu sering reconnect. Tunggu sebentar lalu coba masuk lagi.'
+  spawner-limit-reached: '%prefix% &cKamu hanya boleh memiliki &f%limit% spawner &csaja. Spawner tambahan dihapus.'
+  spawner-limit-alert: '&8[&cVelioraSpawnerGuard&8] &f%player% &cmencoba memasang spawner ke-%attempt% &7(%world% %x% %y% %z%&7). &eDiblokir dan dihapus.'
