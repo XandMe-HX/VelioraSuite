@@ -197,14 +197,17 @@ public final class QuestManager {
 
         int money = progress.getCurrentRewardMoney();
         rewardManager.depositMoney(player, money);
-        if (configManager.isGiveManaOnComplete() && skillsHook.isAvailable()) {
-            skillsHook.addMaxMana(player, configManager.getManaReward(), true);
-        }
+        rewardManager.giveItems(player, configManager.getBaseItemRewards(category), 1);
 
         int newCompleted = progress.getCompletedCount() + 1;
         progress.setCompletedCount(newCompleted);
         boolean levelUp = newCompleted % configManager.getCompletionsPerLevel() == 0;
         if (levelUp) progress.setLevel(progress.getLevel() + 1);
+        int reachedLevel = progress.getLevel();
+        int milestoneMultiplier = levelUp ? configManager.getMilestoneRewardMultiplier(reachedLevel) : 0;
+        boolean manaBonus = levelUp && configManager.isManaBonusLevel(reachedLevel) && skillsHook.isAvailable();
+        if (manaBonus) skillsHook.addMaxMana(player, configManager.getManaLevelBonus(), true);
+        if (milestoneMultiplier > 0) rewardManager.giveItems(player, configManager.getMilestoneItemRewards(category), milestoneMultiplier);
         progress.setCurrentProgress(0);
         progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
         progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
@@ -216,12 +219,12 @@ public final class QuestManager {
         else bossBarManager.hide(player);
 
         if (automatic) {
-            send(player, "quest-auto-completed", "%prefix% &aQuest &f%quest% &aselesai otomatis. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Target baru: &f%target%&a.", placeholders(category, progress, 0, money));
+            send(player, "quest-auto-completed", "%prefix% &aQuest &f%quest% &aselesai. Reward: &f%money%&a + &f%base_items%&a. Level sekarang: &f%level%&a.%milestone_message%", placeholders(category, progress, 0, money, milestoneMultiplier, manaBonus));
             return true;
         }
 
-        send(player, "quest-claimed", "%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money% &adan &f%mana_reward% Max Mana&a.", placeholders(category, progress, skillsHook.getQuestManaCost(progress.getLevel()), money));
-        if (levelUp) send(player, "quest-level-up", "%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.", placeholders(category, progress, 0));
+        send(player, "quest-claimed", "%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money%&a + &f%base_items%&a.%milestone_message%", placeholders(category, progress, skillsHook.getQuestManaCost(progress.getLevel()), money, milestoneMultiplier, manaBonus));
+        if (levelUp) send(player, "quest-level-up", "%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.", placeholders(category, progress, 0, money, milestoneMultiplier, manaBonus));
         if (autoRestart) send(player, "quest-auto-restarted", "%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.", placeholders(category, progress, 0));
         return true;
     }
@@ -251,6 +254,10 @@ public final class QuestManager {
     }
 
     private Map<String, String> placeholders(QuestCategory category, PlayerCategoryProgress progress, int manaCost, int money) {
+        return placeholders(category, progress, manaCost, money, 0, false);
+    }
+
+    private Map<String, String> placeholders(QuestCategory category, PlayerCategoryProgress progress, int manaCost, int money, int milestoneMultiplier, boolean manaBonus) {
         Map<String, String> map = new HashMap<>();
         map.put("%category%", category.key());
         map.put("%quest%", configManager.color(configManager.getCategoryDisplayName(category)));
@@ -259,7 +266,13 @@ public final class QuestManager {
         map.put("%target%", String.valueOf(progress.getCurrentTarget()));
         map.put("%mana_cost%", String.valueOf(manaCost));
         map.put("%money%", String.valueOf(money));
-        map.put("%mana_reward%", String.valueOf(configManager.getManaReward()));
+        map.put("%mana_reward%", String.valueOf(configManager.getManaLevelBonus()));
+        map.put("%base_items%", configManager.formatItemRewards(configManager.getBaseItemRewards(category), 1));
+        String milestoneItems = configManager.formatItemRewards(configManager.getMilestoneItemRewards(category), milestoneMultiplier);
+        map.put("%milestone_items%", milestoneItems);
+        map.put("%milestone_message%", milestoneMultiplier > 0
+                ? " &6Bonus level: &f" + milestoneItems + (manaBonus ? " &6dan &b+" + configManager.getManaLevelBonus() + " Max Mana" : "")
+                : "");
         return map;
     }
 
