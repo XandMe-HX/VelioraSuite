@@ -111,7 +111,8 @@ public final class BossSkillManager {
         location.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0F, 0.8F);
         for (Player player : nearbyPlayers(location, 6.0D)) {
             player.damage(config.groundSlamDamage() * outgoingDamageMultiplier());
-            Vector knock = player.getLocation().toVector().subtract(location.toVector()).normalize().multiply(1.2D).setY(0.55D);
+            Vector knock = safeDirection(player.getLocation().toVector().subtract(location.toVector()))
+                    .multiply(config.groundSlamKnockback()).setY(config.groundSlamUpward());
             player.setVelocity(knock);
         }
     }
@@ -145,7 +146,8 @@ public final class BossSkillManager {
         Location location = boss.getLocation();
         location.getWorld().playSound(location, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.6F);
         for (Player player : nearbyPlayers(location, 10.0D)) {
-            Vector pull = location.toVector().subtract(player.getLocation().toVector()).normalize().multiply(0.7D).setY(0.25D);
+            Vector pull = safeDirection(location.toVector().subtract(player.getLocation().toVector()))
+                    .multiply(config.pullAuraStrength()).setY(config.pullAuraUpward());
             player.setVelocity(pull);
         }
     }
@@ -190,7 +192,7 @@ public final class BossSkillManager {
                 player.getWorld().spawnParticle(Particle.SOUL, player.getLocation(), 24, 0.8D, 0.5D, 0.8D, 0.04D);
                 player.damage(config.shadowPulseDamage() * outgoingDamageMultiplier());
                 Vector pull = boss.getLocation().toVector().subtract(player.getLocation().toVector());
-                if (pull.lengthSquared() > 0.01D) player.setVelocity(pull.normalize().multiply(0.35D).setY(0.18D));
+                if (pull.lengthSquared() > 0.01D) player.setVelocity(pull.normalize().multiply(config.shadowPulsePullStrength()).setY(config.pullAuraUpward()));
             }
         }, config.skillTelegraphTicks());
     }
@@ -256,5 +258,9 @@ public final class BossSkillManager {
     private List<Player> nearbyPlayers(Location location, double horizontalRadius) {
         if (location == null || location.getWorld() == null) return List.of();
         return manager.nearbyTargetPlayers(location, horizontalRadius);
+    }
+
+    private Vector safeDirection(Vector vector) {
+        return vector.lengthSquared() <= 0.0001D ? new Vector() : vector.normalize();
     }
 }

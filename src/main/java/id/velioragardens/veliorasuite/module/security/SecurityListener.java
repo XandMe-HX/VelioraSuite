@@ -8,6 +8,10 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -34,6 +38,7 @@ public final class SecurityListener implements Listener {
             return;
         }
         manager.scheduleOreDigest(event.getPlayer(), 60L);
+        manager.scheduleAntiDupeScan(event.getPlayer(), 100L);
         sendAdminQuickAccess(event.getPlayer());
     }
 
@@ -96,6 +101,26 @@ public final class SecurityListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
         event.blockList().forEach(manager::handleSpawnerRemoved);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof org.bukkit.entity.Player player) manager.scheduleAntiDupeScan(player, 1L);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getWhoClicked() instanceof org.bukkit.entity.Player player) manager.scheduleAntiDupeScan(player, 1L);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getPlayer() instanceof org.bukkit.entity.Player player) manager.scheduleAntiDupeScan(player, 1L);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPickup(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof org.bukkit.entity.Player player) manager.scheduleAntiDupeScan(player, 1L);
     }
 
     @EventHandler

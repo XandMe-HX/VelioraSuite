@@ -137,6 +137,14 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
                 if (args.length < 2) sender.sendMessage("§8[§cVelioraOreWatch§8] §cGunakan §f/vxray clear-log <no|all>§c. Nomor mengikuti urutan §f/vxray alerts§c dari atas ke bawah.");
                 else clearOreAlert(sender, args[1]);
             }
+            case "confirm", "konfirmasi" -> {
+                if (args.length < 2) sender.sendMessage("§8[§cVelioraOreWatch§8] §cGunakan §f/vxray confirm <player>§c.");
+                else manager.confirmXrayBan(sender, args[1]);
+            }
+            case "deny", "tolak" -> {
+                if (args.length < 2) sender.sendMessage("§8[§cVelioraOreWatch§8] §cGunakan §f/vxray deny <player>§c.");
+                else manager.denyXrayBan(sender, args[1]);
+            }
             case "check" -> {
                 if (args.length < 2) sendDetailedOreHelp(sender);
                 else manager.sendOreCheck(sender, args[1]);
@@ -189,6 +197,8 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§f/vxray review <player> §8- §7Check + logs + pertanyaan banding.");
         sender.sendMessage("§f/vxray clear-log <no> §8- §7Hapus alert nomor tertentu setelah dicek.");
         sender.sendMessage("§f/vxray clear-log all §8- §7Hapus semua alert yang sudah dicek.");
+        sender.sendMessage("§f/vxray confirm <player> §8- §7Owner mengonfirmasi ban Xray 15 hari.");
+        sender.sendMessage("§f/vxray deny <player> §8- §7Owner menolak usulan ban Xray.");
         sender.sendMessage("§f/vxray reset <player> §8- §7Reset data mining player.");
         sender.sendMessage("§f/vxray exempt <player> §8- §7Bypass player dari monitor.");
         sender.sendMessage("§f/vxray unexempt <player> §8- §7Hapus bypass player.");
@@ -269,7 +279,7 @@ public final class SecurityCommand implements CommandExecutor, TabCompleter {
         }
         if (commandName.equals("vxray") || alias.equalsIgnoreCase("vxray") || alias.equalsIgnoreCase("vorewatch") || alias.equalsIgnoreCase("orecheck")) {
             if (!manager.getConfigManager().hasAdmin(sender)) return new ArrayList<>();
-            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "guide", "status", "check", "logs", "review", "evidence", "suspects", "top", "alerts", "allreport", "clear-log", "reset", "exempt", "unexempt", "reload")), args[0]);
+            if (args.length == 1) return filter(new ArrayList<>(Arrays.asList("help", "guide", "status", "check", "logs", "review", "evidence", "suspects", "top", "alerts", "allreport", "clear-log", "confirm", "deny", "reset", "exempt", "unexempt", "reload")), args[0]);
             if (args.length == 2 && args[0].equalsIgnoreCase("clear-log")) return filter(new ArrayList<>(Arrays.asList("1", "2", "3", "all")), args[1]);
             return new ArrayList<>();
         }

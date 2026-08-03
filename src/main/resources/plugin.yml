@@ -209,6 +209,9 @@ permissions:
     default: false
   veliorasuite.security.admin:
     default: op
+  veliorasuite.security.owner:
+    description: Confirm or deny VelioraOreWatch temporary bans.
+    default: op
   veliorasuite.security.alerts:
     default: op
   veliorasuite.security.reload:

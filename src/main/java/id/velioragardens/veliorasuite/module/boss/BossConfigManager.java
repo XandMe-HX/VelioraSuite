@@ -38,7 +38,7 @@ public final class BossConfigManager {
         plugin.saveResourceIfNotExists("modules/boss.yml");
         File file = new File(plugin.getDataFolder(), "modules/boss.yml");
         config = YamlConfiguration.loadConfiguration(file);
-        migrateBalanceV2(file);
+        migrateBalanceV3(file);
         migrateBossBarV3(file);
         migrateNotificationDefaults(file);
         loadRarityChance();
@@ -46,19 +46,19 @@ public final class BossConfigManager {
     }
 
     /** Applies the approved boss rebalance once while preserving schedule, arena, and custom messages. */
-    private void migrateBalanceV2(File file) {
-        if (config.getInt("settings.balance-version", 0) >= 2) return;
+    private void migrateBalanceV3(File file) {
+        if (config.getInt("settings.balance-version", 0) >= 3) return;
         try (InputStream input = plugin.getResource("modules/boss.yml")) {
             if (input == null) return;
             YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
             for (String path : List.of("settings.combat", "bosses", "skills", "rewards")) {
                 copySection(defaults, path, !path.equals("bosses"));
             }
-            config.set("settings.balance-version", 2);
+            config.set("settings.balance-version", 3);
             config.save(file);
-            plugin.getLogger().info("VelioraBoss: balance config v2 diterapkan (HP, skill, mace, dan reward team).");
+            plugin.getLogger().info("VelioraBoss: balance config v3 diterapkan (HP maksimal 30K, Mace, collision, dan knockback skill).");
         } catch (IOException exception) {
-            plugin.getLogger().warning("VelioraBoss: gagal menerapkan balance config v2: " + exception.getMessage());
+            plugin.getLogger().warning("VelioraBoss: gagal menerapkan balance config v3: " + exception.getMessage());
         }
     }
 
@@ -134,8 +134,11 @@ public final class BossConfigManager {
     public boolean healthScalingEnabled() { return bool("settings.combat.health-scale-by-nearby-players", true); }
     public double healthPerPlayerMultiplier() { return Math.max(0.0D, number("settings.combat.health-per-player-multiplier", 0.20D)); }
     public double maxHealthMultiplier() { return Math.max(1.0D, number("settings.combat.max-health-multiplier", 2.75D)); }
-    public double maceDamageMultiplier() { return Math.min(0.25D, clamp(number("settings.combat.mace-damage-multiplier", 0.25D), 0.0D, 1.0D)); }
-    public double virtualDamageMultiplier() { return clamp(number("settings.combat.virtual-damage-multiplier", 0.15D), 0.01D, 1.0D); }
+    public boolean bossCollisionEnabled() { return bool("settings.combat.collision-enabled", false); }
+    public double maximumBossHealth() { return Math.max(1.0D, number("settings.combat.maximum-health", 30_000.0D)); }
+    public double maceDamageMultiplier() { return clamp(number("settings.combat.mace-damage-multiplier", 0.65D), 0.05D, 1.0D); }
+    public double maceMaxDamagePerHit() { return Math.max(1.0D, number("settings.combat.mace-max-damage-per-hit", 300.0D)); }
+    public double virtualDamageMultiplier() { return clamp(number("settings.combat.virtual-damage-multiplier", 1.0D), 0.01D, 1.0D); }
     public boolean spawnTitleEnabled() { return bool("effects.spawn.title-enabled", true); }
     public String spawnTitle() { return str("effects.spawn.title", "&c%boss%"); }
     public String spawnSubtitle() { return str("effects.spawn.subtitle", "&7Boss %rarity% muncul di &f%world%"); }
@@ -153,6 +156,11 @@ public final class BossConfigManager {
     public double lightningChainDamage() { return Math.max(0.0D, number("skills.damage.lightning-chain", 6.0D)); }
     public double shadowPulseDamage() { return Math.max(0.0D, number("skills.damage.shadow-pulse", 5.0D)); }
     public double soulCageDamage() { return Math.max(0.0D, number("skills.damage.soul-cage", 4.0D)); }
+    public double groundSlamKnockback() { return clamp(number("skills.movement.ground-slam-knockback", 0.45D), 0.0D, 1.5D); }
+    public double groundSlamUpward() { return clamp(number("skills.movement.ground-slam-upward", 0.18D), 0.0D, 0.75D); }
+    public double pullAuraStrength() { return clamp(number("skills.movement.pull-aura-strength", 0.25D), 0.0D, 1.0D); }
+    public double pullAuraUpward() { return clamp(number("skills.movement.pull-aura-upward", 0.08D), 0.0D, 0.5D); }
+    public double shadowPulsePullStrength() { return clamp(number("skills.movement.shadow-pulse-pull-strength", 0.18D), 0.0D, 1.0D); }
     public double rageThreshold() { return clamp(number("skills.rage.health-threshold", 0.30D), 0.05D, 0.90D); }
     public double rageDamageMultiplier() { return Math.max(1.0D, number("skills.rage.damage-multiplier", 1.18D)); }
     public double rageHealPercentPerCast() { return clamp(number("skills.rage.heal-percent-per-cast", 0.005D), 0.0D, 0.05D); }
@@ -228,7 +236,8 @@ public final class BossConfigManager {
             BossRarity rarity = BossRarity.from(boss.getString("rarity", "COMMON"));
             List<BossSkillType> skills = parseSkills(boss.getStringList("skills"));
             double damage = Math.max(minimumDamage(rarity), boss.getDouble("damage", minimumDamage(rarity)));
-            bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(id.toLowerCase(Locale.ROOT), type, boss.getString("display-name", id), rarity, Math.max(1.0D, boss.getDouble("health", 5000.0D)), damage, Math.max(0.0625D, boss.getDouble("scale", 4.0D)), skills.isEmpty() ? defaultSkills() : skills));
+            double health = Math.min(maximumBossHealth(), Math.max(1.0D, boss.getDouble("health", 5000.0D)));
+            bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(id.toLowerCase(Locale.ROOT), type, boss.getString("display-name", id), rarity, health, damage, Math.max(0.0625D, boss.getDouble("scale", 4.0D)), skills.isEmpty() ? defaultSkills() : skills));
         }
     }
     private List<BossSkillType> parseSkills(List<String> raw) { List<BossSkillType> skills = new ArrayList<>(); for (String value : raw) { BossSkillType skill = BossSkillType.from(value); if (skill != null && !skills.contains(skill)) skills.add(skill); } if (skills.isEmpty()) skills.addAll(List.of(BossSkillType.GROUND_SLAM, BossSkillType.SUMMON_MINIONS, BossSkillType.FIRE_BOMB, BossSkillType.PULL_AURA, BossSkillType.POISON_CLOUD, BossSkillType.RAGE_MODE)); return skills; }
