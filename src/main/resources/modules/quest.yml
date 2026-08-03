@@ -26,12 +26,17 @@ settings:
     auto-start-on-progress: false
     auto-restart-after-claim: false
   rewards:
-    # Anti-inflasi: reward uang naik pelan dan tetap ada batas maksimal.
+    # Nilai uang dikurangi 20% agar tetap cocok untuk economy hard.
     give-mana-on-complete: false
     mana-reward: 0
-    base-money: 1000
-    money-increase-per-level: 125
-    max-money: 17500
+    base-money: 800
+    money-increase-per-level: 100
+    max-money: 14000
+    # Saat naik ke setiap kelipatan level 5: +1 Max Mana dan bonus item kategori.
+    mana-level-interval: 5
+    mana-level-bonus: 1
+    # Bonus item meningkat di level 10/20, namun maksimal 3x agar tidak inflasi.
+    milestone-max-multiplier: 3
   starter:
     enabled: true
     reminder-enabled: true
@@ -48,6 +53,8 @@ categories:
     base-target: 96
     target-increase-per-level: 56
     materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
+    base-item-rewards: [{material: OAK_SAPLING, amount: 2}, {material: BREAD, amount: 1}]
+    milestone-item-rewards: [{material: OAK_LOG, amount: 16}, {material: TORCH, amount: 8}]
   mining:
     enabled: true
     display-name: '&7Mining'
@@ -55,6 +62,8 @@ categories:
     base-target: 128
     target-increase-per-level: 80
     materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE, ANCIENT_DEBRIS]
+    base-item-rewards: [{material: COBBLESTONE, amount: 16}, {material: TORCH, amount: 4}]
+    milestone-item-rewards: [{material: COAL, amount: 8}, {material: TORCH, amount: 16}]
   farmer:
     enabled: true
     display-name: '&eFarming'
@@ -64,13 +73,17 @@ categories:
     harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, SUGAR_CANE, MELON, PUMPKIN, COCOA, NETHER_WART]
     plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
     count-hoe-farmland: true
+    base-item-rewards: [{material: WHEAT_SEEDS, amount: 4}, {material: BREAD, amount: 1}]
+    milestone-item-rewards: [{material: BONE_MEAL, amount: 8}, {material: BAKED_POTATO, amount: 4}]
   chef:
     enabled: true
-    display-name: '&bDaily'
-    icon: CLOCK
+    display-name: '&6Koki'
+    icon: COOKED_BEEF
     base-target: 32
     target-increase-per-level: 20
     cooked-items: [COOKED_BEEF, COOKED_CHICKEN, COOKED_MUTTON, COOKED_PORKCHOP, COOKED_COD, COOKED_SALMON, BAKED_POTATO, DRIED_KELP]
+    base-item-rewards: [{material: BAKED_POTATO, amount: 2}, {material: COAL, amount: 2}]
+    milestone-item-rewards: [{material: COOKED_BEEF, amount: 4}, {material: CAMPFIRE, amount: 1}]
   monster_hunter:
     enabled: true
     display-name: '&cMonster Hunter'
@@ -78,19 +91,25 @@ categories:
     base-target: 28
     target-increase-per-level: 14
     entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER, VINDICATOR, EVOKER, RAVAGER, BREEZE, BOGGED]
+    base-item-rewards: [{material: BONE, amount: 4}, {material: COOKED_BEEF, amount: 1}]
+    milestone-item-rewards: [{material: ARROW, amount: 16}, {material: COOKED_BEEF, amount: 4}]
   animal_hunter:
     enabled: true
-    display-name: '&fAnimal'
+    display-name: '&fBerburu Hewan'
     icon: COOKED_CHICKEN
     base-target: 28
     target-increase-per-level: 13
     entities: [COW, SHEEP, CHICKEN, PIG, RABBIT, COD, SALMON, PUFFERFISH, TROPICAL_FISH]
+    base-item-rewards: [{material: LEATHER, amount: 2}, {material: COOKED_CHICKEN, amount: 1}]
+    milestone-item-rewards: [{material: LEATHER, amount: 8}, {material: COOKED_CHICKEN, amount: 4}]
   fishing:
     enabled: true
     display-name: '&bFishing'
     icon: FISHING_ROD
     base-target: 20
     target-increase-per-level: 12
+    base-item-rewards: [{material: COD, amount: 2}, {material: STRING, amount: 2}]
+    milestone-item-rewards: [{material: COOKED_SALMON, amount: 4}, {material: TORCH, amount: 8}]
 
 permissions:
   use: 'veliorasuite.quest.use'

@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.quest;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
+import id.velioragardens.veliorasuite.module.quest.model.QuestItemReward;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.boss.BarColor;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 public final class QuestConfigManager {
@@ -57,6 +59,9 @@ public final class QuestConfigManager {
     public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 1000)); }
     public int getMoneyIncreasePerLevel() { return Math.max(0, integer("settings.rewards.money-increase-per-level", integer("settings.rewards.money-increase-per-tier", 150))); }
     public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }
+    public int getManaLevelInterval() { return Math.max(1, integer("settings.rewards.mana-level-interval", 5)); }
+    public int getManaLevelBonus() { return Math.max(0, integer("settings.rewards.mana-level-bonus", 1)); }
+    public int getMilestoneMaxMultiplier() { return Math.max(1, integer("settings.rewards.milestone-max-multiplier", 3)); }
     public boolean isStarterEnabled() { return bool("settings.starter.enabled", true); }
     public boolean isStarterReminderEnabled() { return bool("settings.starter.reminder-enabled", true); }
     public int getStarterReminderIntervalSeconds() { return Math.max(900, integer("settings.starter.reminder-interval-seconds", 900)); }
@@ -86,6 +91,32 @@ public final class QuestConfigManager {
         return (int) Math.max(0L, Math.min(getMaxMoneyReward(), reward));
     }
 
+    public boolean isManaBonusLevel(int level) {
+        return level > 0 && level % getManaLevelInterval() == 0;
+    }
+
+    public int getMilestoneRewardMultiplier(int level) {
+        if (!isManaBonusLevel(level)) return 0;
+        return Math.min(getMilestoneMaxMultiplier(), 1 + (level / 10));
+    }
+
+    public List<QuestItemReward> getBaseItemRewards(QuestCategory category) {
+        return itemRewards(category, "base-item-rewards");
+    }
+
+    public List<QuestItemReward> getMilestoneItemRewards(QuestCategory category) {
+        return itemRewards(category, "milestone-item-rewards");
+    }
+
+    public String formatItemRewards(List<QuestItemReward> rewards, int multiplier) {
+        if (rewards.isEmpty() || multiplier <= 0) return "-";
+        List<String> parts = new ArrayList<>();
+        for (QuestItemReward reward : rewards) {
+            parts.add(prettyMaterial(reward.material()) + " x" + (reward.amount() * multiplier));
+        }
+        return String.join(", ", parts);
+    }
+
     public boolean isCountHoeFarmland() { return bool("categories.farmer.count-hoe-farmland", true); }
 
     public Set<Material> getMaterials(QuestCategory category, String node) {
@@ -97,6 +128,30 @@ public final class QuestConfigManager {
             if (material != null) result.add(material);
         }
         return result;
+    }
+
+    private List<QuestItemReward> itemRewards(QuestCategory category, String node) {
+        if (config == null) return List.of();
+        List<QuestItemReward> result = new ArrayList<>();
+        for (Map<?, ?> entry : config.getMapList("categories." + category.key() + "." + node)) {
+            Object rawMaterial = entry.get("material");
+            Material material = material(rawMaterial == null ? "" : String.valueOf(rawMaterial), null);
+            if (material == null || material.isAir()) continue;
+            Object rawAmount = entry.get("amount");
+            int amount = rawAmount instanceof Number number ? number.intValue() : 1;
+            result.add(new QuestItemReward(material, amount));
+        }
+        return result;
+    }
+
+    private String prettyMaterial(Material material) {
+        String[] words = material.name().toLowerCase(Locale.ROOT).split("_");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (!result.isEmpty()) result.append(' ');
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return result.toString();
     }
 
     public Set<EntityType> getEntities(QuestCategory category) {
