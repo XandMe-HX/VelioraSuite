@@ -53,9 +53,9 @@ public final class AdminMonitorManager {
         for (Player player : Bukkit.getOnlinePlayers()) if (isStaff(player)) sessions.putIfAbsent(player.getUniqueId(), now);
     }
 
-    public void login(Player player) { if (track("login")) { sessions.put(player.getUniqueId(), System.currentTimeMillis()); record(player, "LOGIN", "masuk server", player.getLocation()); } }
+    public void login(Player player) { if (isStaff(player) && track("login")) { sessions.put(player.getUniqueId(), System.currentTimeMillis()); record(player, "LOGIN", "masuk server", player.getLocation()); } }
     public void logout(Player player, String reason) {
-        if (!track("logout")) return;
+        if (!isStaff(player) || !track("logout")) return;
         Long started = sessions.remove(player.getUniqueId());
         String duration = started == null ? "durasi tidak diketahui" : "online " + formatDuration(System.currentTimeMillis() - started);
         record(player, reason, "keluar server (" + duration + ")", player.getLocation());
@@ -79,6 +79,7 @@ public final class AdminMonitorManager {
     public void chatAsync(Player player, String message) { Bukkit.getScheduler().runTask(plugin, () -> chat(player, message)); }
 
     private void record(Player player, String type, String detail, Location location) {
+        if (!isStaff(player)) return;
         long now = System.currentTimeMillis();
         LocalDate date = Instant.ofEpochMilli(now).atZone(zoneId).toLocalDate();
         File file = dailyFile(date);
