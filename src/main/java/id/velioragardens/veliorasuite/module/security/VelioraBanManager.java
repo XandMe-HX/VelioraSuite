@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.security;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.security.model.BanSource;
 import id.velioragardens.veliorasuite.module.security.model.VelioraBanRecord;
+import io.papermc.paper.ban.BanListType;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -176,6 +178,30 @@ public final class VelioraBanManager {
 
         save();
         plugin.getLogger().info("VelioraBan recorded: " + safePlayerName + " (" + source.name() + ")");
+    }
+
+    /** Applies a real temporary ban only after the owner confirms an Xray case. */
+    public void banPlayerTemporarily(java.util.UUID playerUuid, String playerName, String reason, BanSource source, long durationMillis) {
+        if (source != BanSource.AUTO_XRAY || durationMillis <= 0L) return;
+        if (playerUuid == null) return;
+        String safePlayerName = normalizePlayerName(playerName);
+        if (safePlayerName == null) {
+            plugin.getLogger().warning("VelioraBan membatalkan temp-ban: nama player tidak valid.");
+            return;
+        }
+        String safeReason = sanitizeReason(reason);
+        long now = System.currentTimeMillis();
+        long expiresAt = now + durationMillis;
+        banRecords.put(safePlayerName.toLowerCase(Locale.ROOT), new VelioraBanRecord(
+                safePlayerName, safeReason, source, now, false, expiresAt));
+        Bukkit.getBanList(BanListType.PROFILE).addBan(
+                Bukkit.createProfile(playerUuid, safePlayerName), safeReason, Instant.ofEpochMilli(expiresAt), "VelioraSuite");
+        Player online = Bukkit.getPlayerExact(safePlayerName);
+        if (online != null) online.kickPlayer("§cKamu terkena ban sementara 15 hari.\n§7Alasan: §f" + safeReason);
+        banHistory.add("[" + formatTime(now) + "] " + source.name() + ": " + safePlayerName + " - " + safeReason);
+        while (banHistory.size() > 100) banHistory.remove(0);
+        save();
+        plugin.getLogger().warning("VelioraBan temporary Xray ban: " + safePlayerName + " hingga " + formatTime(expiresAt));
     }
 
     /**

@@ -51,6 +51,34 @@ settings:
     limit-per-player: 1
     consume-blocked-spawner: true
     alert-cooldown-seconds: 10
+  xray-enforcement:
+    enabled: true
+    # Peringatan pertama = kick. Kedua = menunggu keputusan owner.
+    strike-cooldown-minutes: 10
+    confirmation-expiry-minutes: 60
+    ban-days: 15
+  anti-dupe:
+    enabled: true
+    scan-cooldown-ticks: 10
+    kick-on-quarantine: true
+    # Batas berlaku pada inventory player, bukan chest/base. Item berlebih dikarantina.
+    inventory-limits:
+      SPAWNER: 8
+      DIAMOND: 512
+      DIAMOND_BLOCK: 64
+      DIAMOND_ORE: 128
+      DEEPSLATE_DIAMOND_ORE: 128
+      ANCIENT_DEBRIS: 256
+      NETHERITE_SCRAP: 256
+      NETHERITE_INGOT: 128
+      NETHERITE_BLOCK: 16
+      EMERALD: 768
+      EMERALD_BLOCK: 64
+      EMERALD_ORE: 128
+      DEEPSLATE_EMERALD_ORE: 128
+      RAW_IRON_BLOCK: 64
+      RAW_GOLD_BLOCK: 64
+      RAW_COPPER_BLOCK: 64
   command-protection:
     enabled: true
     max-command-length: 160
@@ -60,6 +88,7 @@ settings:
     hide-blocked-commands: true
 permissions:
   admin: 'veliorasuite.security.admin'
+  owner: 'veliorasuite.security.owner'
   reload: 'veliorasuite.security.reload'
   alerts: 'veliorasuite.security.alerts'
   bypass: 'veliorasuite.security.bypass'

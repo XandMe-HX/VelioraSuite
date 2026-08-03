@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.security;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.module.security.model.BanSource;
 import id.velioragardens.veliorasuite.module.security.model.SecurityDecision;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -8,8 +9,12 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,6 +36,9 @@ public final class SecurityManager {
     private final SecurityTabProtectionManager tabProtectionManager;
     private final SecurityAltGuard altGuard;
     private final SpawnerGuardManager spawnerGuardManager;
+    private final AntiDupeManager antiDupeManager;
+    private final VelioraBanManager banManager;
+    private final File xrayStateFile;
 
     private final Map<UUID, List<OreRecord>> oreRecords = new HashMap<>();
     private final Map<UUID, String> oreNames = new HashMap<>();
@@ -38,6 +46,9 @@ public final class SecurityManager {
     private final Set<String> exemptOreNames = new HashSet<>();
     private final List<OreReport> oreAlerts = new ArrayList<>();
     private final Map<String, Long> alertCooldown = new HashMap<>();
+    private final Map<UUID, Integer> xrayWarnings = new HashMap<>();
+    private final Map<UUID, Long> xrayLastAction = new HashMap<>();
+    private final Map<UUID, Long> pendingXrayBans = new HashMap<>();
 
     public SecurityManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -49,12 +60,17 @@ public final class SecurityManager {
         this.tabProtectionManager = new SecurityTabProtectionManager(configManager, commandProtectionManager);
         this.altGuard = new SecurityAltGuard(plugin, configManager);
         this.spawnerGuardManager = new SpawnerGuardManager(plugin, configManager);
+        this.antiDupeManager = new AntiDupeManager(plugin, configManager);
+        this.banManager = new VelioraBanManager(plugin);
+        this.xrayStateFile = new File(plugin.getDataFolder(), "data/xray-enforcement.yml");
     }
 
     public void load() {
         configManager.load();
         altGuard.load();
         spawnerGuardManager.load();
+        banManager.load();
+        loadXrayState();
         plugin.getLogger().info("VelioraSecurity loaded.");
     }
 
@@ -62,6 +78,8 @@ public final class SecurityManager {
         configManager.load();
         altGuard.load();
         spawnerGuardManager.load();
+        banManager.load();
+        loadXrayState();
         alertManager.clearCooldowns();
         joinProtectionManager.clear();
     }
@@ -76,6 +94,7 @@ public final class SecurityManager {
     public void handleSpawnerBreak(Block block) { spawnerGuardManager.handleBreak(block); }
     public void handleSpawnerRemoved(Block block) { spawnerGuardManager.handleBreak(block); }
     public void rollbackSpawnerPlace(Player player, Block block) { spawnerGuardManager.rollbackPlace(player, block); }
+    public void scheduleAntiDupeScan(Player player, long delayTicks) { antiDupeManager.scheduleScan(player, delayTicks); }
 
     public SecurityDecision checkJoin(Player player) {
         oreNames.put(player.getUniqueId(), player.getName());
@@ -115,8 +134,10 @@ public final class SecurityManager {
         oreNames.put(uuid, player.getName());
         oreRecords.computeIfAbsent(uuid, ignored -> new ArrayList<>()).add(new OreRecord(System.currentTimeMillis(), block.getType().name()));
         trim(uuid);
-        OreReport report = strongest(report(uuid, 5), report(uuid, 15), report(uuid, 60));
+        OreReport fiveMinuteReport = report(uuid, 5);
+        OreReport report = strongest(fiveMinuteReport, report(uuid, 15), report(uuid, 60));
         if (!report.level().equals("NORMAL")) addOreAlert(player, report);
+        if (fiveMinuteReport.level().equals("EXTREME")) handleExtremeXray(player, fiveMinuteReport);
     }
 
     public void scheduleOreDigest(Player player, long delayTicks) {
@@ -165,7 +186,8 @@ public final class SecurityManager {
                 "&7Tracked Players: &f" + oreRecords.size(),
                 "&7Alerts: &f" + oreAlerts.size(),
                 "&7Placed Ore Cache: &f" + placedOre.size(),
-                "&7Mode: &fAlert first",
+                "&7Mode: &f2 peringatan, ban 15 hari wajib konfirmasi owner",
+                "&7Pending Confirmation: &f" + pendingXrayBans.size(),
                 "&8&m--------------------------------"
         ), Map.of());
     }
@@ -231,7 +253,13 @@ public final class SecurityManager {
     public void resetOre(CommandSender sender, String name) {
         if (!configManager.hasAdmin(sender)) { sendNoPermission(sender); return; }
         UUID uuid = uuidByName(name);
-        if (uuid != null) oreRecords.remove(uuid);
+        if (uuid != null) {
+            oreRecords.remove(uuid);
+            xrayWarnings.remove(uuid);
+            xrayLastAction.remove(uuid);
+            pendingXrayBans.remove(uuid);
+            saveXrayState();
+        }
         oreAlerts.removeIf(report -> report.name().equalsIgnoreCase(name));
         sender.sendMessage(color("&8[&cVelioraOreWatch&8] &aData &f" + name + " &adireset."));
     }
@@ -240,6 +268,52 @@ public final class SecurityManager {
         if (!configManager.hasAdmin(sender)) { sendNoPermission(sender); return; }
         if (value) exemptOreNames.add(name.toLowerCase(Locale.ROOT)); else exemptOreNames.remove(name.toLowerCase(Locale.ROOT));
         sender.sendMessage(color("&8[&cVelioraOreWatch&8] &aBypass &f" + name + " &a= &f" + value));
+    }
+
+    public void confirmXrayBan(CommandSender sender, String name) {
+        if (!configManager.hasOwner(sender)) {
+            sender.sendMessage(color("&8[&cVelioraOreWatch&8] &cHanya owner/OP yang dapat mengonfirmasi ban Xray."));
+            return;
+        }
+        UUID uuid = uuidByName(name);
+        if (uuid == null || !pendingXrayBans.containsKey(uuid)) {
+            sender.sendMessage(color("&8[&cVelioraOreWatch&8] &cTidak ada ban Xray yang menunggu konfirmasi untuk &f" + name + "&c."));
+            return;
+        }
+        long expiresAt = pendingXrayBans.get(uuid);
+        if (System.currentTimeMillis() > expiresAt) {
+            pendingXrayBans.remove(uuid);
+            xrayWarnings.put(uuid, 1);
+            saveXrayState();
+            sender.sendMessage(color("&8[&cVelioraOreWatch&8] &eKonfirmasi sudah kedaluwarsa. Player kembali ke peringatan pertama."));
+            return;
+        }
+        String playerName = oreNames.getOrDefault(uuid, name);
+        int days = configManager.getXrayBanDays();
+        banManager.banPlayerTemporarily(uuid, playerName,
+                "Xray terdeteksi 2 kali dan dikonfirmasi Owner Veliora Gardens", BanSource.AUTO_XRAY,
+                days * 24L * 60L * 60L * 1000L);
+        pendingXrayBans.remove(uuid);
+        xrayWarnings.remove(uuid);
+        xrayLastAction.remove(uuid);
+        saveXrayState();
+        sender.sendMessage(color("&8[&cVelioraOreWatch&8] &aBan Xray &f" + days + " hari &auntuk &f" + playerName + " &aberhasil dikonfirmasi."));
+    }
+
+    public void denyXrayBan(CommandSender sender, String name) {
+        if (!configManager.hasOwner(sender)) {
+            sender.sendMessage(color("&8[&cVelioraOreWatch&8] &cHanya owner/OP yang dapat menolak ban Xray."));
+            return;
+        }
+        UUID uuid = uuidByName(name);
+        if (uuid == null || pendingXrayBans.remove(uuid) == null) {
+            sender.sendMessage(color("&8[&cVelioraOreWatch&8] &cTidak ada konfirmasi aktif untuk &f" + name + "&c."));
+            return;
+        }
+        xrayWarnings.put(uuid, 1);
+        xrayLastAction.put(uuid, System.currentTimeMillis());
+        saveXrayState();
+        sender.sendMessage(color("&8[&cVelioraOreWatch&8] &aBan ditolak. &f" + name + " &akembali ke status peringatan pertama."));
     }
 
     public void sendStatus(CommandSender sender) {
@@ -287,9 +361,51 @@ public final class SecurityManager {
         }
     }
 
+    private void handleExtremeXray(Player player, OreReport report) {
+        if (!configManager.isXrayEnforcementEnabled() || configManager.hasBypass(player)) return;
+        UUID uuid = player.getUniqueId();
+        long now = System.currentTimeMillis();
+        Long pendingUntil = pendingXrayBans.get(uuid);
+        if (pendingUntil != null) {
+            if (now <= pendingUntil) return;
+            pendingXrayBans.remove(uuid);
+            xrayWarnings.put(uuid, 1);
+        }
+        long cooldown = configManager.getXrayStrikeCooldownMinutes() * 60_000L;
+        if (now - xrayLastAction.getOrDefault(uuid, 0L) < cooldown) return;
+        int warning = Math.min(2, xrayWarnings.getOrDefault(uuid, 0) + 1);
+        xrayWarnings.put(uuid, warning);
+        xrayLastAction.put(uuid, now);
+        oreNames.put(uuid, player.getName());
+
+        if (warning == 1) {
+            notifyXrayOwners(player.getName(), "&ePeringatan Xray 1/2 &7- player diperingatkan dan dikeluarkan.", report);
+            saveXrayState();
+            player.kickPlayer(color("&cPeringatan Xray 1/2\n&7Pola mining kamu melewati batas EXTREME.\n&7Hentikan Xray. Pelanggaran berikutnya menunggu konfirmasi owner untuk ban 15 hari."));
+            return;
+        }
+
+        long confirmationUntil = now + configManager.getXrayConfirmationMinutes() * 60_000L;
+        pendingXrayBans.put(uuid, confirmationUntil);
+        saveXrayState();
+        notifyXrayOwners(player.getName(), "&cPeringatan Xray 2/2 &7- menunggu konfirmasi owner: &f/vxray confirm "
+                + player.getName() + " &7atau &f/vxray deny " + player.getName(), report);
+        player.kickPlayer(color("&cPeringatan Xray 2/2\n&7Kasus dikirim ke owner untuk konfirmasi ban 15 hari."));
+    }
+
+    private void notifyXrayOwners(String playerName, String action, OreReport report) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (!configManager.hasAlerts(online) && !configManager.hasAdmin(online)) continue;
+            online.sendMessage(color("&8[&cVelioraOreWatch&8] &f" + playerName + " &8| " + action));
+            sendOreReport(online, report);
+        }
+        plugin.getLogger().warning("VelioraOreWatch enforcement: " + playerName + " - " + org.bukkit.ChatColor.stripColor(color(action)));
+    }
+
     private void sendOreReport(CommandSender sender, OreReport report) {
         sender.sendMessage(color("&8[&cVelioraOreWatch&8] &f" + report.name() + " &7UUID &f" + report.uuid()));
-        sender.sendMessage(color("&7Window: &f" + report.window() + " menit &8| &7Score: &e" + report.level() + " &8| &7Action: &fAlert only"));
+        String action = report.level().equals("EXTREME") ? "Peringatan/Kick + Konfirmasi Owner" : "Alert admin";
+        sender.sendMessage(color("&7Window: &f" + report.window() + " menit &8| &7Score: &e" + report.level() + " &8| &7Action: &f" + action));
         sender.sendMessage(color("&7Diamond Ore: &f" + report.diamond() + " &7Ancient Debris: &f" + report.debris() + " &7Emerald Ore: &f" + report.emerald()));
         sender.sendMessage(color("&7Gold Ore: &f" + report.gold() + " &7Iron Ore: &f" + report.iron()));
     }
@@ -336,6 +452,50 @@ public final class SecurityManager {
     private void trim(UUID uuid) {
         long since = System.currentTimeMillis() - 3600000L;
         oreRecords.getOrDefault(uuid, new ArrayList<>()).removeIf(record -> record.time() < since);
+    }
+
+    private void loadXrayState() {
+        xrayWarnings.clear();
+        xrayLastAction.clear();
+        pendingXrayBans.clear();
+        if (!xrayStateFile.exists()) return;
+        YamlConfiguration data = YamlConfiguration.loadConfiguration(xrayStateFile);
+        ConfigurationSection players = data.getConfigurationSection("players");
+        if (players == null) return;
+        long now = System.currentTimeMillis();
+        for (String rawUuid : players.getKeys(false)) {
+            try {
+                UUID uuid = UUID.fromString(rawUuid);
+                String path = "players." + rawUuid;
+                xrayWarnings.put(uuid, Math.max(0, Math.min(2, data.getInt(path + ".warnings", 0))));
+                xrayLastAction.put(uuid, data.getLong(path + ".last-action", 0L));
+                long pendingUntil = data.getLong(path + ".pending-until", 0L);
+                if (pendingUntil > now) pendingXrayBans.put(uuid, pendingUntil);
+                String name = data.getString(path + ".name", "");
+                if (!name.isBlank()) oreNames.put(uuid, name);
+            } catch (IllegalArgumentException ignored) { }
+        }
+    }
+
+    private void saveXrayState() {
+        YamlConfiguration data = new YamlConfiguration();
+        Set<UUID> uuids = new HashSet<>();
+        uuids.addAll(xrayWarnings.keySet());
+        uuids.addAll(pendingXrayBans.keySet());
+        for (UUID uuid : uuids) {
+            String path = "players." + uuid;
+            data.set(path + ".name", oreNames.getOrDefault(uuid, "unknown"));
+            data.set(path + ".warnings", xrayWarnings.getOrDefault(uuid, 0));
+            data.set(path + ".last-action", xrayLastAction.getOrDefault(uuid, 0L));
+            data.set(path + ".pending-until", pendingXrayBans.getOrDefault(uuid, 0L));
+        }
+        File parent = xrayStateFile.getParentFile();
+        if (parent != null && !parent.exists()) parent.mkdirs();
+        try {
+            data.save(xrayStateFile);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraOreWatch gagal menyimpan state enforcement: " + exception.getMessage());
+        }
     }
 
     private boolean isOre(Material material) {

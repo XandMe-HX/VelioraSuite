@@ -2,12 +2,16 @@ package id.velioragardens.veliorasuite.module.security;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 
 import java.io.File;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class SecurityConfigManager {
 
@@ -95,15 +99,47 @@ public final class SecurityConfigManager {
     public boolean isSpawnerGuardConsumeBlockedItem() { return bool("settings.spawner-guard.consume-blocked-spawner", true); }
     public int getSpawnerGuardAlertCooldownSeconds() { return Math.max(0, integer("settings.spawner-guard.alert-cooldown-seconds", 10)); }
 
+    public boolean isXrayEnforcementEnabled() { return bool("settings.xray-enforcement.enabled", true); }
+    public int getXrayStrikeCooldownMinutes() { return Math.max(5, integer("settings.xray-enforcement.strike-cooldown-minutes", 10)); }
+    public int getXrayBanDays() { return Math.max(1, integer("settings.xray-enforcement.ban-days", 15)); }
+    public int getXrayConfirmationMinutes() { return Math.max(5, integer("settings.xray-enforcement.confirmation-expiry-minutes", 60)); }
+
+    public boolean isAntiDupeEnabled() { return bool("settings.anti-dupe.enabled", true); }
+    public boolean isAntiDupeKickEnabled() { return bool("settings.anti-dupe.kick-on-quarantine", true); }
+    public int getAntiDupeScanCooldownTicks() { return Math.max(1, integer("settings.anti-dupe.scan-cooldown-ticks", 10)); }
+    public Map<Material, Integer> getAntiDupeInventoryLimits() {
+        Map<Material, Integer> limits = new LinkedHashMap<>();
+        ConfigurationSection section = config == null ? null : config.getConfigurationSection("settings.anti-dupe.inventory-limits");
+        if (section == null) {
+            limits.put(Material.SPAWNER, 8);
+            limits.put(Material.DIAMOND, 512);
+            limits.put(Material.DIAMOND_BLOCK, 64);
+            limits.put(Material.DIAMOND_ORE, 128);
+            limits.put(Material.DEEPSLATE_DIAMOND_ORE, 128);
+            limits.put(Material.ANCIENT_DEBRIS, 256);
+            limits.put(Material.NETHERITE_INGOT, 128);
+            limits.put(Material.NETHERITE_BLOCK, 16);
+            return limits;
+        }
+        for (String key : section.getKeys(false)) {
+            Material material = Material.matchMaterial(key);
+            int limit = section.getInt(key, 0);
+            if (material != null && limit > 0) limits.put(material, limit);
+        }
+        return limits;
+    }
+
     public String getAdminPermission() { return str("permissions.admin", "veliorasuite.security.admin"); }
     public String getReloadPermission() { return str("permissions.reload", "veliorasuite.security.reload"); }
     public String getAlertsPermission() { return str("permissions.alerts", "veliorasuite.security.alerts"); }
     public String getBypassPermission() { return str("permissions.bypass", "veliorasuite.security.bypass"); }
+    public String getOwnerPermission() { return str("permissions.owner", "veliorasuite.security.owner"); }
 
     public boolean hasAdmin(CommandSender sender) { return sender.hasPermission(getAdminPermission()) || sender.isOp(); }
     public boolean hasReload(CommandSender sender) { return sender.hasPermission(getReloadPermission()) || hasAdmin(sender); }
     public boolean hasAlerts(CommandSender sender) { return sender.hasPermission(getAlertsPermission()) || hasAdmin(sender); }
     public boolean hasBypass(CommandSender sender) { return sender.hasPermission(getBypassPermission()) || hasAdmin(sender); }
+    public boolean hasOwner(CommandSender sender) { return sender.hasPermission(getOwnerPermission()) || sender.isOp(); }
 
     public String message(String path, String fallback) { return str("messages." + path, fallback).replace("%prefix%", getPrefix()); }
     public List<String> messageList(String path, List<String> fallback) {

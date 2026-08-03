@@ -67,6 +67,7 @@ public final class BossManager implements Listener {
     private long nextSpawnAt;
     private long despawnAt;
     private long lastRetargetAt;
+    private long lastHitEffectAt;
     private double activeVirtualHealth;
     private double activeVirtualMaxHealth;
 
@@ -260,12 +261,13 @@ public final class BossManager implements Listener {
         if (damagedBoss) {
             Player player = damager(event.getDamager());
             if (player != null) {
-                if (player.getInventory().getItemInMainHand().getType() == Material.MACE) {
-                    event.setDamage(event.getDamage() * config.maceDamageMultiplier());
-                }
-                double virtualDamage = event.getFinalDamage() * config.virtualDamageMultiplier();
+                boolean mace = player.getInventory().getItemInMainHand().getType() == Material.MACE;
+                double adjustedDamage = event.getFinalDamage();
+                if (mace) adjustedDamage = Math.min(config.maceMaxDamagePerHit(), adjustedDamage * config.maceDamageMultiplier());
+                double virtualDamage = adjustedDamage * config.virtualDamageMultiplier();
                 event.setCancelled(true);
                 damageActiveBoss(player, virtualDamage);
+                showHitFeedback(player, mace);
                 if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
             } else {
                 event.setCancelled(true);
@@ -385,6 +387,7 @@ public final class BossManager implements Listener {
         living.setCustomNameVisible(true);
         living.setRemoveWhenFarAway(false);
         living.setVisualFire(false);
+        living.setCollidable(config.bossCollisionEnabled());
 
         if (living instanceof org.bukkit.entity.Zombie zombie) {
             zombie.setShouldBurnInDay(false);
@@ -536,10 +539,11 @@ public final class BossManager implements Listener {
     }
 
     private double calculateSpawnHealth(double baseHealth, Location location) {
-        if (!config.healthScalingEnabled()) return baseHealth;
+        double cappedBaseHealth = Math.min(config.maximumBossHealth(), Math.max(1.0D, baseHealth));
+        if (!config.healthScalingEnabled()) return cappedBaseHealth;
         int nearbyPlayers = Math.max(1, targetManager.validPlayers(location, location, config.targetRadius()).size());
         double multiplier = Math.min(config.maxHealthMultiplier(), 1.0D + ((nearbyPlayers - 1) * config.healthPerPlayerMultiplier()));
-        return Math.max(baseHealth, baseHealth * multiplier);
+        return Math.min(config.maximumBossHealth(), Math.max(cappedBaseHealth, cappedBaseHealth * multiplier));
     }
 
     /** Applies changed boss.yml values to the currently spawned boss without deleting it. */
@@ -556,6 +560,7 @@ public final class BossManager implements Listener {
         double healthPercent = activeVirtualMaxHealth <= 0.0D ? 1.0D : Math.max(0.0D, Math.min(1.0D, activeVirtualHealth / activeVirtualMaxHealth));
         activeDefinition = refreshed;
         activeBoss.setCustomName(config.color(refreshed.displayName()));
+        activeBoss.setCollidable(config.bossCollisionEnabled());
         activeBoss.getPersistentDataContainer().set(bossNameKey, PersistentDataType.STRING, org.bukkit.ChatColor.stripColor(config.color(refreshed.displayName())));
         activeBoss.getPersistentDataContainer().set(bossRarityKey, PersistentDataType.STRING, refreshed.rarity().name());
 
@@ -611,6 +616,7 @@ public final class BossManager implements Listener {
         arenaCenter = null;
         despawnAt = 0L;
         lastRetargetAt = 0L;
+        lastHitEffectAt = 0L;
         activeVirtualHealth = 0.0D;
         activeVirtualMaxHealth = 0.0D;
     }
@@ -632,6 +638,20 @@ public final class BossManager implements Listener {
         damageTracker.add(player, applied);
         data.addDamage(player, applied);
         if (activeVirtualHealth <= 0.0D) activeBoss.setHealth(0.0D);
+    }
+
+    /** Shows a real hit reaction even though damage is stored in virtual health. */
+    private void showHitFeedback(Player player, boolean mace) {
+        if (!isActive()) return;
+        try { activeBoss.playHurtAnimation(player.getLocation().getYaw()); } catch (Exception ignored) { }
+        long now = System.currentTimeMillis();
+        if (now - lastHitEffectAt < 80L) return;
+        lastHitEffectAt = now;
+        Location hit = activeBoss.getLocation().add(0.0D, Math.max(0.8D, activeBoss.getHeight() * 0.55D), 0.0D);
+        activeBoss.getWorld().spawnParticle(mace ? Particle.FLASH : Particle.DAMAGE_INDICATOR,
+                hit, mace ? 1 : 8, 0.65D, 0.75D, 0.65D, 0.04D);
+        activeBoss.getWorld().playSound(hit, mace ? Sound.ENTITY_GENERIC_EXPLODE : Sound.ENTITY_PLAYER_ATTACK_CRIT,
+                mace ? 0.65F : 0.35F, mace ? 1.45F : 1.15F);
     }
 
     /** Sends a small, per-player aura only every two seconds and scales it down when the arena is busy. */
