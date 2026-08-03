@@ -160,8 +160,16 @@ permissions:
     description: Menandai akun staff yang perlu diaudit AdminMonitor.
     default: false
   veliorasuite.adminmonitor.admin:
+    description: Akses penuh AdminMonitor.
+    default: op
+  veliorasuite.adminmonitor.view:
+    description: Melihat log dan staff online AdminMonitor.
+    default: op
+  veliorasuite.adminmonitor.reload:
+    description: Reload konfigurasi AdminMonitor.
     default: op
   veliorasuite.adminmonitor.notify:
+    description: Menerima alert AdminMonitor bila notify-events diaktifkan.
     default: op
   veliorasuite.admin:
     default: op
