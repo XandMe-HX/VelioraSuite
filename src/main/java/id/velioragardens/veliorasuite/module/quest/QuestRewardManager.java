@@ -1,12 +1,16 @@
 package id.velioragardens.veliorasuite.module.quest;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.module.quest.model.QuestItemReward;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 
 public final class QuestRewardManager {
 
@@ -33,6 +37,22 @@ public final class QuestRewardManager {
             return true;
         } catch (Exception exception) {
             return warnMissingVault(player);
+        }
+    }
+
+    /** Gives configured items; a full inventory drops only the overflow at the player's feet. */
+    public void giveItems(Player player, List<QuestItemReward> rewards, int multiplier) {
+        if (player == null || rewards.isEmpty() || multiplier <= 0) return;
+        for (QuestItemReward reward : rewards) {
+            int remaining = Math.max(1, reward.amount() * multiplier);
+            int maxStack = Math.max(1, reward.material().getMaxStackSize());
+            while (remaining > 0) {
+                int amount = Math.min(maxStack, remaining);
+                ItemStack stack = new ItemStack(reward.material(), amount);
+                Map<Integer, ItemStack> overflow = player.getInventory().addItem(stack);
+                for (ItemStack extra : overflow.values()) player.getWorld().dropItemNaturally(player.getLocation(), extra);
+                remaining -= amount;
+            }
         }
     }
 
