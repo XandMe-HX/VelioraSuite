@@ -1,6 +1,7 @@
 settings:
   enabled: true
   prefix: '&8[&bAdminMonitor&8] '
+  timezone: 'Asia/Jakarta'
   staff-permission: 'veliorasuite.staff'
   admin-permission: 'veliorasuite.adminmonitor.admin'
   notify-permission: 'veliorasuite.adminmonitor.notify'
@@ -13,11 +14,23 @@ settings:
     teleport: true
     gamemode: true
     flight: true
+    block-place: true
+    block-break: true
+    interact: true
+    entity-interact: true
+    entity-attack: true
+    inventory: true
+    item-pickup: true
+    item-drop: true
+    consume: true
+    bucket: true
+    chat: true
+  # Kosong = tidak ada aktivitas yang dikirim ke chat maupun console.
+  # Semua aktivitas tetap tersimpan lengkap di logs/adminmonitor-YYYY-MM-DD.yml.
+  notify-events: []
   notify:
-    console: true
-    owner-chat: true
-    discord-webhook: false
-    discord-webhook-url: ''
+    console: false
+    owner-chat: false
   sensitive-commands:
     - '/login'
     - '/l'
