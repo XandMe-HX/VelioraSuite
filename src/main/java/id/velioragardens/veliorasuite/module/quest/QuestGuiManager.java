@@ -77,16 +77,24 @@ public final class QuestGuiManager implements Listener {
         if (meta != null) {
             meta.setDisplayName(manager.getConfigManager().color(manager.getConfigManager().getCategoryDisplayName(category)));
             List<String> lore = new ArrayList<>();
-            lore.add("&7Quest tersedia: &f1");
-            lore.add("&7Level: &f" + progress.getLevel());
-            lore.add("&7Progress: &f" + progress.getCurrentProgress() + "/" + progress.getCurrentTarget());
-            lore.add("&7Reward Money: &a" + progress.getCurrentRewardMoney());
-            lore.add("&7Mana untuk mulai: &b" + manager.getSkillsHook().getQuestManaCost(progress.getLevel()));
-            if (manager.getConfigManager().isGiveManaOnComplete() && manager.getConfigManager().getManaReward() > 0) {
-                lore.add("&7Reward Max Mana: &b+" + manager.getConfigManager().getManaReward());
+            int nextLevel = progress.getLevel() + 1;
+            int milestoneMultiplier = manager.getConfigManager().getMilestoneRewardMultiplier(nextLevel);
+            lore.add("&8&m------------------------");
+            lore.add("&7Level quest: &f" + progress.getLevel());
+            lore.add("&7Target: &f" + progress.getCurrentProgress() + "/" + progress.getCurrentTarget());
+            lore.add("&7Biaya mulai: &b" + manager.getSkillsHook().getQuestManaCost(progress.getLevel()) + " Mana");
+            lore.add(" ");
+            lore.add("&aHadiah setiap selesai:");
+            lore.add("&7• Uang: &a" + progress.getCurrentRewardMoney());
+            lore.add("&7• Item: &f" + manager.getConfigManager().formatItemRewards(manager.getConfigManager().getBaseItemRewards(category), 1));
+            if (milestoneMultiplier > 0) {
+                lore.add(" ");
+                lore.add("&6Bonus saat mencapai level " + nextLevel + ":");
+                lore.add("&7• Item: &f" + manager.getConfigManager().formatItemRewards(manager.getConfigManager().getMilestoneItemRewards(category), milestoneMultiplier));
+                lore.add("&7• Max Mana: &b+" + manager.getConfigManager().getManaLevelBonus());
             }
-            lore.add("&7Reward Item: &fAman / non-OP");
-            lore.add("&7Status: &f" + progress.getState().name());
+            lore.add(" ");
+            lore.add("&7Status: &f" + status(progress.getState()));
             lore.add(" ");
             if (progress.getState() == QuestState.READY_TO_CLAIM) lore.add("&aKlik untuk claim reward.");
             else if (progress.getState() == QuestState.ACTIVE) lore.add("&eKlik untuk lihat progress.");
@@ -115,4 +123,13 @@ public final class QuestGuiManager implements Listener {
     }
 
     private String done(boolean value) { return value ? "Selesai" : "Belum"; }
+
+    private String status(QuestState state) {
+        return switch (state) {
+            case NOT_STARTED -> "Belum dimulai";
+            case ACTIVE -> "Sedang berjalan";
+            case READY_TO_CLAIM -> "Siap diklaim";
+            case CLAIMED -> "Selesai, pilih quest untuk lanjut";
+        };
+    }
 }
