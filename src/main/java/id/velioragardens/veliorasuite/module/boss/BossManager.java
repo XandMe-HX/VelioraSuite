@@ -67,6 +67,7 @@ public final class BossManager implements Listener {
     private long nextSpawnAt;
     private long despawnAt;
     private long lastRetargetAt;
+    private long lastMinionCleanupAt;
     private long lastHitEffectAt;
     private double activeVirtualHealth;
     private double activeVirtualMaxHealth;
@@ -103,6 +104,7 @@ public final class BossManager implements Listener {
         stopScheduler();
         stopActive(false);
         cleanupTaggedEntities();
+        data.shutdown();
     }
 
     public void reload() {
@@ -110,6 +112,7 @@ public final class BossManager implements Listener {
         data.load();
         sentWarnings.clear();
         lastRetargetAt = 0L;
+        lastMinionCleanupAt = 0L;
         if (!config.isEnabled()) {
             stopActive(false);
             return;
@@ -441,7 +444,11 @@ public final class BossManager implements Listener {
         boolean stuck = !current.getBlock().isPassable() || !current.getBlock().getRelative(0, 1, 0).isPassable();
         if (far || below || stuck) teleportBossBack();
         retarget(false);
-        cleanupMinionsByArena();
+        long now = System.currentTimeMillis();
+        if (now - lastMinionCleanupAt >= 5_000L) {
+            lastMinionCleanupAt = now;
+            cleanupMinionsByArena();
+        }
     }
 
     private void retarget(boolean force) {
@@ -471,7 +478,8 @@ public final class BossManager implements Listener {
 
     private void cleanupMinionsByArena() {
         if (arenaCenter == null || arenaCenter.getWorld() == null) return;
-        for (Entity entity : arenaCenter.getWorld().getNearbyEntities(arenaCenter, 96, 64, 96)) {
+        double scanRadius = config.minionScanRadius();
+        for (Entity entity : arenaCenter.getWorld().getNearbyEntities(arenaCenter, scanRadius, 48, scanRadius)) {
             if (!entity.getScoreboardTags().contains("velioraboss_minion")) continue;
             boolean outside = !entity.getWorld().equals(arenaCenter.getWorld()) || horizontalDistance(entity.getLocation(), arenaCenter) > config.arenaRadius();
             if (outside && config.removeMinionOutsideRadius()) entity.remove();
@@ -616,6 +624,7 @@ public final class BossManager implements Listener {
         arenaCenter = null;
         despawnAt = 0L;
         lastRetargetAt = 0L;
+        lastMinionCleanupAt = 0L;
         lastHitEffectAt = 0L;
         activeVirtualHealth = 0.0D;
         activeVirtualMaxHealth = 0.0D;

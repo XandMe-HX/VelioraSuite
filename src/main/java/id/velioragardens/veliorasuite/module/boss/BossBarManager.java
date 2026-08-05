@@ -12,6 +12,7 @@ public final class BossBarManager {
 
     private final BossConfigManager config;
     private BossBar bar;
+    private long lastPlayerRefreshAt;
 
     public BossBarManager(BossConfigManager config) {
         this.config = config;
@@ -23,6 +24,7 @@ public final class BossBarManager {
         BarColor color = config.colorBossBarByRarity() ? definition.rarity().barColor() : BarColor.RED;
         bar = Bukkit.createBossBar("", color, config.bossBarStyle());
         bar.setVisible(true);
+        lastPlayerRefreshAt = 0L;
     }
 
     public void tick(BossDefinition definition, LivingEntity boss, double health, double maxHealth, long despawnAt) {
@@ -36,7 +38,11 @@ public final class BossBarManager {
                 .replace("%time%", timeLeft(despawnAt));
         bar.setTitle(config.color(title));
         bar.setProgress(Math.max(0.0D, Math.min(1.0D, safeHealth / safeMax)));
-        updatePlayers(boss.getLocation());
+        long now = System.currentTimeMillis();
+        if (now - lastPlayerRefreshAt >= 5_000L) {
+            lastPlayerRefreshAt = now;
+            updatePlayers(boss.getLocation());
+        }
     }
 
     public void clear() {
@@ -45,6 +51,7 @@ public final class BossBarManager {
             bar.setVisible(false);
         }
         bar = null;
+        lastPlayerRefreshAt = 0L;
     }
 
     private void updatePlayers(Location location) {
