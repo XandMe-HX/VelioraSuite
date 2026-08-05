@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.kits;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -14,6 +15,7 @@ public final class KitsDataManager {
     private final VelioraSuite plugin;
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
 
     public KitsDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -35,6 +37,8 @@ public final class KitsDataManager {
         }
 
         this.data = YamlConfiguration.loadConfiguration(file);
+        writer = new BufferedYamlWriter(plugin, file, data, "data/kits-data.yml");
+        writer.start();
     }
 
     public void save() {
@@ -42,12 +46,14 @@ public final class KitsDataManager {
             return;
         }
 
-        try {
-            data.save(file);
-        } catch (IOException exception) {
-            plugin.getLogger().severe("VelioraKits: gagal menyimpan kits-data.yml: " + exception.getMessage());
+        if (writer == null) {
+            try { data.save(file); } catch (IOException exception) { plugin.getLogger().severe("VelioraKits: gagal menyimpan kits-data.yml: " + exception.getMessage()); }
+            return;
         }
+        writer.markDirty();
     }
+
+    public void shutdown() { if (writer != null) writer.shutdown(); }
 
     public long getLastClaim(UUID uuid, String kitId) {
         return data.getLong(playerPath(uuid) + ".claims." + kitId + ".last", 0L);

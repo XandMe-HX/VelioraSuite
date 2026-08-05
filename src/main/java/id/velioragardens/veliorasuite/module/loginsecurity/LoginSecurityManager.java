@@ -46,6 +46,7 @@ public final class LoginSecurityManager {
     public void shutdown() {
         LoginSecurityBlindnessManager.clearAll();
         sessionManager.clearAll();
+        dataManager.shutdown();
     }
 
     public LoginSecurityConfigManager getConfigManager() { return configManager; }

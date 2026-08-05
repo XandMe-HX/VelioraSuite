@@ -57,6 +57,7 @@ public final class TeamManager {
     public void shutdown() {
         inviteManager.clear();
         ownerLeaveConfirmations.clear();
+        dataManager.shutdown();
     }
 
     public TeamConfigManager getConfigManager() {

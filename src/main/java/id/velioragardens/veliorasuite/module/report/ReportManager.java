@@ -45,6 +45,7 @@ public final class ReportManager {
 
     public void shutdown() {
         cooldownManager.clear();
+        dataManager.shutdown();
     }
 
     public ReportConfigManager getConfigManager() {

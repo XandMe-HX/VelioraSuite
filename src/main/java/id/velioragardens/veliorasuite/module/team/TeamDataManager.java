@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.team;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import id.velioragardens.veliorasuite.module.team.model.TeamMember;
 import id.velioragardens.veliorasuite.module.team.model.TeamRole;
@@ -25,6 +26,7 @@ public final class TeamDataManager {
     private final Map<String, Team> teamsByName = new LinkedHashMap<>();
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
 
     public TeamDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -55,6 +57,8 @@ public final class TeamDataManager {
             }
             loadTeamsFromData();
             save();
+            writer = new BufferedYamlWriter(plugin, file, data, "data/teams.yml");
+            writer.start();
         } catch (Exception exception) {
             plugin.getLogger().severe("VelioraTeam: data/teams.yml rusak atau gagal dibaca. Fallback data kosong. Error: " + exception.getMessage());
             this.data = new YamlConfiguration();
@@ -68,13 +72,14 @@ public final class TeamDataManager {
         if (data == null || file == null) {
             return;
         }
-
-        try {
-            data.save(file);
-        } catch (IOException exception) {
-            plugin.getLogger().severe("VelioraTeam: gagal menyimpan teams.yml: " + exception.getMessage());
+        if (writer == null) {
+            try { data.save(file); } catch (IOException exception) { plugin.getLogger().severe("VelioraTeam: gagal menyimpan teams.yml: " + exception.getMessage()); }
+            return;
         }
+        writer.markDirty();
     }
+
+    public void shutdown() { if (writer != null) writer.shutdown(); }
 
     public int nextId() {
         int nextId = data.getInt("last-id", 0) + 1;
