@@ -3,6 +3,7 @@ settings:
   balance-version: 3
   # Memaksa tampilan BossBar lama ikut diperbarui sekali pada server yang sudah berjalan.
   bossbar-version: 3
+  arena-version: 4
   spawn:
     enabled: true
     interval-minutes: 60
@@ -55,15 +56,15 @@ bossbar:
   title: '&5&l%boss% &8» &f%health%&7/&f%max_health% &c❤ &8| &e%time%'
   color-by-rarity: true
   style: SEGMENTED_20
-bossbar-radius: 120
+bossbar-radius: 75
 
 arena:
   enabled: true
-  radius: 90
-  target-radius: 90
+  radius: 60
+  target-radius: 60
   leash-to-spawn: true
   teleport-back-if-far: true
-  teleport-back-distance: 110
+  teleport-back-distance: 70
   teleport-back-if-below-spawn-y: true
   below-y-offset: 28
   remove-minion-outside-radius: true
@@ -74,7 +75,7 @@ targeting:
   include-adventure: true
   include-creative: false
   include-spectator: false
-  target-radius-horizontal: 110
+  target-radius-horizontal: 70
   target-radius-vertical: 72
   retarget-interval-seconds: 2
   force-target-nearest: true

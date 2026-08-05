@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.boss;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.boss.model.BossSpawnPoint;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -23,6 +24,8 @@ public final class BossDataManager {
     private File statsFile;
     private FileConfiguration spawns;
     private FileConfiguration stats;
+    private BufferedYamlWriter spawnsWriter;
+    private BufferedYamlWriter statsWriter;
     private final Map<String, BossSpawnPoint> spawnPoints = new LinkedHashMap<>();
 
     public BossDataManager(VelioraSuite plugin) {
@@ -30,6 +33,8 @@ public final class BossDataManager {
     }
 
     public void load() {
+        if (spawnsWriter != null) spawnsWriter.shutdown();
+        if (statsWriter != null) statsWriter.shutdown();
         plugin.createFolder("data");
         spawnsFile = new File(plugin.getDataFolder(), "data/boss-spawns.yml");
         statsFile = new File(plugin.getDataFolder(), "data/boss-stats.yml");
@@ -37,6 +42,10 @@ public final class BossDataManager {
         create(statsFile);
         spawns = YamlConfiguration.loadConfiguration(spawnsFile);
         stats = YamlConfiguration.loadConfiguration(statsFile);
+        spawnsWriter = new BufferedYamlWriter(plugin, spawnsFile, spawns, "data/boss-spawns.yml");
+        statsWriter = new BufferedYamlWriter(plugin, statsFile, stats, "data/boss-stats.yml");
+        spawnsWriter.start();
+        statsWriter.start();
         loadSpawnPoints();
     }
 
@@ -98,6 +107,11 @@ public final class BossDataManager {
         return list.subList(0, Math.min(limit, list.size()));
     }
 
+    public void shutdown() {
+        if (spawnsWriter != null) spawnsWriter.shutdown();
+        if (statsWriter != null) statsWriter.shutdown();
+    }
+
     private void loadSpawnPoints() {
         spawnPoints.clear();
         ConfigurationSection section = spawns.getConfigurationSection("spawn-points");
@@ -116,8 +130,8 @@ public final class BossDataManager {
         }
     }
 
-    private void saveSpawns() { try { spawns.save(spawnsFile); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan boss-spawns.yml"); } }
-    private void saveStats() { try { stats.save(statsFile); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan boss-stats.yml"); } }
+    private void saveSpawns() { if (spawnsWriter != null) spawnsWriter.markDirty(); }
+    private void saveStats() { if (statsWriter != null) statsWriter.markDirty(); }
     private void create(File file) { if (!file.exists()) try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat " + file.getName()); } }
 
     public record PlayerDamageStat(String uuid, String name, double damage, int participationKills) {}

@@ -57,7 +57,8 @@ public final class BossSkillManager {
         Location center = manager.getArenaCenter();
         if (center == null || center.getWorld() == null) center = manager.getLastKnownLocation();
         if (center == null || center.getWorld() == null) return;
-        for (Entity entity : center.getWorld().getNearbyEntities(center, 96, 64, 96)) if (entity.getScoreboardTags().contains("velioraboss_minion")) entity.remove();
+        double scanRadius = config.minionScanRadius();
+        for (Entity entity : center.getWorld().getNearbyEntities(center, scanRadius, 48, scanRadius)) if (entity.getScoreboardTags().contains("velioraboss_minion")) entity.remove();
     }
 
     private void castRandomSkill() {
@@ -241,7 +242,8 @@ public final class BossSkillManager {
 
     private int countMinions(Location center) {
         int amount = 0;
-        for (Entity entity : center.getWorld().getNearbyEntities(center, 96, 64, 96)) if (entity.getScoreboardTags().contains("velioraboss_minion")) amount++;
+        double scanRadius = config.minionScanRadius();
+        for (Entity entity : center.getWorld().getNearbyEntities(center, scanRadius, 48, scanRadius)) if (entity.getScoreboardTags().contains("velioraboss_minion")) amount++;
         return amount;
     }
 
