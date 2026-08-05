@@ -31,6 +31,8 @@ public final class KitsManager {
         this.previewManager = new KitPreviewManager(configManager);
     }
 
+    public void shutdown() { dataManager.shutdown(); }
+
     public void load() {
         configManager.load();
         dataManager.load();

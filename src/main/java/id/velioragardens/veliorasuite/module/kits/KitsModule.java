@@ -45,6 +45,8 @@ public final class KitsModule implements VelioraModule {
             kitsListener = null;
         }
 
+        if (kitsManager != null) kitsManager.shutdown();
+
         registerDisabledCommand();
     }
 

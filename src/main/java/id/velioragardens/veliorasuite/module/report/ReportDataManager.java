@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.report;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.report.model.Report;
 import id.velioragardens.veliorasuite.module.report.model.ReportStatus;
 import id.velioragardens.veliorasuite.module.report.model.ReportType;
@@ -20,6 +21,7 @@ public final class ReportDataManager {
     private final VelioraSuite plugin;
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
 
     public ReportDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -49,6 +51,8 @@ public final class ReportDataManager {
                 data.createSection("reports");
             }
             save();
+            writer = new BufferedYamlWriter(plugin, file, data, "data/reports.yml");
+            writer.start();
         } catch (Exception exception) {
             plugin.getLogger().severe("VelioraReport: data/reports.yml rusak atau gagal dibaca. Fallback data kosong. Error: " + exception.getMessage());
             this.data = new YamlConfiguration();
@@ -62,12 +66,14 @@ public final class ReportDataManager {
             return;
         }
 
-        try {
-            data.save(file);
-        } catch (IOException exception) {
-            plugin.getLogger().severe("VelioraReport: gagal menyimpan reports.yml: " + exception.getMessage());
+        if (writer == null) {
+            try { data.save(file); } catch (IOException exception) { plugin.getLogger().severe("VelioraReport: gagal menyimpan reports.yml: " + exception.getMessage()); }
+            return;
         }
+        writer.markDirty();
     }
+
+    public void shutdown() { if (writer != null) writer.shutdown(); }
 
     public int nextId() {
         int nextId = data.getInt("last-id", 0) + 1;

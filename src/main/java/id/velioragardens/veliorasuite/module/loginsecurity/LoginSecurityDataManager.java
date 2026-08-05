@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.loginsecurity;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.loginsecurity.model.AuthPlayerData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,6 +17,7 @@ public final class LoginSecurityDataManager {
     private final VelioraSuite plugin;
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
 
     public LoginSecurityDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -42,6 +44,8 @@ public final class LoginSecurityDataManager {
             this.data.createSection("players");
             save();
         }
+        writer = new BufferedYamlWriter(plugin, file, data, "data/loginsecurity.yml");
+        writer.start();
     }
 
     public AuthPlayerData getByName(String playerName) {
@@ -122,12 +126,15 @@ public final class LoginSecurityDataManager {
     }
 
     private void save() {
+        if (writer != null) { writer.markDirty(); return; }
         try {
             data.save(file);
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraLoginSecurity: gagal menyimpan data loginsecurity.yml");
         }
     }
+
+    public void shutdown() { if (writer != null) writer.shutdown(); }
 
     private String key(String name) {
         return name.toLowerCase(Locale.ROOT);
