@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.skills;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.skills.model.PlayerManaData;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -11,7 +12,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public final class ManaDataManager {
@@ -20,6 +22,8 @@ public final class ManaDataManager {
     private final SkillsConfigManager configManager;
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
+    private final Map<UUID, PlayerManaData> cache = new HashMap<>();
 
     public ManaDataManager(VelioraSuite plugin, SkillsConfigManager configManager) {
         this.plugin = plugin;
@@ -33,13 +37,22 @@ public final class ManaDataManager {
             try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat data/skills.yml"); }
         }
         data = YamlConfiguration.loadConfiguration(file);
+        cache.clear();
+        writer = new BufferedYamlWriter(plugin, file, data, "data/skills.yml");
+        writer.start();
     }
 
     public PlayerManaData getOrCreate(OfflinePlayer player) {
         UUID uuid = player.getUniqueId();
+        PlayerManaData cached = cache.get(uuid);
+        if (cached != null) {
+            if (player.getName() != null && !player.getName().equals(cached.getName())) cached.setName(player.getName());
+            return cached;
+        }
         String path = "players." + uuid;
         if (!data.isConfigurationSection(path)) {
             PlayerManaData created = new PlayerManaData(uuid, player.getName(), configManager.getDefaultMana(), configManager.getDefaultMaxMana(), today(), 0, 0);
+            cache.put(uuid, created);
             save(created);
             return created;
         }
@@ -53,6 +66,7 @@ public final class ManaDataManager {
                 data.getInt(path + ".total-mana-spent", 0)
         );
         if (player.getName() != null && !player.getName().equals(result.getName())) result.setName(player.getName());
+        cache.put(uuid, result);
         return result;
     }
 
@@ -70,6 +84,7 @@ public final class ManaDataManager {
     }
 
     public void save(PlayerManaData manaData) {
+        cache.put(manaData.getUuid(), manaData);
         String path = "players." + manaData.getUuid();
         data.set(path + ".name", manaData.getName());
         data.set(path + ".mana", manaData.getMana());
@@ -77,11 +92,11 @@ public final class ManaDataManager {
         data.set(path + ".last-reset-date", manaData.getLastResetDate());
         data.set(path + ".total-mana-earned", manaData.getTotalManaEarned());
         data.set(path + ".total-mana-spent", manaData.getTotalManaSpent());
-        flush();
+        writer.markDirty();
     }
 
     public void flush() {
-        try { data.save(file); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan data/skills.yml"); }
+        if (writer != null) writer.shutdown();
     }
 
     public String today() {

@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.fishing;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishingCollectionEntry;
 import org.bukkit.OfflinePlayer;
@@ -15,6 +16,7 @@ public final class FishingCollectionDataManager {
     private final VelioraSuite plugin;
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
 
     public FishingCollectionDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -27,6 +29,8 @@ public final class FishingCollectionDataManager {
             try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat data/fishing-collection.yml"); }
         }
         data = YamlConfiguration.loadConfiguration(file);
+        writer = new BufferedYamlWriter(plugin, file, data, "data/fishing-collection.yml");
+        writer.start();
     }
 
     public void unlock(OfflinePlayer player, CaughtFish fish) {
@@ -39,7 +43,7 @@ public final class FishingCollectionDataManager {
         data.set(path + ".last-rarity", fish.rarity().name());
         data.set(path + ".last-origin", fish.origin());
         data.set(path + ".last-region", fish.region());
-        flush();
+        writer.markDirty();
     }
 
     public boolean isUnlocked(OfflinePlayer player, String fishId) {
@@ -52,7 +56,7 @@ public final class FishingCollectionDataManager {
     }
 
     public void flush() {
-        try { data.save(file); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan data/fishing-collection.yml"); }
+        if (writer != null) writer.shutdown();
     }
 
     private String path(OfflinePlayer player, String fishId) {
