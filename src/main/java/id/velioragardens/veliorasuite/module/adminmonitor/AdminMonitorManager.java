@@ -10,11 +10,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,25 +22,27 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 public final class AdminMonitorManager {
-    private static final Pattern DAILY_LOG = Pattern.compile("adminmonitor-\\d{4}-\\d{2}-\\d{2}\\.yml");
     private final VelioraSuite plugin;
     private final Map<UUID, Long> sessions = new HashMap<>();
+    private final Object bufferLock = new Object();
+    private final Map<LocalDate, List<Map<String, Object>>> pendingEntries = new HashMap<>();
+    private AdminMonitorDatabase database;
     private FileConfiguration config;
-    private File logsFolder;
     private ZoneId zoneId;
+    private int autosaveTask = -1;
 
     public AdminMonitorManager(VelioraSuite plugin) { this.plugin = plugin; }
 
     public void load() {
         config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/adminmonitor.yml"));
-        logsFolder = new File(plugin.getDataFolder(), "logs");
-        if (!logsFolder.exists() && !logsFolder.mkdirs()) plugin.getLogger().warning("Gagal membuat folder log AdminMonitor.");
         try { zoneId = ZoneId.of(str("settings.timezone", "Asia/Jakarta")); }
         catch (Exception ignored) { zoneId = ZoneId.systemDefault(); }
+        database = new AdminMonitorDatabase(plugin);
+        database.init();
         pruneLogs();
+        startAutosaveTask();
     }
 
     public boolean isEnabledInConfig() { return bool("settings.enabled", true); }
@@ -65,26 +67,11 @@ public final class AdminMonitorManager {
     public void teleport(Player player, String cause, Location from, Location to) { if (track("teleport") && to != null && !sameBlock(from, to)) record(player, "TELEPORT", cause + ": " + formatLocation(from) + " -> " + formatLocation(to), to); }
     public void gameMode(Player player, String mode) { if (track("gamemode")) record(player, "GAMEMODE", "ubah ke " + mode, player.getLocation()); }
     public void flight(Player player, boolean enabled) { if (track("flight")) record(player, "FLY", enabled ? "fly aktif" : "fly nonaktif", player.getLocation()); }
-    public void blockPlace(Player player, String material, Location location) { if (track("block-place")) record(player, "BLOCK_PLACE", material, location); }
-    public void blockBreak(Player player, String material, Location location) { if (track("block-break")) record(player, "BLOCK_BREAK", material, location); }
-    public void interact(Player player, String action, String target, Location location) { if (track("interact")) record(player, "INTERACT", action + " | " + target, location); }
-    public void interactEntity(Player player, String entity) { if (track("entity-interact")) record(player, "ENTITY_INTERACT", entity, player.getLocation()); }
-    public void attackEntity(Player player, String entity) { if (track("entity-attack")) record(player, "ENTITY_ATTACK", entity, player.getLocation()); }
-    public void inventory(Player player, String inventory, String item) { if (track("inventory")) record(player, "INVENTORY", inventory + " | " + item, player.getLocation()); }
-    public void itemPickup(Player player, String item) { if (track("item-pickup")) record(player, "ITEM_PICKUP", item, player.getLocation()); }
-    public void itemDrop(Player player, String item) { if (track("item-drop")) record(player, "ITEM_DROP", item, player.getLocation()); }
-    public void consume(Player player, String item) { if (track("consume")) record(player, "CONSUME", item, player.getLocation()); }
-    public void bucket(Player player, String action, String item) { if (track("bucket")) record(player, action, item, player.getLocation()); }
-    public void chat(Player player, String message) { if (track("chat")) record(player, "CHAT", message, player.getLocation()); }
-    public void chatAsync(Player player, String message) { Bukkit.getScheduler().runTask(plugin, () -> chat(player, message)); }
 
     private void record(Player player, String type, String detail, Location location) {
         if (!isStaff(player)) return;
         long now = System.currentTimeMillis();
         LocalDate date = Instant.ofEpochMilli(now).atZone(zoneId).toLocalDate();
-        File file = dailyFile(date);
-        YamlConfiguration log = YamlConfiguration.loadConfiguration(file);
-        List<Map<?, ?>> entries = new ArrayList<>(log.getMapList("entries"));
         Map<String, Object> entry = new HashMap<>();
         entry.put("time", now);
         entry.put("date", date.toString());
@@ -99,10 +86,7 @@ public final class AdminMonitorManager {
             entry.put("y", location.getBlockY());
             entry.put("z", location.getBlockZ());
         }
-        entries.add(entry);
-        log.set("entries", entries);
-        try { log.save(file); }
-        catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan log AdminMonitor: " + exception.getMessage()); return; }
+        queueEntry(date, entry);
         notifyIfEnabled(player, type, detail);
     }
 
@@ -116,7 +100,7 @@ public final class AdminMonitorManager {
         }
         if (!found) sender.sendMessage(color("&8- &7Tidak ada staff yang sedang online."));
     }
-    public void sendLog(CommandSender sender, String name, LocalDate date) { sendEntries(sender, entries(date).stream().filter(e -> name.equalsIgnoreCase(String.valueOf(e.get("player")))).toList(), "Aktivitas " + name + " pada " + date, 30); }
+    public void sendLog(CommandSender sender, String name, LocalDate date) { sendEntries(sender, entries(date, name), "Aktivitas " + name + " pada " + date, 30); }
     public void sendToday(CommandSender sender, String name) {
         LocalDate today = LocalDate.now(zoneId);
         List<Map<?, ?>> result = entries(today);
@@ -145,7 +129,11 @@ public final class AdminMonitorManager {
     public void sendInvalidDate(CommandSender sender) { sender.sendMessage(color(prefix() + "&cFormat tanggal harus YYYY-MM-DD.")); }
     public LocalDate parseDate(String value) { try { return LocalDate.parse(value); } catch (Exception ignored) { return null; } }
     public LocalDate currentDate() { return LocalDate.now(zoneId); }
-    public void shutdown() { for (Player player : Bukkit.getOnlinePlayers()) if (isStaff(player)) logout(player, "SERVER_STOP"); }
+    public void shutdown() {
+        stopAutosaveTask();
+        for (Player player : Bukkit.getOnlinePlayers()) if (isStaff(player)) logout(player, "SERVER_STOP");
+        flushNow();
+    }
 
     private boolean track(String key) { return bool("settings.track." + key, true); }
     private void notifyIfEnabled(Player player, String type, String detail) {
@@ -154,17 +142,79 @@ public final class AdminMonitorManager {
         if (bool("settings.notify.console", false)) plugin.getLogger().info(ChatColor.stripColor(color(message)));
         if (bool("settings.notify.owner-chat", false)) Bukkit.getOnlinePlayers().stream().filter(p -> p.hasPermission(str("settings.notify-permission", "veliorasuite.adminmonitor.notify")) || p.isOp()).forEach(p -> p.sendMessage(color(message)));
     }
-    private List<Map<?, ?>> entries(LocalDate date) { return new ArrayList<>(YamlConfiguration.loadConfiguration(dailyFile(date)).getMapList("entries")); }
-    private File dailyFile(LocalDate date) { return new File(logsFolder, "adminmonitor-" + date + ".yml"); }
+    private List<Map<?, ?>> entries(LocalDate date) {
+        List<Map<?, ?>> result = new ArrayList<>(database.entries(date));
+        synchronized (bufferLock) {
+            List<Map<String, Object>> pending = pendingEntries.get(date);
+            if (pending != null) result.addAll(pending);
+        }
+        return result;
+    }
+
+    private List<Map<?, ?>> entries(LocalDate date, String player) {
+        List<Map<?, ?>> result = new ArrayList<>(database.entries(date, player));
+        synchronized (bufferLock) {
+            List<Map<String, Object>> pending = pendingEntries.get(date);
+            if (pending != null) result.addAll(pending.stream().filter(entry -> player.equalsIgnoreCase(String.valueOf(entry.get("player")))).toList());
+        }
+        return result;
+    }
+
+    private void queueEntry(LocalDate date, Map<String, Object> entry) {
+        int pendingSize;
+        synchronized (bufferLock) {
+            pendingEntries.computeIfAbsent(date, ignored -> new ArrayList<>()).add(entry);
+            pendingSize = pendingEntries.values().stream().mapToInt(List::size).sum();
+        }
+        if (pendingSize >= Math.max(10, integer("settings.storage.flush-max-pending", 250))) {
+            flushAsync();
+        }
+    }
+
+    private void startAutosaveTask() {
+        stopAutosaveTask();
+        long intervalTicks = Math.max(20L, integer("settings.storage.flush-interval-seconds", 30) * 20L);
+        autosaveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::flushPendingEntries, intervalTicks, intervalTicks).getTaskId();
+    }
+
+    private void stopAutosaveTask() {
+        if (autosaveTask == -1) return;
+        Bukkit.getScheduler().cancelTask(autosaveTask);
+        autosaveTask = -1;
+    }
+
+    private void flushAsync() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::flushPendingEntries);
+    }
+
+    private void flushNow() {
+        flushPendingEntries();
+    }
+
+    private void flushPendingEntries() {
+        Map<LocalDate, List<Map<String, Object>>> snapshot;
+        synchronized (bufferLock) {
+            if (pendingEntries.isEmpty()) return;
+            snapshot = new HashMap<>();
+            pendingEntries.forEach((date, entries) -> snapshot.put(date, new ArrayList<>(entries)));
+            pendingEntries.clear();
+        }
+
+        for (Map.Entry<LocalDate, List<Map<String, Object>>> batch : snapshot.entrySet()) {
+            try {
+                database.insertBatch(batch.getValue());
+            } catch (SQLException exception) {
+                synchronized (bufferLock) {
+                    pendingEntries.computeIfAbsent(batch.getKey(), ignored -> new ArrayList<>()).addAll(batch.getValue());
+                }
+                plugin.getLogger().warning("Gagal menyimpan log AdminMonitor: " + exception.getMessage());
+            }
+        }
+    }
+
     private void pruneLogs() {
         LocalDate cutoff = LocalDate.now(zoneId).minusDays(Math.max(1, integer("settings.keep-days", 30)) - 1L);
-        File[] files = logsFolder.listFiles(file -> DAILY_LOG.matcher(file.getName()).matches());
-        if (files == null) return;
-        for (File file : files) {
-            String datePart = file.getName().substring("adminmonitor-".length(), "adminmonitor-".length() + 10);
-            try { if (LocalDate.parse(datePart).isBefore(cutoff) && !file.delete()) plugin.getLogger().warning("Gagal menghapus log AdminMonitor lama: " + file.getName()); }
-            catch (Exception ignored) { }
-        }
+        database.prune(cutoff);
     }
     private String sanitizeCommand(String command) { return config.getStringList("settings.sensitive-commands").stream().anyMatch(value -> value.equalsIgnoreCase(root(command))) ? root(command) + " <disamarkan>" : command; }
     private String root(String command) { String trimmed = command == null ? "" : command.trim(); return trimmed.isEmpty() ? "/" : trimmed.split(" ", 2)[0].toLowerCase(Locale.ROOT); }

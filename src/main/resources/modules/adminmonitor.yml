@@ -6,6 +6,10 @@ settings:
   admin-permission: 'veliorasuite.adminmonitor.admin'
   notify-permission: 'veliorasuite.adminmonitor.notify'
   keep-days: 30
+  storage:
+    # Log disimpan ke adminmonitor.db secara batch agar tidak membebani main thread.
+    flush-interval-seconds: 30
+    flush-max-pending: 100
   track:
     login: true
     logout: true
@@ -14,19 +18,9 @@ settings:
     teleport: true
     gamemode: true
     flight: true
-    block-place: true
-    block-break: true
-    interact: true
-    entity-interact: true
-    entity-attack: true
-    inventory: true
-    item-pickup: true
-    item-drop: true
-    consume: true
-    bucket: true
-    chat: true
+    chat: false
   # Kosong = tidak ada aktivitas yang dikirim ke chat maupun console.
-  # Semua aktivitas tetap tersimpan lengkap di logs/adminmonitor-YYYY-MM-DD.yml.
+  # Semua aktivitas admin/staff tersimpan di adminmonitor.db.
   notify-events: []
   notify:
     console: false
