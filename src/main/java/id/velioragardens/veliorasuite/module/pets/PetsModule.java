@@ -8,6 +8,9 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.scheduler.BukkitTask;
 
 public final class PetsModule implements VelioraModule {
+    // Pet movement does not need to run every 100 ms. Five ticks keeps following
+    // responsive while cutting the per-player controller work by 60%.
+    private static final long CONTROLLER_INTERVAL_TICKS = 5L;
     private final VelioraSuite plugin;
     private PetManager manager;
     private PetGuiManager guiManager;
@@ -44,7 +47,7 @@ public final class PetsModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(redProtectGuardListener, plugin);
         cleanupAnchorsOnly();
         manager.start(guiManager);
-        coreControllerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetCoreControllerTask(plugin, manager), 2L, 2L);
+        coreControllerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetCoreControllerTask(plugin, manager), CONTROLLER_INTERVAL_TICKS, CONTROLLER_INTERVAL_TICKS);
         quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager.config()), 20L, 40L);
     }
 
