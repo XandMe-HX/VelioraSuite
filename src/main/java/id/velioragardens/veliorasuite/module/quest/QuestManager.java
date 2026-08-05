@@ -42,13 +42,14 @@ public final class QuestManager {
     }
 
     public void reload() {
+        dataManager.flush();
         configManager.load();
         dataManager.load();
     }
 
     public void shutdown() {
         bossBarManager.hideAll();
-        dataManager.flush();
+        dataManager.shutdown();
     }
 
     public QuestConfigManager getConfigManager() { return configManager; }

@@ -12,8 +12,14 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.bukkit.scheduler.BukkitTask;
 
 public final class QuestDataManager {
 
@@ -21,6 +27,11 @@ public final class QuestDataManager {
     private final QuestConfigManager configManager;
     private File file;
     private FileConfiguration data;
+    private final Map<UUID, PlayerQuestData> cachedPlayers = new HashMap<>();
+    private final AtomicBoolean writing = new AtomicBoolean(false);
+    private final Object fileWriteLock = new Object();
+    private BukkitTask autosaveTask;
+    private boolean dirty;
 
     public QuestDataManager(VelioraSuite plugin, QuestConfigManager configManager) {
         this.plugin = plugin;
@@ -34,10 +45,18 @@ public final class QuestDataManager {
             try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat data/quests.yml"); }
         }
         data = YamlConfiguration.loadConfiguration(file);
+        cachedPlayers.clear();
+        dirty = false;
+        startAutosave();
     }
 
     public PlayerQuestData getOrCreate(OfflinePlayer player) {
         UUID uuid = player.getUniqueId();
+        PlayerQuestData cached = cachedPlayers.get(uuid);
+        if (cached != null) {
+            if (player.getName() != null) cached.setName(player.getName());
+            return cached;
+        }
         String base = "players." + uuid;
         PlayerQuestData result = new PlayerQuestData(uuid, player.getName());
         result.setClaimLand(data.getBoolean(base + ".starter.claim-land", false));
@@ -57,6 +76,7 @@ public final class QuestDataManager {
             result.putCategoryProgress(new PlayerCategoryProgress(category, level, completed, state, target, progress, reward));
         }
         if (player.getName() != null) result.setName(player.getName());
+        cachedPlayers.put(uuid, result);
         save(result);
         return result;
     }
@@ -79,7 +99,7 @@ public final class QuestDataManager {
             data.set(path + ".current-progress", progress.getCurrentProgress());
             data.set(path + ".current-reward-money", progress.getCurrentRewardMoney());
         }
-        flush();
+        dirty = true;
     }
 
     public int countPlayers() {
@@ -88,7 +108,43 @@ public final class QuestDataManager {
     }
 
     public void flush() {
-        try { data.save(file); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan data/quests.yml"); }
+        if ((!dirty && !writing.get()) || data == null || file == null) return;
+        synchronized (fileWriteLock) {
+            try {
+                data.save(file);
+                dirty = false;
+            } catch (IOException exception) {
+                plugin.getLogger().warning("Gagal menyimpan data/quests.yml");
+            }
+        }
+    }
+
+    public void shutdown() {
+        if (autosaveTask != null) autosaveTask.cancel();
+        flush();
+    }
+
+    private void startAutosave() {
+        if (autosaveTask != null) autosaveTask.cancel();
+        autosaveTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::flushAsync, 20L * 60L, 20L * 60L);
+    }
+
+    private void flushAsync() {
+        if (!dirty || data == null || file == null || !writing.compareAndSet(false, true)) return;
+        String snapshot = data.saveToString();
+        dirty = false;
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            synchronized (fileWriteLock) {
+                try {
+                    Files.writeString(file.toPath(), snapshot, StandardCharsets.UTF_8);
+                } catch (IOException exception) {
+                    plugin.getLogger().warning("Gagal menyimpan data/quests.yml");
+                    plugin.getServer().getScheduler().runTask(plugin, () -> dirty = true);
+                } finally {
+                    writing.set(false);
+                }
+            }
+        });
     }
 
     private QuestState parseState(String raw) {
