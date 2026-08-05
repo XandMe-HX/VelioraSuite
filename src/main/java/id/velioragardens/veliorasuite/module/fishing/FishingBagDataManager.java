@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.fishing;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import id.velioragardens.veliorasuite.module.fishing.model.FishingBagEntry;
@@ -20,6 +21,7 @@ public final class FishingBagDataManager {
     private final VelioraSuite plugin;
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
 
     public FishingBagDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -32,6 +34,8 @@ public final class FishingBagDataManager {
             try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat data/fishing-bag.yml"); }
         }
         data = YamlConfiguration.loadConfiguration(file);
+        writer = new BufferedYamlWriter(plugin, file, data, "data/fishing-bag.yml");
+        writer.start();
     }
 
     public List<FishingBagEntry> entries(OfflinePlayer player) {
@@ -73,7 +77,7 @@ public final class FishingBagDataManager {
         data.set(path + ".origin", fish.origin());
         data.set(path + ".region", fish.region());
         data.set(path + ".amount", data.getInt(path + ".amount", 0) + amount);
-        flush();
+        writer.markDirty();
     }
 
     public void remove(OfflinePlayer player, String key, int amount) {
@@ -83,11 +87,11 @@ public final class FishingBagDataManager {
         int left = Math.max(0, current - amount);
         if (left <= 0) data.set(path, null);
         else data.set(path + ".amount", left);
-        flush();
+        writer.markDirty();
     }
 
     public void flush() {
-        try { data.save(file); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan data/fishing-bag.yml"); }
+        if (writer != null) writer.shutdown();
     }
 
     private String base(OfflinePlayer player) {

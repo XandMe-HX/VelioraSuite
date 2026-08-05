@@ -7,7 +7,6 @@ import id.velioragardens.veliorasuite.module.pets.model.VelioraPet;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -22,7 +21,6 @@ import java.util.UUID;
 
 public final class PetCoreControllerTask implements Runnable {
     private static final String PET_TAG = "veliorapets_pet";
-    private static final String ANCHOR_TAG = "veliorapets_aquatic_anchor";
     private static final double SIDE_OFFSET = 1.2D;
     private static final double BACK_OFFSET = 1.2D;
     private static final double TELEPORT_DISTANCE = 16.0D;
@@ -34,12 +32,15 @@ public final class PetCoreControllerTask implements Runnable {
     private static final double AUTO_TARGET_RADIUS = 14.0D;
     private static final long STUCK_MILLIS = 5000L;
     private static final long TELEPORT_COOLDOWN_MILLIS = 5000L;
+    private static final long TARGET_SCAN_COOLDOWN_MILLIS = 1000L;
 
     private final PetManager manager;
     private final PetConfigManager config;
     private final Map<UUID, Location> lastLocations = new HashMap<>();
     private final Map<UUID, Long> stuckSince = new HashMap<>();
     private final Map<UUID, Long> lastTeleport = new HashMap<>();
+    private final Map<UUID, Long> lastTargetScan = new HashMap<>();
+    private int maintenanceTick;
 
     public PetCoreControllerTask(VelioraSuite plugin, PetManager manager) {
         this.manager = manager;
@@ -48,7 +49,8 @@ public final class PetCoreControllerTask implements Runnable {
 
     @Override
     public void run() {
-        cleanupAnchorsOnly();
+        boolean runMaintenance = ++maintenanceTick >= 10;
+        if (runMaintenance) maintenanceTick = 0;
         for (Player owner : Bukkit.getOnlinePlayers()) {
             VelioraPet active = manager.activePet(owner.getUniqueId());
             if (active == null) continue;
@@ -59,14 +61,14 @@ public final class PetCoreControllerTask implements Runnable {
                 continue;
             }
             PetDefinition definition = config.pets().get(active.petId());
-            normalizeVisualAge(owner, active, definition, pet);
+            if (runMaintenance) normalizeVisualAge(owner, active, definition, pet);
             if (hasPlayerPassenger(pet)) {
                 stabilizeRiddenPet(pet);
                 active.targetUuid(null);
                 PetMovementDebug.remember(owner.getUniqueId(), "ridden by owner", pet.getLocation(), true, false, "ride control active");
                 continue;
             }
-            stabilize(pet, definition);
+            if (runMaintenance) stabilize(pet, definition);
             if (ownerNotCombat(owner) || definition == null || definition.aquaticPet() || definition.flyingPet()) active.targetUuid(null);
             acquireTargetIfNeeded(owner, active, definition);
             combat(owner, active, definition);
@@ -250,6 +252,10 @@ public final class PetCoreControllerTask implements Runnable {
             }
             active.targetUuid(null);
         }
+        long now = System.currentTimeMillis();
+        UUID ownerUuid = owner.getUniqueId();
+        if (now - lastTargetScan.getOrDefault(ownerUuid, 0L) < TARGET_SCAN_COOLDOWN_MILLIS) return;
+        lastTargetScan.put(ownerUuid, now);
         LivingEntity best = null;
         double bestScore = Double.MAX_VALUE;
         for (Entity entity : owner.getWorld().getNearbyEntities(owner.getLocation(), AUTO_TARGET_RADIUS, 8.0D, AUTO_TARGET_RADIUS)) {
@@ -387,14 +393,6 @@ public final class PetCoreControllerTask implements Runnable {
         UUID uuid = pet.getUniqueId();
         lastLocations.putIfAbsent(uuid, pet.getLocation().clone());
         stuckSince.putIfAbsent(uuid, System.currentTimeMillis());
-    }
-
-    private void cleanupAnchorsOnly() {
-        for (World world : Bukkit.getWorlds()) {
-            for (Entity entity : world.getEntities()) {
-                if (entity.getScoreboardTags().contains(ANCHOR_TAG)) entity.remove();
-            }
-        }
     }
 
     private double clamp(double value, double min, double max) {

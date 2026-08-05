@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.pets;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.pets.model.OwnedPet;
 import id.velioragardens.veliorasuite.module.pets.model.PlayerPetData;
 import org.bukkit.configuration.ConfigurationSection;
@@ -24,14 +25,18 @@ public final class PetDataManager {
     private File file;
     private FileConfiguration data;
     private final Map<UUID, PlayerPetData> cache = new HashMap<>();
+    private BufferedYamlWriter writer;
 
     public PetDataManager(VelioraSuite plugin) { this.plugin = plugin; }
 
     public void load() {
+        if (writer != null) writer.shutdown();
         plugin.createFolder("data");
         file = new File(plugin.getDataFolder(), "data/pets.yml");
         if (!file.exists()) try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat pets.yml"); }
         data = YamlConfiguration.loadConfiguration(file);
+        writer = new BufferedYamlWriter(plugin, file, data, "data/pets.yml");
+        writer.start();
         cache.clear();
     }
 
@@ -55,11 +60,12 @@ public final class PetDataManager {
             data.set(petPath + ".cooldown-until", pet.cooldownUntil());
             data.set(petPath + ".last-fed", pet.lastFed());
         }
-        saveFile();
+        writer.markDirty();
     }
 
     public void saveAll() {
         for (UUID uuid : new ArrayList<>(cache.keySet())) save(uuid);
+        if (writer != null) writer.shutdown();
     }
 
     public List<ItemStack> loadStorage(UUID uuid) {
@@ -70,7 +76,7 @@ public final class PetDataManager {
     public void saveStorage(UUID uuid, ItemStack[] contents) {
         migrateLegacyStorage(uuid);
         data.set("players." + uuid + ".storage", normalizeContents(contents));
-        saveFile();
+        writer.markDirty();
     }
 
     public List<ItemStack> loadStorageOverflow(UUID uuid) {
@@ -85,7 +91,7 @@ public final class PetDataManager {
             if (item != null && !item.getType().isAir() && item.getAmount() > 0) clean.add(item.clone());
         }
         data.set(path, clean.isEmpty() ? null : clean);
-        saveFile();
+        writer.markDirty();
     }
 
     private PlayerPetData loadPlayer(UUID uuid) {
@@ -143,7 +149,7 @@ public final class PetDataManager {
         data.set(playerPath + ".storage", normalizeContents(shared));
         data.set(playerPath + ".storage-overflow", overflow.isEmpty() ? null : overflow);
         data.set(migratedPath, true);
-        saveFile();
+        writer.markDirty();
     }
 
     private List<ItemStack> readItems(String path, int limit) {
@@ -193,5 +199,4 @@ public final class PetDataManager {
         return remaining.getAmount() <= 0 ? null : remaining;
     }
 
-    private void saveFile() { try { data.save(file); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan pets.yml"); } }
 }

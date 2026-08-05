@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.fishing;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import id.velioragardens.veliorasuite.module.fishing.model.PlayerFishingStats;
@@ -21,6 +22,7 @@ public final class FishingDataManager {
     private final VelioraSuite plugin;
     private File file;
     private FileConfiguration data;
+    private BufferedYamlWriter writer;
 
     public FishingDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -33,6 +35,8 @@ public final class FishingDataManager {
             try { file.createNewFile(); } catch (IOException exception) { plugin.getLogger().warning("Gagal membuat data/fishing.yml"); }
         }
         data = YamlConfiguration.loadConfiguration(file);
+        writer = new BufferedYamlWriter(plugin, file, data, "data/fishing.yml");
+        writer.start();
     }
 
     public PlayerFishingStats getOrCreate(OfflinePlayer player) {
@@ -98,11 +102,11 @@ public final class FishingDataManager {
         data.set(path + ".best-fish-name", stats.getBestFishName());
         data.set(path + ".best-fish-weight", stats.getBestFishWeight());
         data.set(path + ".best-fish-price", stats.getBestFishPrice());
-        flush();
+        writer.markDirty();
     }
 
     public void flush() {
-        try { data.save(file); } catch (IOException exception) { plugin.getLogger().warning("Gagal menyimpan data/fishing.yml"); }
+        if (writer != null) writer.shutdown();
     }
 
     private boolean isBetter(CaughtFish fish, PlayerFishingStats stats) {
