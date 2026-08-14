@@ -32,11 +32,13 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 
 public final class BossManager implements Listener {
 
@@ -55,6 +57,9 @@ public final class BossManager implements Listener {
     private final BossQuestHook questHook;
     private final Random random = new Random();
     private final Set<Integer> sentWarnings = new HashSet<>();
+    private final Map<UUID, MaceSmashState> maceSmashes = new HashMap<>();
+    private final Map<UUID, List<Long>> invalidReachHits = new HashMap<>();
+    private final Map<UUID, Long> bossDamageLocks = new HashMap<>();
     private final NamespacedKey bossIdKey;
     private final NamespacedKey bossNameKey;
     private final NamespacedKey bossRarityKey;
@@ -263,23 +268,89 @@ public final class BossManager implements Listener {
         }
         if (damagedBoss) {
             Player player = damager(event.getDamager());
-            if (player != null) {
-                boolean mace = player.getInventory().getItemInMainHand().getType() == Material.MACE;
-                double adjustedDamage = event.getFinalDamage();
-                if (mace) adjustedDamage = Math.min(config.maceMaxDamagePerHit(), adjustedDamage * config.maceDamageMultiplier());
-                double virtualDamage = adjustedDamage * config.virtualDamageMultiplier();
+            if (player == null) {
                 event.setCancelled(true);
-                damageActiveBoss(player, virtualDamage);
-                showHitFeedback(player, mace);
-                if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
-            } else {
-                event.setCancelled(true);
+                return;
             }
+            if (isBossDamageLocked(player)) {
+                event.setCancelled(true);
+                player.sendMessage(config.color("&8[&6VelioraBoss&8] &cDamage boss dikunci sementara: &f" + timeLeft(bossDamageLocks.get(player.getUniqueId()))));
+                return;
+            }
+            // Projectiles remain valid; only impossible direct melee hits are rejected.
+            if (event.getDamager() instanceof Player && isMeleeReachViolation(player)) {
+                event.setCancelled(true);
+                recordInvalidReach(player);
+                return;
+            }
+
+            boolean mace = player.getInventory().getItemInMainHand().getType() == Material.MACE;
+            boolean chargedMace = mace && isMaceSmash(player) && consumeMaceSmashCharge(player);
+            double adjustedDamage = event.getFinalDamage();
+            if (chargedMace) adjustedDamage = Math.min(config.maceMaxDamagePerHit(), adjustedDamage * config.maceDamageMultiplier());
+            double virtualDamage = adjustedDamage * config.virtualDamageMultiplier();
+            event.setCancelled(true);
+            damageActiveBoss(player, virtualDamage);
+            showHitFeedback(player, chargedMace);
+            if (chargedMace) player.sendMessage(config.color("&8[&6VelioraBoss&8] &eMace Smash &f"
+                    + maceSmashes.get(player.getUniqueId()).charges() + "&7/" + config.maceSmashCharges()));
+            if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
             return;
         }
         if (damagerBoss) {
             double damage = activeDefinition == null ? event.getDamage() : activeDefinition.damage();
             event.setDamage(damage * skillManager.outgoingDamageMultiplier());
+        }
+    }
+
+    private boolean isMaceSmash(Player player) {
+        return player.getFallDistance() > 1.5F && !player.isOnGround();
+    }
+
+    private boolean consumeMaceSmashCharge(Player player) {
+        long now = System.currentTimeMillis();
+        MaceSmashState state = maceSmashes.get(player.getUniqueId());
+        if (state == null || now >= state.cooldownUntil()) state = new MaceSmashState(config.maceSmashCharges(), 0L);
+        if (state.charges() <= 0) {
+            player.sendMessage(config.color("&8[&6VelioraBoss&8] &cMace Smash habis. &7Pulih dalam &f" + timeLeft(state.cooldownUntil())));
+            maceSmashes.put(player.getUniqueId(), state);
+            return false;
+        }
+        int remaining = state.charges() - 1;
+        long cooldownUntil = remaining == 0 ? now + config.maceSmashCooldownSeconds() * 1000L : state.cooldownUntil();
+        maceSmashes.put(player.getUniqueId(), new MaceSmashState(remaining, cooldownUntil));
+        return true;
+    }
+
+    private boolean isBossDamageLocked(Player player) {
+        return bossDamageLocks.getOrDefault(player.getUniqueId(), 0L) > System.currentTimeMillis();
+    }
+
+    private boolean isMeleeReachViolation(Player player) {
+        if (activeBoss == null) return false;
+        Location eye = player.getEyeLocation();
+        org.bukkit.util.BoundingBox box = activeBoss.getBoundingBox();
+        double x = Math.max(box.getMinX(), Math.min(eye.getX(), box.getMaxX()));
+        double y = Math.max(box.getMinY(), Math.min(eye.getY(), box.getMaxY()));
+        double z = Math.max(box.getMinZ(), Math.min(eye.getZ(), box.getMaxZ()));
+        double dx = eye.getX() - x, dy = eye.getY() - y, dz = eye.getZ() - z;
+        return dx * dx + dy * dy + dz * dz > config.bossMeleeReach() * config.bossMeleeReach();
+    }
+
+    private void recordInvalidReach(Player player) {
+        long now = System.currentTimeMillis();
+        List<Long> hits = invalidReachHits.computeIfAbsent(player.getUniqueId(), ignored -> new ArrayList<>());
+        hits.removeIf(time -> now - time > config.invalidReachWindowSeconds() * 1000L);
+        hits.add(now);
+        player.sendMessage(config.color("&8[&6VelioraBoss&8] &cHit terlalu jauh dibatalkan. &7(" + hits.size() + "/" + config.invalidReachLimit() + ")"));
+        if (hits.size() < config.invalidReachLimit()) return;
+        long until = now + config.invalidReachDamageLockSeconds() * 1000L;
+        bossDamageLocks.put(player.getUniqueId(), until);
+        hits.clear();
+        String message = config.color("&8[&6VelioraBoss&8] &e" + player.getName()
+                + " &cmemicu anti-reach. Damage boss dikunci &f" + config.invalidReachDamageLockSeconds() + " detik&c.");
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.isOp() || online.hasPermission("veliorasuite.security.alerts")) online.sendMessage(message);
         }
     }
 
@@ -404,7 +475,7 @@ public final class BossManager implements Listener {
         activeVirtualHealth = spawnHealth;
         double spawnScale = calculateSpawnScale(definition);
         scaleHelper.setMaxHealth(living, NATIVE_BOSS_HEALTH);
-        scaleHelper.applyCombatDefense(living, config.bossArmor(), config.bossArmorToughness(), config.bossKnockbackResistance());
+        scaleHelper.applyCombatDefense(living, 0.0D, 0.0D, config.bossKnockbackResistance());
         scaleHelper.apply(living, spawnScale);
         if (living instanceof Mob mob) mob.setTarget(findBestTarget(location));
         bossBarManager.create(definition);
@@ -576,7 +647,7 @@ public final class BossManager implements Listener {
         activeVirtualMaxHealth = refreshedHealth;
         activeVirtualHealth = refreshedHealth * healthPercent;
         scaleHelper.setMaxHealth(activeBoss, NATIVE_BOSS_HEALTH);
-        scaleHelper.applyCombatDefense(activeBoss, config.bossArmor(), config.bossArmorToughness(), config.bossKnockbackResistance());
+        scaleHelper.applyCombatDefense(activeBoss, 0.0D, 0.0D, config.bossKnockbackResistance());
         scaleHelper.apply(activeBoss, calculateSpawnScale(refreshed));
         bossBarManager.create(refreshed);
         skillManager.start(refreshed);
@@ -708,6 +779,8 @@ public final class BossManager implements Listener {
     private String normalizeId(String input) { return input.trim().toLowerCase(Locale.ROOT).replace(' ', '_'); }
     private String normalizeLoose(String input) { return input == null ? "" : config.plain(input).toLowerCase(Locale.ROOT).replace("_", "").replace("-", "").replace(" ", ""); }
     private void stopScheduler() { if (schedulerTask != null) schedulerTask.cancel(); schedulerTask = null; }
+
+    private record MaceSmashState(int charges, long cooldownUntil) { }
 
     private String timeLeft(long target) {
         if (target <= 0L) return "belum aktif";

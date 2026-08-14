@@ -154,8 +154,14 @@ public final class BossConfigManager {
     public double maxHealthMultiplier() { return Math.max(1.0D, number("settings.combat.max-health-multiplier", 2.75D)); }
     public boolean bossCollisionEnabled() { return bool("settings.combat.collision-enabled", false); }
     public double maximumBossHealth() { return Math.max(1.0D, number("settings.combat.maximum-health", 30_000.0D)); }
-    public double maceDamageMultiplier() { return clamp(number("settings.combat.mace-damage-multiplier", 0.65D), 0.05D, 1.0D); }
-    public double maceMaxDamagePerHit() { return Math.max(1.0D, number("settings.combat.mace-max-damage-per-hit", 300.0D)); }
+    public double maceDamageMultiplier() { return clamp(number("settings.combat.mace-damage-multiplier", 1.0D), 0.05D, 1.0D); }
+    public double maceMaxDamagePerHit() { return Math.max(1.0D, number("settings.combat.mace-max-damage-per-hit", 450.0D)); }
+    public int maceSmashCharges() { return Math.max(1, integer("settings.combat.mace-smash-charges", 3)); }
+    public int maceSmashCooldownSeconds() { return Math.max(60, integer("settings.combat.mace-smash-cooldown-seconds", 300)); }
+    public double bossMeleeReach() { return Math.max(3.0D, number("settings.combat.melee-reach-limit", 6.5D)); }
+    public int invalidReachLimit() { return Math.max(3, integer("settings.combat.invalid-reach-limit", 8)); }
+    public int invalidReachWindowSeconds() { return Math.max(5, integer("settings.combat.invalid-reach-window-seconds", 30)); }
+    public int invalidReachDamageLockSeconds() { return Math.max(10, integer("settings.combat.invalid-reach-damage-lock-seconds", 120)); }
     public double virtualDamageMultiplier() { return clamp(number("settings.combat.virtual-damage-multiplier", 1.0D), 0.01D, 1.0D); }
     public boolean spawnTitleEnabled() { return bool("effects.spawn.title-enabled", true); }
     public String spawnTitle() { return str("effects.spawn.title", "&c%boss%"); }
@@ -171,7 +177,8 @@ public final class BossConfigManager {
     public int skillTelegraphTicks() { return Math.max(10, integer("skills.telegraph-ticks", 26)); }
     public double groundSlamDamage() { return Math.max(0.0D, number("skills.damage.ground-slam", 6.0D)); }
     public double fireBombDamage() { return Math.max(0.0D, number("skills.damage.fire-bomb", 7.0D)); }
-    public double lightningChainDamage() { return Math.max(0.0D, number("skills.damage.lightning-chain", 6.0D)); }
+    public double lightningChainDamage() { return Math.max(0.0D, number("skills.damage.lightning-chain", 5.0D)); }
+    public double lightningChainRadius() { return Math.max(2.0D, number("skills.lightning-radius", 8.0D)); }
     public double shadowPulseDamage() { return Math.max(0.0D, number("skills.damage.shadow-pulse", 5.0D)); }
     public double soulCageDamage() { return Math.max(0.0D, number("skills.damage.soul-cage", 4.0D)); }
     public double groundSlamKnockback() { return clamp(number("skills.movement.ground-slam-knockback", 0.45D), 0.0D, 1.5D); }
