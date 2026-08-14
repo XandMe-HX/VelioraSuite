@@ -49,6 +49,30 @@ public final class AntiDupeManager {
         }, Math.max(1L, delayTicks));
     }
 
+    /**
+     * Moves only the requested suspicious amounts from the player's inventory into
+     * the recoverable quarantine file. Used by OreWatch after a staged warning.
+     */
+    public String quarantineSuspiciousItems(Player player, Map<Material, Integer> requested, String reason) {
+        if (player == null || requested == null || requested.isEmpty()) return "";
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        List<ItemStack> quarantined = new ArrayList<>();
+        Map<Material, Integer> removedCounts = new HashMap<>();
+        for (Map.Entry<Material, Integer> entry : requested.entrySet()) {
+            int amount = Math.max(0, entry.getValue());
+            if (amount <= 0) continue;
+            int removed = removeExcess(contents, entry.getKey(), amount, quarantined);
+            if (removed > 0) removedCounts.put(entry.getKey(), removed);
+        }
+        if (quarantined.isEmpty()) return "";
+        player.getInventory().setStorageContents(contents);
+        player.updateInventory();
+        String quarantineId = saveQuarantine(player, quarantined, removedCounts, reason);
+        plugin.getLogger().warning("VelioraOreWatch quarantined " + summarize(removedCounts)
+                + " from " + player.getName() + " id=" + quarantineId + " reason=" + reason);
+        return quarantineId;
+    }
+
     private void scan(Player player) {
         Map<Material, Integer> limits = config.getAntiDupeInventoryLimits();
         if (limits.isEmpty()) return;
@@ -68,7 +92,7 @@ public final class AntiDupeManager {
         if (quarantined.isEmpty()) return;
         player.getInventory().setStorageContents(contents);
         player.updateInventory();
-        String quarantineId = saveQuarantine(player, quarantined, removedCounts);
+        String quarantineId = saveQuarantine(player, quarantined, removedCounts, "ANTI_DUPE_LIMIT");
         String summary = summarize(removedCounts);
         plugin.getLogger().warning("VelioraAntiDupe quarantined " + summary + " from " + player.getName() + " id=" + quarantineId);
         for (Player online : Bukkit.getOnlinePlayers()) {
@@ -105,7 +129,7 @@ public final class AntiDupeManager {
         return removed;
     }
 
-    private String saveQuarantine(Player player, List<ItemStack> items, Map<Material, Integer> counts) {
+    private String saveQuarantine(Player player, List<ItemStack> items, Map<Material, Integer> counts, String reason) {
         File parent = quarantineFile.getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
             plugin.getLogger().warning("VelioraAntiDupe gagal membuat folder data karantina.");
@@ -118,6 +142,7 @@ public final class AntiDupeManager {
         data.set(path + ".player", player.getName());
         data.set(path + ".uuid", player.getUniqueId().toString());
         data.set(path + ".timestamp", now);
+        data.set(path + ".reason", reason);
         data.set(path + ".counts", counts.entrySet().stream().collect(
                 java.util.stream.Collectors.toMap(entry -> entry.getKey().name(), Map.Entry::getValue)));
         data.set(path + ".items", items);

@@ -100,8 +100,14 @@ public final class SecurityConfigManager {
     public int getSpawnerGuardAlertCooldownSeconds() { return Math.max(0, integer("settings.spawner-guard.alert-cooldown-seconds", 10)); }
 
     public boolean isXrayEnforcementEnabled() { return bool("settings.xray-enforcement.enabled", true); }
-    public int getXrayStrikeCooldownMinutes() { return Math.max(5, integer("settings.xray-enforcement.strike-cooldown-minutes", 10)); }
-    public int getXrayBanDays() { return Math.max(1, integer("settings.xray-enforcement.ban-days", 15)); }
+    public int getXrayStrikeCooldownMinutes() { return Math.max(1, integer("settings.xray-enforcement.strike-cooldown-minutes", 10)); }
+    public int getXrayVisualAlertLimit() { return Math.max(1, integer("settings.xray-enforcement.visual-alert-limit", 3)); }
+    public int getXrayBlindnessSeconds() { return Math.max(1, integer("settings.xray-enforcement.first-warning-blindness-seconds", 10)); }
+    public int getXrayFirstBanDays() { return Math.max(1, integer("settings.xray-enforcement.first-ban-days", 3)); }
+    public int getXrayRepeatBanDays() { return Math.max(getXrayFirstBanDays(), integer("settings.xray-enforcement.repeat-ban-days", 15)); }
+    public String getXrayAppealContact() { return str("settings.xray-enforcement.appeal-contact", "WhatsApp Owner"); }
+    // Kept for compatibility with the old owner-confirm commands.
+    public int getXrayBanDays() { return getXrayRepeatBanDays(); }
     public int getXrayConfirmationMinutes() { return Math.max(5, integer("settings.xray-enforcement.confirmation-expiry-minutes", 60)); }
 
     public boolean isAntiDupeEnabled() { return bool("settings.anti-dupe.enabled", true); }
