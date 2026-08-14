@@ -99,6 +99,7 @@ public final class TraderItemFactory {
 
     public NamespacedKey getFishingLuckBonusKey() { return fishingLuckBonusKey; }
     public NamespacedKey getCustomDamageKey() { return customDamageKey; }
+    public NamespacedKey getItemIdKey() { return itemIdKey; }
 
     private void applyEnchant(ItemStack stack, String enchantLine) {
         if (enchantLine == null || enchantLine.isBlank()) return;
