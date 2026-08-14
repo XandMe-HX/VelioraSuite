@@ -53,10 +53,16 @@ settings:
     alert-cooldown-seconds: 10
   xray-enforcement:
     enabled: true
-    # Peringatan pertama = kick. Kedua = menunggu keputusan owner.
+    # 1: blindness/title/sound, 2: quarantine + kick, 3: ban 3 hari,
+    # pelanggaran setelah ban: 15 hari. Semua tahap menyimpan bukti.
     strike-cooldown-minutes: 10
+    visual-alert-limit: 3
+    first-warning-blindness-seconds: 10
+    first-ban-days: 3
+    repeat-ban-days: 15
+    appeal-contact: 'WhatsApp Owner'
+    # Tetap dibaca agar command lama tidak rusak.
     confirmation-expiry-minutes: 60
-    ban-days: 15
   anti-dupe:
     enabled: true
     scan-cooldown-ticks: 10
