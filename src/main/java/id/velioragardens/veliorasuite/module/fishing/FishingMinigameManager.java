@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.Locale;
 
 public final class FishingMinigameManager implements Listener {
 
@@ -60,7 +61,7 @@ public final class FishingMinigameManager implements Listener {
         if (now - session.lastClick < manager.getConfigManager().getClickCooldownMs()) return;
         session.lastClick = now;
         session.clicks++;
-        showTitle(event.getPlayer(), session);
+        showActionBar(event.getPlayer(), session);
         if (session.clicks >= session.targetClicks) success(event.getPlayer());
     }
 
@@ -80,11 +81,18 @@ public final class FishingMinigameManager implements Listener {
         int target = manager.getConfigManager().getSpamNeeded(fish.rarity());
         double seconds = manager.getConfigManager().getMinigameSeconds(fish.rarity());
         Session session = new Session(generatedFish, target, System.currentTimeMillis() + (long) (seconds * 1000.0D));
-        BukkitTask task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> fail(player), Math.max(1L, (long) (seconds * 20.0D)));
-        session.task = task;
         sessions.put(player.getUniqueId(), session);
+        BukkitTask task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (sessions.get(player.getUniqueId()) != session) return;
+            if (!player.isOnline() || System.currentTimeMillis() >= session.endAt) {
+                fail(player);
+                return;
+            }
+            showActionBar(player, session);
+        }, 0L, 5L);
+        session.task = task;
         player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("minigame-start", "%prefix% &eTarikan kuat! Spam klik untuk menarik ikan!")));
-        showTitle(player, session);
+        showActionBar(player, session);
     }
 
     private void success(Player player) {
@@ -102,13 +110,17 @@ public final class FishingMinigameManager implements Listener {
         player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("minigame-fail", "%prefix% &cIkan lepas.")));
     }
 
-    private void showTitle(Player player, Session session) {
+    private void showActionBar(Player player, Session session) {
         if (!manager.getConfigManager().isMinigameShowTitle()) return;
-        FishRarity rarity = session.generatedFish.fish().rarity();
         double secondsLeft = Math.max(0.0D, (session.endAt - System.currentTimeMillis()) / 1000.0D);
-        String title = rarity.color() + rarity.name() + " &8» &f" + session.clicks + "&7/&f" + session.targetClicks;
-        String subtitle = "&e" + String.format("%.1f", secondsLeft) + "s";
-        player.sendTitle(manager.getConfigManager().color(title), manager.getConfigManager().color(subtitle), 0, 20, 5);
+        int bars = 8;
+        int filled = Math.min(bars, (int) Math.ceil((session.clicks / (double) session.targetClicks) * bars));
+        String bar = "█".repeat(filled) + "░".repeat(Math.max(0, bars - filled));
+        String timeColor = secondsLeft <= 3.0D ? "&c" : "&e";
+        String text = "&bTarikan &7[&a" + bar.substring(0, filled) + "&8" + bar.substring(filled) + "&7] &f"
+                + session.clicks + "&7/&f" + session.targetClicks + " " + timeColor
+                + String.format(Locale.US, "%.1fs", secondsLeft);
+        player.sendActionBar(manager.getConfigManager().color(text));
     }
 
     private void removeCaught(Entity entity) {
