@@ -2,7 +2,7 @@ package id.velioragardens.veliorasuite.module.chat;
 
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -12,7 +12,7 @@ import java.util.regex.PatternSyntaxException;
 public final class ChatFilterManager {
 
     private final ChatConfigManager configManager;
-    private final Map<UUID, String> lastMessages = new HashMap<>();
+    private final Map<UUID, String> lastMessages = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> repeatCounts = new HashMap<>();
 
     public ChatFilterManager(ChatConfigManager configManager) {

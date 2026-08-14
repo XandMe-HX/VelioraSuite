@@ -46,7 +46,7 @@ settings:
   auto-reply:
     # Auto bantuan berbasis kata kunci. Bukan AI API, tapi bot pintar ringan agar member tidak tanya berulang.
     enabled: true
-    cooldown-seconds: 0
+    cooldown-seconds: 20
     delay-ticks: 14
     prefix: '&8[&aVelioraGuide&8] '
     priority-replies: [social, social_activity, owner_help, urgent_help]
