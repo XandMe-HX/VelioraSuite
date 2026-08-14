@@ -7,14 +7,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -24,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.TimeZone;
 
 public final class SecurityManager {
 
@@ -39,6 +45,7 @@ public final class SecurityManager {
     private final AntiDupeManager antiDupeManager;
     private final VelioraBanManager banManager;
     private final File xrayStateFile;
+    private final File xrayEvidenceFile;
 
     private final Map<UUID, List<OreRecord>> oreRecords = new HashMap<>();
     private final Map<UUID, String> oreNames = new HashMap<>();
@@ -49,6 +56,8 @@ public final class SecurityManager {
     private final Map<UUID, Integer> xrayWarnings = new HashMap<>();
     private final Map<UUID, Long> xrayLastAction = new HashMap<>();
     private final Map<UUID, Long> pendingXrayBans = new HashMap<>();
+    private final Map<UUID, Integer> visualOreAlerts = new HashMap<>();
+    private final Map<UUID, Map<Material, Integer>> xrayInventoryBaselines = new HashMap<>();
 
     public SecurityManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -63,6 +72,7 @@ public final class SecurityManager {
         this.antiDupeManager = new AntiDupeManager(plugin, configManager);
         this.banManager = new VelioraBanManager(plugin);
         this.xrayStateFile = new File(plugin.getDataFolder(), "data/xray-enforcement.yml");
+        this.xrayEvidenceFile = new File(plugin.getDataFolder(), "data/xray-evidence.yml");
     }
 
     public void load() {
@@ -132,7 +142,17 @@ public final class SecurityManager {
 
         UUID uuid = player.getUniqueId();
         oreNames.put(uuid, player.getName());
-        oreRecords.computeIfAbsent(uuid, ignored -> new ArrayList<>()).add(new OreRecord(System.currentTimeMillis(), block.getType().name()));
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        int fortune = tool.getEnchantments().entrySet().stream()
+                .filter(entry -> entry.getKey().getKey().getKey().equalsIgnoreCase("fortune"))
+                .mapToInt(Map.Entry::getValue).max().orElse(0);
+        boolean silkTouch = tool.getEnchantments().keySet().stream()
+                .anyMatch(enchantment -> enchantment.getKey().getKey().equalsIgnoreCase("silk_touch"));
+        Location location = block.getLocation();
+        oreRecords.computeIfAbsent(uuid, ignored -> new ArrayList<>()).add(new OreRecord(
+                System.currentTimeMillis(), block.getType().name(), location.getWorld().getName(),
+                location.getBlockX(), location.getBlockY(), location.getBlockZ(),
+                tool.getType().name(), fortune, silkTouch));
         trim(uuid);
         OreReport fiveMinuteReport = report(uuid, 5);
         OreReport report = strongest(fiveMinuteReport, report(uuid, 15), report(uuid, 60));
@@ -186,7 +206,7 @@ public final class SecurityManager {
                 "&7Tracked Players: &f" + oreRecords.size(),
                 "&7Alerts: &f" + oreAlerts.size(),
                 "&7Placed Ore Cache: &f" + placedOre.size(),
-                "&7Mode: &f2 peringatan, ban 15 hari wajib konfirmasi owner",
+                "&7Mode: &f1 efek, 2 karantina+kick, 3 ban 3 hari, ulang ban 15 hari",
                 "&7Pending Confirmation: &f" + pendingXrayBans.size(),
                 "&8&m--------------------------------"
         ), Map.of());
@@ -207,7 +227,11 @@ public final class SecurityManager {
         if (uuid == null) { sender.sendMessage(color("&8[&cVelioraOreWatch&8] &cData player tidak ditemukan.")); return; }
         sender.sendMessage(color("&8&m--------------------------------"));
         sender.sendMessage(color("&c&lOre Logs &8- &f" + oreNames.getOrDefault(uuid, name)));
-        oreRecords.getOrDefault(uuid, List.of()).stream().sorted(Comparator.comparingLong(OreRecord::time).reversed()).limit(12).forEach(record -> sender.sendMessage(color("&8- &f" + record.ore())));
+        oreRecords.getOrDefault(uuid, List.of()).stream().sorted(Comparator.comparingLong(OreRecord::time).reversed()).limit(12)
+                .forEach(record -> sender.sendMessage(color("&8- &7" + formatTime(record.time()) + " &f" + record.ore()
+                        + " &8| &7" + record.world() + " " + record.x() + " " + record.y() + " " + record.z()
+                        + " &8| &7tool &f" + record.tool() + " &7Fortune " + record.fortune()
+                        + (record.silkTouch() ? " &bSilk Touch" : ""))));
         sender.sendMessage(color("&8&m--------------------------------"));
     }
 
@@ -258,6 +282,8 @@ public final class SecurityManager {
             xrayWarnings.remove(uuid);
             xrayLastAction.remove(uuid);
             pendingXrayBans.remove(uuid);
+            visualOreAlerts.remove(uuid);
+            xrayInventoryBaselines.remove(uuid);
             saveXrayState();
         }
         oreAlerts.removeIf(report -> report.name().equalsIgnoreCase(name));
@@ -354,9 +380,14 @@ public final class SecurityManager {
         alertCooldown.put(key, now);
         oreAlerts.add(report);
         while (oreAlerts.size() > 50) oreAlerts.remove(0);
+
+        int displayed = visualOreAlerts.getOrDefault(player.getUniqueId(), 0);
+        if (displayed >= configManager.getXrayVisualAlertLimit()) return;
+        visualOreAlerts.put(player.getUniqueId(), displayed + 1);
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (!configManager.hasAlerts(online) && !configManager.hasAdmin(online)) continue;
-            online.sendMessage(color("&8[&cVelioraOreWatch&8] &cSuspicious Mining"));
+            online.sendMessage(color("&8[&cVelioraOreWatch&8] &cSuspicious Mining &7("
+                    + (displayed + 1) + "/" + configManager.getXrayVisualAlertLimit() + ")"));
             sendOreReport(online, report);
         }
     }
@@ -365,32 +396,80 @@ public final class SecurityManager {
         if (!configManager.isXrayEnforcementEnabled() || configManager.hasBypass(player)) return;
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
-        Long pendingUntil = pendingXrayBans.get(uuid);
-        if (pendingUntil != null) {
-            if (now <= pendingUntil) return;
-            pendingXrayBans.remove(uuid);
-            xrayWarnings.put(uuid, 1);
-        }
         long cooldown = configManager.getXrayStrikeCooldownMinutes() * 60_000L;
         if (now - xrayLastAction.getOrDefault(uuid, 0L) < cooldown) return;
-        int warning = Math.min(2, xrayWarnings.getOrDefault(uuid, 0) + 1);
+
+        int warning = Math.min(4, xrayWarnings.getOrDefault(uuid, 0) + 1);
         xrayWarnings.put(uuid, warning);
         xrayLastAction.put(uuid, now);
         oreNames.put(uuid, player.getName());
 
         if (warning == 1) {
-            notifyXrayOwners(player.getName(), "&ePeringatan Xray 1/2 &7- player diperingatkan dan dikeluarkan.", report);
+            xrayInventoryBaselines.put(uuid, snapshotSuspiciousInventory(player));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS,
+                    configManager.getXrayBlindnessSeconds() * 20, 0, false, false, true));
+            player.playSound(player.getLocation(), Sound.ENTITY_WARDEN_ROAR, 0.9F, 0.65F);
+            player.sendTitle(color("&4&lX-RAY TERDETEKSI"), color("&cPeringatan 1/3 &7- aktivitasmu sedang dicatat"), 10, 80, 20);
+            player.sendMessage(color("&8[&cVelioraOreWatch&8] &cBerhenti menggunakan Xray. &7Pelanggaran kedua: item mencurigakan dikarantina dan kamu dikeluarkan."));
+            notifyXrayOwners(player.getName(), "&eTahap 1/3 &7- blindness, suara, title, dan bukti disimpan.", report);
+            saveXrayEvidence(player, report, "WARNING_1");
             saveXrayState();
-            player.kickPlayer(color("&cPeringatan Xray 1/2\n&7Pola mining kamu melewati batas EXTREME.\n&7Hentikan Xray. Pelanggaran berikutnya menunggu konfirmasi owner untuk ban 15 hari."));
             return;
         }
 
-        long confirmationUntil = now + configManager.getXrayConfirmationMinutes() * 60_000L;
-        pendingXrayBans.put(uuid, confirmationUntil);
+        String quarantineId = quarantineSuspiciousGain(player, report);
+        if (warning == 2) {
+            notifyXrayOwners(player.getName(), "&6Tahap 2/3 &7- kick dan item hasil sesi dikarantina."
+                    + (quarantineId.isBlank() ? "" : " &7ID: &f" + quarantineId), report);
+            saveXrayEvidence(player, report, "KICK_2 quarantine=" + quarantineId);
+            xrayInventoryBaselines.put(uuid, snapshotSuspiciousInventory(player));
+            saveXrayState();
+            player.kickPlayer(color("&cPeringatan Xray 2/3\n&7Item mencurigakan diamankan untuk pemeriksaan owner."
+                    + (quarantineId.isBlank() ? "" : "\n&7ID karantina: &f" + quarantineId)
+                    + "\n&7Pelanggaran berikutnya: ban 3 hari."));
+            return;
+        }
+
+        int days = warning == 3 ? configManager.getXrayFirstBanDays() : configManager.getXrayRepeatBanDays();
+        String stage = warning == 3 ? "BAN_3_DAYS" : "REPEAT_BAN_15_DAYS";
+        saveXrayEvidence(player, report, stage + " quarantine=" + quarantineId);
+        notifyXrayOwners(player.getName(), (warning == 3 ? "&cTahap 3/3" : "&4Pelanggaran berulang")
+                + " &7- auto-ban &f" + days + " hari&7."
+                + (quarantineId.isBlank() ? "" : " Karantina: &f" + quarantineId), report);
         saveXrayState();
-        notifyXrayOwners(player.getName(), "&cPeringatan Xray 2/2 &7- menunggu konfirmasi owner: &f/vxray confirm "
-                + player.getName() + " &7atau &f/vxray deny " + player.getName(), report);
-        player.kickPlayer(color("&cPeringatan Xray 2/2\n&7Kasus dikirim ke owner untuk konfirmasi ban 15 hari."));
+        banManager.banPlayerTemporarily(uuid, player.getName(),
+                "Xray EXTREME tahap " + warning + ". Banding/keringanan: " + configManager.getXrayAppealContact(),
+                BanSource.AUTO_XRAY, days * 24L * 60L * 60L * 1000L);
+    }
+
+    private Map<Material, Integer> snapshotSuspiciousInventory(Player player) {
+        Map<Material, Integer> snapshot = new HashMap<>();
+        for (Material material : suspiciousXrayMaterials()) {
+            int amount = player.getInventory().all(material).values().stream().mapToInt(ItemStack::getAmount).sum();
+            snapshot.put(material, amount);
+        }
+        return snapshot;
+    }
+
+    private String quarantineSuspiciousGain(Player player, OreReport report) {
+        Map<Material, Integer> before = xrayInventoryBaselines.get(player.getUniqueId());
+        if (before == null) {
+            xrayInventoryBaselines.put(player.getUniqueId(), snapshotSuspiciousInventory(player));
+            return "";
+        }
+        Map<Material, Integer> now = snapshotSuspiciousInventory(player);
+        Map<Material, Integer> requested = new HashMap<>();
+        for (Material material : suspiciousXrayMaterials()) {
+            int gained = Math.max(0, now.getOrDefault(material, 0) - before.getOrDefault(material, 0));
+            if (gained > 0) requested.put(material, gained);
+        }
+        return antiDupeManager.quarantineSuspiciousItems(player, requested,
+                "XRAY_STAGE_" + xrayWarnings.getOrDefault(player.getUniqueId(), 0)
+                        + "_D" + report.diamond() + "_A" + report.debris());
+    }
+
+    private List<Material> suspiciousXrayMaterials() {
+        return List.of(Material.DIAMOND, Material.DIAMOND_ORE, Material.DEEPSLATE_DIAMOND_ORE, Material.ANCIENT_DEBRIS);
     }
 
     private void notifyXrayOwners(String playerName, String action, OreReport report) {
@@ -404,17 +483,26 @@ public final class SecurityManager {
 
     private void sendOreReport(CommandSender sender, OreReport report) {
         sender.sendMessage(color("&8[&cVelioraOreWatch&8] &f" + report.name() + " &7UUID &f" + report.uuid()));
-        String action = report.level().equals("EXTREME") ? "Peringatan/Kick + Konfirmasi Owner" : "Alert admin";
-        sender.sendMessage(color("&7Window: &f" + report.window() + " menit &8| &7Score: &e" + report.level() + " &8| &7Action: &f" + action));
-        sender.sendMessage(color("&7Diamond Ore: &f" + report.diamond() + " &7Ancient Debris: &f" + report.debris() + " &7Emerald Ore: &f" + report.emerald()));
-        sender.sendMessage(color("&7Gold Ore: &f" + report.gold() + " &7Iron Ore: &f" + report.iron()));
+        String action = report.level().equals("EXTREME") ? "Enforcement bertahap otomatis" : "Review admin";
+        sender.sendMessage(color("&7Waktu: &f" + formatTime(report.latestTime()) + " WIB &8| &7Window: &f"
+                + report.window() + "m &8| &7Level: &e" + report.level() + " &8| &7Action: &f" + action));
+        sender.sendMessage(color("&7Diamond: &f" + report.diamond() + " &7Debris: &f" + report.debris()
+                + " &7Emerald: &f" + report.emerald() + " &8| &7Total ore: &f" + report.total()
+                + " &7Rasio rare: &f" + String.format(Locale.US, "%.1f%%", report.rareRatio() * 100.0D)));
+        sender.sendMessage(color("&7Lokasi terakhir: &f" + report.world() + " " + report.x() + " " + report.y() + " " + report.z()
+                + " &8| &7Tool: &f" + report.tool() + " &7Fortune " + report.fortune()
+                + (report.silkTouch() ? " &bSilk Touch" : "")
+                + (report.caveLikely() ? " &8| &aKonteks cave terdeteksi" : "")));
     }
 
     private OreReport report(UUID uuid, int minutes) {
         long since = System.currentTimeMillis() - minutes * 60000L;
-        int diamond = 0, debris = 0, gold = 0, iron = 0, emerald = 0;
+        int diamond = 0, debris = 0, gold = 0, iron = 0, emerald = 0, total = 0;
+        OreRecord latest = null;
         for (OreRecord record : oreRecords.getOrDefault(uuid, List.of())) {
             if (record.time() < since) continue;
+            total++;
+            if (latest == null || record.time() > latest.time()) latest = record;
             String ore = record.ore();
             if (ore.contains("DIAMOND_ORE")) diamond++;
             else if (ore.equals("ANCIENT_DEBRIS")) debris++;
@@ -422,16 +510,32 @@ public final class SecurityManager {
             else if (ore.contains("IRON_ORE")) iron++;
             else if (ore.contains("EMERALD_ORE")) emerald++;
         }
-        String level = level(minutes, diamond, debris, gold, iron, emerald);
+        double rareRatio = (diamond + debris + emerald) / (double) Math.max(1, total);
+        boolean caveLikely = total >= 30 && rareRatio < 0.18D;
+        String level = level(minutes, diamond, debris, gold, iron, emerald, total);
         int score = diamond * 3 + debris * 10 + emerald * 4 + gold + iron / 2;
-        return new OreReport(uuid, oreNames.getOrDefault(uuid, "unknown"), minutes, diamond, debris, gold, iron, emerald, level, score);
+        long latestTime = latest == null ? System.currentTimeMillis() : latest.time();
+        return new OreReport(uuid, oreNames.getOrDefault(uuid, "unknown"), minutes, diamond, debris, gold, iron,
+                emerald, total, rareRatio, caveLikely, level, score, latestTime,
+                latest == null ? "unknown" : latest.world(), latest == null ? 0 : latest.x(),
+                latest == null ? 0 : latest.y(), latest == null ? 0 : latest.z(),
+                latest == null ? "unknown" : latest.tool(), latest == null ? 0 : latest.fortune(),
+                latest != null && latest.silkTouch());
     }
 
-    private String level(int minutes, int diamond, int debris, int gold, int iron, int emerald) {
+    private String level(int minutes, int diamond, int debris, int gold, int iron, int emerald, int total) {
         double factor = minutes / 5.0D;
-        if (debris >= 12 * factor || diamond >= 55 * factor || emerald >= 25 * factor || gold >= 110 * factor || iron >= 220 * factor) return "EXTREME";
-        if (debris >= 9 * factor || diamond >= 40 * factor || emerald >= 15 * factor || gold >= 75 * factor || iron >= 150 * factor) return "HIGH";
-        if (debris >= 5 * factor || diamond >= 25 * factor || emerald >= 8 * factor || gold >= 40 * factor || iron >= 80 * factor) return "ALERT";
+        double rareRatio = (diamond + debris + emerald) / (double) Math.max(1, total);
+
+        // Fortune and Silk Touch never multiply this counter: one broken ore block
+        // is always one record. A broad cave vein is softened by the rare/total ratio.
+        boolean rareExtreme = debris >= 12 * factor || diamond >= 55 * factor;
+        boolean directPattern = rareRatio >= 0.18D || debris >= 16 * factor || diamond >= 80 * factor;
+        if (rareExtreme && directPattern) return "EXTREME";
+        if (debris >= 9 * factor || diamond >= 40 * factor || emerald >= 15 * factor
+                || gold >= 75 * factor || iron >= 150 * factor) return "HIGH";
+        if (debris >= 5 * factor || diamond >= 25 * factor || emerald >= 8 * factor
+                || gold >= 40 * factor || iron >= 80 * factor) return "ALERT";
         return "NORMAL";
     }
 
@@ -454,10 +558,63 @@ public final class SecurityManager {
         oreRecords.getOrDefault(uuid, new ArrayList<>()).removeIf(record -> record.time() < since);
     }
 
+    private void saveXrayEvidence(Player player, OreReport report, String action) {
+        File parent = xrayEvidenceFile.getParentFile();
+        if (parent != null && !parent.exists()) parent.mkdirs();
+        YamlConfiguration data = xrayEvidenceFile.exists()
+                ? YamlConfiguration.loadConfiguration(xrayEvidenceFile) : new YamlConfiguration();
+        String id = System.currentTimeMillis() + "-" + player.getUniqueId().toString().substring(0, 8);
+        String path = "records." + id;
+        data.set(path + ".timestamp", System.currentTimeMillis());
+        data.set(path + ".time-wib", formatTime(System.currentTimeMillis()));
+        data.set(path + ".player", player.getName());
+        data.set(path + ".uuid", player.getUniqueId().toString());
+        data.set(path + ".action", action);
+        data.set(path + ".window-minutes", report.window());
+        data.set(path + ".level", report.level());
+        data.set(path + ".score", report.score());
+        data.set(path + ".diamond-ore", report.diamond());
+        data.set(path + ".ancient-debris", report.debris());
+        data.set(path + ".total-ore", report.total());
+        data.set(path + ".rare-ratio", report.rareRatio());
+        data.set(path + ".cave-context", report.caveLikely());
+        data.set(path + ".last-location", report.world() + " " + report.x() + " " + report.y() + " " + report.z());
+        data.set(path + ".tool", report.tool());
+        data.set(path + ".fortune", report.fortune());
+        data.set(path + ".silk-touch", report.silkTouch());
+        List<String> logs = oreRecords.getOrDefault(player.getUniqueId(), List.of()).stream()
+                .filter(record -> record.time() >= System.currentTimeMillis() - report.window() * 60000L)
+                .sorted(Comparator.comparingLong(OreRecord::time).reversed()).limit(30)
+                .map(record -> formatTime(record.time()) + " WIB | " + record.ore() + " | "
+                        + record.world() + " " + record.x() + " " + record.y() + " " + record.z()
+                        + " | " + record.tool() + " Fortune " + record.fortune()
+                        + (record.silkTouch() ? " SilkTouch" : ""))
+                .toList();
+        data.set(path + ".ore-log", logs);
+        ConfigurationSection records = data.getConfigurationSection("records");
+        if (records != null && records.getKeys(false).size() > 500) {
+            records.getKeys(false).stream().sorted().limit(records.getKeys(false).size() - 500)
+                    .forEach(old -> data.set("records." + old, null));
+        }
+        try {
+            data.save(xrayEvidenceFile);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraOreWatch gagal menyimpan bukti: " + exception.getMessage());
+        }
+    }
+
+    private String formatTime(long time) {
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
+        format.setTimeZone(TimeZone.getTimeZone("Asia/Jakarta"));
+        return format.format(new java.util.Date(time));
+    }
+
     private void loadXrayState() {
         xrayWarnings.clear();
         xrayLastAction.clear();
         pendingXrayBans.clear();
+        visualOreAlerts.clear();
+        xrayInventoryBaselines.clear();
         if (!xrayStateFile.exists()) return;
         YamlConfiguration data = YamlConfiguration.loadConfiguration(xrayStateFile);
         ConfigurationSection players = data.getConfigurationSection("players");
@@ -467,12 +624,21 @@ public final class SecurityManager {
             try {
                 UUID uuid = UUID.fromString(rawUuid);
                 String path = "players." + rawUuid;
-                xrayWarnings.put(uuid, Math.max(0, Math.min(2, data.getInt(path + ".warnings", 0))));
+                xrayWarnings.put(uuid, Math.max(0, Math.min(4, data.getInt(path + ".warnings", 0))));
                 xrayLastAction.put(uuid, data.getLong(path + ".last-action", 0L));
                 long pendingUntil = data.getLong(path + ".pending-until", 0L);
                 if (pendingUntil > now) pendingXrayBans.put(uuid, pendingUntil);
                 String name = data.getString(path + ".name", "");
                 if (!name.isBlank()) oreNames.put(uuid, name);
+                ConfigurationSection baselineSection = data.getConfigurationSection(path + ".inventory-baseline");
+                if (baselineSection != null) {
+                    Map<Material, Integer> baseline = new HashMap<>();
+                    for (String materialName : baselineSection.getKeys(false)) {
+                        Material material = Material.matchMaterial(materialName);
+                        if (material != null) baseline.put(material, Math.max(0, baselineSection.getInt(materialName)));
+                    }
+                    if (!baseline.isEmpty()) xrayInventoryBaselines.put(uuid, baseline);
+                }
             } catch (IllegalArgumentException ignored) { }
         }
     }
@@ -482,12 +648,19 @@ public final class SecurityManager {
         Set<UUID> uuids = new HashSet<>();
         uuids.addAll(xrayWarnings.keySet());
         uuids.addAll(pendingXrayBans.keySet());
+        uuids.addAll(xrayInventoryBaselines.keySet());
         for (UUID uuid : uuids) {
             String path = "players." + uuid;
             data.set(path + ".name", oreNames.getOrDefault(uuid, "unknown"));
             data.set(path + ".warnings", xrayWarnings.getOrDefault(uuid, 0));
             data.set(path + ".last-action", xrayLastAction.getOrDefault(uuid, 0L));
             data.set(path + ".pending-until", pendingXrayBans.getOrDefault(uuid, 0L));
+            Map<Material, Integer> baseline = xrayInventoryBaselines.get(uuid);
+            if (baseline != null) {
+                for (Map.Entry<Material, Integer> entry : baseline.entrySet()) {
+                    data.set(path + ".inventory-baseline." + entry.getKey().name(), entry.getValue());
+                }
+            }
         }
         File parent = xrayStateFile.getParentFile();
         if (parent != null && !parent.exists()) parent.mkdirs();
@@ -540,6 +713,11 @@ public final class SecurityManager {
 
     private String color(String text) { return configManager.color(text); }
 
-    private record OreRecord(long time, String ore) { }
-    private record OreReport(UUID uuid, String name, int window, int diamond, int debris, int gold, int iron, int emerald, String level, int score) { }
+    private record OreRecord(long time, String ore, String world, int x, int y, int z,
+                             String tool, int fortune, boolean silkTouch) { }
+
+    private record OreReport(UUID uuid, String name, int window, int diamond, int debris, int gold, int iron,
+                             int emerald, int total, double rareRatio, boolean caveLikely, String level, int score,
+                             long latestTime, String world, int x, int y, int z, String tool, int fortune,
+                             boolean silkTouch) { }
 }
