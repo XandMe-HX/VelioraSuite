@@ -52,6 +52,7 @@ public final class PetManager implements Listener {
     private static final double WALK_SPEED = 1.10D;
     private static final double VELOCITY_SPEED = 0.28D;
     private static final double HOSTILE_FALLBACK_SPEED = 0.30D;
+    private static final long PET_HUNGER_MILLIS = 24L * 60L * 60L * 1000L;
 
     private final VelioraSuite plugin;
     private final PetConfigManager config;
@@ -62,6 +63,7 @@ public final class PetManager implements Listener {
     private final Map<UUID, VelioraPet> activePets = new HashMap<>();
     private final Map<UUID, String> lastSpawnFailure = new HashMap<>();
     private final Map<UUID, Integer> lastSpawnAttempts = new HashMap<>();
+    private final Map<UUID, Long> hungerNoticeCooldowns = new HashMap<>();
     private final Random random = new Random();
     private final NamespacedKey ownerKey;
     private final NamespacedKey petIdKey;
@@ -243,6 +245,7 @@ public final class PetManager implements Listener {
         lastSpawnAttempts.put(player.getUniqueId(), 0);
         scheduleSpawnChecks(player, definition, owned, entity);
         player.sendMessage(config.color(config.message("pet-summoned", "%prefix% &aPet &f%pet% &adipanggil.").replace("%pet%", config.color(owned.name()))));
+        notifyHungry(player, owned);
         sendFoodHint(player, definition);
         return true;
     }
@@ -541,6 +544,12 @@ public final class PetManager implements Listener {
 
     private void attackIfPossible(Player owner, VelioraPet pet, PetDefinition definition, long now) {
         if (!config.combatEnabled() || pet.targetUuid() == null) return;
+        OwnedPet owned = data.get(owner.getUniqueId()).get(pet.petId());
+        if (owned == null || isHungry(owned)) {
+            pet.targetUuid(null);
+            if (owned != null) notifyHungry(owner, owned);
+            return;
+        }
         if (definition.aquaticPet() || definition.flyingPet() || pet.entity() instanceof Monster) { pet.targetUuid(null); return; }
         Entity target = Bukkit.getEntity(pet.targetUuid());
         if (!(target instanceof LivingEntity living) || living.isDead() || !isAllowedTarget(living)) { pet.targetUuid(null); return; }
@@ -552,11 +561,11 @@ public final class PetManager implements Listener {
             return;
         }
         if (now - pet.lastAttackMillis() < config.attackCooldownSeconds() * 1000L) return;
-        double amount = definition.damage() * config.petDamageMultiplier();
+        double levelMultiplier = owned.level() >= 50 ? 1.20D : owned.level() >= 30 ? 1.10D : 1.0D;
+        double amount = definition.damage() * config.petDamageMultiplier() * levelMultiplier;
         living.damage(amount, owner);
         pet.entity().getWorld().playSound(pet.entity().getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5F, 1.4F);
         pet.lastAttackMillis(now);
-        OwnedPet owned = data.get(owner.getUniqueId()).get(pet.petId());
         if (owned != null) {
             boolean leveled = owned.addExp(2, config.maxLevel());
             data.save(owner.getUniqueId());
@@ -649,6 +658,19 @@ public final class PetManager implements Listener {
     private double scaleFor(PetDefinition definition, int level) {
         double bonus = Math.min(config.maxScaleBonus(), Math.max(0, level - 1) * config.scalePerLevel());
         return definition.scale() + bonus;
+    }
+
+    private boolean isHungry(OwnedPet owned) {
+        return owned == null || System.currentTimeMillis() - owned.lastFed() >= PET_HUNGER_MILLIS;
+    }
+
+    private void notifyHungry(Player player, OwnedPet owned) {
+        if (player == null || owned == null || !isHungry(owned)) return;
+        long now = System.currentTimeMillis();
+        if (now - hungerNoticeCooldowns.getOrDefault(player.getUniqueId(), 0L) < 30L * 60L * 1000L) return;
+        hungerNoticeCooldowns.put(player.getUniqueId(), now);
+        player.sendMessage(config.color(config.message("pet-hungry", "%prefix% &d%pet%&7: Saya butuh makan, Tuan.")
+                .replace("%pet%", owned.name())));
     }
 
     private void sendFoodHint(Player player, PetDefinition definition) {

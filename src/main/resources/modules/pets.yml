@@ -271,6 +271,7 @@ messages:
   pet-storage-open: '%prefix% &aMembuka storage pet.'
   pet-renamed: '%prefix% &aNama pet diubah menjadi &f%name%&a.'
   pet-fed: '%prefix% &aPet &f%pet% &adiberi makan. EXP +&f%exp%&a.'
+  pet-hungry: '%prefix% &d%pet%&7: Saya butuh makan, Tuan.'
   pet-feed-wrong-food: '%prefix% &cPet ini butuh makanan: &f%food%'
   pet-not-found: '%prefix% &cPet &f%pet% &ctidak ditemukan.'
   pet-not-owned: '%prefix% &cKamu belum punya pet &f%pet%&c.'
