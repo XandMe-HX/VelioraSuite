@@ -162,6 +162,8 @@ trade-pool:
     lore:
       - '&7Pedang langka dari Veliora Trader.'
       - '&7Damage target: &f20'
+      - '&bSkill: &fKlik kanan mob untuk memanggil petir.'
+      - '&7Cooldown skill: &f1 jam'
     enchantments:
       - DAMAGE_ALL:5
       - FIRE_ASPECT:2
