@@ -33,16 +33,23 @@ settings:
     # Collision dimatikan supaya hitbox boss besar tidak terus mendorong player.
     collision-enabled: false
     # Hard cap tetap berlaku walaupun config boss salah atau scaling diaktifkan.
-    maximum-health: 30000
-    # HP tetap sesuai tier dan tidak pernah melewati 30K.
+    maximum-health: 10000
+    # HP virtual dibuat ringkas agar raid tetap cepat dan seru.
     health-scale-by-nearby-players: false
     health-per-player-multiplier: 0.18
     max-health-multiplier: 2.35
     # HP virtual menerima damage final normal; hit tidak lagi terasa seperti kebal.
     virtual-damage-multiplier: 1.0
-    # Mace tetap berguna, tetapi damage smash dibatasi agar tidak one-hit boss.
-    mace-damage-multiplier: 0.65
-    mace-max-damage-per-hit: 300
+    # Tiga smash Mace penuh per pemain, lalu cooldown 5 menit.
+    mace-damage-multiplier: 1.0
+    mace-max-damage-per-hit: 450
+    mace-smash-charges: 3
+    mace-smash-cooldown-seconds: 300
+    # Anti reach hanya membatalkan hit + memberi lock damage sementara, tidak ada auto-ban.
+    melee-reach-limit: 6.5
+    invalid-reach-limit: 8
+    invalid-reach-window-seconds: 30
+    invalid-reach-damage-lock-seconds: 120
 
 rarity-chance:
   common: 42.0
@@ -64,7 +71,7 @@ arena:
   target-radius: 60
   leash-to-spawn: true
   teleport-back-if-far: true
-  teleport-back-distance: 70
+  teleport-back-distance: 90
   teleport-back-if-below-spawn-y: true
   below-y-offset: 28
   remove-minion-outside-radius: true
@@ -92,7 +99,7 @@ bosses:
     entity: HUSK
     display-name: '&2Rotten Colossus'
     rarity: COMMON
-    health: 16000
+    health: 6000
     damage: 7.0
     scale: 3.4
     skills: [GROUND_SLAM, SUMMON_MINIONS]
@@ -102,7 +109,7 @@ bosses:
     entity: ZOMBIE
     display-name: '&aMoss Warden'
     rarity: COMMON
-    health: 18000
+    health: 7000
     damage: 7.0
     scale: 3.5
     skills: [POISON_CLOUD, SUMMON_MINIONS]
@@ -112,7 +119,7 @@ bosses:
     entity: RAVAGER
     display-name: '&aForest Beast'
     rarity: RARE
-    health: 20000
+    health: 8000
     damage: 8.0
     scale: 4.4
     skills: [GROUND_SLAM, POISON_CLOUD, RAGE_MODE]
@@ -122,7 +129,7 @@ bosses:
     entity: VINDICATOR
     display-name: '&cInfernal Butcher'
     rarity: RARE
-    health: 21000
+    health: 9000
     damage: 8.0
     scale: 4.2
     skills: [GROUND_SLAM, SUMMON_MINIONS, RAGE_MODE]
@@ -132,7 +139,7 @@ bosses:
     entity: DROWNED
     display-name: '&3Deep Drowned King'
     rarity: RARE
-    health: 22000
+    health: 10000
     damage: 8.0
     scale: 4.2
     skills: [PULL_AURA, POISON_CLOUD, RAGE_MODE]
@@ -142,7 +149,7 @@ bosses:
     entity: HUSK
     display-name: '&eSand Revenant'
     rarity: RARE
-    health: 22000
+    health: 10000
     damage: 8.0
     scale: 4.1
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS]
@@ -152,7 +159,7 @@ bosses:
     entity: RAVAGER
     display-name: '&7Cave Titan'
     rarity: EPIC
-    health: 24000
+    health: 12000
     damage: 9.0
     scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
@@ -162,7 +169,7 @@ bosses:
     entity: WARDEN
     display-name: '&9Ancient Warden'
     rarity: EPIC
-    health: 25000
+    health: 13000
     damage: 9.0
     scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, POISON_CLOUD, RAGE_MODE]
@@ -172,7 +179,7 @@ bosses:
     entity: PIGLIN_BRUTE
     display-name: '&5Abyss Brute'
     rarity: EPIC
-    health: 25000
+    health: 13000
     damage: 9.0
     scale: 4.8
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, RAGE_MODE]
@@ -182,7 +189,7 @@ bosses:
     entity: EVOKER
     display-name: '&dCrystal Evoker'
     rarity: LEGENDARY
-    health: 27000
+    health: 15000
     damage: 10.0
     scale: 5.4
     skills: [FIRE_BOMB, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
@@ -192,7 +199,7 @@ bosses:
     entity: RAVAGER
     display-name: '&6Namazu Earthshaker'
     rarity: LEGENDARY
-    health: 28000
+    health: 16000
     damage: 10.0
     scale: 5.6
     skills: [GROUND_SLAM, FIRE_BOMB, SUMMON_MINIONS, RAGE_MODE]
@@ -202,7 +209,7 @@ bosses:
     entity: WITHER_SKELETON
     display-name: '&8Soul Reaper'
     rarity: LEGENDARY
-    health: 28000
+    health: 16000
     damage: 10.0
     scale: 5.4
     skills: [PULL_AURA, POISON_CLOUD, SUMMON_MINIONS, RAGE_MODE]
@@ -212,7 +219,7 @@ bosses:
     entity: WITHER_SKELETON
     display-name: '&5Void Executioner'
     rarity: MYTHIC
-    health: 30000
+    health: 20000
     damage: 11.0
     scale: 6.0
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
@@ -222,7 +229,7 @@ bosses:
     entity: WARDEN
     display-name: '&0Eclipse Warden'
     rarity: MYTHIC
-    health: 30000
+    health: 20000
     damage: 11.0
     scale: 6.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, POISON_CLOUD, RAGE_MODE]
@@ -232,7 +239,7 @@ bosses:
     entity: WARDEN
     display-name: '&bFrost Warden'
     rarity: LEGENDARY
-    health: 28000
+    health: 16000
     damage: 10.0
     scale: 5.5
     skills: [GROUND_SLAM, LIGHTNING_CHAIN, SOUL_CAGE, HEAL_PULSE, RAGE_MODE]
@@ -242,7 +249,7 @@ bosses:
     entity: WITHER_SKELETON
     display-name: '&cNether Reaper'
     rarity: EPIC
-    health: 26000
+    health: 14000
     damage: 9.0
     scale: 5.1
     skills: [FIRE_BOMB, SHADOW_PULSE, PULL_AURA, RAGE_MODE]
@@ -252,7 +259,7 @@ bosses:
     entity: WARDEN
     display-name: '&5Abyss Guardian'
     rarity: MYTHIC
-    health: 30000
+    health: 20000
     damage: 11.0
     scale: 6.0
     skills: [LIGHTNING_CHAIN, SHADOW_PULSE, SOUL_CAGE, HEAL_PULSE, RAGE_MODE]
@@ -262,7 +269,7 @@ bosses:
     entity: RAVAGER
     display-name: '&bTempest Juggernaut'
     rarity: LEGENDARY
-    health: 29000
+    health: 18000
     damage: 10.0
     scale: 5.5
     skills: [GROUND_SLAM, LIGHTNING_CHAIN, SOUL_CAGE, RAGE_MODE]
@@ -279,7 +286,8 @@ skills:
   damage:
     ground-slam: 6.0
     fire-bomb: 7.0
-    lightning-chain: 6.0
+    lightning-chain: 5.0
+  lightning-radius: 8.0
     shadow-pulse: 5.0
     soul-cage: 4.0
   movement:
