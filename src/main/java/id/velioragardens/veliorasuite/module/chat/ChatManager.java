@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ChatManager {
 
@@ -20,7 +21,8 @@ public final class ChatManager {
     private final ChatFilterManager filterManager;
     private final ChatPlaceholderManager placeholderManager;
     private final ChatFormatManager formatManager;
-    private final Map<UUID, Long> autoReplyCooldowns = new HashMap<>();
+    private final Map<UUID, Long> autoReplyCooldowns = new ConcurrentHashMap<>();
+    private Map<String, ChatConfigManager.AutoReplyEntry> autoReplies = Map.of();
 
     public ChatManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -34,11 +36,13 @@ public final class ChatManager {
 
     public void load() {
         configManager.load();
+        autoReplies = configManager.getAutoReplies();
         plugin.getLogger().info("VelioraChat loaded.");
     }
 
     public void reload() {
         configManager.load();
+        autoReplies = configManager.getAutoReplies();
         cooldownManager.clear();
         commandCooldownManager.clear();
         autoReplyCooldowns.clear();
@@ -213,7 +217,7 @@ public final class ChatManager {
         if (cooldownMillis > 0 && now - last < cooldownMillis) return;
 
         String normalizedMessage = message.toLowerCase(Locale.ROOT);
-        for (Map.Entry<String, ChatConfigManager.AutoReplyEntry> entry : configManager.getAutoReplies().entrySet()) {
+        for (Map.Entry<String, ChatConfigManager.AutoReplyEntry> entry : autoReplies.entrySet()) {
             ChatConfigManager.AutoReplyEntry reply = entry.getValue();
             if (!matchesAnyTrigger(normalizedMessage, reply.triggers())) continue;
 
