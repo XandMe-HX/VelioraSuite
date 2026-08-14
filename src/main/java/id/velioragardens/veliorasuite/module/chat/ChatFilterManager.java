@@ -13,7 +13,7 @@ public final class ChatFilterManager {
 
     private final ChatConfigManager configManager;
     private final Map<UUID, String> lastMessages = new ConcurrentHashMap<>();
-    private final Map<UUID, Integer> repeatCounts = new HashMap<>();
+    private final Map<UUID, Integer> repeatCounts = new ConcurrentHashMap<>();
 
     public ChatFilterManager(ChatConfigManager configManager) {
         this.configManager = configManager;
