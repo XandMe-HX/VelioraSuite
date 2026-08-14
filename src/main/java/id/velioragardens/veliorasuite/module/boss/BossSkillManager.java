@@ -164,9 +164,9 @@ public final class BossSkillManager {
         }
     }
 
-    /** Arena-wide ranged counter with a visible warning before damage lands. */
+    /** A readable close-range raid mechanic: every nearby member gets a warning, then 2.5 hearts of lightning damage. */
     private void lightningChain(LivingEntity boss) {
-        List<Player> targets = new ArrayList<>(nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal()));
+        List<Player> targets = new ArrayList<>(nearbyPlayers(boss.getLocation(), config.lightningChainRadius()));
         if (targets.isEmpty()) return;
         boss.getWorld().playSound(boss.getLocation(), Sound.ENTITY_WARDEN_SONIC_CHARGE, 1.0F, 1.15F);
         for (Player player : targets) {
