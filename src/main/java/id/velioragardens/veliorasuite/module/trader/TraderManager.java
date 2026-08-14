@@ -192,10 +192,29 @@ public final class TraderManager {
 
     private List<TraderTradeItem> selectRandomItems() {
         List<TraderTradeItem> pool = new ArrayList<>(configManager.getTradePool());
-        Collections.shuffle(pool);
         if (pool.isEmpty()) return List.of();
-        int amount = Math.min(configManager.getRandomItemsPerSpawn(), pool.size());
-        return List.copyOf(pool.subList(0, amount));
+
+        List<TraderTradeItem> selected = new ArrayList<>();
+        selectCategory(pool, selected, List.of("builder_supply", "mining_supply", "explorer_supply", "experience_supply", "ender_supply", "diamond_pack_x64"), 2);
+        selectCategory(pool, selected, List.of("enchanted_shulker", "guardian_shield", "ocean_crown", "windwalker_boots", "silk_touch_relic", "aether_pickaxe"), 2);
+        selectCategory(pool, selected, List.of("excalibur", "angel_of_death_bow", "trisula_poseidon", "kapak_leviathan", "ancient_mace", "ryujin_no_tsuri", "skybound_wings"), 1);
+
+        Collections.shuffle(pool);
+        for (TraderTradeItem item : pool) {
+            if (selected.size() >= Math.min(5, configManager.getRandomItemsPerSpawn())) break;
+            if (!selected.contains(item)) selected.add(item);
+        }
+        return List.copyOf(selected);
+    }
+
+    private void selectCategory(List<TraderTradeItem> pool, List<TraderTradeItem> selected, List<String> ids, int amount) {
+        List<TraderTradeItem> category = new ArrayList<>();
+        for (TraderTradeItem item : pool) if (ids.contains(item.getId())) category.add(item);
+        Collections.shuffle(category);
+        for (TraderTradeItem item : category) {
+            if (amount-- <= 0) break;
+            selected.add(item);
+        }
     }
 
     private void broadcast(String path, String fallback) {

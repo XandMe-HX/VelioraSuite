@@ -3,22 +3,22 @@ settings:
   prefix: '&8[&bVelioraFishing&8] '
 
   rarity-chance:
-    trash: 20.0
-    vanilla: 15.0
-    common: 55.0
-    ornamental: 3.0
-    epic: 2.5
-    legendary: 0.20
-    mitologi: 0.05
+    trash: 18.0
+    vanilla: 16.0
+    common: 56.0
+    ornamental: 6.0
+    epic: 3.5
+    legendary: 0.40
+    mitologi: 0.10
 
   price:
     trash: {min: 1, max: 1, max-final: 1}
-    vanilla: {min: 10, max: 50, max-final: 50}
-    common: {min: 50, max: 100, max-final: 100}
-    ornamental: {min: 100, max: 500, max-final: 500}
-    epic: {min: 500, max: 1000, max-final: 1000}
-    legendary: {min: 10000, max: 50000, max-final: 50000}
-    mitologi: {min: 50000, max: 150000, max-final: 500000}
+    vanilla: {min: 15, max: 40, max-final: 50}
+    common: {min: 100, max: 170, max-final: 225}
+    ornamental: {min: 350, max: 700, max-final: 900}
+    epic: {min: 1800, max: 3200, max-final: 4200}
+    legendary: {min: 12000, max: 18000, max-final: 24000}
+    mitologi: {min: 35000, max: 55000, max-final: 70000}
 
   minigame:
     enabled: true
@@ -29,12 +29,12 @@ settings:
     remove-vanilla-caught-entity: true
     difficulty:
       trash: {enabled: false, spam-needed: 0, seconds: 0.0}
-      vanilla: {enabled: true, spam-needed: 5, seconds: 5.0}
-      common: {enabled: true, spam-needed: 10, seconds: 10.0}
-      ornamental: {enabled: true, spam-needed: 20, seconds: 10.0}
-      epic: {enabled: true, spam-needed: 25, seconds: 10.0}
-      legendary: {enabled: true, spam-needed: 50, seconds: 25.0}
-      mitologi: {enabled: true, spam-needed: 100, seconds: 30.0}
+      vanilla: {enabled: true, spam-needed: 3, seconds: 6.0}
+      common: {enabled: true, spam-needed: 5, seconds: 8.0}
+      ornamental: {enabled: true, spam-needed: 8, seconds: 10.0}
+      epic: {enabled: true, spam-needed: 12, seconds: 12.0}
+      legendary: {enabled: true, spam-needed: 18, seconds: 16.0}
+      mitologi: {enabled: true, spam-needed: 25, seconds: 20.0}
 
   sell-gui:
     enabled: true
