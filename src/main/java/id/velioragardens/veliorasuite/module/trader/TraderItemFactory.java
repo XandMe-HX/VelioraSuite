@@ -5,6 +5,7 @@ import id.velioragardens.veliorasuite.module.trader.model.TraderPaymentType;
 import id.velioragardens.veliorasuite.module.trader.model.TraderTradeItem;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -68,7 +69,7 @@ public final class TraderItemFactory {
             for (String line : item.getLore()) lore.add(configManager.color(line));
             if (item.isUnrepairable()) lore.add(configManager.color("&cTidak bisa direpair."));
             meta.setLore(lore);
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(itemIdKey, PersistentDataType.STRING, item.getId());
             if (item.isUnrepairable()) pdc.set(unrepairableKey, PersistentDataType.BYTE, (byte) 1);
@@ -109,7 +110,22 @@ public final class TraderItemFactory {
         if (parts.length > 1) {
             try { level = Integer.parseInt(parts[1].trim()); } catch (NumberFormatException ignored) { level = 1; }
         }
-        Enchantment enchantment = Enchantment.getByName(name);
+        String modern = switch (name) {
+            case "DAMAGE_ALL" -> "sharpness";
+            case "LOOT_BONUS_MOBS" -> "looting";
+            case "DURABILITY" -> "unbreaking";
+            case "ARROW_DAMAGE" -> "power";
+            case "ARROW_FIRE" -> "flame";
+            case "ARROW_KNOCKBACK" -> "punch";
+            case "ARROW_INFINITE" -> "infinity";
+            case "DIG_SPEED" -> "efficiency";
+            case "LOOT_BONUS_BLOCKS" -> "fortune";
+            case "PROTECTION_ENVIRONMENTAL" -> "protection";
+            case "PROTECTION_FALL" -> "feather_falling";
+            case "LUCK" -> "luck_of_the_sea";
+            default -> name.toLowerCase(Locale.ROOT);
+        };
+        Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(modern));
         if (enchantment != null) stack.addUnsafeEnchantment(enchantment, level);
     }
 }
