@@ -187,6 +187,7 @@ messages:
     - '&f/fish bag &7- Buka Fish Bag.'
     - '&f/fish sell &7- Jual ikan.'
     - '&f/fish collection &7- Buka koleksi ikan.'
+    - '&f/fish rods &7- Buka Rod Shop.'
     - '&f/fish top &7- Leaderboard fishing.'
     - '&f/fish reload &7- Reload config.'
     - '&8&m--------------------------------'
