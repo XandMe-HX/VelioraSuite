@@ -41,6 +41,12 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
                 manager.openSellGui(player);
                 return true;
             }
+            case "rods", "rod", "shop" -> {
+                if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
+                if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
+                manager.openRodShop(player);
+                return true;
+            }
             case "collection" -> {
                 if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
                 if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
@@ -74,7 +80,7 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
         List<String> options = new ArrayList<>(Arrays.asList("help"));
         if (hasBag(sender)) options.add("bag");
         if (hasSell(sender)) options.add("sell");
-        if (hasUse(sender)) options.add("collection");
+        if (hasUse(sender)) { options.add("collection"); options.add("rods"); }
         if (hasTop(sender)) options.add("top");
         if (hasReload(sender)) options.add("reload");
         return filter(options, args[0]);
