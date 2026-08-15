@@ -33,16 +33,16 @@ gui:
   preview-title: '&8Preview: %kit%'
   filler:
     enabled: true
-    material: BLACK_STAINED_GLASS_PANE
+    material: GRAY_STAINED_GLASS_PANE
     name: ' '
     lore: []
   status-lore:
-    available: ['', '&aStatus: Bisa diambil', '&7Premium: claim pertama gratis 1x.', '&7Klik kiri untuk claim.', '&7Klik kanan untuk preview.']
-    cooldown: ['', '&cStatus: Cooldown', '&7Sisa waktu: &f%time%', '&7Klik kanan untuk preview.']
-    locked-permission: ['', '&cStatus: Terkunci', '&cTerkunci', '&7Kamu tidak punya permission kit ini.']
-    locked-premium: ['', '&cStatus: Premium', '&cTerkunci', '&7Butuh permission: &f%premium_permission%']
-    need-buy: ['', '&eStatus: Berbayar', '&7Harga claim: &a$%price%', '&7Claim pertama premium gratis 1x.', '&7Kalau sudah pernah gratis, claim berikutnya bayar.', '&7Klik kiri untuk claim/buy.', '&7Klik kanan untuk preview.']
-    bought: ['', '&aStatus: Sudah dibeli', '&7Klik kiri untuk claim.', '&7Klik kanan untuk preview.']
+    available: ['', '&a&lSIAP DIAMBIL', '&7Klik kiri: &fClaim kit', '&7Klik kanan: &fLihat isi kit']
+    cooldown: ['', '&c&lMASIH COOLDOWN', '&7Tersedia lagi: &f%time%', '&7Klik kanan: &fLihat isi kit']
+    locked-permission: ['', '&c&lTERKUNCI', '&7Kamu belum memiliki permission kit ini.', '&7Klik kanan: &fLihat isi kit']
+    locked-premium: ['', '&d&lKHUSUS PREMIUM', '&7Butuh: &f%premium_permission%', '&7Klik kanan: &fLihat isi kit']
+    need-buy: ['', '&e&lPERLU PEMBAYARAN', '&7Harga: &a$%price%', '&7Klik kiri: &fClaim dan bayar', '&7Klik kanan: &fLihat isi kit']
+    bought: ['', '&b&lSUDAH DIBELI', '&7Klik kiri: &fClaim kit', '&7Klik kanan: &fLihat isi kit']
 
 messages:
   no-permission: '%prefix% &cKamu tidak punya izin.'
@@ -177,7 +177,7 @@ kits:
     premium-level: 1
     cooldown: '0s'
     buy: { enabled: true, price: 10000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 29, material: PLAYER_HEAD, name: '&aPremium I', lore: ['&7Full iron kit enchant easy.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a10K', '&7Butuh permission: &fveliorasuite.kits.premium.1', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 29, material: IRON_CHESTPLATE, name: '&aPremium I', lore: ['&7Full iron kit enchant easy.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a10K', '&7Butuh permission: &fveliorasuite.kits.premium.1', '&7Klik kiri untuk claim.'] }
     items:
       - { material: IRON_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
       - { material: IRON_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
@@ -198,7 +198,7 @@ kits:
     premium-level: 2
     cooldown: '0s'
     buy: { enabled: true, price: 20000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 31, material: PLAYER_HEAD, name: '&bPremium II', lore: ['&7Full diamond kit enchant level 2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a20K', '&7Butuh permission: &fveliorasuite.kits.premium.2', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 30, material: DIAMOND_CHESTPLATE, name: '&bPremium II', lore: ['&7Full diamond kit enchant level 2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a20K', '&7Butuh permission: &fveliorasuite.kits.premium.2', '&7Klik kiri untuk claim.'] }
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
@@ -219,7 +219,7 @@ kits:
     premium-level: 3
     cooldown: '0s'
     buy: { enabled: true, price: 30000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 33, material: PLAYER_HEAD, name: '&dPremium III', lore: ['&7Full diamond kit enchant level 3.', '&7Golden Apple x20, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a30K', '&7Butuh permission: &fveliorasuite.kits.premium.3', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 31, material: TOTEM_OF_UNDYING, name: '&dPremium III', lore: ['&7Full diamond kit enchant level 3.', '&7Golden Apple x20, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a30K', '&7Butuh permission: &fveliorasuite.kits.premium.3', '&7Klik kiri untuk claim.'] }
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -241,7 +241,7 @@ kits:
     premium-level: 4
     cooldown: '0s'
     buy: { enabled: true, price: 40000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 39, material: PLAYER_HEAD, name: '&6Premium IV', lore: ['&7Full netherite kit enchant level 3.', '&7Golden Apple x30, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a40K', '&7Butuh permission: &fveliorasuite.kits.premium.4', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 32, material: NETHERITE_CHESTPLATE, name: '&6Premium IV', lore: ['&7Full netherite kit enchant level 3.', '&7Golden Apple x30, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a40K', '&7Butuh permission: &fveliorasuite.kits.premium.4', '&7Klik kiri untuk claim.'] }
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -263,7 +263,7 @@ kits:
     premium-level: 5
     cooldown: '0s'
     buy: { enabled: true, price: 50000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 41, material: PLAYER_HEAD, name: '&cPremium V', lore: ['&7Full netherite kit enchant hard.', '&7Golden Apple x30, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a50K', '&7Butuh permission: &fveliorasuite.kits.premium.5', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 33, material: NETHER_STAR, name: '&cPremium V', lore: ['&7Full netherite kit enchant hard.', '&7Golden Apple x30, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a50K', '&7Butuh permission: &fveliorasuite.kits.premium.5', '&7Klik kiri untuk claim.'] }
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }

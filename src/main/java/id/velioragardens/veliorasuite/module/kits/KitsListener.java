@@ -35,6 +35,17 @@ public final class KitsListener implements Listener {
             return;
         }
 
+        String action = holder.getAction(event.getRawSlot());
+        if ("close".equals(action)) {
+            player.closeInventory();
+            return;
+        }
+        if ("help".equals(action)) {
+            player.closeInventory();
+            kitsManager.sendHelp(player);
+            return;
+        }
+
         String kitId = holder.getKitId(event.getRawSlot());
         if (kitId == null) {
             return;
