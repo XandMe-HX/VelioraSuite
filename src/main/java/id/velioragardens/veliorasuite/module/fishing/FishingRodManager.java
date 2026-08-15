@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.entity.FishHook;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -187,6 +188,7 @@ public final class FishingRodManager implements Listener {
                 Component.text("Klik untuk membeli", TextColor.color(0xFFFFFF))
         );
         meta.lore(lore);
+        applyRodEnchantments(meta, rod.tier());
         item.setItemMeta(meta);
         return item;
     }
@@ -198,12 +200,33 @@ public final class FishingRodManager implements Listener {
         meta.lore(List.of(
                 Component.text("VelioraFishing Rod • Tier " + rod.tier(), TextColor.color(0x55D6FF)),
                 Component.text("+" + rod.secondsBonus() + ".0 detik • -" + rod.clickReduction() + " klik", TextColor.color(0xD6E0EB)),
+                Component.text("Custom: " + customEnchantName(rod.tier()), TextColor.color(0xB56CFF)),
+                Component.text("Enchant: Lure " + rod.tier() + " • Luck " + rod.tier() + " • Unbreaking " + (rod.tier() + 2), TextColor.color(0x70E0C0)),
                 Component.text("Terikat: " + owner.getName(), TextColor.color(0x8391A5))
         ));
         meta.getPersistentDataContainer().set(tierKey, PersistentDataType.INTEGER, rod.tier());
         meta.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owner.getUniqueId().toString());
+        applyRodEnchantments(meta, rod.tier());
         item.setItemMeta(meta);
         return item;
+    }
+
+    private void applyRodEnchantments(ItemMeta meta, int tier) {
+        int level = Math.max(1, Math.min(5, tier));
+        meta.addEnchant(Enchantment.LURE, level, true);
+        meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, level, true);
+        meta.addEnchant(Enchantment.UNBREAKING, level + 2, true);
+        if (tier >= 4) meta.addEnchant(Enchantment.MENDING, 1, true);
+    }
+
+    private String customEnchantName(int tier) {
+        return switch (tier) {
+            case 1 -> "River Sense I";
+            case 2 -> "Current Reader II";
+            case 3 -> "Tidal Focus III";
+            case 4 -> "Abyssal Hunter IV";
+            default -> "Leviathan's Favor V";
+        };
     }
 
     private int getBoundTier(ItemStack item) {

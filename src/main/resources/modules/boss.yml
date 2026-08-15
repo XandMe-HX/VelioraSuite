@@ -6,6 +6,13 @@ settings:
   arena-version: 4
   spawn:
     enabled: true
+    # Jadwal utama memakai WIB. Tambah jam lain dengan format 'HH:mm' bila dibutuhkan.
+    daily-schedule:
+      enabled: true
+      times: ['20:00']
+    # Fallback ketika daily-schedule dimatikan.
+    realtime-hourly:
+      enabled: false
     interval-minutes: 60
     retry-minutes: 5
     despawn-minutes: 35
@@ -287,9 +294,9 @@ skills:
     ground-slam: 6.0
     fire-bomb: 7.0
     lightning-chain: 5.0
-  lightning-radius: 8.0
     shadow-pulse: 5.0
     soul-cage: 4.0
+  lightning-radius: 8.0
   movement:
     # Efek gerak tetap terasa, tetapi tidak membuat player mental terus-menerus.
     ground-slam-knockback: 0.45
@@ -363,7 +370,7 @@ messages:
   reward-team-bonus: '%prefix% &bBonus team &f%team%&b: &e%money%'
   boss-next: '%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.'
   boss-active: '%prefix% &cBoss aktif: &f%boss% &7di &f%world% %x% %y% %z%&7. HP: &f%health%/%max_health%'
-  spawn-set: '%prefix% &aSpawn boss &f%name% &aberhasil diset. Jadwal boss sekarang aktif dan mengikuti WIB setiap 1 jam.'
+  spawn-set: '%prefix% &aSpawn boss &f%name% &aberhasil diset. Jadwal boss sekarang aktif mengikuti jam WIB di settings.spawn.daily-schedule.times.'
   reload-success: '%prefix% &aVelioraBoss berhasil direload.'
   stop-success: '%prefix% &aBoss aktif berhasil dihentikan.'
   no-active-boss: '%prefix% &cBelum ada spawn point boss. Gunakan &f/boss set <nama>&c dulu.'
