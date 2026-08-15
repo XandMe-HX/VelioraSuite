@@ -314,7 +314,10 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
                 if (online != null) online.kickPlayer("§cIP kamu diblokir setelah review " + value.id);
                 value.status = "IP_BANNED by " + sender.getName();
             } else if (action.equals("ban7d")) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tempban " + value.player + " 7d CombatGuard " + value.id);
+                Date expires = new Date(System.currentTimeMillis() + 7L * 24L * 60L * 60L * 1000L);
+                Bukkit.getBanList(BanList.Type.NAME).addBan(value.player, "CombatGuard " + value.id, expires, sender.getName());
+                Player online = Bukkit.getPlayer(value.uuid);
+                if (online != null) online.kickPlayer("§cKamu diban 7 hari setelah review " + value.id);
                 value.status = "BANNED_7D by " + sender.getName();
             } else {
                 sender.sendMessage("§cGunakan ipban atau ban7d.");
