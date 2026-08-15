@@ -29,6 +29,9 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -142,6 +145,20 @@ public final class BossManager implements Listener {
         player.sendMessage(config.color(config.message("boss-next", "%prefix% &eBoss belum muncul. Spawn berikutnya dalam &f%time%&e.").replace("%time%", timeLeft(nextSpawnAt))));
     }
 
+    public boolean spawnRandom(CommandSender sender) {
+        Location location = randomSpawnPoint();
+        if (location == null) {
+            sender.sendMessage(config.color(config.message("no-spawn-point", "%prefix% &cBelum ada spawn point boss. Gunakan &f/boss set <nama>&c dulu.")));
+            return false;
+        }
+        BossDefinition definition = randomDefinition();
+        if (definition == null) {
+            sender.sendMessage(config.color(config.message("boss-not-found", "%prefix% &cTidak ada definisi boss yang valid di boss.yml.")));
+            return false;
+        }
+        return spawn(definition, location, true);
+    }
+
     public boolean spawnByName(String input, CommandSender sender) {
         BossDefinition definition = resolveBoss(input);
         if (definition == null) {
@@ -162,11 +179,17 @@ public final class BossManager implements Listener {
         BossDefinition definition = config.bosses().get(exact);
         if (definition != null) return definition;
         String compact = normalizeLoose(input);
+        BossDefinition prefixMatch = null;
         for (BossDefinition boss : config.bosses().values()) {
-            if (normalizeLoose(boss.id()).equals(compact)) return boss;
-            if (normalizeLoose(config.plain(boss.displayName())).equals(compact)) return boss;
+            String id = normalizeLoose(boss.id());
+            String name = normalizeLoose(config.plain(boss.displayName()));
+            if (id.equals(compact) || name.equals(compact)) return boss;
+            if (id.startsWith(compact) || name.startsWith(compact)) {
+                if (prefixMatch != null) return null; // Prefix ambigu: minta nama lebih lengkap.
+                prefixMatch = boss;
+            }
         }
-        return null;
+        return prefixMatch;
     }
 
     public void sendBossList(CommandSender sender) {
@@ -763,6 +786,21 @@ public final class BossManager implements Listener {
     }
 
     private long nextSpawnMillis() {
+        if (config.dailyScheduleEnabled()) {
+            ZonedDateTime now = ZonedDateTime.now(JAKARTA_ZONE);
+            ZonedDateTime nearest = null;
+            for (String raw : config.dailySpawnTimes()) {
+                try {
+                    LocalTime time = LocalTime.parse(raw, DateTimeFormatter.ofPattern("HH:mm"));
+                    ZonedDateTime candidate = now.withHour(time.getHour()).withMinute(time.getMinute()).withSecond(0).withNano(0);
+                    if (!candidate.isAfter(now)) candidate = candidate.plusDays(1L);
+                    if (nearest == null || candidate.isBefore(nearest)) nearest = candidate;
+                } catch (DateTimeParseException ignored) {
+                    plugin.getLogger().warning("VelioraBoss: jam tidak valid di settings.spawn.daily-times: " + raw);
+                }
+            }
+            if (nearest != null) return nearest.toInstant().toEpochMilli();
+        }
         int interval = config.intervalMinutes();
         if (interval == 60) {
             return ZonedDateTime.now(JAKARTA_ZONE).truncatedTo(ChronoUnit.HOURS).plusHours(1L).toInstant().toEpochMilli();
