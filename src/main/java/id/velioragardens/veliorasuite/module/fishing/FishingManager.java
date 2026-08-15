@@ -63,6 +63,7 @@ public final class FishingManager {
 
     public void reload() {
         configManager.load();
+        if (rodManager != null) rodManager.reload();
     }
 
     public void shutdown() {
