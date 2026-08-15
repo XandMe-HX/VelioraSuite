@@ -5,6 +5,8 @@ settings:
   mana:
     default-mana: 10
     default-max-mana: 10
+    # Batas keras agar bonus quest tidak membuat Mana tanpa akhir.
+    max-mana-cap: 100
     min-mana: 0
     daily-reset:
       enabled: true

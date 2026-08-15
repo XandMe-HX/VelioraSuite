@@ -58,7 +58,7 @@ public final class ManaManager {
     public boolean addMaxMana(Player player, int amount, boolean fillToNewMax) {
         if (player == null || amount <= 0) return false;
         PlayerManaData data = getData(player);
-        data.setMaxMana(data.getMaxMana() + amount);
+        data.setMaxMana(Math.min(configManager.getMaxManaCap(), data.getMaxMana() + amount));
         if (fillToNewMax) {
             data.setMana(data.getMaxMana());
         } else {
@@ -79,7 +79,7 @@ public final class ManaManager {
 
     public boolean setMaxMana(Player player, int amount) {
         PlayerManaData data = getData(player);
-        data.setMaxMana(Math.max(1, amount));
+        data.setMaxMana(Math.min(configManager.getMaxManaCap(), Math.max(1, amount)));
         clamp(data);
         dataManager.save(data);
         return true;
@@ -128,7 +128,7 @@ public final class ManaManager {
     }
 
     private void clamp(PlayerManaData data) {
-        data.setMaxMana(Math.max(1, data.getMaxMana()));
+        data.setMaxMana(Math.min(configManager.getMaxManaCap(), Math.max(1, data.getMaxMana())));
         int min = configManager.getMinMana();
         data.setMana(Math.max(min, Math.min(data.getMana(), data.getMaxMana())));
     }

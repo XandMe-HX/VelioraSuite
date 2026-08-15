@@ -199,10 +199,14 @@ public final class QuestManager {
         int money = progress.getCurrentRewardMoney();
         rewardManager.depositMoney(player, money);
         rewardManager.giveItems(player, configManager.getBaseItemRewards(category), 1);
+        if (configManager.isGiveManaOnComplete() && skillsHook.isAvailable()) {
+            skillsHook.giveMana(player, configManager.getManaReward(), "quest:reward:" + category.key());
+        }
 
         int newCompleted = progress.getCompletedCount() + 1;
         progress.setCompletedCount(newCompleted);
-        boolean levelUp = newCompleted % configManager.getCompletionsPerLevel() == 0;
+        boolean levelUp = newCompleted % configManager.getCompletionsPerLevel() == 0
+                && progress.getLevel() < configManager.getMaxLevel();
         if (levelUp) progress.setLevel(progress.getLevel() + 1);
         int reachedLevel = progress.getLevel();
         int milestoneMultiplier = levelUp ? configManager.getMilestoneRewardMultiplier(reachedLevel) : 0;
@@ -213,7 +217,7 @@ public final class QuestManager {
         progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
         progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
 
-        boolean autoRestart = configManager.isAutoRestartAfterClaim();
+        boolean autoRestart = tryAutoRestart(player, category, progress);
         progress.setState(autoRestart ? QuestState.ACTIVE : QuestState.CLAIMED);
         dataManager.save(data);
         if (autoRestart) bossBarManager.showOrUpdate(player, category, progress);
@@ -221,6 +225,11 @@ public final class QuestManager {
 
         if (automatic) {
             send(player, "quest-auto-completed", "%prefix% &aQuest &f%quest% &aselesai. Reward: &f%money%&a + &f%base_items%&a. Level sekarang: &f%level%&a.%milestone_message%", placeholders(category, progress, 0, money, milestoneMultiplier, manaBonus));
+            if (autoRestart) {
+                send(player, "quest-auto-restarted", "%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.", placeholders(category, progress, 0));
+            } else if (configManager.isAutoRestartAfterClaim()) {
+                send(player, "quest-auto-paused", "%prefix% &eQuest belum dilanjutkan karena Mana tidak cukup. Mulai lagi dari menu Quest setelah reset.", Map.of());
+            }
             return true;
         }
 
@@ -228,6 +237,15 @@ public final class QuestManager {
         if (levelUp) send(player, "quest-level-up", "%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.", placeholders(category, progress, 0, money, milestoneMultiplier, manaBonus));
         if (autoRestart) send(player, "quest-auto-restarted", "%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.", placeholders(category, progress, 0));
         return true;
+    }
+
+    private boolean tryAutoRestart(Player player, QuestCategory category, PlayerCategoryProgress progress) {
+        if (!configManager.isAutoRestartAfterClaim()) return false;
+        if (configManager.hasBypassMana(player) || !configManager.isRequireSkillsMana()) return true;
+        if (!skillsHook.isAvailable()) return false;
+
+        int manaCost = skillsHook.getQuestManaCost(progress.getLevel());
+        return manaCost <= 0 || skillsHook.takeMana(player, manaCost, "quest:auto:" + category.key());
     }
 
     private boolean validateCategory(Player player, QuestCategory category) {

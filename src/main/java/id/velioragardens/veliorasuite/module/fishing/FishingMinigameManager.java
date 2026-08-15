@@ -72,6 +72,10 @@ public final class FishingMinigameManager implements Listener {
         remove(event.getPlayer().getUniqueId());
     }
 
+    public boolean isActive(Player player) {
+        return player != null && sessions.containsKey(player.getUniqueId());
+    }
+
     public void clear() {
         for (Session session : sessions.values()) session.cancelTask();
         sessions.clear();

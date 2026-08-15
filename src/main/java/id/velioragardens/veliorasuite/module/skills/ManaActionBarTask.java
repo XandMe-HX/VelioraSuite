@@ -1,6 +1,8 @@
 package id.velioragardens.veliorasuite.module.skills;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.api.VelioraModule;
+import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import id.velioragardens.veliorasuite.module.skills.model.PlayerManaData;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -9,6 +11,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
+
+import java.util.Optional;
 
 public final class ManaActionBarTask {
 
@@ -47,6 +51,7 @@ public final class ManaActionBarTask {
     }
 
     private void send(Player player) {
+        if (isFishingMinigameActive(player)) return;
         PlayerManaData data = manaManager.getData(player);
         String text = configManager.getActionBarFormat()
                 .replace("%health%", String.valueOf(Math.max(0, (int) Math.ceil(player.getHealth()))))
@@ -71,6 +76,17 @@ public final class ManaActionBarTask {
 
         String colored = ChatColor.translateAlternateColorCodes('&', text);
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(colored));
+    }
+
+    private boolean isFishingMinigameActive(Player player) {
+        if (plugin.getModuleManager() == null) return false;
+        Optional<VelioraModule> module = plugin.getModuleManager().getModule("fishing");
+        if (module.isEmpty() || !(module.get() instanceof FishingModule fishingModule)
+                || fishingModule.getFishingManager() == null
+                || fishingModule.getFishingManager().getMinigameManager() == null) {
+            return false;
+        }
+        return fishingModule.getFishingManager().getMinigameManager().isActive(player);
     }
 
     private int manaPercent(int mana, int maxMana) {
