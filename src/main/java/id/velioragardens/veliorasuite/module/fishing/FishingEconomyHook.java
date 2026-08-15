@@ -43,8 +43,13 @@ public final class FishingEconomyHook {
             if (registration == null) return warn();
             Object economy = registration.getProvider();
             Method withdraw = economy.getClass().getMethod("withdrawPlayer", OfflinePlayer.class, double.class);
-            withdraw.invoke(economy, player, amount);
-            return true;
+            Object response = withdraw.invoke(economy, player, amount);
+            try {
+                Method success = response.getClass().getMethod("transactionSuccess");
+                return Boolean.TRUE.equals(success.invoke(response));
+            } catch (Exception ignored) {
+                return true;
+            }
         } catch (Exception exception) {
             return warn();
         }
