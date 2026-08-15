@@ -36,6 +36,20 @@ public final class FishingRodManager implements Listener {
         tierKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_rod_tier");
         ownerKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_rod_owner");
         rods = manager.getConfigManager().getRodDefinitions();
+        startAmbientAura();
+    }
+
+    private void startAmbientAura() {
+        Bukkit.getScheduler().runTaskTimer(manager.getConfigManager().getPlugin(), () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                int tier = getTier(player);
+                if (tier < 3 || player.isDead()) continue;
+                Particle particle = tier == 3 ? Particle.ENCHANT : tier == 4 ? Particle.SOUL_FIRE_FLAME : Particle.END_ROD;
+                int count = tier == 5 ? 4 : 2;
+                player.getWorld().spawnParticle(particle, player.getLocation().add(0.0D, 1.0D, 0.0D),
+                        count, 0.28D, 0.38D, 0.28D, 0.01D);
+            }
+        }, 20L, 20L);
     }
 
     public void reload() {
