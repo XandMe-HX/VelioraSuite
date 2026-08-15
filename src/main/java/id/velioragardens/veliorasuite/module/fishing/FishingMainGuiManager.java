@@ -26,7 +26,7 @@ public final class FishingMainGuiManager implements Listener {
         Inventory inventory = Bukkit.createInventory(null, 27, manager.getConfigManager().color("&8VelioraFishing"));
         inventory.setItem(10, item(Material.CHEST, "&bFish Bag", List.of("&7Buka tas ikan virtual.", "&f/fish bag")));
         inventory.setItem(11, item(Material.BARREL, "&aSell Fish", List.of("&7Buka GUI jual ikan.", "&f/fish sell")));
-        inventory.setItem(13, item(Material.FISHING_ROD, "&aVelioraFishing", List.of("&7Custom fishing, minigame,", "&7bag, collection, sell, dan top.")));
+        inventory.setItem(13, item(Material.FISHING_ROD, "&aRod Shop", List.of("&7Beli rod dan lihat bonus", "&7minigame serta aura memancing.")));
         inventory.setItem(15, item(Material.BOOK, "&dFish Collection", List.of("&7Lihat ikan yang sudah kamu temukan.", "&f/fish collection")));
         inventory.setItem(16, item(Material.OAK_SIGN, "&eFish Top", List.of("&7Lihat leaderboard gabungan.", "&f/fish top")));
         inventory.setItem(22, item(Material.PLAYER_HEAD, "&fFishing Stats", List.of("&7Gunakan &f/fish top &7untuk data ranking.")));
@@ -46,6 +46,7 @@ public final class FishingMainGuiManager implements Listener {
         switch (slot) {
             case 10 -> openNextTick(player, () -> manager.openBagGui(player));
             case 11 -> openNextTick(player, () -> manager.openSellGui(player));
+            case 13 -> openNextTick(player, () -> manager.openRodShop(player));
             case 15 -> openNextTick(player, () -> manager.openCollectionGui(player));
             case 16, 22 -> openNextTick(player, () -> manager.sendTop(player));
             case 26 -> player.closeInventory();
