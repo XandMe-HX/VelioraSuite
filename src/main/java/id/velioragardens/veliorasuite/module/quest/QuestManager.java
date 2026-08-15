@@ -199,6 +199,9 @@ public final class QuestManager {
         int money = progress.getCurrentRewardMoney();
         rewardManager.depositMoney(player, money);
         rewardManager.giveItems(player, configManager.getBaseItemRewards(category), 1);
+        if (configManager.isGiveManaOnComplete() && skillsHook.isAvailable()) {
+            skillsHook.giveMana(player, configManager.getManaReward(), "quest:reward:" + category.key());
+        }
 
         int newCompleted = progress.getCompletedCount() + 1;
         progress.setCompletedCount(newCompleted);
