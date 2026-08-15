@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 public final class KitsListener implements Listener {
@@ -74,6 +75,14 @@ public final class KitsListener implements Listener {
 
         if (click.isLeftClick()) {
             kitsManager.claimKit(player, kitId);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof KitGuiManager.KitsGuiHolder
+                || event.getView().getTopInventory().getHolder() instanceof KitPreviewManager.PreviewHolder) {
+            event.setCancelled(true);
         }
     }
 
