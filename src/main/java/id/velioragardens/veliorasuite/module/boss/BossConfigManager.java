@@ -130,7 +130,12 @@ public final class BossConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String prefix() { return str("messages.prefix", "&8[&cVelioraBoss&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
-    public boolean realtimeHourlySpawnEnabled() { return bool("settings.spawn.realtime-hourly.enabled", true); }
+    public boolean dailyScheduleEnabled() { return bool("settings.spawn.daily-schedule.enabled", true); }
+    public List<String> dailySpawnTimes() {
+        List<String> times = config == null ? List.of() : config.getStringList("settings.spawn.daily-schedule.times");
+        return times.isEmpty() ? List.of("20:00") : times;
+    }
+    public boolean realtimeHourlySpawnEnabled() { return !dailyScheduleEnabled() && bool("settings.spawn.realtime-hourly.enabled", false); }
     public int intervalMinutes() { return realtimeHourlySpawnEnabled() ? 60 : Math.max(1, integer("settings.spawn.interval-minutes", 60)); }
     public int spawnRetryMinutes() { return Math.max(1, integer("settings.spawn.retry-minutes", 5)); }
     public int despawnMinutes() { return Math.max(1, integer("settings.spawn.despawn-minutes", 25)); }

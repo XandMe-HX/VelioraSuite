@@ -36,7 +36,10 @@ public final class BossCommand implements CommandExecutor, TabCompleter {
             }
             case "spawn" -> {
                 if (!has(sender, "veliorasuite.boss.spawn")) { noPerm(sender); return true; }
-                if (args.length < 2) { sender.sendMessage("/boss spawn <boss>"); return true; }
+                if (args.length < 2) {
+                    manager.spawnRandom(sender);
+                    return true;
+                }
                 manager.spawnByName(joinSpace(args, 1), sender);
                 return true;
             }
