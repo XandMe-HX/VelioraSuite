@@ -42,8 +42,27 @@ public final class BossConfigManager {
         migrateBossBarV3(file);
         migrateArenaV4(file);
         migrateNotificationDefaults(file);
+        migrateHourlyScheduleV2(file);
         loadRarityChance();
         loadBosses();
+    }
+
+    /**
+     * Restores the intended WIB clock schedule on existing servers:
+     * 19:29 -> 20:00 -> 21:00 -> 22:00, instead of one fixed daily time.
+     */
+    private void migrateHourlyScheduleV2(File file) {
+        if (config.getInt("settings.spawn.schedule-version", 0) >= 2) return;
+        config.set("settings.spawn.daily-schedule.enabled", false);
+        config.set("settings.spawn.realtime-hourly.enabled", true);
+        config.set("settings.spawn.interval-minutes", 60);
+        config.set("settings.spawn.schedule-version", 2);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: jadwal WIB per pergantian jam diterapkan.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menyimpan migrasi jadwal: " + exception.getMessage());
+        }
     }
 
     /** Applies the approved boss rebalance once while preserving schedule, arena, and custom messages. */
@@ -130,12 +149,12 @@ public final class BossConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String prefix() { return str("messages.prefix", "&8[&cVelioraBoss&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
-    public boolean dailyScheduleEnabled() { return bool("settings.spawn.daily-schedule.enabled", true); }
+    public boolean dailyScheduleEnabled() { return bool("settings.spawn.daily-schedule.enabled", false); }
     public List<String> dailySpawnTimes() {
         List<String> times = config == null ? List.of() : config.getStringList("settings.spawn.daily-schedule.times");
         return times.isEmpty() ? List.of("20:00") : times;
     }
-    public boolean realtimeHourlySpawnEnabled() { return !dailyScheduleEnabled() && bool("settings.spawn.realtime-hourly.enabled", false); }
+    public boolean realtimeHourlySpawnEnabled() { return !dailyScheduleEnabled() && bool("settings.spawn.realtime-hourly.enabled", true); }
     public int intervalMinutes() { return realtimeHourlySpawnEnabled() ? 60 : Math.max(1, integer("settings.spawn.interval-minutes", 60)); }
     public int spawnRetryMinutes() { return Math.max(1, integer("settings.spawn.retry-minutes", 5)); }
     public int despawnMinutes() { return Math.max(1, integer("settings.spawn.despawn-minutes", 25)); }
