@@ -39,6 +39,8 @@ public final class FishingConfigManager {
         loadFishDefinitions();
     }
 
+    public VelioraSuite getPlugin() { return plugin; }
+
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&bVelioraFishing&8] "); }
     public boolean isMinigameEnabled() { return bool("settings.minigame.enabled", true); }
