@@ -28,12 +28,16 @@ public final class FishingRodManager implements Listener {
     private final FishingManager manager;
     private final NamespacedKey tierKey;
     private final NamespacedKey ownerKey;
-    private final List<FishingRodDefinition> rods;
+    private List<FishingRodDefinition> rods;
 
     public FishingRodManager(FishingManager manager) {
         this.manager = manager;
         tierKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_rod_tier");
         ownerKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_rod_owner");
+        rods = manager.getConfigManager().getRodDefinitions();
+    }
+
+    public void reload() {
         rods = manager.getConfigManager().getRodDefinitions();
     }
 
