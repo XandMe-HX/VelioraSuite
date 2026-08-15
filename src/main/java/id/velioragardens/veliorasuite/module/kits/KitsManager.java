@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.kits;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.kits.model.Kit;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -105,6 +106,7 @@ public final class KitsManager {
         if (!firstJoin && cooldownManager.isOnCooldown(player.getUniqueId(), kit) && !player.hasPermission(configManager.getBypassCooldownPermission()) && !player.hasPermission(configManager.getAdminPermission())) {
             String time = cooldownManager.formatTime(cooldownManager.getRemainingMillis(player.getUniqueId(), kit));
             send(player, "kit-on-cooldown", "%prefix% &cKit &f%kit% &cmasih cooldown: &f%time%&c.", Map.of("%kit%", kit.getId(), "%time%", time));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.7F, 0.8F);
             return;
         }
 
@@ -112,6 +114,7 @@ public final class KitsManager {
             int missingSlots = rewardManager.getMissingSlots(player, kit);
             if (missingSlots > 0) {
                 send(player, "inventory-not-enough-space", "%prefix% &cInventory kamu penuh. Kosongkan minimal &f%slots% slot &cuntuk claim kit ini.", Map.of("%slots%", String.valueOf(missingSlots)));
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.7F, 0.8F);
                 return;
             }
         }
@@ -134,6 +137,9 @@ public final class KitsManager {
             send(player, "kit-claimed-equipped", "%prefix% &aKit &f%kit% &aberhasil diclaim. Armor otomatis dipakai.", Map.of("%kit%", kit.getId()));
         } else {
             send(player, "kit-claimed", "%prefix% &aKamu berhasil claim kit &f%kit%&a.", Map.of("%kit%", kit.getId()));
+        }
+        if (!firstJoin) {
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.25F);
         }
     }
 
