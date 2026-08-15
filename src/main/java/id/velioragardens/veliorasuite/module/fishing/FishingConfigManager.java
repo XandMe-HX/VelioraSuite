@@ -13,6 +13,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,8 +37,33 @@ public final class FishingConfigManager {
         plugin.saveResourceIfNotExists("modules/fishing.yml");
         File file = new File(plugin.getDataFolder(), "modules/fishing.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        migrateHardMinigame(file);
         loadRarityChances();
         loadFishDefinitions();
+    }
+
+    private void migrateHardMinigame(File file) {
+        if (config.getInt("settings.minigame.difficulty-version", 0) >= 2) return;
+        String root = "settings.minigame.difficulty.";
+        config.set(root + "vanilla.spam-needed", 8);
+        config.set(root + "vanilla.seconds", 4.0D);
+        config.set(root + "common.spam-needed", 14);
+        config.set(root + "common.seconds", 5.0D);
+        config.set(root + "ornamental.spam-needed", 24);
+        config.set(root + "ornamental.seconds", 6.0D);
+        config.set(root + "epic.spam-needed", 36);
+        config.set(root + "epic.seconds", 7.0D);
+        config.set(root + "legendary.spam-needed", 55);
+        config.set(root + "legendary.seconds", 8.0D);
+        config.set(root + "mitologi.spam-needed", 80);
+        config.set(root + "mitologi.seconds", 10.0D);
+        config.set("settings.minigame.difficulty-version", 2);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraFishing: mode minigame hard v2 diterapkan.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraFishing: gagal menyimpan migrasi minigame: " + exception.getMessage());
+        }
     }
 
     public VelioraSuite getPlugin() { return plugin; }
