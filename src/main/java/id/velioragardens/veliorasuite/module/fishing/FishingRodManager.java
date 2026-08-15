@@ -17,9 +17,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import id.velioragardens.veliorasuite.module.fishing.model.FishingRodDefinition;
 
 import java.util.List;
-import java.util.Locale;
 
 public final class FishingRodManager implements Listener {
 
@@ -28,21 +28,20 @@ public final class FishingRodManager implements Listener {
     private final FishingManager manager;
     private final NamespacedKey tierKey;
     private final NamespacedKey ownerKey;
-    private final List<RodDefinition> rods = List.of(
-            new RodDefinition(1, "Bamboo Drift", "#76C043", "#F3D36B", 0, 0, 0, 0, "Rod awal yang sederhana."),
-            new RodDefinition(2, "Coral Whisper", "#FF8A65", "#FF70A6", 12000, 75, 1, 0, "Buih coral lembut di kail."),
-            new RodDefinition(3, "Tidecaller", "#55E6FF", "#3E7BFA", 35000, 250, 1, 1, "Aura aqua di kail dan tangan."),
-            new RodDefinition(4, "Abyssal Current", "#2454C6", "#7837D6", 75000, 750, 2, 2, "Gelombang laut gelap saat menarik."),
-            new RodDefinition(5, "Celestial Leviathan", "#93E9FF", "#8D52E7", 150000, 1500, 3, 3, "Cahaya samudra surgawi yang lembut.")
-    );
+    private final List<FishingRodDefinition> rods;
 
     public FishingRodManager(FishingManager manager) {
         this.manager = manager;
         tierKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_rod_tier");
         ownerKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_rod_owner");
+        rods = manager.getConfigManager().getRodDefinitions();
     }
 
     public void open(Player player) {
+        if (!manager.getConfigManager().isRodsEnabled()) {
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eRod Shop sedang dimatikan."));
+            return;
+        }
         Inventory inventory = Bukkit.createInventory(null, 27, SHOP_TITLE);
         for (int slot = 0; slot < 27; slot++) inventory.setItem(slot, filler());
         for (RodDefinition rod : rods) inventory.setItem(10 + rod.tier(), createShopItem(player, rod));
@@ -57,8 +56,8 @@ public final class FishingRodManager implements Listener {
         ItemMeta meta = item.getItemMeta();
         Integer tier = meta.getPersistentDataContainer().get(tierKey, PersistentDataType.INTEGER);
         String owner = meta.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
-        if (tier == null || tier < 1 || tier > rods.size()) return 0;
-        return player.getUniqueId().toString().equals(owner) ? tier : 0;
+        if (tier == null || tier < 1 || definition(tier).tier() != tier) return 0;
+        return player.getUniqueId().toString().equals(owner) && manager.getRodDataManager().has(player.getUniqueId(), tier) ? tier : 0;
     }
 
     public int clickReduction(Player player) {
@@ -111,12 +110,29 @@ public final class FishingRodManager implements Listener {
         if (event.getView().getTitle().equals(SHOP_TITLE)) event.setCancelled(true);
     }
 
-    private void buy(Player player, RodDefinition rod) {
+    private void buy(Player player, FishingRodDefinition rod) {
+        if (!manager.getConfigManager().isRodsEnabled()) return;
         boolean bypass = player.hasPermission(manager.getConfigManager().getRodBypassPermission())
                 || player.hasPermission(manager.getConfigManager().getAdminPermission()) || player.isOp();
-        int owned = highestTier(player);
-        if (!bypass && owned >= rod.tier()) {
-            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eKamu sudah memiliki rod tier ini atau lebih tinggi."));
+        boolean unlocked = manager.getRodDataManager().has(player.getUniqueId(), rod.tier());
+        int owned = manager.getRodDataManager().highest(player.getUniqueId(), maxTier());
+        if (unlocked) {
+            if (hasBoundRod(player, rod.tier())) {
+                player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eRod ini sudah ada di inventory kamu."));
+                return;
+            }
+            if (player.getInventory().firstEmpty() < 0) {
+                player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eInventory kamu penuh."));
+                return;
+            }
+            manager.getRodDataManager().unlock(player.getUniqueId(), rod.tier());
+        player.getInventory().addItem(createRod(player, rod));
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aRod berhasil diambil kembali."));
+            player.closeInventory();
+            return;
+        }
+        if (!bypass && rod.tier() > 1 && owned < rod.tier() - 1) {
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eKamu harus membuka tier sebelumnya terlebih dahulu."));
             return;
         }
         int catches = manager.getDataManager().getOrCreate(player).getTotalCatches();
@@ -137,16 +153,17 @@ public final class FishingRodManager implements Listener {
         player.closeInventory();
     }
 
-    private int highestTier(Player player) {
-        int highest = 0;
-        for (ItemStack item : player.getInventory().getContents()) highest = Math.max(highest, getBoundTier(item, player));
-        return highest;
+    private boolean hasBoundRod(Player player, int tier) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (getBoundTier(item, player) == tier) return true;
+        }
+        return false;
     }
 
-    private ItemStack createShopItem(Player player, RodDefinition rod) {
+    private ItemStack createShopItem(Player player, FishingRodDefinition rod) {
         ItemStack item = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(gradient(rod.name(), rod.from(), rod.to()));
+        meta.displayName(gradient(rod.name(), rod.fromColor(), rod.toColor()));
         boolean bypass = player.hasPermission(manager.getConfigManager().getRodBypassPermission())
                 || player.hasPermission(manager.getConfigManager().getAdminPermission()) || player.isOp();
         int catches = manager.getDataManager().getOrCreate(player).getTotalCatches();
@@ -170,7 +187,7 @@ public final class FishingRodManager implements Listener {
         return item;
     }
 
-    private ItemStack createRod(Player owner, RodDefinition rod) {
+    private ItemStack createRod(Player owner, FishingRodDefinition rod) {
         ItemStack item = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(gradient(rod.name(), rod.from(), rod.to()));
@@ -199,8 +216,12 @@ public final class FishingRodManager implements Listener {
         return tier != null && owner.getUniqueId().toString().equals(rodOwner) ? tier : 0;
     }
 
-    private RodDefinition definition(int tier) {
+    private FishingRodDefinition definition(int tier) {
         return rods.stream().filter(rod -> rod.tier() == tier).findFirst().orElse(rods.getFirst());
+    }
+
+    private int maxTier() {
+        return rods.stream().mapToInt(FishingRodDefinition::tier).max().orElse(1);
     }
 
     private ItemStack filler() {
@@ -231,6 +252,4 @@ public final class FishingRodManager implements Listener {
         return result;
     }
 
-    private record RodDefinition(int tier, String name, String from, String to, int price, int requiredCatches,
-                                 int secondsBonus, int clickReduction, String aura) { }
 }

@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.fishing;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.fishing.model.FishDefinition;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import id.velioragardens.veliorasuite.module.fishing.model.FishingRodDefinition;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -51,6 +52,35 @@ public final class FishingConfigManager {
     public boolean isMinigameEnabledForRarity(FishRarity rarity) { return bool(rarityPath("settings.minigame.difficulty", rarity, ".enabled"), rarity != FishRarity.TRASH); }
     public int getSpamNeeded(FishRarity rarity) { return Math.max(0, integer(rarityPath("settings.minigame.difficulty", rarity, ".spam-needed"), fallbackSpam(rarity))); }
     public double getMinigameSeconds(FishRarity rarity) { return Math.max(0.0D, number(rarityPath("settings.minigame.difficulty", rarity, ".seconds"), fallbackSeconds(rarity))); }
+    public boolean isRodsEnabled() { return bool("settings.rods.enabled", true); }
+    public FishRarity getCatchMessageMinRarity() {
+        String value = str("settings.catch-message-min-rarity", "NONE").trim();
+        return value.equalsIgnoreCase("NONE") || value.isEmpty() ? null : FishRarity.fromKey(value);
+    }
+    public List<FishingRodDefinition> getRodDefinitions() {
+        List<FishingRodDefinition> fallback = List.of(
+                new FishingRodDefinition(1, "Bamboo Drift", "#76C043", "#F3D36B", 0, 0, 0, 0, "Rod awal yang sederhana."),
+                new FishingRodDefinition(2, "Coral Whisper", "#FF8A65", "#FF70A6", 12000, 75, 1, 0, "Buih coral lembut di kail."),
+                new FishingRodDefinition(3, "Tidecaller", "#55E6FF", "#3E7BFA", 35000, 250, 1, 1, "Aura aqua di kail dan tangan."),
+                new FishingRodDefinition(4, "Abyssal Current", "#2454C6", "#7837D6", 75000, 750, 2, 2, "Gelombang laut gelap saat menarik."),
+                new FishingRodDefinition(5, "Celestial Leviathan", "#93E9FF", "#8D52E7", 150000, 1500, 3, 3, "Cahaya samudra surgawi yang lembut.")
+        );
+        ConfigurationSection section = config == null ? null : config.getConfigurationSection("settings.rods.items");
+        if (section == null) return fallback;
+        List<FishingRodDefinition> result = new java.util.ArrayList<>();
+        for (String key : section.getKeys(false)) {
+            ConfigurationSection rod = section.getConfigurationSection(key);
+            if (rod == null) continue;
+            int tier = Math.max(1, rod.getInt("tier", result.size() + 1));
+            result.add(new FishingRodDefinition(tier, rod.getString("name", key), rod.getString("gradient-from", "#55D6FF"),
+                    rod.getString("gradient-to", "#3E7BFA"), Math.max(0, rod.getInt("price", 0)),
+                    Math.max(0, rod.getInt("required-catches", 0)), Math.max(0, rod.getInt("seconds-bonus", 0)),
+                    Math.max(0, rod.getInt("click-reduction", 0)), rod.getString("aura", "Aura fishing.")));
+        }
+        result.sort(java.util.Comparator.comparingInt(FishingRodDefinition::tier));
+        return result.isEmpty() ? fallback : result;
+    }
+
     public boolean isSellGuiEnabled() { return bool("settings.sell-gui.enabled", true); }
     public String getSellGuiTitle() { return str("settings.sell-gui.title", "&8VelioraFishing Sell"); }
     public int getSellGuiSize() { return inventorySize(integer("settings.sell-gui.size", 54)); }
