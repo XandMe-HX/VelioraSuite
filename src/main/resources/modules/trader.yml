@@ -165,10 +165,11 @@ trade-pool:
       - '&bSkill: &fKlik kanan mob untuk memanggil petir.'
       - '&7Cooldown skill: &f1 jam'
     enchantments:
-      - DAMAGE_ALL:5
-      - FIRE_ASPECT:2
-      - LOOT_BONUS_MOBS:3
-      - DURABILITY:3
+      - DAMAGE_ALL:7
+      - FIRE_ASPECT:3
+      - LOOT_BONUS_MOBS:4
+      - DURABILITY:5
+      - MENDING:1
     payment:
       type: MONEY
       money: 500000
@@ -186,11 +187,11 @@ trade-pool:
     lore:
       - '&7Busur trader dengan projectile damage target 10.'
     enchantments:
-      - ARROW_DAMAGE:5
+      - ARROW_DAMAGE:7
       - ARROW_FIRE:1
       - ARROW_KNOCKBACK:2
       - ARROW_INFINITE:1
-      - DURABILITY:3
+      - DURABILITY:5
     payment:
       type: MONEY
       money: 500000
@@ -209,9 +210,10 @@ trade-pool:
       - '&7Trisula mitologi dengan damage target 10.'
     enchantments:
       - LOYALTY:3
-      - IMPALING:5
+      - IMPALING:7
       - CHANNELING:1
-      - DURABILITY:3
+      - DURABILITY:5
+      - MENDING:1
     payment:
       type: MONEY
       money: 475000
@@ -230,9 +232,10 @@ trade-pool:
       - '&7Fishing luck bonus: &f+30%'
       - '&7Terhubung dengan VelioraFishing.'
     enchantments:
-      - LUCK:3
-      - LURE:3
-      - DURABILITY:3
+      - LUCK:5
+      - LURE:5
+      - DURABILITY:5
+      - MENDING:1
     payment:
       type: MONEY
       money: 350000
@@ -311,9 +314,11 @@ trade-pool:
     lore:
       - '&7Mace kuno dari reruntuhan Veliora.'
     enchantments:
-      - DENSITY:4
-      - BREACH:3
-      - DURABILITY:3
+      - DENSITY:5
+      - BREACH:4
+      - WIND_BURST:2
+      - DURABILITY:5
+      - MENDING:1
     payment:
       type: MONEY
       money: 500000
