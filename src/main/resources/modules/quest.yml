@@ -71,7 +71,7 @@ categories:
     icon: WHEAT
     base-target: 96
     target-increase-per-level: 58
-    harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, SUGAR_CANE, MELON, PUMPKIN, COCOA, NETHER_WART]
+    harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, COCOA, NETHER_WART]
     plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
     # Tanam dan mencangkul tidak dihitung agar tidak bisa progres instan.
     count-hoe-farmland: false
