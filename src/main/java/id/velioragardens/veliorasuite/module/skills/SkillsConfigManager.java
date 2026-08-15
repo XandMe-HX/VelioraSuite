@@ -27,7 +27,8 @@ public final class SkillsConfigManager {
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&bVelioraSkills&8] "); }
     public int getDefaultMana() { return Math.max(0, integer("settings.mana.default-mana", 10)); }
-    public int getDefaultMaxMana() { return Math.max(1, integer("settings.mana.default-max-mana", 10)); }
+    public int getDefaultMaxMana() { return Math.min(getMaxManaCap(), Math.max(1, integer("settings.mana.default-max-mana", 10))); }
+    public int getMaxManaCap() { return Math.max(1, integer("settings.mana.max-mana-cap", 100)); }
     public int getMinMana() { return Math.max(0, integer("settings.mana.min-mana", 0)); }
     public boolean isDailyResetEnabled() { return bool("settings.mana.daily-reset.enabled", true); }
     public String getResetTime() { return str("settings.mana.daily-reset.reset-time", "00:00"); }
