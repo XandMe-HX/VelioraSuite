@@ -33,6 +33,28 @@ public final class FishingEconomyHook {
         }
     }
 
+    public boolean withdraw(OfflinePlayer player, double amount) {
+        if (amount <= 0) return true;
+        try {
+            if (Bukkit.getPluginManager().getPlugin("Vault") == null) return warn();
+            Class<?> economyClass = Class.forName("net.milkbowl.vault.economy.Economy");
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            RegisteredServiceProvider<?> registration = Bukkit.getServicesManager().getRegistration((Class) economyClass);
+            if (registration == null) return warn();
+            Object economy = registration.getProvider();
+            Method withdraw = economy.getClass().getMethod("withdrawPlayer", OfflinePlayer.class, double.class);
+            Object response = withdraw.invoke(economy, player, amount);
+            try {
+                Method success = response.getClass().getMethod("transactionSuccess");
+                return Boolean.TRUE.equals(success.invoke(response));
+            } catch (Exception ignored) {
+                return true;
+            }
+        } catch (Exception exception) {
+            return warn();
+        }
+    }
+
     private boolean warn() {
         if (!warned) {
             plugin.getLogger().warning("VelioraFishing: Vault economy tidak aktif, hasil sell dilewati.");

@@ -82,6 +82,7 @@ public final class FishingModule implements VelioraModule {
         listeners.add(manager.getSellGuiManager());
         listeners.add(manager.getBagGuiManager());
         listeners.add(manager.getCollectionGuiManager());
+        listeners.add(manager.getRodManager());
         for (Listener listener : listeners) plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 

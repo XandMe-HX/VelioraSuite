@@ -80,8 +80,8 @@ public final class FishingMinigameManager implements Listener {
     private void start(Player player, FishGenerator.GeneratedFish generatedFish, FishHook hook) {
         remove(player.getUniqueId());
         CaughtFish fish = generatedFish.fish();
-        int target = manager.getConfigManager().getSpamNeeded(fish.rarity());
-        double seconds = manager.getConfigManager().getMinigameSeconds(fish.rarity());
+        int target = Math.max(1, manager.getConfigManager().getSpamNeeded(fish.rarity()) - manager.getRodManager().clickReduction(player));
+        double seconds = manager.getConfigManager().getMinigameSeconds(fish.rarity()) + manager.getRodManager().secondsBonus(player);
         Session session = new Session(generatedFish, hook, target, System.currentTimeMillis() + (long) (seconds * 1000.0D));
         sessions.put(player.getUniqueId(), session);
         BukkitTask task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
@@ -91,6 +91,7 @@ public final class FishingMinigameManager implements Listener {
                 return;
             }
             showActionBar(player, session);
+            manager.getRodManager().showAura(player, session.hook);
             showRodAndHookEffect(player, session);
         }, 0L, 5L);
         session.task = task;

@@ -87,6 +87,7 @@ public final class FishingConfigManager {
     public String getTopPermission() { return str("permissions.top", "veliorasuite.fishing.top"); }
     public String getAdminPermission() { return str("permissions.admin", "veliorasuite.fishing.admin"); }
     public String getReloadPermission() { return str("permissions.reload", "veliorasuite.fishing.reload"); }
+    public String getRodBypassPermission() { return str("permissions.rods-bypass", "veliorasuite.fishing.rods.bypass"); }
 
     public String message(String path, String fallback) { return str("messages." + path, fallback).replace("%prefix%", getPrefix()); }
     public List<String> messageList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList("messages." + path); return list.isEmpty() ? fallback : list; }
