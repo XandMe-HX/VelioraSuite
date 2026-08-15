@@ -96,8 +96,8 @@ messages:
 kits:
   starter:
     enabled: true
-    display-name: '&aStarter Kit'
-    description: ['&7Kit awal survival gratis.', '&7Cooldown 3 hari.']
+    display-name: '&a&lS&e&lT&a&lA&e&lR&a&lT&e&lE&a&lR &f&lK&a&lI&e&lT'
+    description: ['&a&l✦ &fPaket awal untuk memulai survival.', '&8Cooldown: &a3 hari']
     permission: ''
     premium-level: 0
     cooldown: '3d'
@@ -105,8 +105,8 @@ kits:
     gui:
       slot: 20
       material: CHEST
-      name: '&aStarter Kit'
-      lore: ['&7Full leather armor.', '&7Full stone tools.', '&7Oak Fence x192.', '&aGratis, cooldown 3 hari.']
+      name: '&a&lS&e&lT&a&lA&e&lR&a&lT&e&lE&a&lR &f&lK&a&lI&e&lT'
+      lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fPerlengkapan awal survival', '&7Leather Armor &8• &7Stone Tools', '&7Oak Fence &fx192', '&8━━━━━━━━━━━━━━━━━━━━', '&a&lGRATIS &8• &7Cooldown: &f3 hari']
     items:
       - { material: LEATHER_HELMET, amount: 1, enchants: [] }
       - { material: LEATHER_CHESTPLATE, amount: 1, enchants: [] }
@@ -123,8 +123,8 @@ kits:
     rewards: { money: 0, exp: 0, commands: [] }
   food:
     enabled: true
-    display-name: '&eFood Kit'
-    description: ['&7Makanan gratis.', '&7Cooldown 5 hari.']
+    display-name: '&e&lF&6&lO&e&lO&6&lD &f&lK&e&lI&6&lT'
+    description: ['&e&l✦ &fBekal perjalanan untuk petualanganmu.', '&8Cooldown: &e5 hari']
     permission: ''
     premium-level: 0
     cooldown: '5d'
@@ -132,16 +132,16 @@ kits:
     gui:
       slot: 22
       material: BREAD
-      name: '&eFood Kit'
-      lore: ['&7Bread x64.', '&7Cooked Beef x32.', '&aGratis, cooldown 5 hari.']
+      name: '&e&lF&6&lO&e&lO&6&lD &f&lK&e&lI&6&lT'
+      lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fBekal perjalananmu', '&7Bread &fx64 &8• &7Cooked Beef &fx32', '&8━━━━━━━━━━━━━━━━━━━━', '&a&lGRATIS &8• &7Cooldown: &f5 hari']
     items:
       - { material: BREAD, amount: 64, enchants: [] }
       - { material: COOKED_BEEF, amount: 32, enchants: [] }
     rewards: { money: 0, exp: 0, commands: [] }
   build:
     enabled: true
-    display-name: '&6Build Kit'
-    description: ['&7Material bangunan dasar.', '&7Harga claim 20K.']
+    display-name: '&e&lB&6&lU&e&lI&6&lL&e&lD &f&lK&e&lI&6&lT'
+    description: ['&6&l✦ &fMaterial besar untuk proyek bangunan.', '&8Harga claim: &a20.000']
     permission: ''
     premium-level: 0
     cooldown: '0s'
@@ -149,8 +149,8 @@ kits:
     gui:
       slot: 24
       material: OAK_LOG
-      name: '&6Build Kit'
-      lore: ['&7Material build banyak.', '&7Harga claim: &a20K']
+      name: '&e&lB&6&lU&e&lI&6&lL&e&lD &f&lK&e&lI&6&lT'
+      lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fMaterial untuk membangun', '&7Log, Stone, Cobblestone, Grass', '&7dan Oak Fence dalam jumlah besar', '&8━━━━━━━━━━━━━━━━━━━━', '&aHarga claim: &f20.000']
     items:
       - { material: OAK_FENCE, amount: 64, enchants: [] }
       - { material: OAK_FENCE, amount: 64, enchants: [] }
@@ -171,13 +171,13 @@ kits:
     rewards: { money: 0, exp: 0, commands: [] }
   premium_1:
     enabled: true
-    display-name: '&aPremium I'
-    description: ['&7Full iron kit.', '&7Claim pertama gratis 1x.', '&7Setelah itu bayar 10K per claim.', '&7Butuh permission: veliorasuite.kits.premium.1']
+    display-name: '&a&lP&2&lR&a&lE&2&lM&a&lI&2&lU&a&lM &f&lI'
+    description: ['&a&l✦ &fPaket Iron untuk rank Premium I.', '&8Claim pertama: &aGratis']
     permission: 'veliorasuite.kits.premium.1'
     premium-level: 1
     cooldown: '0s'
     buy: { enabled: true, price: 10000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 29, material: IRON_CHESTPLATE, name: '&aPremium I', lore: ['&7Full iron kit enchant easy.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a10K', '&7Butuh permission: &fveliorasuite.kits.premium.1', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 29, material: IRON_CHESTPLATE, name: '&a&lP&2&lR&a&lE&2&lM&a&lI&2&lU&a&lM &f&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fIron Armor &8• &fTools Enchant I', '&7Bonus: Carrot &fx64', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a10.000'] }
     items:
       - { material: IRON_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
       - { material: IRON_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
@@ -192,13 +192,13 @@ kits:
     rewards: { money: 0, exp: 0, commands: [] }
   premium_2:
     enabled: true
-    display-name: '&bPremium II'
-    description: ['&7Full diamond kit.', '&7Claim pertama gratis 1x.', '&7Setelah itu bayar 20K per claim.', '&7Butuh permission: veliorasuite.kits.premium.2']
+    display-name: '&b&lP&3&lR&b&lE&3&lM&b&lI&3&lU&b&lM &f&lI&b&lI'
+    description: ['&b&l✦ &fPaket Diamond untuk rank Premium II.', '&8Claim pertama: &aGratis']
     permission: 'veliorasuite.kits.premium.2'
     premium-level: 2
     cooldown: '0s'
     buy: { enabled: true, price: 20000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 30, material: DIAMOND_CHESTPLATE, name: '&bPremium II', lore: ['&7Full diamond kit enchant level 2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a20K', '&7Butuh permission: &fveliorasuite.kits.premium.2', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 30, material: DIAMOND_CHESTPLATE, name: '&b&lP&3&lR&b&lE&3&lM&b&lI&3&lU&b&lM &f&lI&b&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fDiamond Armor &8• &fTools Enchant II', '&7Bonus: Golden Apple &fx10', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a20.000'] }
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
@@ -213,13 +213,13 @@ kits:
     rewards: { money: 0, exp: 0, commands: [] }
   premium_3:
     enabled: true
-    display-name: '&dPremium III'
-    description: ['&7Full diamond kit hard.', '&7Claim pertama gratis 1x.', '&7Setelah itu bayar 30K per claim.', '&7Butuh permission: veliorasuite.kits.premium.3']
+    display-name: '&d&lP&5&lR&d&lE&5&lM&d&lI&5&lU&d&lM &f&lI&d&lI&5&lI'
+    description: ['&d&l✦ &fDiamond kuat untuk rank Premium III.', '&8Claim pertama: &aGratis']
     permission: 'veliorasuite.kits.premium.3'
     premium-level: 3
     cooldown: '0s'
     buy: { enabled: true, price: 30000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 31, material: TOTEM_OF_UNDYING, name: '&dPremium III', lore: ['&7Full diamond kit enchant level 3.', '&7Golden Apple x20, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a30K', '&7Butuh permission: &fveliorasuite.kits.premium.3', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 31, material: TOTEM_OF_UNDYING, name: '&d&lP&5&lR&d&lE&5&lM&d&lI&5&lU&d&lM &f&lI&d&lI&5&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fDiamond Armor &8• &fTools Enchant III', '&7Golden Apple &fx20 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a30.000'] }
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -235,13 +235,13 @@ kits:
     rewards: { money: 0, exp: 0, commands: [] }
   premium_4:
     enabled: true
-    display-name: '&6Premium IV'
-    description: ['&7Full netherite kit normal.', '&7Claim pertama gratis 1x.', '&7Setelah itu bayar 40K per claim.', '&7Butuh permission: veliorasuite.kits.premium.4']
+    display-name: '&6&lP&e&lR&6&lE&e&lM&6&lI&e&lU&6&lM &f&lI&6&lV'
+    description: ['&6&l✦ &fNetherite untuk rank Premium IV.', '&8Claim pertama: &aGratis']
     permission: 'veliorasuite.kits.premium.4'
     premium-level: 4
     cooldown: '0s'
     buy: { enabled: true, price: 40000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 32, material: NETHERITE_CHESTPLATE, name: '&6Premium IV', lore: ['&7Full netherite kit enchant level 3.', '&7Golden Apple x30, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a40K', '&7Butuh permission: &fveliorasuite.kits.premium.4', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 32, material: NETHERITE_CHESTPLATE, name: '&6&lP&e&lR&6&lE&e&lM&6&lI&e&lU&6&lM &f&lI&6&lV', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fNetherite Armor &8• &fTools Enchant III', '&7Golden Apple &fx30 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a40.000'] }
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -257,13 +257,13 @@ kits:
     rewards: { money: 0, exp: 0, commands: [] }
   premium_5:
     enabled: true
-    display-name: '&cPremium V'
-    description: ['&7Full netherite kit hard.', '&7Claim pertama gratis 1x.', '&7Setelah itu bayar 50K per claim.', '&7Butuh permission: veliorasuite.kits.premium.5']
+    display-name: '&c&lP&4&lR&c&lE&4&lM&c&lI&4&lU&c&lM &f&lV'
+    description: ['&c&l✦ &fNetherite terkuat untuk Premium V.', '&8Claim pertama: &aGratis']
     permission: 'veliorasuite.kits.premium.5'
     premium-level: 5
     cooldown: '0s'
     buy: { enabled: true, price: 50000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 33, material: NETHER_STAR, name: '&cPremium V', lore: ['&7Full netherite kit enchant hard.', '&7Golden Apple x30, Totem x2.', '&aGratis 1x pertama sesuai rank.', '&7Claim berikutnya: &a50K', '&7Butuh permission: &fveliorasuite.kits.premium.5', '&7Klik kiri untuk claim.'] }
+    gui: { slot: 33, material: NETHER_STAR, name: '&c&lP&4&lR&c&lE&4&lM&c&lI&4&lU&c&lM &f&lV', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fNetherite Armor &8• &fTools Enchant IV', '&7Golden Apple &fx30 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a50.000'] }
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
