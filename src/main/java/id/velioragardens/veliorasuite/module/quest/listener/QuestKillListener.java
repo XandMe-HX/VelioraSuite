@@ -19,8 +19,8 @@ public final class QuestKillListener implements Listener {
     public void onEntityDeath(EntityDeathEvent event) {
         Player killer = event.getEntity().getKiller();
         if (killer == null) return;
-        if (event.getEntity().getSpawnReason() == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER
-                || event.getEntity().getSpawnReason() == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG) {
+        if (event.getEntity().getEntitySpawnReason() == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER
+                || event.getEntity().getEntitySpawnReason() == org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG) {
             return;
         }
         if (manager.getConfigManager().getEntities(QuestCategory.MONSTER_HUNTER).contains(event.getEntityType())) {
