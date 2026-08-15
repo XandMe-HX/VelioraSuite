@@ -44,7 +44,7 @@ public final class FishingRodManager implements Listener {
         }
         Inventory inventory = Bukkit.createInventory(null, 27, SHOP_TITLE);
         for (int slot = 0; slot < 27; slot++) inventory.setItem(slot, filler());
-        for (RodDefinition rod : rods) inventory.setItem(10 + rod.tier(), createShopItem(player, rod));
+        for (FishingRodDefinition rod : rods) inventory.setItem(10 + rod.tier(), createShopItem(player, rod));
         inventory.setItem(22, basic(Material.BARRIER, "§cKembali", List.of("§7Kembali ke menu Fishing.")));
         player.openInventory(inventory);
     }
@@ -125,8 +125,7 @@ public final class FishingRodManager implements Listener {
                 player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eInventory kamu penuh."));
                 return;
             }
-            manager.getRodDataManager().unlock(player.getUniqueId(), rod.tier());
-        player.getInventory().addItem(createRod(player, rod));
+            player.getInventory().addItem(createRod(player, rod));
             player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aRod berhasil diambil kembali."));
             player.closeInventory();
             return;
@@ -148,6 +147,7 @@ public final class FishingRodManager implements Listener {
             player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cUang kamu tidak cukup atau Vault tidak aktif."));
             return;
         }
+        manager.getRodDataManager().unlock(player.getUniqueId(), rod.tier());
         player.getInventory().addItem(createRod(player, rod));
         player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aKamu mendapatkan rod baru!"));
         player.closeInventory();
@@ -190,7 +190,7 @@ public final class FishingRodManager implements Listener {
     private ItemStack createRod(Player owner, FishingRodDefinition rod) {
         ItemStack item = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(gradient(rod.name(), rod.from(), rod.to()));
+        meta.displayName(gradient(rod.name(), rod.fromColor(), rod.toColor()));
         meta.lore(List.of(
                 Component.text("VelioraFishing Rod • Tier " + rod.tier(), TextColor.color(0x55D6FF)),
                 Component.text("+" + rod.secondsBonus() + ".0 detik • -" + rod.clickReduction() + " klik", TextColor.color(0xD6E0EB)),
