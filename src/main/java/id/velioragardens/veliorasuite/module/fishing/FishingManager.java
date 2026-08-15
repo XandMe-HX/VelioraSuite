@@ -20,6 +20,7 @@ public final class FishingManager {
     private final FishingDataManager dataManager;
     private final FishingBagDataManager bagDataManager;
     private final FishingCollectionDataManager collectionDataManager;
+    private final FishingRodDataManager rodDataManager;
     private final FishGenerator generator;
     private final FishItemFactory itemFactory;
     private final FishingEconomyHook economyHook;
@@ -38,6 +39,7 @@ public final class FishingManager {
         this.dataManager = new FishingDataManager(plugin);
         this.bagDataManager = new FishingBagDataManager(plugin);
         this.collectionDataManager = new FishingCollectionDataManager(plugin);
+        this.rodDataManager = new FishingRodDataManager(plugin);
         this.generator = new FishGenerator(configManager);
         this.itemFactory = new FishItemFactory(plugin, configManager);
         this.economyHook = new FishingEconomyHook(plugin);
@@ -50,6 +52,7 @@ public final class FishingManager {
         dataManager.load();
         bagDataManager.load();
         collectionDataManager.load();
+        rodDataManager.load();
         mainGuiManager = new FishingMainGuiManager(this);
         sellGuiManager = new FishingSellGuiManager(this);
         bagGuiManager = new FishingBagGuiManager(this);
@@ -73,6 +76,7 @@ public final class FishingManager {
     public FishingDataManager getDataManager() { return dataManager; }
     public FishingBagDataManager getBagDataManager() { return bagDataManager; }
     public FishingCollectionDataManager getCollectionDataManager() { return collectionDataManager; }
+    public FishingRodDataManager getRodDataManager() { return rodDataManager; }
     public FishGenerator getGenerator() { return generator; }
     public FishItemFactory getItemFactory() { return itemFactory; }
     public FishingMainGuiManager getMainGuiManager() { return mainGuiManager; }
@@ -95,7 +99,10 @@ public final class FishingManager {
         } else {
             giveItem(player, itemFactory.create(generatedFish.definition(), fish));
         }
-        send(player, "catch-success", "%prefix% &aKamu mendapatkan %rarity_color%%fish% &7(&f%weight%&7) senilai &a%price%&7.", fishPlaceholders(fish));
+        FishRarity minimumCatchMessage = configManager.getCatchMessageMinRarity();
+        if (minimumCatchMessage != null && fish.rarity().power() >= minimumCatchMessage.power()) {
+            send(player, "catch-success", "%prefix% &aKamu mendapatkan %rarity_color%%fish% &7(&f%weight%&7) senilai &a%price%&7.", fishPlaceholders(fish));
+        }
     }
 
     public void openMainGui(Player player) { mainGuiManager.open(player); }
