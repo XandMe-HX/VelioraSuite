@@ -25,6 +25,15 @@ public final class KitsListener implements Listener {
             return;
         }
 
+        if (event.getView().getTopInventory().getHolder() instanceof KitPreviewManager.PreviewHolder previewHolder) {
+            event.setCancelled(true);
+            if (event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize()
+                    && previewHolder.isBackSlot(event.getRawSlot())) {
+                kitsManager.openGui(player);
+            }
+            return;
+        }
+
         if (!(event.getView().getTopInventory().getHolder() instanceof KitGuiManager.KitsGuiHolder holder)) {
             return;
         }
