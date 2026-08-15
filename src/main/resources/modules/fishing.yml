@@ -36,10 +36,19 @@ settings:
       legendary: {enabled: true, spam-needed: 18, seconds: 16.0}
       mitologi: {enabled: true, spam-needed: 25, seconds: 20.0}
 
+  # NONE means normal catches do not fill chat. Legendary/Mythic still use their global broadcast.
+  catch-message-min-rarity: NONE
+
   rods:
     enabled: true
     bypass-permission: 'veliorasuite.fishing.rods.bypass'
     # Rod bonuses only make minigames easier; they do not directly boost Legendary/Mythic odds.
+    items:
+      bamboo_drift: {tier: 1, name: 'Bamboo Drift', gradient-from: '#76C043', gradient-to: '#F3D36B', price: 0, required-catches: 0, seconds-bonus: 0, click-reduction: 0, aura: 'Rod awal yang sederhana.'}
+      coral_whisper: {tier: 2, name: 'Coral Whisper', gradient-from: '#FF8A65', gradient-to: '#FF70A6', price: 12000, required-catches: 75, seconds-bonus: 1, click-reduction: 0, aura: 'Buih coral lembut di kail.'}
+      tidecaller: {tier: 3, name: 'Tidecaller', gradient-from: '#55E6FF', gradient-to: '#3E7BFA', price: 35000, required-catches: 250, seconds-bonus: 1, click-reduction: 1, aura: 'Aura aqua di kail dan tangan.'}
+      abyssal_current: {tier: 4, name: 'Abyssal Current', gradient-from: '#2454C6', gradient-to: '#7837D6', price: 75000, required-catches: 750, seconds-bonus: 2, click-reduction: 2, aura: 'Gelombang laut gelap saat menarik.'}
+      celestial_leviathan: {tier: 5, name: 'Celestial Leviathan', gradient-from: '#93E9FF', gradient-to: '#8D52E7', price: 150000, required-catches: 1500, seconds-bonus: 3, click-reduction: 3, aura: 'Cahaya samudra surgawi yang lembut.'}
 
   sell-gui:
     enabled: true
