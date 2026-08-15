@@ -4,7 +4,9 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.FishHook;
 import org.bukkit.entity.Player;
+import org.bukkit.Particle;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -47,7 +49,7 @@ public final class FishingMinigameManager implements Listener {
             manager.giveGeneratedFish(player, generatedFish);
             return;
         }
-        start(player, generatedFish);
+        start(player, generatedFish, event.getHook());
     }
 
     @EventHandler
@@ -75,12 +77,12 @@ public final class FishingMinigameManager implements Listener {
         sessions.clear();
     }
 
-    private void start(Player player, FishGenerator.GeneratedFish generatedFish) {
+    private void start(Player player, FishGenerator.GeneratedFish generatedFish, FishHook hook) {
         remove(player.getUniqueId());
         CaughtFish fish = generatedFish.fish();
         int target = manager.getConfigManager().getSpamNeeded(fish.rarity());
         double seconds = manager.getConfigManager().getMinigameSeconds(fish.rarity());
-        Session session = new Session(generatedFish, target, System.currentTimeMillis() + (long) (seconds * 1000.0D));
+        Session session = new Session(generatedFish, hook, target, System.currentTimeMillis() + (long) (seconds * 1000.0D));
         sessions.put(player.getUniqueId(), session);
         BukkitTask task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             if (sessions.get(player.getUniqueId()) != session) return;
@@ -89,9 +91,9 @@ public final class FishingMinigameManager implements Listener {
                 return;
             }
             showActionBar(player, session);
+            showRodAndHookEffect(player, session);
         }, 0L, 5L);
         session.task = task;
-        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("minigame-start", "%prefix% &eTarikan kuat! Spam klik untuk menarik ikan!")));
         showActionBar(player, session);
     }
 
@@ -99,7 +101,6 @@ public final class FishingMinigameManager implements Listener {
         Session session = sessions.remove(player.getUniqueId());
         if (session == null) return;
         session.cancelTask();
-        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("minigame-success", "%prefix% &aBerhasil menarik ikan!")));
         manager.giveGeneratedFish(player, session.generatedFish);
     }
 
@@ -107,20 +108,34 @@ public final class FishingMinigameManager implements Listener {
         Session session = sessions.remove(player.getUniqueId());
         if (session == null) return;
         session.cancelTask();
-        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("minigame-fail", "%prefix% &cIkan lepas.")));
     }
 
     private void showActionBar(Player player, Session session) {
         if (!manager.getConfigManager().isMinigameShowTitle()) return;
         double secondsLeft = Math.max(0.0D, (session.endAt - System.currentTimeMillis()) / 1000.0D);
-        int bars = 8;
+        int bars = 32;
         int filled = Math.min(bars, (int) Math.ceil((session.clicks / (double) session.targetClicks) * bars));
-        String bar = "█".repeat(filled) + "░".repeat(Math.max(0, bars - filled));
+        int remaining = Math.max(0, session.targetClicks - session.clicks);
+        String green = "|".repeat(filled);
+        String empty = "|".repeat(Math.max(0, bars - filled));
         String timeColor = secondsLeft <= 3.0D ? "&c" : "&e";
-        String text = "&bTarikan &7[&a" + bar.substring(0, filled) + "&8" + bar.substring(filled) + "&7] &f"
-                + session.clicks + "&7/&f" + session.targetClicks + " " + timeColor
-                + String.format(Locale.US, "%.1fs", secondsLeft);
+        String text = "&bTarikan &7[&a" + green + "&8" + empty + "&7] &f"
+                + session.clicks + "&7/&f" + session.targetClicks + " &8• &fSisa: &e"
+                + remaining + " klik &8• " + timeColor + String.format(Locale.US, "%.1fs", secondsLeft);
         player.sendActionBar(manager.getConfigManager().color(text));
+    }
+
+    private void showRodAndHookEffect(Player player, Session session) {
+        FishRarity rarity = session.generatedFish.fish().rarity();
+        if (rarity.power() < FishRarity.EPIC.power()) return;
+        Particle playerParticle = rarity == FishRarity.MITOLOGI ? Particle.DRAGON_BREATH : Particle.ENCHANT;
+        Particle hookParticle = rarity == FishRarity.MITOLOGI ? Particle.TOTEM_OF_UNDYING : Particle.END_ROD;
+        player.getWorld().spawnParticle(playerParticle, player.getLocation().add(0.0D, 1.0D, 0.0D),
+                rarity == FishRarity.MITOLOGI ? 7 : 3, 0.35D, 0.55D, 0.35D, 0.01D);
+        if (session.hook != null && session.hook.isValid()) {
+            session.hook.getWorld().spawnParticle(hookParticle, session.hook.getLocation(),
+                    rarity == FishRarity.MITOLOGI ? 10 : 4, 0.18D, 0.18D, 0.18D, 0.01D);
+        }
     }
 
     private void removeCaught(Entity entity) {
@@ -134,14 +149,16 @@ public final class FishingMinigameManager implements Listener {
 
     private static final class Session {
         private final FishGenerator.GeneratedFish generatedFish;
+        private final FishHook hook;
         private final int targetClicks;
         private final long endAt;
         private int clicks;
         private long lastClick;
         private BukkitTask task;
 
-        private Session(FishGenerator.GeneratedFish generatedFish, int targetClicks, long endAt) {
+        private Session(FishGenerator.GeneratedFish generatedFish, FishHook hook, int targetClicks, long endAt) {
             this.generatedFish = generatedFish;
+            this.hook = hook;
             this.targetClicks = targetClicks;
             this.endAt = endAt;
         }
