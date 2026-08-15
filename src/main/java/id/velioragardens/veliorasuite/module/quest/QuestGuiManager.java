@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -57,6 +58,13 @@ public final class QuestGuiManager implements Listener {
         else if (progress.getState() == QuestState.ACTIVE) manager.sendProgress(player);
         else manager.startQuest(player, category);
         open(player);
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getGuiTitle()))) {
+            event.setCancelled(true);
+        }
     }
 
     private void fill(Inventory inventory) {
