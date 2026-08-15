@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -38,7 +39,9 @@ public final class QuestGuiManager implements Listener {
     public QuestGuiManager(QuestManager manager) { this.manager = manager; }
 
     public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, manager.getConfigManager().color(manager.getConfigManager().getGuiTitle()));
+        QuestGuiHolder holder = new QuestGuiHolder();
+        Inventory inventory = Bukkit.createInventory(holder, 54, manager.getConfigManager().color(manager.getConfigManager().getGuiTitle()));
+        holder.setInventory(inventory);
         fill(inventory);
         PlayerQuestData data = manager.getDataManager().getOrCreate(player);
         for (Map.Entry<Integer, QuestCategory> entry : SLOTS.entrySet()) inventory.setItem(entry.getKey(), item(player, data, entry.getValue()));
@@ -49,7 +52,7 @@ public final class QuestGuiManager implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getGuiTitle()))) return;
+        if (!(event.getView().getTopInventory().getHolder() instanceof QuestGuiHolder)) return;
         event.setCancelled(true);
         QuestCategory category = SLOTS.get(event.getRawSlot());
         if (category == null) return;
@@ -62,7 +65,7 @@ public final class QuestGuiManager implements Listener {
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getGuiTitle()))) {
+        if (event.getView().getTopInventory().getHolder() instanceof QuestGuiHolder) {
             event.setCancelled(true);
         }
     }
@@ -128,6 +131,19 @@ public final class QuestGuiManager implements Listener {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private static final class QuestGuiHolder implements InventoryHolder {
+        private Inventory inventory;
+
+        private void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
     }
 
     private String done(boolean value) { return value ? "Selesai" : "Belum"; }
