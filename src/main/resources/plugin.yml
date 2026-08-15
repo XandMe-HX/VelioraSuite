@@ -81,6 +81,11 @@ commands:
     usage: /vsecurity <help|status|alerts|reload|alt>
     aliases: [vsec, security, vxray, vorewatch, orecheck, valt, valts, altguard]
     permission: veliorasuite.security.admin
+  vguard:
+    description: Review global CombatGuard evidence and cases.
+    usage: /vguard <status|logs|case|confirm|deny|clear>
+    aliases: [combatguard, killaura]
+    permission: veliorasuite.security.alerts
   vskills:
     description: Manage VelioraSkills.
     usage: /vskills <help|status|reload|mana>
@@ -210,7 +215,7 @@ permissions:
   veliorasuite.security.admin:
     default: op
   veliorasuite.security.owner:
-    description: Confirm or deny VelioraOreWatch temporary bans.
+    description: Konfirmasi kasus keamanan, CombatGuard, dan tindakan IP-ban.
     default: op
   veliorasuite.security.alerts:
     default: op

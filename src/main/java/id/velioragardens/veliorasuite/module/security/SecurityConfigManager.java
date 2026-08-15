@@ -9,6 +9,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,7 +30,20 @@ public final class SecurityConfigManager {
         plugin.saveResourceIfNotExists("modules/security.yml");
         File file = new File(plugin.getDataFolder(), "modules/security.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        try (InputStream input = plugin.getResource("modules/security.yml")) {
+            if (input != null) {
+                YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(input, StandardCharsets.UTF_8));
+                config.setDefaults(defaults);
+                config.options().copyDefaults(true);
+                config.save(file);
+            }
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraSecurity: gagal menggabungkan default baru: " + exception.getMessage());
+        }
     }
+
+    public FileConfiguration config() { return config; }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&cVelioraSecurity&8] "); }
