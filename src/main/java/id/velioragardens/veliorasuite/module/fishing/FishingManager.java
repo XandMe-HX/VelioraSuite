@@ -29,6 +29,7 @@ public final class FishingManager {
     private FishingSellGuiManager sellGuiManager;
     private FishingBagGuiManager bagGuiManager;
     private FishingCollectionGuiManager collectionGuiManager;
+    private FishingRodManager rodManager;
     private FishingMinigameManager minigameManager;
 
     public FishingManager(VelioraSuite plugin) {
@@ -53,6 +54,7 @@ public final class FishingManager {
         sellGuiManager = new FishingSellGuiManager(this);
         bagGuiManager = new FishingBagGuiManager(this);
         collectionGuiManager = new FishingCollectionGuiManager(this);
+        rodManager = new FishingRodManager(this);
         minigameManager = new FishingMinigameManager(plugin, this);
     }
 
@@ -77,6 +79,7 @@ public final class FishingManager {
     public FishingSellGuiManager getSellGuiManager() { return sellGuiManager; }
     public FishingBagGuiManager getBagGuiManager() { return bagGuiManager; }
     public FishingCollectionGuiManager getCollectionGuiManager() { return collectionGuiManager; }
+    public FishingRodManager getRodManager() { return rodManager; }
     public FishingMinigameManager getMinigameManager() { return minigameManager; }
 
     public void giveGeneratedFish(Player player, FishGenerator.GeneratedFish generatedFish) {
@@ -99,6 +102,11 @@ public final class FishingManager {
     public void openSellGui(Player player) { sellGuiManager.open(player); }
     public void openBagGui(Player player) { bagGuiManager.open(player); }
     public void openCollectionGui(Player player) { collectionGuiManager.open(player); }
+    public void openRodShop(Player player) { rodManager.open(player); }
+
+    public boolean withdrawRodCost(Player player, int amount) {
+        return amount <= 0 || economyHook.withdraw(player, amount);
+    }
 
     public void withdrawFromBag(Player player, FishingBagEntry entry, int amount) {
         if (player == null || entry == null || amount <= 0) return;
