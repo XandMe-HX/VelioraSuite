@@ -42,6 +42,7 @@ public final class TraderConfigManager {
         config = YamlConfiguration.loadConfiguration(file);
         mergeBundledDefaults(file);
         migrateConfig(file);
+        migrateMythicEnchants(file);
         loadLocations();
         loadCampBlocks();
         loadTradePool();
@@ -56,6 +57,22 @@ public final class TraderConfigManager {
             config.save(file);
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraTrader: gagal memperbarui default trader.yml: " + exception.getMessage());
+        }
+    }
+
+    private void migrateMythicEnchants(File file) {
+        if (config.getInt("settings.enchant-version", 0) >= 2) return;
+        config.set("trade-pool.excalibur.enchantments", List.of("DAMAGE_ALL:7", "FIRE_ASPECT:3", "LOOT_BONUS_MOBS:4", "DURABILITY:5", "MENDING:1"));
+        config.set("trade-pool.angel_of_death_bow.enchantments", List.of("ARROW_DAMAGE:7", "ARROW_FIRE:1", "ARROW_KNOCKBACK:2", "ARROW_INFINITE:1", "DURABILITY:5"));
+        config.set("trade-pool.trisula_poseidon.enchantments", List.of("LOYALTY:3", "IMPALING:7", "CHANNELING:1", "DURABILITY:5", "MENDING:1"));
+        config.set("trade-pool.ryujin_no_tsuri.enchantments", List.of("LUCK:5", "LURE:5", "DURABILITY:5", "MENDING:1"));
+        config.set("trade-pool.ancient_mace.enchantments", List.of("DENSITY:5", "BREACH:4", "WIND_BURST:2", "DURABILITY:5", "MENDING:1"));
+        config.set("settings.enchant-version", 2);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraTrader: enchant mitologi v2 diterapkan.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraTrader: gagal menyimpan migrasi enchant: " + exception.getMessage());
         }
     }
 
