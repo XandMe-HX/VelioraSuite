@@ -225,7 +225,9 @@ public final class QuestManager {
 
         if (automatic) {
             send(player, "quest-auto-completed", "%prefix% &aQuest &f%quest% &aselesai. Reward: &f%money%&a + &f%base_items%&a. Level sekarang: &f%level%&a.%milestone_message%", placeholders(category, progress, 0, money, milestoneMultiplier, manaBonus));
-            if (configManager.isAutoRestartAfterClaim() && !autoRestart) {
+            if (autoRestart) {
+                send(player, "quest-auto-restarted", "%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.", placeholders(category, progress, 0));
+            } else if (configManager.isAutoRestartAfterClaim()) {
                 send(player, "quest-auto-paused", "%prefix% &eQuest belum dilanjutkan karena Mana tidak cukup. Mulai lagi dari menu Quest setelah reset.", Map.of());
             }
             return true;
