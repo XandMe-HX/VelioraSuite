@@ -19,7 +19,8 @@ public final class KitPreviewManager {
     }
 
     public void openPreview(org.bukkit.entity.Player player, Kit kit) {
-        int size = Math.max(27, Math.min(54, ((kit.getItems().size() + 17) / 9) * 9));
+        // One header row and one navigation row leave up to 36 slots for kit items.
+        int size = Math.max(27, Math.min(54, ((kit.getItems().size() + 26) / 9) * 9));
         PreviewHolder holder = new PreviewHolder();
         Inventory inventory = Bukkit.createInventory(holder, size, configManager.getPreviewTitle(kit.getDisplayName()));
         holder.setInventory(inventory);
