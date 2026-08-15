@@ -36,6 +36,11 @@ settings:
       legendary: {enabled: true, spam-needed: 18, seconds: 16.0}
       mitologi: {enabled: true, spam-needed: 25, seconds: 20.0}
 
+  rods:
+    enabled: true
+    bypass-permission: 'veliorasuite.fishing.rods.bypass'
+    # Rod bonuses only make minigames easier; they do not directly boost Legendary/Mythic odds.
+
   sell-gui:
     enabled: true
     title: '&8VelioraFishing Sell'
@@ -74,6 +79,7 @@ permissions:
   top: 'veliorasuite.fishing.top'
   admin: 'veliorasuite.fishing.admin'
   reload: 'veliorasuite.fishing.reload'
+  rods-bypass: 'veliorasuite.fishing.rods.bypass'
 
 fish:
   old_boot: {name: 'Old Boot', rarity: TRASH, material: LEATHER_BOOTS, origin: 'VelioraFishing', region: 'Sampah', weight: {min: 0.1, max: 1.0}, price: {min: 1, max: 1}, head: {enabled: false, texture-base64: '', fallback-material: LEATHER_BOOTS}}
