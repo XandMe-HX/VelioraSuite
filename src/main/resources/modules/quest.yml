@@ -24,7 +24,8 @@ settings:
     completions-per-level: 1
     max-level: 100
     auto-start-on-progress: false
-    auto-restart-after-claim: false
+    # Quest kategori yang sama lanjut otomatis setelah selesai jika Mana masih cukup.
+    auto-restart-after-claim: true
   rewards:
     # Nilai uang dikurangi 20% agar tetap cocok untuk economy hard.
     give-mana-on-complete: false
@@ -72,7 +73,8 @@ categories:
     target-increase-per-level: 58
     harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, SUGAR_CANE, MELON, PUMPKIN, COCOA, NETHER_WART]
     plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
-    count-hoe-farmland: true
+    # Tanam dan mencangkul tidak dihitung agar tidak bisa progres instan.
+    count-hoe-farmland: false
     base-item-rewards: [{material: WHEAT_SEEDS, amount: 4}, {material: BREAD, amount: 1}]
     milestone-item-rewards: [{material: BONE_MEAL, amount: 8}, {material: BAKED_POTATO, amount: 4}]
   chef:
@@ -129,6 +131,7 @@ messages:
   quest-claimed: '%prefix% &aReward quest &f%quest% &aberhasil diclaim. Kamu mendapat &f%money%&a. Pilih quest lagi untuk lanjut level berikutnya.'
   quest-level-up: '%prefix% &bQuest &f%quest% &bnaik ke level &f%level%&b.'
   quest-auto-restarted: '%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.'
+  quest-auto-paused: '%prefix% &eQuest belum dilanjutkan karena Mana tidak cukup. Mulai lagi dari menu Quest setelah reset.'
   quest-max-level: '%prefix% &6Quest &f%quest% &6sudah mencapai level maksimal &f100&6.'
   quest-not-active: '%prefix% &cQuest ini belum aktif. Pilih dulu lewat &f/quests&c atau &f/quests start <category>&c.'
   quest-already-active: '%prefix% &cQuest ini sedang aktif.'
