@@ -11,6 +11,7 @@ public final class SecurityModule implements VelioraModule {
     private final VelioraSuite plugin;
     private SecurityManager manager;
     private SecurityListener listener;
+    private CombatGuardManager combatGuard;
     private boolean enabled;
 
     public SecurityModule(VelioraSuite plugin) {
@@ -27,6 +28,8 @@ public final class SecurityModule implements VelioraModule {
         plugin.saveResourceIfNotExists("modules/security.yml");
         manager = new SecurityManager(plugin);
         manager.load();
+        combatGuard = new CombatGuardManager(plugin, manager.getConfigManager());
+        combatGuard.load();
     }
 
     @Override
@@ -35,6 +38,12 @@ public final class SecurityModule implements VelioraModule {
         registerCommand();
         listener = new SecurityListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+        plugin.getServer().getPluginManager().registerEvents(combatGuard, plugin);
+        PluginCommand guardCommand = plugin.getCommand("vguard");
+        if (guardCommand != null) {
+            guardCommand.setExecutor(combatGuard);
+            guardCommand.setTabCompleter(combatGuard);
+        }
     }
 
     @Override
@@ -44,6 +53,10 @@ public final class SecurityModule implements VelioraModule {
             HandlerList.unregisterAll(listener);
             listener = null;
         }
+        if (combatGuard != null) {
+            HandlerList.unregisterAll(combatGuard);
+            combatGuard.shutdown();
+        }
         registerDisabledCommand();
     }
 
@@ -51,6 +64,7 @@ public final class SecurityModule implements VelioraModule {
     public void reload() {
         if (manager != null) manager.reload();
         else load();
+        if (combatGuard != null) combatGuard.reload();
     }
 
     @Override
