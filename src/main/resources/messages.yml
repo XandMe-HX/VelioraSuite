@@ -9,7 +9,7 @@
 # - Setelah edit, jalankan /vs reload.
 # =========================================================
 
-prefix: '&8【&aVelioraSuite&8】'
+prefix: '&8[&bVeliora&3Suite&8]'
 
 no-permission: '%prefix% &cKamu tidak punya izin.'
 reload-success: '%prefix% &aPlugin berhasil direload.'
