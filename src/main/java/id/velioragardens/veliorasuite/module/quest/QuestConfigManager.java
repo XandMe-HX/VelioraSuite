@@ -34,12 +34,13 @@ public final class QuestConfigManager {
         plugin.saveResourceIfNotExists("modules/quest.yml");
         File file = new File(plugin.getDataFolder(), "modules/quest.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        migrateAutomaticProgressionV2(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&aVelioraQuest&8] "); }
-    public boolean isRequireSkillsMana() { return bool("settings.require-skills-mana", true); }
+    public boolean isRequireSkillsMana() { return bool("settings.require-skills-mana", false); }
     public boolean isDebugMana() { return bool("settings.debug-mana", false); }
     public boolean isGuiEnabled() { return bool("settings.gui.enabled", true); }
     public String getGuiTitle() { return str("settings.gui.title", "&8Veliora Quest"); }
@@ -52,8 +53,8 @@ public final class QuestConfigManager {
     public int getBossBarAutoHideSeconds() { return Math.max(0, integer("settings.bossbar.auto-hide-seconds", 8)); }
     public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 1)); }
     public int getMaxLevel() { return Math.max(1, integer("settings.progression.max-level", 100)); }
-    public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", false); }
-    public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", false); }
+    public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", true); }
+    public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", true); }
     public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", false); }
     public int getManaReward() { return Math.max(0, integer("settings.rewards.mana-reward", 0)); }
     public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 1000)); }
@@ -178,6 +179,24 @@ public final class QuestConfigManager {
     public String message(String path, String fallback) { return str("messages." + path, fallback).replace("%prefix%", getPrefix()); }
     public List<String> messageList(String path, List<String> fallback) { List<String> list = config == null ? List.of() : config.getStringList("messages." + path); return list.isEmpty() ? fallback : list; }
     public String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }
+
+    /** Enables automatic AuraSkills-style progression once without touching player quest data. */
+    private void migrateAutomaticProgressionV2(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 2) return;
+        config.set("settings.require-skills-mana", false);
+        config.set("settings.progression.auto-start-on-progress", true);
+        config.set("settings.progression.auto-restart-after-claim", true);
+        config.set("settings.progression.config-version", 2);
+        config.set("messages.quest-started", "%prefix% &aQuest &f%quest% &amengikuti aktivitasmu secara otomatis.");
+        config.set("messages.quest-auto-completed", "%prefix% &aQuest &f%quest% &aselesai. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Quest berikutnya langsung berjalan.");
+        config.set("messages.quest-not-active", "%prefix% &eQuest ini akan aktif otomatis saat kamu melakukan aktivitas kategorinya.");
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraQuest: progression otomatis v2 diterapkan tanpa mereset data player.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal menyimpan migrasi progression otomatis: " + exception.getMessage());
+        }
+    }
 
     /** Migrates the old placeholder category so existing server configs show the real tree-cutting quest. */
     private void migrateLegacyWoodcuttingDisplay(File file) {

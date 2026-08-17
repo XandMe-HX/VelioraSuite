@@ -6,6 +6,7 @@ settings:
     cooldown-seconds: 5
     max-recent-alerts: 20
   combat-guard:
+    config-version: 2
     enabled: true
     # Floodgate dicek lewat UUID API; prefix nama hanya fallback untuk versi lama.
     # Bedrock/touch diberi toleransi lebih besar dan tidak ditindak dari satu sinyal saja.

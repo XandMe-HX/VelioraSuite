@@ -19,6 +19,7 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
+    config-version: 2
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Level berhenti di 100, tetapi reward dan siklus quest tetap berjalan.
     completions-per-level: 1
