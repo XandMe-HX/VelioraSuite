@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&8[&bAdminMonitor&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lMONITOR &6&l] &r'
   timezone: 'Asia/Jakarta'
   staff-permission: 'veliorasuite.staff'
   admin-permission: 'veliorasuite.adminmonitor.admin'

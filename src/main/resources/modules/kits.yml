@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&8[&bVelioraKits&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lKITS &6&l] &r'
   command: '/kits'
   open-gui-on-main-command: true
   use-per-kit-permission: true

@@ -6,7 +6,7 @@
 
 settings:
   enabled: true
-  prefix: '&8[&bVelioraChat&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lCHAT &6&l] &r'
 
   formatter-enabled: false
   essentials-mode: true

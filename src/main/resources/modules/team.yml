@@ -17,7 +17,7 @@ settings:
   balance-version: 2
 
   # Prefix default untuk pesan command.
-  prefix: '&8[&bVelioraTeam&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lTEAM &6&l] &r'
 
   # Biaya membuat team.
   create-cost: 30000

@@ -437,7 +437,7 @@ effects:
     particle: TOTEM_OF_UNDYING
 
 messages:
-  prefix: '&8[&cVelioraBoss&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lBOSS &6&l] &r'
   boss-spawn: '%prefix% &c%boss% &7muncul di dungeon. &f/boss status &7untuk lokasi.'
   boss-death: '%prefix% &a%boss% berhasil dikalahkan!'
   boss-despawn: '%prefix% &e%boss% menghilang.'

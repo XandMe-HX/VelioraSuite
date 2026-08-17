@@ -35,6 +35,7 @@ public final class QuestConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/quest.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
         migrateAutomaticProgressionV2(file);
+        migrateRewardsV3(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -195,6 +196,22 @@ public final class QuestConfigManager {
             plugin.getLogger().info("VelioraQuest: progression otomatis v2 diterapkan tanpa mereset data player.");
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraQuest: gagal menyimpan migrasi progression otomatis: " + exception.getMessage());
+        }
+    }
+
+    private void migrateRewardsV3(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 3) return;
+        config.set("settings.rewards.give-mana-on-complete", true);
+        config.set("settings.rewards.mana-reward", 5);
+        config.set("settings.rewards.base-money", 500);
+        config.set("settings.rewards.money-increase-per-level", 75);
+        config.set("settings.rewards.max-money", 10000);
+        config.set("settings.progression.config-version", 3);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraQuest: reward v3 diterapkan (Mana +5, money 500-10000).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal menyimpan migrasi reward v3: " + exception.getMessage());
         }
     }
 

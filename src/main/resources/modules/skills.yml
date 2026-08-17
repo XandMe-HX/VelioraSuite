@@ -1,12 +1,13 @@
 settings:
   enabled: true
-  prefix: '&8[&bVelioraSkills&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lSKILLS &6&l] &r'
 
   mana:
-    default-mana: 10
-    default-max-mana: 10
+    config-version: 2
+    default-mana: 20
+    default-max-mana: 20
     # Batas keras agar bonus quest tidak membuat Mana tanpa akhir.
-    max-mana-cap: 100
+    max-mana-cap: 200
     min-mana: 0
     daily-reset:
       enabled: true
@@ -20,10 +21,17 @@ settings:
         level-10-14: 3
         level-15-plus: 4
 
+  abilities:
+    blocked-worlds: [war_world]
+    miner: {enabled: true, cost: 25, cooldown-seconds: 120, duration-seconds: 30}
+    guardian: {enabled: true, cost: 35, cooldown-seconds: 90, duration-seconds: 10}
+    dash: {enabled: true, cost: 18, cooldown-seconds: 30, duration-seconds: 1}
+    fisher: {enabled: true, cost: 20, cooldown-seconds: 120, duration-seconds: 60}
+
   actionbar:
     enabled: true
     interval-ticks: 20
-    format: '&c❤ %health% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%'
+    format: '&cHP %health% &8| &e$ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &bMANA &f%veliorasuite_mana%/%veliorasuite_mana_max%'
     disabled-worlds: []
 
   placeholderapi:
@@ -60,6 +68,7 @@ messages:
     - '&8&m--------------------------------'
     - '&b&lVelioraSkills'
     - '&f/vskills mana &7- Cek mana kamu.'
+    - '&f/vskills ability <miner|guardian|dash|fisher> &7- Gunakan kemampuan Mana.'
     - '&f/vskills mana <player> &7- Cek mana player.'
     - '&f/vskills status &7- Cek status module.'
     - '&f/vskills reload &7- Reload config.'

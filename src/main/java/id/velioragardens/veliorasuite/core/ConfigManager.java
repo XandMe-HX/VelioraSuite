@@ -5,6 +5,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ public final class ConfigManager {
 
     private static final List<String> MODULE_CONFIGS = List.of(
             "guide",
+            "menu",
             "loginsecurity",
             "team",
             "kits",
@@ -51,7 +53,30 @@ public final class ConfigManager {
             plugin.saveResourceIfNotExists("modules/" + moduleName + ".yml");
         }
 
+        applyBrandThemeV1();
         reload();
+    }
+
+    private void applyBrandThemeV1() {
+        if (plugin.getConfig().getInt("settings.brand-version", 0) >= 1) return;
+        String[][] modules = {
+                {"adminmonitor", "MONITOR"}, {"announcement", "NEWS"}, {"boss", "BOSS"},
+                {"chat", "CHAT"}, {"fishing", "FISHING"}, {"kits", "KITS"},
+                {"loginsecurity", "LOGIN"}, {"menu", "MENU"}, {"pets", "PETS"},
+                {"quest", "QUEST"}, {"report", "REPORT"}, {"security", "SECURITY"},
+                {"skills", "SKILLS"}, {"team", "TEAM"}, {"trader", "TRADER"}, {"warp", "WARP"}
+        };
+        for (String[] module : modules) {
+            File file = new File(plugin.getDataFolder(), "modules/" + module[0] + ".yml");
+            if (!file.exists()) continue;
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+            yaml.set("settings.prefix", "&6&l[ &e&lVELIORA &a&l" + module[1] + " &6&l] &r");
+            try { yaml.save(file); }
+            catch (IOException exception) { plugin.getLogger().warning("Gagal menerapkan tema ke " + module[0] + ": " + exception.getMessage()); }
+        }
+        plugin.getConfig().set("settings.prefix", "&6&l[ &e&lVELIORA &a&lSUITE &6&l] &r");
+        plugin.getConfig().set("settings.brand-version", 1);
+        plugin.saveConfig();
     }
 
     public void reload() {

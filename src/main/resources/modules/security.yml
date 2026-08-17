@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&8[&cVelioraSecurity&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lSECURITY &6&l] &r'
   alerts:
     enabled: true
     cooldown-seconds: 5
@@ -34,10 +34,12 @@ settings:
     window-seconds: 30
     kick-message: '&cTerlalu banyak join dari koneksi yang sama. Coba lagi nanti.'
   name-protection:
+    config-version: 3
     enabled: true
     name-regex: '^[a-zA-Z0-9_]{3,16}$'
     allow-bedrock-prefix: true
-    bedrock-prefixes: ['.', '*']
+    bedrock-prefixes: ['_']
+    reserve-bedrock-prefix-for-floodgate: true
     kick-message: '&cNama player tidak valid.'
   identity-protection:
     enabled: true

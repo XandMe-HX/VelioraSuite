@@ -17,6 +17,7 @@ public final class SkillsManager {
     private final ManaManager manaManager;
     private final SkillsPlaceholderManager placeholderManager;
     private final SkillsApi api;
+    private final ManaAbilityManager abilityManager;
     private final ManaActionBarTask actionBarTask;
     private final ManaResetTask resetTask;
 
@@ -27,6 +28,7 @@ public final class SkillsManager {
         this.manaManager = new ManaManager(configManager, dataManager);
         this.placeholderManager = new SkillsPlaceholderManager(configManager, manaManager);
         this.api = new SkillsApi(manaManager);
+        this.abilityManager = new ManaAbilityManager(plugin, configManager, manaManager);
         this.actionBarTask = new ManaActionBarTask(plugin, configManager, manaManager);
         this.resetTask = new ManaResetTask(plugin, configManager, manaManager);
     }
@@ -57,6 +59,7 @@ public final class SkillsManager {
     public ManaManager getManaManager() { return manaManager; }
     public SkillsPlaceholderManager getPlaceholderManager() { return placeholderManager; }
     public SkillsApi getApi() { return api; }
+    public ManaAbilityManager getAbilityManager() { return abilityManager; }
 
     public void sendHelp(CommandSender sender) {
         sendLines(sender, configManager.messageList("help", List.of(

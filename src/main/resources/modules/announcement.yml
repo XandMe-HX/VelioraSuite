@@ -57,7 +57,7 @@ settings:
 
   # Prefix default untuk announcement.
   # Prefix akan ditambahkan pada baris pertama announcement.
-  prefix: '&8[&bVeliora&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lNEWS &6&l] &r'
 
 sound:
   # Sound saat announcement dikirim ke player.

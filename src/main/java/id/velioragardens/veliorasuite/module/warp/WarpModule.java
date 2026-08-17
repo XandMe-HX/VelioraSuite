@@ -33,6 +33,7 @@ public final class WarpModule implements VelioraModule {
         register("lobby", executor);
         register("dungeon", executor);
         register("pvp", executor);
+        register("guild", executor);
         listener = new WarpListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
@@ -47,7 +48,10 @@ public final class WarpModule implements VelioraModule {
         disableCommand("lobby");
         disableCommand("dungeon");
         disableCommand("pvp");
+        disableCommand("guild");
     }
+
+    public WarpManager getManager() { return manager; }
 
     @Override public void reload() { if (manager != null) manager.load(); else load(); }
     @Override public boolean isEnabled() { return enabled; }
