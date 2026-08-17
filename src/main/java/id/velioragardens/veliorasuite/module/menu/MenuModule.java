@@ -148,7 +148,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
             case 34 -> openRtp(player);
             case 37 -> run(player, "kits");
             case 39 -> run(player, "ftb");
-            case 41 -> run(player, "key");
+            case 41 -> run(player, "key shop");
             case 43 -> openTeam(player);
             case 45 -> openTop(player, true);
             case 49 -> openRanks(player);
@@ -400,12 +400,10 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
 
     private void run(Player player, String command) {
         player.closeInventory();
-        String root = command.split(" ", 2)[0];
-        if (Bukkit.getPluginCommand(root) == null) {
+        if (!player.performCommand(command)) {
+            String root = command.split(" ", 2)[0];
             player.sendMessage(prefix() + color("&cFitur /" + root + " belum tersedia atau pluginnya belum aktif."));
-            return;
         }
-        if (!player.performCommand(command)) player.sendMessage(prefix() + color("&cCommand gagal dijalankan."));
     }
 
     private Inventory inventory(Holder holder, int size, String title) {
