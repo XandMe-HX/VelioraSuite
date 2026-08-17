@@ -113,7 +113,10 @@ bosses:
     scale: 3.4
     skills: [GROUND_SLAM, SUMMON_MINIONS]
     rewards:
-      money: { enabled: true, min: 500, max: 1500 }
+      money:
+        enabled: true
+        min: 500
+        max: 1500
   moss_warden:
     entity: ZOMBIE
     display-name: '&aMoss Warden'
@@ -123,7 +126,10 @@ bosses:
     scale: 3.5
     skills: [POISON_CLOUD, SUMMON_MINIONS]
     rewards:
-      money: { enabled: true, min: 500, max: 1500 }
+      money:
+        enabled: true
+        min: 500
+        max: 1500
   forest_beast:
     entity: RAVAGER
     display-name: '&aForest Beast'
@@ -133,7 +139,10 @@ bosses:
     scale: 4.4
     skills: [GROUND_SLAM, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 800, max: 2500 }
+      money:
+        enabled: true
+        min: 800
+        max: 2500
   infernal_butcher:
     entity: VINDICATOR
     display-name: '&cInfernal Butcher'
@@ -143,7 +152,10 @@ bosses:
     scale: 4.2
     skills: [GROUND_SLAM, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 800, max: 2500 }
+      money:
+        enabled: true
+        min: 800
+        max: 2500
   deep_drowned_king:
     entity: DROWNED
     display-name: '&3Deep Drowned King'
@@ -153,7 +165,10 @@ bosses:
     scale: 4.2
     skills: [PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 800, max: 2500 }
+      money:
+        enabled: true
+        min: 800
+        max: 2500
   sand_revenant:
     entity: HUSK
     display-name: '&eSand Revenant'
@@ -163,7 +178,10 @@ bosses:
     scale: 4.1
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS]
     rewards:
-      money: { enabled: true, min: 800, max: 2500 }
+      money:
+        enabled: true
+        min: 800
+        max: 2500
   cave_titan:
     entity: RAVAGER
     display-name: '&7Cave Titan'
@@ -173,7 +191,10 @@ bosses:
     scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1200, max: 3500 }
+      money:
+        enabled: true
+        min: 1200
+        max: 3500
   ancient_warden:
     entity: WARDEN
     display-name: '&9Ancient Warden'
@@ -183,7 +204,10 @@ bosses:
     scale: 5.0
     skills: [GROUND_SLAM, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1200, max: 3500 }
+      money:
+        enabled: true
+        min: 1200
+        max: 3500
   abyss_brute:
     entity: PIGLIN_BRUTE
     display-name: '&5Abyss Brute'
@@ -193,7 +217,10 @@ bosses:
     scale: 4.8
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1200, max: 3500 }
+      money:
+        enabled: true
+        min: 1200
+        max: 3500
   crystal_evoker:
     entity: EVOKER
     display-name: '&dCrystal Evoker'
@@ -203,7 +230,10 @@ bosses:
     scale: 5.4
     skills: [FIRE_BOMB, PULL_AURA, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1800, max: 5000 }
+      money:
+        enabled: true
+        min: 1800
+        max: 5000
   namazu_earthshaker:
     entity: RAVAGER
     display-name: '&6Namazu Earthshaker'
@@ -213,7 +243,10 @@ bosses:
     scale: 5.6
     skills: [GROUND_SLAM, FIRE_BOMB, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1800, max: 5000 }
+      money:
+        enabled: true
+        min: 1800
+        max: 5000
   soul_reaper:
     entity: WITHER_SKELETON
     display-name: '&8Soul Reaper'
@@ -223,7 +256,10 @@ bosses:
     scale: 5.4
     skills: [PULL_AURA, POISON_CLOUD, SUMMON_MINIONS, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1800, max: 5000 }
+      money:
+        enabled: true
+        min: 1800
+        max: 5000
   void_executioner:
     entity: WITHER_SKELETON
     display-name: '&5Void Executioner'
@@ -233,7 +269,10 @@ bosses:
     scale: 6.0
     skills: [GROUND_SLAM, FIRE_BOMB, PULL_AURA, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 2500, max: 6500 }
+      money:
+        enabled: true
+        min: 2500
+        max: 6500
   eclipse_warden:
     entity: WARDEN
     display-name: '&0Eclipse Warden'
@@ -243,7 +282,10 @@ bosses:
     scale: 6.0
     skills: [GROUND_SLAM, PULL_AURA, SUMMON_MINIONS, POISON_CLOUD, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 2500, max: 6500 }
+      money:
+        enabled: true
+        min: 2500
+        max: 6500
   frost_warden:
     entity: WARDEN
     display-name: '&bFrost Warden'
@@ -253,7 +295,10 @@ bosses:
     scale: 5.5
     skills: [GROUND_SLAM, LIGHTNING_CHAIN, SOUL_CAGE, HEAL_PULSE, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1800, max: 5000 }
+      money:
+        enabled: true
+        min: 1800
+        max: 5000
   nether_reaper:
     entity: WITHER_SKELETON
     display-name: '&cNether Reaper'
@@ -263,7 +308,10 @@ bosses:
     scale: 5.1
     skills: [FIRE_BOMB, SHADOW_PULSE, PULL_AURA, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1200, max: 3500 }
+      money:
+        enabled: true
+        min: 1200
+        max: 3500
   abyss_guardian:
     entity: WARDEN
     display-name: '&5Abyss Guardian'
@@ -273,7 +321,10 @@ bosses:
     scale: 6.0
     skills: [LIGHTNING_CHAIN, SHADOW_PULSE, SOUL_CAGE, HEAL_PULSE, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 2500, max: 6500 }
+      money:
+        enabled: true
+        min: 2500
+        max: 6500
   tempest_juggernaut:
     entity: RAVAGER
     display-name: '&bTempest Juggernaut'
@@ -283,7 +334,10 @@ bosses:
     scale: 5.5
     skills: [GROUND_SLAM, LIGHTNING_CHAIN, SOUL_CAGE, RAGE_MODE]
     rewards:
-      money: { enabled: true, min: 1800, max: 5000 }
+      money:
+        enabled: true
+        min: 1800
+        max: 5000
 
 skills:
   enabled: true
@@ -334,23 +388,41 @@ rewards:
     max: 2000
   top-damage-bonus:
     enabled: true
-    first: { min: 600, max: 600 }
-    second: { min: 300, max: 300 }
-    third: { min: 100, max: 100 }
+    first:
+      min: 600
+      max: 600
+    second:
+      min: 300
+      max: 300
+    third:
+      min: 100
+      max: 100
   team-bonus:
     enabled: false
     # Uang bonus team dimatikan; hadiah utama adalah item untuk setiap peserta.
     minimum-eligible-members: 2
-    pool: { min: 0, max: 0 }
+    pool:
+      min: 0
+      max: 0
   money-total-cap:
     enabled: true
     max-per-player: 2000
   materials:
-    common: { diamond: 0, ancient-debris: 0 }
-    rare: { diamond: 0, ancient-debris: 0 }
-    epic: { diamond: 1, ancient-debris: 0 }
-    legendary: { diamond: 1, ancient-debris: 0 }
-    mythic: { diamond: 2, ancient-debris: 1 }
+    common:
+      diamond: 0
+      ancient-debris: 0
+    rare:
+      diamond: 0
+      ancient-debris: 0
+    epic:
+      diamond: 1
+      ancient-debris: 0
+    legendary:
+      diamond: 1
+      ancient-debris: 0
+    mythic:
+      diamond: 2
+      ancient-debris: 1
 
 effects:
   spawn:

@@ -1,5 +1,5 @@
 settings:
-  config-version: 2
+  config-version: 3
   enabled: true
   prefix: '&8[&6VelioraTrader&8] '
   spawn:
@@ -26,6 +26,8 @@ settings:
   trade:
     random-items-per-spawn: 5
     max-money-price: 500000
+    # Semua harga MONEY efektif menjadi 80% dari angka payment.money.
+    money-price-multiplier: 0.80
     stock-mode: GLOBAL
     default-stock: 1
     per-player-limit: 1
@@ -57,80 +59,7 @@ companion:
     y: 1.0
     z: 1.5
 
-camp:
-  enabled: true
-  restore-on-despawn: true
-  template: ADVENTURER_TENT
-  skip-npc-space: true
-  protect-solid-blocks: true
-  allow-replace:
-    - AIR
-    - CAVE_AIR
-    - VOID_AIR
-    - GRASS
-    - TALL_GRASS
-    - SHORT_GRASS
-    - FERN
-    - LARGE_FERN
-    - SNOW
-  blocks:
-    - offset: [-2, 0, -1]
-      material: OAK_PLANKS
-    - offset: [-1, 0, -1]
-      material: OAK_PLANKS
-    - offset: [0, 0, -1]
-      material: OAK_PLANKS
-    - offset: [1, 0, -1]
-      material: OAK_PLANKS
-    - offset: [-2, 0, 0]
-      material: OAK_SLAB
-    - offset: [-1, 0, 0]
-      material: OAK_SLAB
-    - offset: [0, 0, 0]
-      material: OAK_SLAB
-    - offset: [1, 0, 0]
-      material: OAK_SLAB
-    - offset: [-2, 1, 0]
-      material: BARREL
-    - offset: [-1, 1, 0]
-      material: CHEST
-    - offset: [0, 1, 0]
-      material: CRAFTING_TABLE
-    - offset: [1, 1, 0]
-      material: COMPOSTER
-    - offset: [2, 1, 0]
-      material: BARREL
-    - offset: [-3, 0, 1]
-      material: CAMPFIRE
-    - offset: [2, 1, 1]
-      material: OAK_FENCE
-    - offset: [2, 2, 1]
-      material: LANTERN
-    - offset: [-2, 1, -2]
-      material: WHITE_WOOL
-    - offset: [-1, 2, -2]
-      material: WHITE_WOOL
-    - offset: [0, 2, -2]
-      material: WHITE_WOOL
-    - offset: [1, 1, -2]
-      material: WHITE_WOOL
-    - offset: [-2, 1, -3]
-      material: WHITE_WOOL
-    - offset: [-1, 2, -3]
-      material: WHITE_WOOL
-    - offset: [0, 2, -3]
-      material: WHITE_WOOL
-    - offset: [1, 1, -3]
-      material: WHITE_WOOL
-    - offset: [-1, 1, -2]
-      material: BROWN_CARPET
-    - offset: [0, 1, -2]
-      material: BROWN_CARPET
-    - offset: [-1, 1, -3]
-      material: BROWN_CARPET
-    - offset: [0, 1, -3]
-      material: BROWN_CARPET
-
+# Camp/tenda dihapus: trader tidak lagi mengubah block dunia.
 gui:
   title: '&8Veliora Trader'
   size: 27
@@ -574,7 +503,7 @@ trade-pool:
 
 messages:
   force-spawn-success: '%prefix% &aTrader berhasil dispawn untuk test.'
-  riset-success: '%prefix% &aTrader berhasil diriset, camp lama dibersihkan, dan trader baru dispawn.'
+  riset-success: '%prefix% &aTrader berhasil diriset, trader lama dibersihkan dan trader baru dispawn.'
   riset-failed: '%prefix% &cGagal riset trader. Cek console.'
   trader-spawn: '%prefix% &6Veliora Trader muncul di &f%world% %x% %y% %z%&6.'
   trader-despawn: '%prefix% &eVeliora Trader telah pergi.'

@@ -39,6 +39,11 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
-        return placeholderManager.getPlaceholder(player, params);
+        try {
+            return placeholderManager.getPlaceholder(player, params);
+        } catch (RuntimeException | LinkageError exception) {
+            plugin.getLogger().warning("Placeholder veliorasuite_" + params + " gagal diproses: " + exception.getMessage());
+            return "";
+        }
     }
 }

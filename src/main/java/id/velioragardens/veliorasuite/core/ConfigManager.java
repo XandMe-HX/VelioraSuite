@@ -25,6 +25,7 @@ public final class ConfigManager {
             "boss",
             "security",
             "chat",
+            "warp",
             "trader",
             "pets"
     );

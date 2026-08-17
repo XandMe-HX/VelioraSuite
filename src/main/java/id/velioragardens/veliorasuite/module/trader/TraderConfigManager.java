@@ -78,9 +78,18 @@ public final class TraderConfigManager {
 
     private void migrateConfig(File file) {
         int version = config.getInt("settings.config-version", 1);
-        if (version >= 2) return;
-        config.set("settings.trade.random-items-per-spawn", 5);
-        config.set("settings.config-version", 2);
+        boolean changed = false;
+        if (version < 2) {
+            config.set("settings.trade.random-items-per-spawn", 5);
+            changed = true;
+        }
+        if (version < 3) {
+            config.set("settings.trade.money-price-multiplier", 0.80D);
+            config.set("camp", null);
+            changed = true;
+        }
+        if (!changed) return;
+        config.set("settings.config-version", 3);
         try {
             config.save(file);
         } catch (IOException exception) {
@@ -151,6 +160,7 @@ public final class TraderConfigManager {
         return Math.max(1, Math.min(getTradeSlots().size(), configured));
     }
     public long getMaxMoneyPrice() { return Math.max(0L, Math.min(500_000L, config == null ? 500_000L : config.getLong("settings.trade.max-money-price", 500_000L))); }
+    public double getMoneyPriceMultiplier() { return Math.max(0.0D, Math.min(1.0D, number("settings.trade.money-price-multiplier", 0.80D))); }
     public String getStockMode() { return str("settings.trade.stock-mode", "GLOBAL"); }
     public int getDefaultStock() { return Math.max(1, integer("settings.trade.default-stock", 1)); }
     public int getPerPlayerLimit() { return Math.max(1, integer("settings.trade.per-player-limit", 1)); }
@@ -242,10 +252,14 @@ public final class TraderConfigManager {
                     Math.max(0, item.getInt("fishing-luck-bonus", 0)),
                     item.getBoolean("unrepairable", true),
                     paymentType,
-                    Math.min(getMaxMoneyPrice(), Math.max(0L, item.getLong("payment.money", 0L))),
+                    Math.min(getMaxMoneyPrice(), applyMoneyPriceMultiplier(item.getLong("payment.money", 0L))),
                     fish
             ));
         }
+    }
+
+    private long applyMoneyPriceMultiplier(long configured) {
+        return Math.max(0L, Math.round(Math.max(0L, configured) * getMoneyPriceMultiplier()));
     }
 
     private Object mapValue(java.util.Map<?, ?> map, String key, Object fallback) { Object value = map.get(key); return value == null ? fallback : value; }

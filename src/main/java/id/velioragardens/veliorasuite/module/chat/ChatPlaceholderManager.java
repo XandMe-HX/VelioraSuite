@@ -8,6 +8,7 @@ import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
@@ -63,16 +64,33 @@ public final class ChatPlaceholderManager {
 
     public String getPlaceholder(OfflinePlayer player, String identifier) {
         if (identifier == null) return "";
-        UUID uuid = player == null ? null : player.getUniqueId();
-        String lower = identifier.toLowerCase();
-        if (lower.startsWith("quest_")) return getQuestPlaceholder(player, lower);
-        return switch (lower) {
-            case "team_name" -> getTeamName(uuid);
-            case "team_tag" -> getTeamTag(uuid);
-            case "player_name" -> player == null ? "" : player.getName();
-            case "mana", "mana_max", "mana_bar", "mana_percent" -> getSkillsPlaceholder(player, identifier);
-            default -> "";
-        };
+        try {
+            UUID uuid = player == null ? null : player.getUniqueId();
+            String lower = identifier.toLowerCase();
+            if (lower.startsWith("quest_")) return getQuestPlaceholder(player, lower);
+            return switch (lower) {
+                case "team_name" -> getTeamName(uuid);
+                case "team_tag" -> getTeamTag(uuid);
+                case "player_name" -> player == null ? "" : player.getName();
+                case "playtime" -> formatPlaytime(player);
+                case "mana", "mana_max", "mana_bar", "mana_percent" -> getSkillsPlaceholder(player, identifier);
+                default -> "";
+            };
+        } catch (RuntimeException | LinkageError exception) {
+            return "";
+        }
+    }
+
+    private String formatPlaytime(OfflinePlayer player) {
+        if (player == null || player.getPlayer() == null) return "0m";
+        long ticks = Math.max(0L, player.getPlayer().getStatistic(Statistic.PLAY_ONE_MINUTE));
+        long minutes = ticks / (20L * 60L);
+        long days = minutes / 1440L;
+        long hours = (minutes % 1440L) / 60L;
+        long remainingMinutes = minutes % 60L;
+        if (days > 0) return days + "d " + hours + "h";
+        if (hours > 0) return hours + "h " + remainingMinutes + "m";
+        return remainingMinutes + "m";
     }
 
     private String getSkillsPlaceholder(OfflinePlayer player, String identifier) {

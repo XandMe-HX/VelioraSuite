@@ -7,19 +7,25 @@ settings:
     max-recent-alerts: 20
   combat-guard:
     enabled: true
-    # Pemeriksaan hanya berjalan ketika player menyerang; tidak melakukan scan seluruh world.
+    # Floodgate dicek lewat UUID API; prefix nama hanya fallback untuk versi lama.
+    # Bedrock/touch diberi toleransi lebih besar dan tidak ditindak dari satu sinyal saja.
     java-max-reach: 3.45
-    bedrock-max-reach: 3.85
+    java-hard-reach-extra: 0.35
+    bedrock-max-reach: 4.10
+    bedrock-hard-reach-extra: 0.45
     minimum-facing-dot: 0.05
+    bedrock-minimum-facing-dot: -0.25
+    bedrock-strong-signals-required: 2
+    minimum-tps-for-geometry: 18.0
     multi-target-count: 3
-    maximum-cps: 20
-    minimum-event-score: 30
-    score-decay-per-second: 1.5
-    stage-1-score: 45
-    stage-2-score: 80
-    stage-3-score: 120
+    maximum-cps: 22
+    minimum-event-score: 8
+    score-decay-per-second: 4.0
+    stage-1-score: 70
+    stage-2-score: 140
+    stage-3-score: 230
     max-evidence-per-player: 20
-    # Stage 3 hanya kick + membuat case. IP-ban selalu menunggu konfirmasi Owner.
+    # Maksimal tiga alert per sesi. Stage 3 hanya kick + case; ban tetap keputusan staff.
     require-human-confirmation-for-ip-ban: true
   join-protection:
     enabled: true
