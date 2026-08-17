@@ -88,6 +88,11 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
         if (exempt(player, target)) return;
 
         long now = System.currentTimeMillis();
+        CombatState state = states.computeIfAbsent(player.getUniqueId(), ignored -> new CombatState(player.getName()));
+        state.decay(now, config.config().getDouble("settings.combat-guard.score-decay-per-second", 4.0D));
+        state.stage = Math.min(state.stage, stage(state.score));
+        state.name = player.getName();
+
         Deque<Long> hitTimes = clicks.computeIfAbsent(player.getUniqueId(), ignored -> new ArrayDeque<>());
         hitTimes.addLast(now);
         while (!hitTimes.isEmpty() && now - hitTimes.peekFirst() > 1000L) hitTimes.removeFirst();
@@ -96,41 +101,80 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
         targets.entrySet().removeIf(entry -> now - entry.getValue() > 350L);
         targets.put(target.getUniqueId(), now);
 
+        boolean bedrock = isBedrock(player);
         double reach = reach(player, target);
         double allowedReach = maxReach(player);
-        boolean impossibleReach = reach > allowedReach;
+        double hardExtra = config.config().getDouble(
+                bedrock ? "settings.combat-guard.bedrock-hard-reach-extra" : "settings.combat-guard.java-hard-reach-extra",
+                bedrock ? 0.45D : 0.35D);
+        boolean softReach = reach > allowedReach;
+        boolean hardReach = reach > allowedReach + Math.max(0.15D, hardExtra);
         boolean noSight = !player.hasLineOfSight(target) && reach > 2.2D;
         double facing = facing(player, target);
-        boolean impossibleFacing = facing < config.config().getDouble("settings.combat-guard.minimum-facing-dot", 0.05D);
+        double minimumFacing = config.config().getDouble(
+                bedrock ? "settings.combat-guard.bedrock-minimum-facing-dot" : "settings.combat-guard.minimum-facing-dot",
+                bedrock ? -0.25D : 0.05D);
+        boolean impossibleFacing = reach > 1.5D && facing < minimumFacing;
         boolean multiAura = targets.size() >= config.config().getInt("settings.combat-guard.multi-target-count", 3);
-        boolean autoClick = hitTimes.size() > config.config().getInt("settings.combat-guard.maximum-cps", 20);
+        boolean autoClick = hitTimes.size() > config.config().getInt("settings.combat-guard.maximum-cps", 22);
+        boolean stableTps = Bukkit.getTPS()[0] >= config.config().getDouble("settings.combat-guard.minimum-tps-for-geometry", 18.0D);
 
         int eventScore = 0;
+        int strongSignals = 0;
         List<String> signals = new ArrayList<>();
-        if (impossibleReach) { eventScore += 50; signals.add(String.format(Locale.US, "reach %.2f/%.2f", reach, allowedReach)); }
-        if (noSight) { eventScore += 40; signals.add("hit-through-wall"); }
-        if (impossibleFacing) { eventScore += 30; signals.add(String.format(Locale.US, "facing %.2f", facing)); }
-        if (multiAura) { eventScore += 40; signals.add("multi-target " + targets.size()); }
-        if (autoClick) { eventScore += 20; signals.add("cps " + hitTimes.size()); }
-        if (eventScore < config.config().getInt("settings.combat-guard.minimum-event-score", 30)) return;
+        if (stableTps && softReach) {
+            eventScore += hardReach ? 35 : 12;
+            if (hardReach) strongSignals++;
+            signals.add(String.format(Locale.US, "reach %.2f/%.2f%s", reach, allowedReach, hardReach ? " HARD" : ""));
+        }
+        if (noSight) {
+            eventScore += 35;
+            strongSignals++;
+            signals.add("hit-through-wall");
+        }
+        if (stableTps && impossibleFacing) {
+            eventScore += bedrock ? 6 : 12;
+            signals.add(String.format(Locale.US, "facing %.2f", facing));
+        }
+        if (multiAura) {
+            eventScore += 32;
+            strongSignals++;
+            signals.add("multi-target " + targets.size());
+        }
+        if (autoClick) {
+            eventScore += 10;
+            signals.add("cps " + hitTimes.size());
+        }
 
-        CombatState state = states.computeIfAbsent(player.getUniqueId(), ignored -> new CombatState(player.getName()));
-        state.decay(now, config.config().getDouble("settings.combat-guard.score-decay-per-second", 1.5D));
-        state.name = player.getName();
-        state.score = Math.min(200.0D, state.score + eventScore);
+        // Bedrock touch controls can report wider aim and reach. A single geometric
+        // signal is recorded gently; destructive actions require two independent signals.
+        int requiredStrongSignals = bedrock
+                ? config.config().getInt("settings.combat-guard.bedrock-strong-signals-required", 2)
+                : 1;
+        if (bedrock && strongSignals < requiredStrongSignals) eventScore = Math.min(eventScore, 8);
+        if (eventScore < config.config().getInt("settings.combat-guard.minimum-event-score", 8)) return;
+
+        state.score = Math.min(300.0D, state.score + eventScore);
         String evidence = evidence(player, target, reach, facing, targets.size(), hitTimes.size(), signals);
         state.addEvidence(evidence, config.config().getInt("settings.combat-guard.max-evidence-per-player", 20));
 
         int newStage = stage(state.score);
+        boolean actionableHit = (!bedrock || strongSignals >= requiredStrongSignals)
+                && (hardReach || noSight || multiAura);
         if (newStage <= state.stage) {
-            if (state.stage >= 2 && (impossibleReach || noSight || multiAura)) event.setCancelled(true);
+            if (state.stage >= 2 && actionableHit) event.setCancelled(true);
             return;
         }
-        state.stage = newStage;
-        if (newStage >= 2) event.setCancelled(true);
-        alertStaff(player, state, evidence);
 
-        if (newStage >= 3) {
+        state.stage = newStage;
+        if (newStage >= 2 && actionableHit) event.setCancelled(true);
+        if (state.alertsSent < 3) {
+            state.alertsSent++;
+            alertStaff(player, state, evidence);
+        }
+
+        if (newStage >= 3 && !state.caseCreated) {
+            state.caseCreated = true;
             String id = "CASE-" + String.format(Locale.ROOT, "%04d", nextCaseId++);
             String ip = player.getAddress() == null || player.getAddress().getAddress() == null
                     ? "" : player.getAddress().getAddress().getHostAddress();
@@ -138,7 +182,7 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
                     "PENDING", new ArrayList<>(state.evidence), now);
             cases.put(id, combatCase);
             Bukkit.broadcast("§8[§4CombatGuard§8] §c" + id + " menunggu konfirmasi Owner/Admin/Guard.", "veliorasuite.security.alerts");
-            player.kickPlayer("§cCombatGuard: pola serangan brutal terdeteksi.\n§7Kasus " + id + " sedang ditinjau staff.");
+            player.kickPlayer("§cCombatGuard: beberapa sinyal serangan kuat terdeteksi.\n§7Kasus " + id + " sedang ditinjau staff.");
         }
         save();
     }
@@ -190,9 +234,17 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
     }
 
     private boolean isBedrock(Player player) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("floodgate")) return false;
+        try {
+            Class<?> apiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            Object api = apiClass.getMethod("getInstance").invoke(null);
+            Object result = apiClass.getMethod("isFloodgatePlayer", UUID.class).invoke(api, player.getUniqueId());
+            if (result instanceof Boolean value) return value;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            // Fallback below keeps compatibility with older Floodgate installations.
+        }
         String name = player.getName();
-        return Bukkit.getPluginManager().isPluginEnabled("floodgate")
-                && (name.startsWith(".") || name.startsWith("*"));
+        return name.startsWith(".") || name.startsWith("*");
     }
 
     private double reach(Player player, LivingEntity target) {
@@ -212,9 +264,9 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
     }
 
     private int stage(double score) {
-        if (score >= config.config().getDouble("settings.combat-guard.stage-3-score", 120.0D)) return 3;
-        if (score >= config.config().getDouble("settings.combat-guard.stage-2-score", 80.0D)) return 2;
-        if (score >= config.config().getDouble("settings.combat-guard.stage-1-score", 45.0D)) return 1;
+        if (score >= config.config().getDouble("settings.combat-guard.stage-3-score", 230.0D)) return 3;
+        if (score >= config.config().getDouble("settings.combat-guard.stage-2-score", 140.0D)) return 2;
+        if (score >= config.config().getDouble("settings.combat-guard.stage-1-score", 70.0D)) return 1;
         return 0;
     }
 
@@ -417,6 +469,8 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
         private String name;
         private double score;
         private int stage;
+        private int alertsSent;
+        private boolean caseCreated;
         private long updatedAt = System.currentTimeMillis();
         private final List<String> evidence = new ArrayList<>();
 

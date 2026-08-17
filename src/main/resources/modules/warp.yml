@@ -1,0 +1,25 @@
+settings:
+  enabled: true
+  prefix: '&8[&bVelioraWarp&8] '
+  cooldown-seconds: 3
+  sound:
+    enabled: true
+    name: ENTITY_ENDERMAN_TELEPORT
+
+permissions:
+  use: veliorasuite.warp.use
+  admin: veliorasuite.warp.admin
+  reload: veliorasuite.warp.reload
+
+messages:
+  no-permission: '%prefix% &cKamu tidak punya izin.'
+  not-found: '%prefix% &cWarp tidak ditemukan: &f%warp%'
+  world-missing: '%prefix% &cWorld tujuan belum dimuat.'
+  cooldown: '%prefix% &eTunggu &f%seconds%s &esebelum warp lagi.'
+  failed: '%prefix% &cTeleport gagal. Coba lagi.'
+  teleported: '%prefix% &aTeleport ke &f%warp%&a.'
+  set: '%prefix% &aWarp &f%warp% &aberhasil diset.'
+  deleted: '%prefix% &aWarp berhasil dihapus.'
+  invalid-name: '%prefix% &cNama warp harus 2-24 karakter: huruf kecil, angka, _ atau -.'
+  list: '%prefix% &7Warp: &f%warps%'
+  reload: '%prefix% &aKonfigurasi dan data warp dimuat ulang.'

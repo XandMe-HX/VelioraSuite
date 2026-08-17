@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.2.0
+version: 1.3.0
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
@@ -124,6 +124,24 @@ commands:
       - vpet
       - vpets
     permission: veliorasuite.pets.use
+  vgwarp:
+    description: Kelola dan gunakan warp Veliora.
+    usage: /vgwarp <nama|set|delete|list|info|alias|reload>
+    aliases: [vwarp]
+    permission: veliorasuite.warp.use
+  lobby:
+    description: Teleport ke warp lobby.
+    usage: /lobby
+    aliases: [hub, spawn]
+    permission: veliorasuite.warp.use
+  dungeon:
+    description: Teleport ke warp dungeon.
+    usage: /dungeon
+    permission: veliorasuite.warp.use
+  pvp:
+    description: Teleport ke warp pvp.
+    usage: /pvp
+    permission: veliorasuite.warp.use
   register:
     description: Register Veliora account.
     usage: /register <key> <key confirm>
@@ -222,6 +240,12 @@ permissions:
   veliorasuite.security.reload:
     default: op
   veliorasuite.security.bypass:
+    default: op
+  veliorasuite.warp.use:
+    default: true
+  veliorasuite.warp.admin:
+    default: op
+  veliorasuite.warp.reload:
     default: op
   veliorasuite.pets.use:
     default: true

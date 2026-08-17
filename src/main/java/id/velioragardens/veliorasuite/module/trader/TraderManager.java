@@ -81,11 +81,8 @@ public final class TraderManager {
         if (selected.isEmpty()) return false;
 
         purchaseManager.resetForNewTrader();
-        campManager.build(location);
-        if (!npcManager.spawn(location)) {
-            campManager.restore();
-            return false;
-        }
+        // Camp/tent generation was intentionally removed. The configured location stays untouched.
+        if (!npcManager.spawn(location)) return false;
 
         activeLocation = location.clone();
         despawnAt = System.currentTimeMillis() + configManager.getActiveMinutes() * 60_000L;
@@ -94,7 +91,7 @@ public final class TraderManager {
         dataManager.saveActive(activeLocation, despawnAt);
         spawnManager.resetReminderClock();
         if (configManager.isAnnounceSpawn()) broadcast("trader-spawn", "%prefix% &6Veliora Trader muncul di &f%world% %x% %y% %z%&6.");
-        if (configManager.isDebugSpawn()) plugin.getLogger().info("VelioraTrader debug: active=true despawnAt=" + despawnAt + " campPlaced=" + campManager.getPlacedBlocks() + " campSkipped=" + campManager.getSkippedBlocks());
+        if (configManager.isDebugSpawn()) plugin.getLogger().info("VelioraTrader debug: active=true despawnAt=" + despawnAt + " location=" + activeLocation);
         return true;
     }
 
@@ -111,7 +108,7 @@ public final class TraderManager {
         cleanupActiveTrader(true);
         Location location = spawnManager.findSpawnLocation();
         boolean spawned = spawn(location);
-        if (spawned) send(sender, "riset-success", "%prefix% &aTrader berhasil diriset, camp lama dibersihkan, dan trader baru dispawn.", Map.of());
+        if (spawned) send(sender, "riset-success", "%prefix% &aTrader berhasil diriset, trader lama dibersihkan dan trader baru dispawn.", Map.of());
         else send(sender, "riset-failed", "%prefix% &cGagal riset trader. Cek console.", Map.of());
         return spawned;
     }

@@ -20,6 +20,7 @@ import id.velioragardens.veliorasuite.module.security.SecurityModule;
 import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.trader.TraderModule;
+import id.velioragardens.veliorasuite.module.warp.WarpModule;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -86,6 +87,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new KitsModule(this));
         moduleManager.register(new ReportModule(this));
         moduleManager.register(new ChatModule(this));
+        moduleManager.register(new WarpModule(this));
         moduleManager.register(new SecurityModule(this));
         moduleManager.register(new FishingModule(this));
         moduleManager.register(new SkillsModule(this));
