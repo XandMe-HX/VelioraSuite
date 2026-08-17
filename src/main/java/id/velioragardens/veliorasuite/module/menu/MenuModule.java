@@ -171,7 +171,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         ItemStack stack = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) stack.getItemMeta();
         meta.setOwningPlayer(player);
-        meta.setDisplayName(color("&6&l[ &e&lPROFIL &a&l" + player.getName() + " &6&l]"));
+        meta.setDisplayName(color("&8[&bProfil &f" + player.getName() + "&8]"));
         meta.setLore(color(lore));
         stack.setItemMeta(meta);
         return stack;
@@ -413,8 +413,8 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     }
 
     private void frame(Inventory gui) {
-        ItemStack dark = pane(Material.BLACK_STAINED_GLASS_PANE);
-        ItemStack gold = pane(Material.YELLOW_STAINED_GLASS_PANE);
+        ItemStack dark = pane(Material.BLUE_STAINED_GLASS_PANE);
+        ItemStack gold = pane(Material.LIGHT_BLUE_STAINED_GLASS_PANE);
         for (int slot = 0; slot < gui.getSize(); slot++) {
             int row = slot / 9, col = slot % 9;
             if (row == 0 || row == gui.getSize() / 9 - 1 || col == 0 || col == 8) gui.setItem(slot, (slot % 2 == 0) ? gold : dark);
@@ -422,7 +422,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     }
 
     private void fill(Inventory gui) {
-        ItemStack pane = pane(Material.BLACK_STAINED_GLASS_PANE);
+        ItemStack pane = pane(Material.BLUE_STAINED_GLASS_PANE);
         for (int i = 0; i < gui.getSize(); i++) gui.setItem(i, pane);
     }
 
