@@ -22,7 +22,7 @@
 
 settings:
   debug: false
-  prefix: '&6&l[ &e&lVELIORA &a&lSUITE &6&l] &r'
+  prefix: '&8[&bVeliora&3Suite&8] &r'
   brand-version: 1
 
 modules:
