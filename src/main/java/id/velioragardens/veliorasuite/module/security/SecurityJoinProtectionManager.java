@@ -35,7 +35,10 @@ public final class SecurityJoinProtectionManager {
             return new SecurityDecision(true, true, "JOIN_RISK", player.getName(), configManager.getRiskTemporaryBlockThreshold(), "IP hash masih dalam cooldown", "TEMPORARY_DENY", "suspicious-join-kick", "%prefix% &cTerlalu banyak akun berbeda dari koneksi yang sama. Coba lagi sebentar.");
         }
 
-        boolean invalidName = configManager.isNameProtectionEnabled() && !isValidName(player.getName());
+        boolean reservedJavaPrefix = configManager.isReserveBedrockPrefix()
+                && player.getName().startsWith("_") && !isFloodgatePlayer(player);
+        boolean invalidName = configManager.isNameProtectionEnabled()
+                && (reservedJavaPrefix || !isValidName(player.getName()));
         if (invalidName) {
             int risk = riskManager.scoreJoinRisk(player, 0, 0, 0, true);
             return new SecurityDecision(true, true, "INVALID_NAME", player.getName(), risk, "Nama player tidak sesuai aturan", "KICK_TEMPORARY", "name-kick", configManager.getNameKickMessage());
@@ -78,6 +81,18 @@ public final class SecurityJoinProtectionManager {
         namesByIp.clear();
         rejoinsByIdentity.clear();
         temporaryHolds.clear();
+    }
+
+    private boolean isFloodgatePlayer(Player player) {
+        try {
+            Class<?> apiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            Object api = apiClass.getMethod("getInstance").invoke(null);
+            Object result = apiClass.getMethod("isFloodgatePlayer", java.util.UUID.class)
+                    .invoke(api, player.getUniqueId());
+            return result instanceof Boolean value && value;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return false;
+        }
     }
 
     private boolean isValidName(String originalName) {

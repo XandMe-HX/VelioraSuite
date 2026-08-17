@@ -13,6 +13,7 @@ import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import id.velioragardens.veliorasuite.module.guide.GuideModule;
 import id.velioragardens.veliorasuite.module.kits.KitsModule;
 import id.velioragardens.veliorasuite.module.loginsecurity.LoginSecurityModule;
+import id.velioragardens.veliorasuite.module.menu.MenuModule;
 import id.velioragardens.veliorasuite.module.pets.PetsModule;
 import id.velioragardens.veliorasuite.module.quest.QuestModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
@@ -81,6 +82,7 @@ public final class VelioraSuite extends JavaPlugin {
     private void registerModules() {
         moduleManager.register(new AdminMonitorModule(this));
         moduleManager.register(new GuideModule(this));
+        moduleManager.register(new MenuModule(this));
         moduleManager.register(new AnnouncementModule(this));
         moduleManager.register(new LoginSecurityModule(this));
         moduleManager.register(new TeamModule(this));

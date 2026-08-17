@@ -44,6 +44,12 @@ public final class SkillsCommand implements CommandExecutor, TabCompleter {
                 handleMana(sender, args);
                 return true;
             }
+            case "ability" -> {
+                if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
+                if (args.length < 2) { manager.sendHelp(sender); return true; }
+                manager.getAbilityManager().activate(player, args[1]);
+                return true;
+            }
             default -> {
                 manager.sendHelp(sender);
                 return true;
@@ -55,9 +61,12 @@ public final class SkillsCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             List<String> options = new ArrayList<>();
-            if (manager.getConfigManager().hasUse(sender)) options.addAll(Arrays.asList("help", "status", "mana"));
+            if (manager.getConfigManager().hasUse(sender)) options.addAll(Arrays.asList("help", "status", "mana", "ability"));
             if (manager.getConfigManager().hasReload(sender)) options.add("reload");
             return filter(options, args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("ability")) {
+            return filter(Arrays.asList("miner", "guardian", "dash", "fisher"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("mana")) {
             List<String> options = new ArrayList<>();

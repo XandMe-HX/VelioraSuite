@@ -73,6 +73,7 @@ public final class ChatPlaceholderManager {
                 case "team_tag" -> getTeamTag(uuid);
                 case "player_name" -> player == null ? "" : player.getName();
                 case "playtime" -> formatPlaytime(player);
+                case "level" -> getLevel(player);
                 case "mana", "mana_max", "mana_bar", "mana_percent" -> getSkillsPlaceholder(player, identifier);
                 default -> "";
             };
@@ -82,8 +83,8 @@ public final class ChatPlaceholderManager {
     }
 
     private String formatPlaytime(OfflinePlayer player) {
-        if (player == null || player.getPlayer() == null) return "0m";
-        long ticks = Math.max(0L, player.getPlayer().getStatistic(Statistic.PLAY_ONE_MINUTE));
+        if (player == null) return "0m";
+        long ticks = Math.max(0L, player.getStatistic(Statistic.PLAY_ONE_MINUTE));
         long minutes = ticks / (20L * 60L);
         long days = minutes / 1440L;
         long hours = (minutes % 1440L) / 60L;
@@ -91,6 +92,18 @@ public final class ChatPlaceholderManager {
         if (days > 0) return days + "d " + hours + "h";
         if (hours > 0) return hours + "h " + remainingMinutes + "m";
         return remainingMinutes + "m";
+    }
+
+    private String getLevel(OfflinePlayer player) {
+        QuestModule questModule = getQuestModule();
+        if (player == null || questModule == null || questModule.getQuestManager() == null) return "1";
+        int total = 0;
+        int count = 0;
+        for (var progress : questModule.getQuestManager().getDataManager().getOrCreate(player).getCategories().values()) {
+            total += progress.getLevel();
+            count++;
+        }
+        return String.valueOf(count == 0 ? 1 : Math.max(1, Math.round((float) total / count)));
     }
 
     private String getSkillsPlaceholder(OfflinePlayer player, String identifier) {

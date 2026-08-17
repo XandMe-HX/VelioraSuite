@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&8[&bVelioraFishing&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lFISHING &6&l] &r'
 
   rarity-chance:
     trash: 18.0

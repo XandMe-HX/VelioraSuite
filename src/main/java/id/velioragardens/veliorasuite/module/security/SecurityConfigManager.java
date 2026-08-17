@@ -42,6 +42,7 @@ public final class SecurityConfigManager {
             plugin.getLogger().warning("VelioraSecurity: gagal menggabungkan default baru: " + exception.getMessage());
         }
         migrateCombatGuardV2(file);
+        migrateBedrockPrefixV3(file);
     }
 
     private void migrateCombatGuardV2(File file) {
@@ -69,6 +70,15 @@ public final class SecurityConfigManager {
         }
     }
 
+    private void migrateBedrockPrefixV3(File file) {
+        if (config.getInt("settings.name-protection.config-version", 0) >= 3) return;
+        config.set("settings.name-protection.config-version", 3);
+        config.set("settings.name-protection.bedrock-prefixes", List.of("_"));
+        config.set("settings.name-protection.reserve-bedrock-prefix-for-floodgate", true);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraSecurity: gagal menyimpan prefix Bedrock _: " + exception.getMessage()); }
+    }
+
     public FileConfiguration config() { return config; }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
@@ -88,8 +98,9 @@ public final class SecurityConfigManager {
     public boolean isAllowBedrockPrefix() { return bool("settings.name-protection.allow-bedrock-prefix", true); }
     public List<String> getBedrockPrefixes() {
         List<String> list = config == null ? List.of() : config.getStringList("settings.name-protection.bedrock-prefixes");
-        return list.isEmpty() ? List.of(".", "*") : list;
+        return list.isEmpty() ? List.of("_") : list;
     }
+    public boolean isReserveBedrockPrefix() { return bool("settings.name-protection.reserve-bedrock-prefix-for-floodgate", true); }
     public String getNameKickMessage() { return str("settings.name-protection.kick-message", "&cNama player tidak valid."); }
 
     public boolean isCommandProtectionEnabled() { return bool("settings.command-protection.enabled", true); }

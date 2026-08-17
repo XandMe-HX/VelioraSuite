@@ -128,6 +128,10 @@ public final class ManaManager {
     }
 
     private void clamp(PlayerManaData data) {
+        if (data.getMaxMana() < configManager.getDefaultMaxMana()) {
+            data.setMaxMana(configManager.getDefaultMaxMana());
+            data.setMana(Math.max(data.getMana(), configManager.getDefaultMana()));
+        }
         data.setMaxMana(Math.min(configManager.getMaxManaCap(), Math.max(1, data.getMaxMana())));
         int min = configManager.getMinMana();
         data.setMana(Math.max(min, Math.min(data.getMana(), data.getMaxMana())));

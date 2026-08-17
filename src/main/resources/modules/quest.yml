@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&8[&aVelioraQuest&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lQUEST &6&l] &r'
   # Mode otomatis seperti skill progression: aktivitas langsung memulai quest terkait.
   # Mana tetap milik VelioraSkills, tetapi tidak dipotong untuk memulai quest.
   require-skills-mana: false
@@ -19,7 +19,7 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 2
+    config-version: 3
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Level berhenti di 100, tetapi reward dan siklus quest tetap berjalan.
     completions-per-level: 1
@@ -28,11 +28,11 @@ settings:
     auto-restart-after-claim: true
   rewards:
     # Nilai uang dikurangi 20% agar tetap cocok untuk economy hard.
-    give-mana-on-complete: false
-    mana-reward: 0
-    base-money: 800
-    money-increase-per-level: 100
-    max-money: 14000
+    give-mana-on-complete: true
+    mana-reward: 5
+    base-money: 500
+    money-increase-per-level: 75
+    max-money: 10000
     # Saat naik ke setiap kelipatan level 5: +1 Max Mana dan bonus item kategori.
     mana-level-interval: 5
     mana-level-bonus: 1

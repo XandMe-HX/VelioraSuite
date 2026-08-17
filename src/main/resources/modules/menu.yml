@@ -1,0 +1,50 @@
+settings:
+  enabled: true
+  prefix: '&6&l[ &e&lVELIORA &a&lMENU &6&l] &r'
+
+# Hanya warna Minecraft klasik dan karakter ASCII supaya aman di Java dan Bedrock.
+titles:
+  main: '&6&l[ &e&lVELIORA &a&lMENU &6&l]'
+  warps: '&6&l[ &e&lVELIORA &a&lWARP &6&l]'
+  ranks: '&6&l[ &e&lVELIORA &a&lRANK &6&l]'
+  playtime: '&6&l[ &e&lTOP &a&lPLAYTIME &6&l]'
+  balance: '&6&l[ &e&lTOP &a&lBALANCE &6&l]'
+  team: '&6&l[ &e&lVELIORA &a&lTEAM &6&l]'
+  rtp: '&6&l[ &e&lVELIORA &a&lRTP &6&l]'
+  skills: '&6&l[ &e&lVELIORA &a&lSKILLS &6&l]'
+
+leaderboards:
+  # Cache mencegah Vault/statistik dibaca setiap player mengklik menu.
+  cache-seconds: 300
+
+# Deskripsi bebas diedit. Urutan di file adalah urutan di GUI.
+ranks:
+  member:
+    material: LEATHER_CHESTPLATE
+    name: '&f&lMEMBER'
+    description: ['Rank awal seluruh pemain.', 'Akses fitur dasar Veliora Gardens.']
+  vip:
+    material: GOLDEN_CHESTPLATE
+    name: '&e&lVIP'
+    description: ['Rank dukungan awal.', 'Benefit mengikuti permission LuckPerms server.']
+  legend:
+    material: DIAMOND_CHESTPLATE
+    name: '&b&lLEGEND'
+    description: ['Rank premium lanjutan.', 'Benefit mengikuti permission LuckPerms server.']
+  helper:
+    material: LAPIS_LAZULI
+    name: '&9&lHELPER'
+    description: ['Membantu member dan menjaga kenyamanan server.']
+  guard:
+    material: SHIELD
+    name: '&a&lGUARD'
+    description: ['Menangani laporan dan bukti pelanggaran.']
+  admin:
+    material: REDSTONE
+    name: '&c&lADMIN'
+    description: ['Mengelola sistem dan operasional server.']
+  owner:
+    material: NETHER_STAR
+    name: '&6&lOWNER'
+    description: ['Pemilik dan pengarah Veliora Gardens.']
+

@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public final class SkillsConfigManager {
@@ -22,13 +23,14 @@ public final class SkillsConfigManager {
         plugin.saveResourceIfNotExists("modules/skills.yml");
         File file = new File(plugin.getDataFolder(), "modules/skills.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        migrateManaV2(file);
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&bVelioraSkills&8] "); }
-    public int getDefaultMana() { return Math.max(0, integer("settings.mana.default-mana", 10)); }
-    public int getDefaultMaxMana() { return Math.min(getMaxManaCap(), Math.max(1, integer("settings.mana.default-max-mana", 10))); }
-    public int getMaxManaCap() { return Math.max(1, integer("settings.mana.max-mana-cap", 100)); }
+    public int getDefaultMana() { return Math.max(0, integer("settings.mana.default-mana", 20)); }
+    public int getDefaultMaxMana() { return Math.min(getMaxManaCap(), Math.max(1, integer("settings.mana.default-max-mana", 20))); }
+    public int getMaxManaCap() { return Math.max(1, integer("settings.mana.max-mana-cap", 200)); }
     public int getMinMana() { return Math.max(0, integer("settings.mana.min-mana", 0)); }
     public boolean isDailyResetEnabled() { return bool("settings.mana.daily-reset.enabled", true); }
     public String getResetTime() { return str("settings.mana.daily-reset.reset-time", "00:00"); }
@@ -49,6 +51,31 @@ public final class SkillsConfigManager {
     public String getManaBarFilledColor() { return str("settings.mana-bar.filled-color", "&b"); }
     public String getManaBarEmptyColor() { return str("settings.mana-bar.empty-color", "&7"); }
     public String getManaBarSymbol() { return str("settings.mana-bar.symbol", "|"); }
+
+    public boolean isAbilityEnabled(String name) { return bool("settings.abilities." + name + ".enabled", false); }
+    public int getAbilityCost(String name) { return Math.max(0, integer("settings.abilities." + name + ".cost", 20)); }
+    public int getAbilityCooldown(String name) { return Math.max(1, integer("settings.abilities." + name + ".cooldown-seconds", 60)); }
+    public int getAbilityDuration(String name) { return Math.max(1, integer("settings.abilities." + name + ".duration-seconds", 30)); }
+    public List<String> getAbilityBlockedWorlds() { return config == null ? List.of() : config.getStringList("settings.abilities.blocked-worlds"); }
+
+    private void migrateManaV2(File file) {
+        if (config.getInt("settings.mana.config-version", 0) >= 2) return;
+        config.set("settings.mana.config-version", 2);
+        config.set("settings.mana.default-mana", 20);
+        config.set("settings.mana.default-max-mana", 20);
+        config.set("settings.mana.max-mana-cap", 200);
+        config.set("settings.abilities.blocked-worlds", List.of("war_world"));
+        String[][] values = {{"miner","25","120","30"},{"guardian","35","90","10"},{"dash","18","30","1"},{"fisher","20","120","60"}};
+        for (String[] value : values) {
+            String base = "settings.abilities." + value[0] + ".";
+            config.set(base + "enabled", true);
+            config.set(base + "cost", Integer.parseInt(value[1]));
+            config.set(base + "cooldown-seconds", Integer.parseInt(value[2]));
+            config.set(base + "duration-seconds", Integer.parseInt(value[3]));
+        }
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraSkills: gagal migrasi Mana v2: " + exception.getMessage()); }
+    }
 
     public String getUsePermission() { return str("permissions.use", "veliorasuite.skills.use"); }
     public String getAdminPermission() { return str("permissions.admin", "veliorasuite.skills.admin"); }

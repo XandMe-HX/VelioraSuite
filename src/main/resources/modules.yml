@@ -2,6 +2,7 @@ modules:
   core: true
   adminmonitor: true
   guide: true
+  menu: true
   loginsecurity: true
   team: true
   kits: true

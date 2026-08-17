@@ -16,7 +16,7 @@ settings:
   enabled: true
 
   # Prefix default untuk semua pesan VelioraReport.
-  prefix: '&8[&cVelioraReport&8] '
+  prefix: '&6&l[ &e&lVELIORA &a&lREPORT &6&l] &r'
 
   # Minimal panjang alasan report.
   min-reason-length: 5
