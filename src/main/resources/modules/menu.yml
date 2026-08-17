@@ -1,17 +1,17 @@
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lMENU &6&l] &r'
+  prefix: '&8[&bVeliora&3Menu&8] &r'
 
 # Hanya warna Minecraft klasik dan karakter ASCII supaya aman di Java dan Bedrock.
 titles:
-  main: '&6&l[ &e&lVELIORA &a&lMENU &6&l]'
-  warps: '&6&l[ &e&lVELIORA &a&lWARP &6&l]'
-  ranks: '&6&l[ &e&lVELIORA &a&lRANK &6&l]'
-  playtime: '&6&l[ &e&lTOP &a&lPLAYTIME &6&l]'
-  balance: '&6&l[ &e&lTOP &a&lBALANCE &6&l]'
-  team: '&6&l[ &e&lVELIORA &a&lTEAM &6&l]'
-  rtp: '&6&l[ &e&lVELIORA &a&lRTP &6&l]'
-  skills: '&6&l[ &e&lVELIORA &a&lSKILLS &6&l]'
+  main: '&1Veliora &bMenu'
+  warps: '&1Veliora &bWarp'
+  ranks: '&1Veliora &bRank'
+  playtime: '&1Top &bPlaytime'
+  balance: '&1Top &bBalance'
+  team: '&1Veliora &bTeam'
+  rtp: '&1Veliora &bRTP'
+  skills: '&1Veliora &bSkills'
 
 leaderboards:
   # Cache mencegah Vault/statistik dibaca setiap player mengklik menu.
