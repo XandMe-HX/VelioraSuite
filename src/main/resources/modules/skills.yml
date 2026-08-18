@@ -3,7 +3,7 @@ settings:
   prefix: '&6&l[ &e&lVELIORA &a&lSKILLS &6&l] &r'
 
   mana:
-    config-version: 2
+    config-version: 3
     default-mana: 20
     default-max-mana: 20
     # Batas keras agar bonus quest tidak membuat Mana tanpa akhir.
@@ -23,15 +23,15 @@ settings:
 
   abilities:
     blocked-worlds: [war_world]
-    miner: {enabled: true, cost: 25, cooldown-seconds: 120, duration-seconds: 30}
-    guardian: {enabled: true, cost: 35, cooldown-seconds: 90, duration-seconds: 10}
-    dash: {enabled: true, cost: 18, cooldown-seconds: 30, duration-seconds: 1}
-    fisher: {enabled: true, cost: 20, cooldown-seconds: 120, duration-seconds: 60}
+    miner: {enabled: true, cost: 5, cooldown-seconds: 120, duration-seconds: 30}
+    guardian: {enabled: true, cost: 8, cooldown-seconds: 90, duration-seconds: 10}
+    dash: {enabled: true, cost: 4, cooldown-seconds: 30, duration-seconds: 1}
+    fisher: {enabled: true, cost: 5, cooldown-seconds: 120, duration-seconds: 60}
 
   actionbar:
     enabled: true
     interval-ticks: 20
-    format: '&cHP %health% &8| &e$ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &bMANA &f%veliorasuite_mana%/%veliorasuite_mana_max%'
+    format: '&c❤ %health% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%'
     disabled-worlds: []
 
   placeholderapi:

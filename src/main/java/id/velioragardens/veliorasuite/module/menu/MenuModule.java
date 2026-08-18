@@ -33,7 +33,9 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.io.File;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -51,6 +53,8 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     private boolean enabled;
     private List<Score> playtimeTop = List.of();
     private List<Score> balanceTop = List.of();
+    private List<Score> killsTop = List.of();
+    private List<Score> deathsTop = List.of();
     private long nextRefresh;
 
     public MenuModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -61,6 +65,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         configFile = new File(plugin.getDataFolder(), "modules/menu.yml");
         config = YamlConfiguration.loadConfiguration(configFile);
         migrateOceanTheme();
+        migrateMenuV2();
     }
 
     private void migrateOceanTheme() {
@@ -75,6 +80,8 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
                 "ranks", "&1Veliora &bRank",
                 "playtime", "&1Top &bPlaytime",
                 "balance", "&1Top &bBalance",
+                "kills", "&1Top &bKill",
+                "deaths", "&1Top &bDeath",
                 "team", "&1Veliora &bTeam",
                 "rtp", "&1Veliora &bRTP",
                 "skills", "&1Veliora &bSkills");
@@ -97,6 +104,29 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
 
     private boolean isLegacyGold(String value) {
         return value != null && value.contains("&6&l[") && value.contains("VELIORA");
+    }
+
+    private void migrateMenuV2() {
+        if (config.getInt("settings.config-version", 0) >= 2) return;
+        try (InputStreamReader reader = new InputStreamReader(
+                java.util.Objects.requireNonNull(plugin.getResource("modules/menu.yml")), StandardCharsets.UTF_8)) {
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(reader);
+            config.set("settings.config-version", 2);
+            config.set("titles.kills", defaults.getString("titles.kills", "&1Top &bKill"));
+            config.set("titles.deaths", defaults.getString("titles.deaths", "&1Top &bDeath"));
+            config.set("ranks", null);
+            ConfigurationSection ranks = defaults.getConfigurationSection("ranks");
+            if (ranks != null) {
+                for (Map.Entry<String, Object> entry : ranks.getValues(true).entrySet()) {
+                    if (entry.getValue() instanceof ConfigurationSection) continue;
+                    config.set("ranks." + entry.getKey(), entry.getValue());
+                }
+            }
+            config.save(configFile);
+            plugin.getLogger().info("VelioraMenu diperbarui: rank resmi serta Top Kill/Death aktif.");
+        } catch (Exception exception) {
+            plugin.getLogger().warning("Gagal migrasi VelioraMenu v2: " + exception.getMessage());
+        }
     }
 
     @Override public void enable() {
@@ -136,8 +166,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
             case MAIN -> clickMain(player, slot);
             case WARPS -> clickWarps(player, slot);
             case RANKS -> clickRank(player, slot);
-            case PLAYTIME -> clickTop(player, slot, true);
-            case BALANCE -> clickTop(player, slot, false);
+            case PLAYTIME, BALANCE, KILLS, DEATHS -> clickTop(player, slot);
             case TEAM -> clickTeam(player, slot);
             case RTP -> { if (slot == 22) run(player, "rtp"); else if (slot == 49) openMain(player); }
             case SKILLS -> clickSkills(player, slot);
@@ -170,7 +199,9 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         gui.setItem(41, item(Material.TRIPWIRE_HOOK, "&d&lKEY SHOP", "&7Hadiah dan key VelioraGacha."));
         gui.setItem(43, item(Material.WHITE_BANNER, "&b&lTEAM", "&7Buat, undang, dan kelola team."));
         gui.setItem(45, item(Material.CLOCK, "&e&lTOP PLAYTIME", "&7Sepuluh pemain paling aktif."));
+        gui.setItem(46, item(Material.IRON_SWORD, "&c&lTOP KILL", "&7Sepuluh pemain dengan kill terbanyak."));
         gui.setItem(49, item(Material.NETHER_STAR, "&6&lRANK", "&7Lihat seluruh rank dan manfaatnya."));
+        gui.setItem(52, item(Material.SKELETON_SKULL, "&7&lTOP DEATH", "&7Sepuluh pemain dengan kematian terbanyak."));
         gui.setItem(53, item(Material.GOLD_BLOCK, "&a&lTOP BALANCE", "&7Sepuluh saldo tertinggi."));
         player.openInventory(gui);
     }
@@ -189,9 +220,11 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
             case 39 -> run(player, "ftb");
             case 41 -> run(player, "key shop");
             case 43 -> openTeam(player);
-            case 45 -> openTop(player, true);
+            case 45 -> openTop(player, Leaderboard.PLAYTIME);
+            case 46 -> openTop(player, Leaderboard.KILLS);
             case 49 -> openRanks(player);
-            case 53 -> openTop(player, false);
+            case 52 -> openTop(player, Leaderboard.DEATHS);
+            case 53 -> openTop(player, Leaderboard.BALANCE);
             default -> { }
         }
     }
@@ -261,10 +294,10 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         Holder holder = new Holder(Page.SKILLS);
         Inventory gui = inventory(holder, 27, title("skills", "&6&l[ &e&lVELIORA &a&lSKILLS &6&l]"));
         fill(gui);
-        gui.setItem(10, item(Material.GOLDEN_PICKAXE, "&e&lMINER FOCUS", "&7Haste selama 30 detik.", "&bBiaya: 25 Mana"));
-        gui.setItem(12, item(Material.SHIELD, "&a&lGUARDIAN", "&7Regeneration selama 10 detik.", "&bBiaya: 35 Mana"));
-        gui.setItem(14, item(Material.FEATHER, "&f&lDASH", "&7Meluncur ke arah pandangan.", "&bBiaya: 18 Mana"));
-        gui.setItem(16, item(Material.FISHING_ROD, "&b&lFISHER FOCUS", "&7Luck selama 60 detik.", "&bBiaya: 20 Mana"));
+        gui.setItem(10, item(Material.GOLDEN_PICKAXE, "&e&lMINER FOCUS", "&7Haste selama 30 detik.", "&bBiaya: " + abilityCost("miner") + " Mana"));
+        gui.setItem(12, item(Material.SHIELD, "&a&lGUARDIAN", "&7Regeneration selama 10 detik.", "&bBiaya: " + abilityCost("guardian") + " Mana"));
+        gui.setItem(14, item(Material.FEATHER, "&f&lDASH", "&7Meluncur ke arah pandangan.", "&bBiaya: " + abilityCost("dash") + " Mana"));
+        gui.setItem(16, item(Material.FISHING_ROD, "&b&lFISHER FOCUS", "&7Luck selama 60 detik.", "&bBiaya: " + abilityCost("fisher") + " Mana"));
         gui.setItem(22, back());
         player.openInventory(gui);
     }
@@ -328,31 +361,35 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         for (String line : config.getStringList("ranks." + key + ".description")) player.sendMessage(color(" &8- &7" + line));
     }
 
-    private void openTop(Player player, boolean playtime) {
+    private void openTop(Player player, Leaderboard board) {
         refreshIfExpired();
-        Page page = playtime ? Page.PLAYTIME : Page.BALANCE;
+        Page page = switch (board) {
+            case PLAYTIME -> Page.PLAYTIME;
+            case BALANCE -> Page.BALANCE;
+            case KILLS -> Page.KILLS;
+            case DEATHS -> Page.DEATHS;
+        };
         Holder holder = new Holder(page);
-        Inventory gui = inventory(holder, 54, title(playtime ? "playtime" : "balance",
-                playtime ? "&6&l[ &e&lTOP &a&lPLAYTIME &6&l]" : "&6&l[ &e&lTOP &a&lBALANCE &6&l]"));
+        Inventory gui = inventory(holder, 54, title(board.configKey, board.fallbackTitle));
         frame(gui);
-        List<Score> scores = playtime ? playtimeTop : balanceTop;
+        List<Score> scores = scores(board);
         for (int i = 0; i < Math.min(10, scores.size()); i++) {
             Score score = scores.get(i);
-            String value = playtime ? formatTime((long) score.value) : "$" + format(score.value);
+            String value = formatScore(board, score.value);
             gui.setItem(TOP_SLOTS[i], item(i == 0 ? Material.GOLD_INGOT : Material.PAPER,
                     "&e&l#" + (i + 1) + " &f" + score.name, "&7" + value));
         }
-        int ownRank = ownRank(player, playtime);
-        double ownValue = playtime ? player.getStatistic(Statistic.PLAY_ONE_MINUTE) : balance(player);
+        int ownRank = ownRank(player, board);
+        double ownValue = statistic(player, board);
         gui.setItem(49, item(Material.PLAYER_HEAD, "&a&lPOSISIMU",
                 "&7Peringkat: &f#" + (ownRank < 1 ? "-" : ownRank),
-                "&7Nilai: &f" + (playtime ? formatTime((long) ownValue) : "$" + format(ownValue)),
+                "&7Nilai: &f" + formatScore(board, ownValue),
                 "&8Data diperbarui berkala agar server tetap ringan."));
         gui.setItem(45, back());
         player.openInventory(gui);
     }
 
-    private void clickTop(Player player, int slot, boolean playtime) {
+    private void clickTop(Player player, int slot) {
         if (slot == 45) openMain(player);
     }
 
@@ -363,31 +400,65 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     private void refreshLeaderboards() {
         List<Score> play = new ArrayList<>();
         List<Score> money = new ArrayList<>();
+        List<Score> kills = new ArrayList<>();
+        List<Score> deaths = new ArrayList<>();
         for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
             String name = offline.getName();
             if (name == null || name.isBlank()) continue;
             play.add(new Score(offline.getUniqueId(), name, offline.getStatistic(Statistic.PLAY_ONE_MINUTE)));
             money.add(new Score(offline.getUniqueId(), name, balance(offline)));
+            kills.add(new Score(offline.getUniqueId(), name, offline.getStatistic(Statistic.PLAYER_KILLS)));
+            deaths.add(new Score(offline.getUniqueId(), name, offline.getStatistic(Statistic.DEATHS)));
         }
         Comparator<Score> descending = Comparator.comparingDouble(Score::value).reversed();
         play.sort(descending);
         money.sort(descending);
+        kills.sort(descending);
+        deaths.sort(descending);
         playtimeTop = List.copyOf(play.subList(0, Math.min(10, play.size())));
         balanceTop = List.copyOf(money.subList(0, Math.min(10, money.size())));
+        killsTop = List.copyOf(kills.subList(0, Math.min(10, kills.size())));
+        deathsTop = List.copyOf(deaths.subList(0, Math.min(10, deaths.size())));
         nextRefresh = System.currentTimeMillis() + Math.max(60, config.getInt("leaderboards.cache-seconds", 300)) * 1000L;
     }
 
-    private int ownRank(Player player, boolean playtime) {
+    private int ownRank(Player player, Leaderboard board) {
         List<Score> all = new ArrayList<>();
         for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
             String name = offline.getName();
             if (name == null) continue;
-            all.add(new Score(offline.getUniqueId(), name,
-                    playtime ? offline.getStatistic(Statistic.PLAY_ONE_MINUTE) : balance(offline)));
+            all.add(new Score(offline.getUniqueId(), name, statistic(offline, board)));
         }
         all.sort(Comparator.comparingDouble(Score::value).reversed());
         for (int i = 0; i < all.size(); i++) if (all.get(i).uuid.equals(player.getUniqueId())) return i + 1;
         return -1;
+    }
+
+    private List<Score> scores(Leaderboard board) {
+        return switch (board) {
+            case PLAYTIME -> playtimeTop;
+            case BALANCE -> balanceTop;
+            case KILLS -> killsTop;
+            case DEATHS -> deathsTop;
+        };
+    }
+
+    private double statistic(OfflinePlayer player, Leaderboard board) {
+        return switch (board) {
+            case PLAYTIME -> player.getStatistic(Statistic.PLAY_ONE_MINUTE);
+            case BALANCE -> balance(player);
+            case KILLS -> player.getStatistic(Statistic.PLAYER_KILLS);
+            case DEATHS -> player.getStatistic(Statistic.DEATHS);
+        };
+    }
+
+    private String formatScore(Leaderboard board, double value) {
+        return switch (board) {
+            case PLAYTIME -> formatTime((long) value);
+            case BALANCE -> "$" + format(value);
+            case KILLS -> (long) value + " kill";
+            case DEATHS -> (long) value + " death";
+        };
     }
 
     private int level(Player player) {
@@ -406,6 +477,12 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         SkillsModule module = module("skills", SkillsModule.class);
         if (module == null || module.getApi() == null) return "-";
         return module.getApi().getMana(player) + "/" + module.getApi().getMaxMana(player);
+    }
+
+    private int abilityCost(String ability) {
+        SkillsModule module = module("skills", SkillsModule.class);
+        if (module == null || module.getSkillsManager() == null) return 0;
+        return module.getSkillsManager().getConfigManager().getAbilityCost(ability);
     }
 
     private boolean warpReady(String name) {
@@ -491,7 +568,20 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         return plugin.getModuleManager().getModule(name).filter(type::isInstance).map(type::cast).orElse(null);
     }
 
-    private enum Page { MAIN, WARPS, RANKS, PLAYTIME, BALANCE, TEAM, RTP, SKILLS }
+    private enum Page { MAIN, WARPS, RANKS, PLAYTIME, BALANCE, KILLS, DEATHS, TEAM, RTP, SKILLS }
+    private enum Leaderboard {
+        PLAYTIME("playtime", "&1Top &bPlaytime"),
+        BALANCE("balance", "&1Top &bBalance"),
+        KILLS("kills", "&1Top &bKill"),
+        DEATHS("deaths", "&1Top &bDeath");
+
+        private final String configKey;
+        private final String fallbackTitle;
+        Leaderboard(String configKey, String fallbackTitle) {
+            this.configKey = configKey;
+            this.fallbackTitle = fallbackTitle;
+        }
+    }
     private static final class Holder implements InventoryHolder {
         private final Page page;
         private Inventory inventory;

@@ -263,9 +263,7 @@ public final class KitsManager {
     }
 
     private double effectivePrice(Kit kit) {
-        if (kit.getPremiumLevel() <= 0) return kit.getPrice();
-        int level = Math.max(1, Math.min(5, kit.getPremiumLevel()));
-        return level * 10000.0D;
+        return Math.max(0.0D, kit.getPrice());
     }
 
     private boolean handlePriceBeforeClaim(Player player, Kit kit, boolean freeClaim) {

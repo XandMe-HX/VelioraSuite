@@ -24,6 +24,7 @@ public final class SkillsConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/skills.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
         migrateManaV2(file);
+        migrateManaV3(file);
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
@@ -75,6 +76,23 @@ public final class SkillsConfigManager {
         }
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraSkills: gagal migrasi Mana v2: " + exception.getMessage()); }
+    }
+
+    private void migrateManaV3(File file) {
+        if (config.getInt("settings.mana.config-version", 0) >= 3) return;
+        config.set("settings.mana.config-version", 3);
+        config.set("settings.abilities.miner.cost", 5);
+        config.set("settings.abilities.guardian.cost", 8);
+        config.set("settings.abilities.dash.cost", 4);
+        config.set("settings.abilities.fisher.cost", 5);
+        config.set("settings.actionbar.enabled", true);
+        config.set("settings.actionbar.interval-ticks", 20);
+        config.set("settings.actionbar.format", "&c❤ %health% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%");
+        if (!config.isList("settings.actionbar.disabled-worlds")) {
+            config.set("settings.actionbar.disabled-worlds", List.of());
+        }
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraSkills: gagal migrasi Mana v3: " + exception.getMessage()); }
     }
 
     public String getUsePermission() { return str("permissions.use", "veliorasuite.skills.use"); }
