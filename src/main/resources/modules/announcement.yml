@@ -57,7 +57,7 @@ settings:
 
   # Prefix default untuk announcement.
   # Prefix akan ditambahkan pada baris pertama announcement.
-  prefix: '&6&l[ &e&lVELIORA &a&lNEWS &6&l] &r'
+  prefix: '&8[&bVeliora&3Info&8] &r'
 
 sound:
   # Sound saat announcement dikirim ke player.
@@ -108,7 +108,7 @@ permissions:
 
 messages:
   # Semua pesan command VelioraAnnouncement bisa diedit di sini.
-  prefix: '&8[&bVelioraAnnouncement&8]'
+  prefix: '&8[&bVeliora&3Info&8]'
 
   no-permission: '%prefix% &cKamu tidak punya izin.'
   reload-success: '%prefix% &aAnnouncement berhasil direload dan task sudah direstart dengan aman.'
@@ -165,7 +165,15 @@ announcements:
     # Prefix dari settings.prefix otomatis muncul di baris pertama.
     lines:
       - '&bVeliora Gardens &7adalah server survival MMORPG cozy.'
-      - '&7Gunakan &f/vguide &7untuk melihat panduan server.'
+      - '&7Gunakan &f/menu &7untuk semua fitur, warp, quest, dan pet.'
+
+  travel:
+    enabled: true
+    permission: ''
+    worlds: []
+    lines:
+      - '&bMau pergi ke tempat lain?'
+      - '&7Gunakan &f/lobby&7, &f/dungeon&7, atau &f/pvp&7.'
 
   rules:
     enabled: true
@@ -189,7 +197,7 @@ announcements:
     worlds: []
     lines:
       - '&aButuh item atau ingin jual hasil farming?'
-      - '&7Gunakan &f/shop &7atau &f/sellgui&7.'
+      - '&7Gunakan &f/shop&7, &f/sellgui&7, atau &f/menu&7.'
 
   fishing:
     enabled: true
@@ -197,7 +205,7 @@ announcements:
     worlds: []
     lines:
       - '&bSuka mancing?'
-      - '&7Gunakan &f/vf top &7untuk melihat top pemancing.'
+      - '&7Gunakan &f/fish &7untuk mancing dan &f/pet &7untuk membuka pet.'
 
   claim:
     enabled: true

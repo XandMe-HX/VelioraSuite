@@ -47,6 +47,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     private static final int[] TOP_SLOTS = {10,11,12,13,14,15,16,19,20,21};
     private final VelioraSuite plugin;
     private FileConfiguration config;
+    private File configFile;
     private boolean enabled;
     private List<Score> playtimeTop = List.of();
     private List<Score> balanceTop = List.of();
@@ -57,7 +58,45 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
 
     @Override public void load() {
         plugin.saveResourceIfNotExists("modules/menu.yml");
-        config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/menu.yml"));
+        configFile = new File(plugin.getDataFolder(), "modules/menu.yml");
+        config = YamlConfiguration.loadConfiguration(configFile);
+        migrateOceanTheme();
+    }
+
+    private void migrateOceanTheme() {
+        boolean changed = false;
+        if (isLegacyGold(config.getString("settings.prefix"))) {
+            config.set("settings.prefix", "&8[&bVeliora&3Menu&8] &r");
+            changed = true;
+        }
+        Map<String, String> titles = Map.of(
+                "main", "&1Veliora &bMenu",
+                "warps", "&1Veliora &bWarp",
+                "ranks", "&1Veliora &bRank",
+                "playtime", "&1Top &bPlaytime",
+                "balance", "&1Top &bBalance",
+                "team", "&1Veliora &bTeam",
+                "rtp", "&1Veliora &bRTP",
+                "skills", "&1Veliora &bSkills");
+        for (Map.Entry<String, String> entry : titles.entrySet()) {
+            String path = "titles." + entry.getKey();
+            if (isLegacyGold(config.getString(path))) {
+                config.set(path, entry.getValue());
+                changed = true;
+            }
+        }
+        if (changed) {
+            try {
+                config.save(configFile);
+                plugin.getLogger().info("Tema lama VelioraMenu dimigrasikan ke Ocean Theme.");
+            } catch (java.io.IOException exception) {
+                plugin.getLogger().warning("Gagal menyimpan migrasi Ocean Theme: " + exception.getMessage());
+            }
+        }
+    }
+
+    private boolean isLegacyGold(String value) {
+        return value != null && value.contains("&6&l[") && value.contains("VELIORA");
     }
 
     @Override public void enable() {
@@ -171,7 +210,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         ItemStack stack = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) stack.getItemMeta();
         meta.setOwningPlayer(player);
-        meta.setDisplayName(color("&6&l[ &e&lPROFIL &a&l" + player.getName() + " &6&l]"));
+        meta.setDisplayName(color("&8[&bProfil &f" + player.getName() + "&8]"));
         meta.setLore(color(lore));
         stack.setItemMeta(meta);
         return stack;
@@ -413,8 +452,8 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     }
 
     private void frame(Inventory gui) {
-        ItemStack dark = pane(Material.BLACK_STAINED_GLASS_PANE);
-        ItemStack gold = pane(Material.YELLOW_STAINED_GLASS_PANE);
+        ItemStack dark = pane(Material.BLUE_STAINED_GLASS_PANE);
+        ItemStack gold = pane(Material.LIGHT_BLUE_STAINED_GLASS_PANE);
         for (int slot = 0; slot < gui.getSize(); slot++) {
             int row = slot / 9, col = slot % 9;
             if (row == 0 || row == gui.getSize() / 9 - 1 || col == 0 || col == 8) gui.setItem(slot, (slot % 2 == 0) ? gold : dark);
@@ -422,7 +461,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     }
 
     private void fill(Inventory gui) {
-        ItemStack pane = pane(Material.BLACK_STAINED_GLASS_PANE);
+        ItemStack pane = pane(Material.BLUE_STAINED_GLASS_PANE);
         for (int i = 0; i < gui.getSize(); i++) gui.setItem(i, pane);
     }
 
