@@ -6,6 +6,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.Set;
 public final class ConfigManager {
 
     private static final List<String> MODULE_CONFIGS = List.of(
+            "adminmonitor",
             "guide",
             "menu",
             "loginsecurity",
@@ -29,7 +32,9 @@ public final class ConfigManager {
             "chat",
             "warp",
             "trader",
-            "pets"
+            "pets",
+            "adventure",
+            "notifications"
     );
 
     private final VelioraSuite plugin;
@@ -48,6 +53,7 @@ public final class ConfigManager {
         plugin.saveResourceIfNotExists("messages.yml");
         plugin.saveResourceIfNotExists("modules.yml");
         plugin.saveResourceIfNotExists("database/schema.sql");
+        mergeModuleDefaults();
 
         for (String moduleName : MODULE_CONFIGS) {
             plugin.saveResourceIfNotExists("modules/" + moduleName + ".yml");
@@ -55,6 +61,27 @@ public final class ConfigManager {
 
         applyBrandThemeV1();
         reload();
+    }
+
+    private void mergeModuleDefaults() {
+        File modulesFile = new File(plugin.getDataFolder(), "modules.yml");
+        YamlConfiguration installed = YamlConfiguration.loadConfiguration(modulesFile);
+        try (var stream = plugin.getResource("modules.yml")) {
+            if (stream == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+            if (!defaults.isConfigurationSection("modules")) return;
+            boolean changed = false;
+            for (String key : defaults.getConfigurationSection("modules").getKeys(false)) {
+                String path = "modules." + key;
+                if (installed.contains(path)) continue;
+                installed.set(path, defaults.getBoolean(path));
+                changed = true;
+            }
+            if (changed) installed.save(modulesFile);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("Gagal menambahkan default module baru: " + exception.getMessage());
+        }
     }
 
     private void applyBrandThemeV1() {

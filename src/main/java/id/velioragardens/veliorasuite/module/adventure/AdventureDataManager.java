@@ -1,0 +1,209 @@
+package id.velioragardens.veliorasuite.module.adventure;
+
+import id.velioragardens.veliorasuite.VelioraSuite;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.scheduler.BukkitTask;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+public final class AdventureDataManager {
+    private final VelioraSuite plugin;
+    private final Map<UUID, PlayerData> players = new HashMap<>();
+    private final Map<Integer, GuildData> guilds = new HashMap<>();
+    private File file;
+    private YamlConfiguration yaml;
+    private BukkitTask flushTask;
+    private boolean dirty;
+
+    public AdventureDataManager(VelioraSuite plugin) { this.plugin = plugin; }
+
+    public void load() {
+        flush();
+        if (flushTask != null) flushTask.cancel();
+        plugin.createFolder("data");
+        file = new File(plugin.getDataFolder(), "data/adventure.yml");
+        yaml = YamlConfiguration.loadConfiguration(file);
+        players.clear();
+        guilds.clear();
+        loadPlayers();
+        loadGuilds();
+        dirty = false;
+        flushTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::flush, 100L, 100L);
+    }
+
+    private void loadPlayers() {
+        ConfigurationSection section = yaml.getConfigurationSection("players");
+        if (section == null) return;
+        for (String key : section.getKeys(false)) try {
+            UUID uuid = UUID.fromString(key);
+            String path = "players." + key;
+            players.put(uuid, new PlayerData(
+                    uuid,
+                    yaml.getString(path + ".name", "Unknown"),
+                    Math.max(0L, yaml.getLong(path + ".exp", 0L)),
+                    Math.max(0, yaml.getInt(path + ".completed", 0)),
+                    yaml.getString(path + ".custom-rank", "")
+            ));
+        } catch (IllegalArgumentException ignored) { }
+    }
+
+    private void loadGuilds() {
+        ConfigurationSection section = yaml.getConfigurationSection("guilds");
+        if (section == null) return;
+        for (String key : section.getKeys(false)) try {
+            int id = Integer.parseInt(key);
+            String path = "guilds." + key;
+            GuildData guild = new GuildData(id);
+            guild.exp = Math.max(0L, yaml.getLong(path + ".exp", 0L));
+            guild.completed = Math.max(0, yaml.getInt(path + ".completed", 0));
+            guild.dailyDate = yaml.getString(path + ".daily-date", "");
+            guild.dailyIds.addAll(yaml.getStringList(path + ".daily-quests"));
+            guild.activeQuest = yaml.getString(path + ".active.id", "");
+            guild.activeProgress = Math.max(0, yaml.getInt(path + ".active.progress", 0));
+            guild.activeTarget = Math.max(0, yaml.getInt(path + ".active.target", 0));
+            guild.activeExpires = Math.max(0L, yaml.getLong(path + ".active.expires", 0L));
+            guild.activeX = yaml.getInt(path + ".active.x", 0);
+            guild.activeZ = yaml.getInt(path + ".active.z", 0);
+            guild.ready = yaml.getBoolean(path + ".active.ready", false);
+            guild.mobsSpawned = yaml.getBoolean(path + ".active.mobs-spawned", false);
+            ConfigurationSection contributions = yaml.getConfigurationSection(path + ".active.contributions");
+            if (contributions != null) for (String uuid : contributions.getKeys(false)) try {
+                guild.contributions.put(UUID.fromString(uuid), contributions.getInt(uuid, 0));
+            } catch (IllegalArgumentException ignored) { }
+            guilds.put(id, guild);
+        } catch (NumberFormatException ignored) { }
+    }
+
+    public PlayerData player(UUID uuid, String name) {
+        String safeName = name == null || name.isBlank() ? "Unknown" : name;
+        PlayerData data = players.computeIfAbsent(uuid, key -> new PlayerData(key, safeName, 0L, 0, ""));
+        if (name != null && !name.isBlank()) data.name = name;
+        return data;
+    }
+
+    public GuildData guild(int id) { return guilds.computeIfAbsent(id, GuildData::new); }
+
+    public void save() {
+        dirty = true;
+    }
+
+    public void flush() {
+        if (!dirty || yaml == null || file == null) return;
+        yaml.set("players", null);
+        for (PlayerData data : players.values()) {
+            String path = "players." + data.uuid;
+            yaml.set(path + ".name", data.name);
+            yaml.set(path + ".exp", data.exp);
+            yaml.set(path + ".completed", data.completed);
+            yaml.set(path + ".custom-rank", data.customRank);
+        }
+        yaml.set("guilds", null);
+        for (GuildData guild : guilds.values()) {
+            String path = "guilds." + guild.id;
+            yaml.set(path + ".exp", guild.exp);
+            yaml.set(path + ".completed", guild.completed);
+            yaml.set(path + ".daily-date", guild.dailyDate);
+            yaml.set(path + ".daily-quests", guild.dailyIds);
+            yaml.set(path + ".active.id", guild.activeQuest);
+            yaml.set(path + ".active.progress", guild.activeProgress);
+            yaml.set(path + ".active.target", guild.activeTarget);
+            yaml.set(path + ".active.expires", guild.activeExpires);
+            yaml.set(path + ".active.x", guild.activeX);
+            yaml.set(path + ".active.z", guild.activeZ);
+            yaml.set(path + ".active.ready", guild.ready);
+            yaml.set(path + ".active.mobs-spawned", guild.mobsSpawned);
+            yaml.set(path + ".active.contributions", null);
+            for (Map.Entry<UUID, Integer> entry : guild.contributions.entrySet()) {
+                yaml.set(path + ".active.contributions." + entry.getKey(), entry.getValue());
+            }
+        }
+        try { yaml.save(file); dirty = false; }
+        catch (IOException exception) { plugin.getLogger().severe("VelioraPetualang: gagal menyimpan data: " + exception.getMessage()); }
+    }
+
+    public void shutdown() {
+        save();
+        flush();
+        if (flushTask != null) flushTask.cancel();
+        flushTask = null;
+    }
+
+    public static final class PlayerData {
+        private final UUID uuid;
+        private String name;
+        private long exp;
+        private int completed;
+        private String customRank;
+
+        private PlayerData(UUID uuid, String name, long exp, int completed, String customRank) {
+            this.uuid = uuid; this.name = name; this.exp = exp; this.completed = completed;
+            this.customRank = customRank == null ? "" : customRank;
+        }
+        public long exp() { return exp; }
+        public int completed() { return completed; }
+        public String customRank() { return customRank; }
+        public void addExp(long value) { exp = Math.max(0L, exp + value); }
+        public void setExp(long value) { exp = Math.max(0L, value); }
+        public void complete() { completed++; }
+        public void customRank(String value) { customRank = value == null ? "" : value.trim(); }
+    }
+
+    public static final class GuildData {
+        private final int id;
+        private long exp;
+        private int completed;
+        private String dailyDate = "";
+        private final List<String> dailyIds = new ArrayList<>();
+        private String activeQuest = "";
+        private int activeProgress;
+        private int activeTarget;
+        private long activeExpires;
+        private int activeX;
+        private int activeZ;
+        private boolean ready;
+        private boolean mobsSpawned;
+        private final Map<UUID, Integer> contributions = new LinkedHashMap<>();
+
+        private GuildData(int id) { this.id = id; }
+        public int id() { return id; }
+        public long exp() { return exp; }
+        public int completed() { return completed; }
+        public String dailyDate() { return dailyDate; }
+        public List<String> dailyIds() { return dailyIds; }
+        public String activeQuest() { return activeQuest; }
+        public int activeProgress() { return activeProgress; }
+        public int activeTarget() { return activeTarget; }
+        public long activeExpires() { return activeExpires; }
+        public int activeX() { return activeX; }
+        public int activeZ() { return activeZ; }
+        public boolean ready() { return ready; }
+        public boolean mobsSpawned() { return mobsSpawned; }
+        public Map<UUID, Integer> contributions() { return contributions; }
+        public void daily(String date, List<String> ids) { dailyDate = date; dailyIds.clear(); dailyIds.addAll(ids); clearActive(); }
+        public void start(AdventureQuestTemplate quest, long expires, int x, int z) {
+            activeQuest = quest.id(); activeProgress = 0; activeTarget = quest.amount(); activeExpires = expires;
+            activeX = x; activeZ = z; ready = false; mobsSpawned = false; contributions.clear();
+        }
+        public void addProgress(UUID player, int amount) {
+            if (amount <= 0 || ready) return;
+            int applied = Math.min(amount, Math.max(0, activeTarget - activeProgress));
+            activeProgress += applied;
+            contributions.merge(player, applied, Integer::sum);
+            ready = activeProgress >= activeTarget;
+        }
+        public void setMobsSpawned() { mobsSpawned = true; }
+        public void complete(long rewardExp) { exp += Math.max(0L, rewardExp); completed++; clearActive(); }
+        public void clearActive() {
+            activeQuest = ""; activeProgress = 0; activeTarget = 0; activeExpires = 0L; activeX = 0; activeZ = 0;
+            ready = false; mobsSpawned = false; contributions.clear();
+        }
+    }
+}
