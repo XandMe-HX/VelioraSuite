@@ -21,7 +21,7 @@
 
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lLOGIN &6&l] &r'
+  prefix: '&6[&eVELIORA &aLOGIN&6] &r'
 
   require-login: true
   min-password-length: 5

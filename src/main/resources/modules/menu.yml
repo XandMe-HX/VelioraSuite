@@ -1,5 +1,6 @@
 settings:
   enabled: true
+  config-version: 2
   prefix: '&8[&bVeliora&3Menu&8] &r'
 
 # Hanya warna Minecraft klasik dan karakter ASCII supaya aman di Java dan Bedrock.
@@ -9,6 +10,8 @@ titles:
   ranks: '&1Veliora &bRank'
   playtime: '&1Top &bPlaytime'
   balance: '&1Top &bBalance'
+  kills: '&1Top &bKill'
+  deaths: '&1Top &bDeath'
   team: '&1Veliora &bTeam'
   rtp: '&1Veliora &bRTP'
   skills: '&1Veliora &bSkills'
@@ -19,32 +22,52 @@ leaderboards:
 
 # Deskripsi bebas diedit. Urutan di file adalah urutan di GUI.
 ranks:
-  member:
+  warga:
     material: LEATHER_CHESTPLATE
-    name: '&f&lMEMBER'
-    description: ['Rank awal seluruh pemain.', 'Akses fitur dasar Veliora Gardens.']
-  vip:
-    material: GOLDEN_CHESTPLATE
-    name: '&e&lVIP'
-    description: ['Rank dukungan awal.', 'Benefit mengikuti permission LuckPerms server.']
-  legend:
+    name: '&f&lWARGA'
+    description: ['Sethome 1x dan 15K block claim.', 'Claim 2x dan akses /anvil.', 'Akses Premium Kit I.']
+  petani:
+    material: WHEAT
+    name: '&a&lPETANI'
+    description: ['Sethome 2x dan 20K block claim.', 'Claim 2x dan akses /anvil.', 'Akses Premium Kit I.']
+  pengrajin:
+    material: CRAFTING_TABLE
+    name: '&6&lPENGRAJIN'
+    description: ['Sethome 2x dan 25K block claim.', 'Claim 2x dan akses /anvil.', 'Akses Premium Kit II.']
+  hunter:
+    material: BOW
+    name: '&c&lHUNTER'
+    description: ['Sethome 3x dan 30K block claim.', 'Claim 3x, /anvil, dan /workbench.', 'Akses Premium Kit II.']
+  scout:
+    material: COMPASS
+    name: '&e&lSCOUT'
+    description: ['Sethome 3x dan 45K block claim.', 'Claim 3x, /anvil, dan /workbench.', 'Akses Premium Kit III.']
+  knight:
+    material: IRON_CHESTPLATE
+    name: '&7&lKNIGHT'
+    description: ['Sethome 4x dan 60K block claim.', 'Claim 4x, /anvil, dan /workbench.', 'Akses Premium Kit III.']
+  wizard:
+    material: ENCHANTING_TABLE
+    name: '&d&lWIZARD'
+    description: ['Sethome 4x dan 80K block claim.', 'Claim 4x dan akses cartography table.', 'Akses Premium Kit IV.']
+  mithril:
     material: DIAMOND_CHESTPLATE
-    name: '&b&lLEGEND'
-    description: ['Rank premium lanjutan.', 'Benefit mengikuti permission LuckPerms server.']
-  helper:
-    material: LAPIS_LAZULI
-    name: '&9&lHELPER'
-    description: ['Membantu member dan menjaga kenyamanan server.']
-  guard:
-    material: SHIELD
-    name: '&a&lGUARD'
-    description: ['Menangani laporan dan bukti pelanggaran.']
-  admin:
-    material: REDSTONE
-    name: '&c&lADMIN'
-    description: ['Mengelola sistem dan operasional server.']
-  owner:
+    name: '&b&lMITHRIL'
+    description: ['Sethome 5x dan 100K block claim.', 'Claim 5x dan akses cartography table.', 'Akses Premium Kit IV.']
+  archon:
+    material: AMETHYST_SHARD
+    name: '&5&lARCHON'
+    description: ['Sethome 6x dan 300K block claim.', 'Claim 6x dan akses ender chest.', 'Akses Premium Kit V.']
+  overlord:
+    material: GOLDEN_CHESTPLATE
+    name: '&6&lOVERLORD'
+    description: ['Sethome 6x dan 900K block claim.', 'Claim 6x, smithing table, dan ender chest.', 'Akses Premium Kit V.']
+  streamer:
+    material: SPYGLASS
+    name: '&c&lSTREAMER'
+    description: ['Official Content Partner.', 'Diberikan setelah syarat kreator terpenuhi.', 'Akses Premium Kit V.']
+  vtuber:
     material: NETHER_STAR
-    name: '&6&lOWNER'
-    description: ['Pemilik dan pengarah Veliora Gardens.']
+    name: '&d&lVTUBER'
+    description: ['Official Content Partner.', 'Diberikan setelah verifikasi konten dan live.', 'Akses Premium Kit V.']
 
