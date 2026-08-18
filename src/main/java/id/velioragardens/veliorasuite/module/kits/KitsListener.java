@@ -64,7 +64,8 @@ public final class KitsListener implements Listener {
         ClickType click = event.getClick();
 
         if (click.isShiftClick()) {
-            kitsManager.buyKit(player, kitId);
+            kitsManager.previewKit(player, kitId);
+            player.sendMessage(org.bukkit.ChatColor.AQUA + "Preview dibuka. Pembelian tidak dilakukan dari klik GUI; gunakan /kits claim " + kitId + " setelah yakin.");
             return;
         }
 
@@ -74,6 +75,11 @@ public final class KitsListener implements Listener {
         }
 
         if (click.isLeftClick()) {
+            if (kitsManager.isPaidKit(kitId)) {
+                kitsManager.previewKit(player, kitId);
+                player.sendMessage(org.bukkit.ChatColor.YELLOW + "Cek isi kit terlebih dahulu. Jika sudah yakin, gunakan /kits claim " + kitId + ".");
+                return;
+            }
             kitsManager.claimKit(player, kitId);
         }
     }
