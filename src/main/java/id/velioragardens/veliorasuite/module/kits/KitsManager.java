@@ -205,6 +205,12 @@ public final class KitsManager {
         return applyPlaceholders(text, getKitPlaceholders(kit, time));
     }
 
+    /** Paid kits must be claimed explicitly by command, preventing accidental GUI purchases. */
+    public boolean isPaidKit(String kitId) {
+        Kit kit = configManager.getKit(kitId);
+        return kit != null && kit.isBuyEnabled() && kit.getPrice() > 0.0D;
+    }
+
     public List<String> getKitIds() { return configManager.getKitIds(); }
 
     private Kit getUsableKit(Player player, String kitId) {
