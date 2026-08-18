@@ -10,7 +10,7 @@ settings:
   economy:
     enabled: true
   first-join-kit:
-    enabled: false
+    enabled: true
     kit: 'starter'
 
 commands:
@@ -141,11 +141,11 @@ kits:
   build:
     enabled: true
     display-name: '&e&lB&6&lU&e&lI&6&lL&e&lD &f&lK&e&lI&6&lT'
-    description: ['&6&l✦ &fMaterial besar untuk proyek bangunan.', '&8Harga claim: &a20.000']
+    description: ['&6&l✦ &fMaterial besar untuk proyek bangunan.', '&8Harga claim: &a5.000']
     permission: ''
     premium-level: 0
     cooldown: '0s'
-    buy: { enabled: true, price: 20000, one-time-purchase: false, first-claim-free: false }
+    buy: { enabled: true, price: 5000, one-time-purchase: false, first-claim-free: false }
     gui:
       slot: 24
       material: OAK_LOG
@@ -176,8 +176,8 @@ kits:
     permission: 'veliorasuite.kits.premium.1'
     premium-level: 1
     cooldown: '0s'
-    buy: { enabled: true, price: 10000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 29, material: IRON_CHESTPLATE, name: '&a&lP&2&lR&a&lE&2&lM&a&lI&2&lU&a&lM &f&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fIron Armor &8• &fTools Enchant I', '&7Bonus: Carrot &fx64', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a10.000'] }
+    buy: { enabled: true, price: 5000, one-time-purchase: false, first-claim-free: true }
+    gui: { slot: 29, material: IRON_CHESTPLATE, name: '&a&lP&2&lR&a&lE&2&lM&a&lI&2&lU&a&lM &f&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fIron Armor &8• &fTools Enchant I', '&7Bonus: Carrot &fx64', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a5.000'] }
     items:
       - { material: IRON_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
       - { material: IRON_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:1', 'DURABILITY:1'] }
@@ -197,8 +197,8 @@ kits:
     permission: 'veliorasuite.kits.premium.2'
     premium-level: 2
     cooldown: '0s'
-    buy: { enabled: true, price: 20000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 30, material: DIAMOND_CHESTPLATE, name: '&b&lP&3&lR&b&lE&3&lM&b&lI&3&lU&b&lM &f&lI&b&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fDiamond Armor &8• &fTools Enchant II', '&7Bonus: Golden Apple &fx10', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a20.000'] }
+    buy: { enabled: true, price: 10000, one-time-purchase: false, first-claim-free: true }
+    gui: { slot: 30, material: DIAMOND_CHESTPLATE, name: '&b&lP&3&lR&b&lE&3&lM&b&lI&3&lU&b&lM &f&lI&b&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fDiamond Armor &8• &fTools Enchant II', '&7Bonus: Golden Apple &fx10', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a10.000'] }
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:2', 'DURABILITY:2'] }
@@ -218,8 +218,8 @@ kits:
     permission: 'veliorasuite.kits.premium.3'
     premium-level: 3
     cooldown: '0s'
-    buy: { enabled: true, price: 30000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 31, material: TOTEM_OF_UNDYING, name: '&d&lP&5&lR&d&lE&5&lM&d&lI&5&lU&d&lM &f&lI&d&lI&5&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fDiamond Armor &8• &fTools Enchant III', '&7Golden Apple &fx20 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a30.000'] }
+    buy: { enabled: true, price: 15000, one-time-purchase: false, first-claim-free: true }
+    gui: { slot: 31, material: TOTEM_OF_UNDYING, name: '&d&lP&5&lR&d&lE&5&lM&d&lI&5&lU&d&lM &f&lI&d&lI&5&lI', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fDiamond Armor &8• &fTools Enchant III', '&7Golden Apple &fx20 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a15.000'] }
     items:
       - { material: DIAMOND_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: DIAMOND_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -240,8 +240,8 @@ kits:
     permission: 'veliorasuite.kits.premium.4'
     premium-level: 4
     cooldown: '0s'
-    buy: { enabled: true, price: 40000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 32, material: NETHERITE_CHESTPLATE, name: '&6&lP&e&lR&6&lE&e&lM&6&lI&e&lU&6&lM &f&lI&6&lV', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fNetherite Armor &8• &fTools Enchant III', '&7Golden Apple &fx30 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a40.000'] }
+    buy: { enabled: true, price: 20000, one-time-purchase: false, first-claim-free: true }
+    gui: { slot: 32, material: NETHERITE_CHESTPLATE, name: '&6&lP&e&lR&6&lE&e&lM&6&lI&e&lU&6&lM &f&lI&6&lV', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fNetherite Armor &8• &fTools Enchant III', '&7Golden Apple &fx30 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a20.000'] }
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:3', 'DURABILITY:3'] }
@@ -262,8 +262,8 @@ kits:
     permission: 'veliorasuite.kits.premium.5'
     premium-level: 5
     cooldown: '0s'
-    buy: { enabled: true, price: 50000, one-time-purchase: false, first-claim-free: true }
-    gui: { slot: 33, material: NETHER_STAR, name: '&c&lP&4&lR&c&lE&4&lM&c&lI&4&lU&c&lM &f&lV', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fNetherite Armor &8• &fTools Enchant IV', '&7Golden Apple &fx30 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a50.000'] }
+    buy: { enabled: true, price: 25000, one-time-purchase: false, first-claim-free: true }
+    gui: { slot: 33, material: NETHER_STAR, name: '&c&lP&4&lR&c&lE&4&lM&c&lI&4&lU&c&lM &f&lV', lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fNetherite Armor &8• &fTools Enchant IV', '&7Golden Apple &fx30 &8• &7Totem &fx2', '&8━━━━━━━━━━━━━━━━━━━━', '&aClaim pertama gratis', '&7Berikutnya: &a25.000'] }
     items:
       - { material: NETHERITE_HELMET, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
       - { material: NETHERITE_CHESTPLATE, amount: 1, enchants: ['PROTECTION_ENVIRONMENTAL:4', 'DURABILITY:3'] }
