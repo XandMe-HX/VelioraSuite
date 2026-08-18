@@ -22,6 +22,7 @@ import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.trader.TraderModule;
 import id.velioragardens.veliorasuite.module.warp.WarpModule;
+import id.velioragardens.veliorasuite.placeholder.VelioraPlaceholderExpansion;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -57,6 +58,7 @@ public final class VelioraSuite extends JavaPlugin {
         registerModules();
         registerCoreCommand();
         this.moduleManager.enableAll();
+        registerPlaceholderExpansion();
 
         getLogger().info("VelioraSuite clean core enabled.");
     }
@@ -97,6 +99,15 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new TraderModule(this));
         moduleManager.register(new BossModule(this));
         moduleManager.register(new PetsModule(this));
+    }
+
+    private void registerPlaceholderExpansion() {
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            getLogger().info("PlaceholderAPI tidak ditemukan; placeholder VelioraSuite tidak didaftarkan.");
+            return;
+        }
+        new VelioraPlaceholderExpansion(this).register();
+        getLogger().info("PlaceholderAPI VelioraSuite terdaftar: %veliorasuite_level%, %veliorasuite_mana%, %veliorasuite_mana_max%, %veliorasuite_team_tag%, %veliorasuite_playtime%.");
     }
 
     private void registerCoreCommand() {
