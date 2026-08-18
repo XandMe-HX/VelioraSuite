@@ -1,0 +1,22 @@
+world-warning:
+  enabled: true
+  worlds:
+    - world_nether
+    - world_the_end
+  title: '&cHATI-HATI'
+  subtitle: '&fKeepInventory &ctidak aktif &fdi dunia ini.'
+  sound: ENTITY_ENDER_DRAGON_GROWL
+  fade-in: 10
+  stay: 80
+  fade-out: 20
+
+mentions:
+  enabled: true
+  require-at: true
+  cooldown-seconds: 10
+  title: '&bKAMU DI-MENTION'
+  subtitle: '&f%player% &7menyebut namamu di chat.'
+  sound: BLOCK_NOTE_BLOCK_BELL
+  fade-in: 5
+  stay: 50
+  fade-out: 15
