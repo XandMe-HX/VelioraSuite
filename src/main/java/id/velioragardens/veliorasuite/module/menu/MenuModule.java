@@ -47,6 +47,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     private static final int[] TOP_SLOTS = {10,11,12,13,14,15,16,19,20,21};
     private final VelioraSuite plugin;
     private FileConfiguration config;
+    private File configFile;
     private boolean enabled;
     private List<Score> playtimeTop = List.of();
     private List<Score> balanceTop = List.of();
@@ -57,7 +58,45 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
 
     @Override public void load() {
         plugin.saveResourceIfNotExists("modules/menu.yml");
-        config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/menu.yml"));
+        configFile = new File(plugin.getDataFolder(), "modules/menu.yml");
+        config = YamlConfiguration.loadConfiguration(configFile);
+        migrateOceanTheme();
+    }
+
+    private void migrateOceanTheme() {
+        boolean changed = false;
+        if (isLegacyGold(config.getString("settings.prefix"))) {
+            config.set("settings.prefix", "&8[&bVeliora&3Menu&8] &r");
+            changed = true;
+        }
+        Map<String, String> titles = Map.of(
+                "main", "&1Veliora &bMenu",
+                "warps", "&1Veliora &bWarp",
+                "ranks", "&1Veliora &bRank",
+                "playtime", "&1Top &bPlaytime",
+                "balance", "&1Top &bBalance",
+                "team", "&1Veliora &bTeam",
+                "rtp", "&1Veliora &bRTP",
+                "skills", "&1Veliora &bSkills");
+        for (Map.Entry<String, String> entry : titles.entrySet()) {
+            String path = "titles." + entry.getKey();
+            if (isLegacyGold(config.getString(path))) {
+                config.set(path, entry.getValue());
+                changed = true;
+            }
+        }
+        if (changed) {
+            try {
+                config.save(configFile);
+                plugin.getLogger().info("Tema lama VelioraMenu dimigrasikan ke Ocean Theme.");
+            } catch (java.io.IOException exception) {
+                plugin.getLogger().warning("Gagal menyimpan migrasi Ocean Theme: " + exception.getMessage());
+            }
+        }
+    }
+
+    private boolean isLegacyGold(String value) {
+        return value != null && value.contains("&6&l[") && value.contains("VELIORA");
     }
 
     @Override public void enable() {
