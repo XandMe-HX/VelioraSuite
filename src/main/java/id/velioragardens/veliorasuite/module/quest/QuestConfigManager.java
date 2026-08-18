@@ -58,6 +58,7 @@ public final class QuestConfigManager {
     public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", true); }
     public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", false); }
     public int getManaReward() { return Math.max(0, integer("settings.rewards.mana-reward", 0)); }
+    public long getAdventureExpPerCompletion() { return Math.max(0L, config.getLong("integrations.adventure-exp-per-completion", 75L)); }
     public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 1000)); }
     public int getMoneyIncreasePerLevel() { return Math.max(0, integer("settings.rewards.money-increase-per-level", integer("settings.rewards.money-increase-per-tier", 150))); }
     public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }

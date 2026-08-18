@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.boss;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import id.velioragardens.veliorasuite.module.boss.model.BossDefinition;
 import id.velioragardens.veliorasuite.module.boss.model.BossRarity;
 import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
@@ -397,6 +398,9 @@ public final class BossManager implements Listener {
                 if (player != null) {
                     questHook.addMonsterHunterProgress(player);
                     data.addParticipation(player);
+                    AdventureModule adventure = plugin.getModuleManager().getModule("adventure")
+                            .filter(AdventureModule.class::isInstance).map(AdventureModule.class::cast).orElse(null);
+                    if (adventure != null && adventure.getManager() != null) adventure.getManager().addBossProgress(player, 1);
                 }
             }
         }

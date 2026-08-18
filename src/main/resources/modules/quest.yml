@@ -1,3 +1,6 @@
+integrations:
+  adventure-exp-per-completion: 75
+
 settings:
   enabled: true
   prefix: '&6&l[ &e&lVELIORA &a&lQUEST &6&l] &r'

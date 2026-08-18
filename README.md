@@ -124,6 +124,61 @@ Placeholder lama tetap dipakai:
 %veliorasuite_player_name%
 ```
 
+## Guild Petualang
+
+Module `adventure` menyatukan Team, Fishing, Boss/Dungeon, dan Quest menjadi lima misi guild harian. Misi hanya dapat diterima dan dikerjakan saat minimal dua anggota team online. Koordinat tujuan, hadiah, tingkat kesulitan, 50 template misi, level, dan rank dapat diatur di:
+
+```text
+plugins/VelioraSuite/modules/adventure.yml
+```
+
+Command pemain:
+
+```text
+/vgpetualang
+/vgteam
+```
+
+Command admin:
+
+```text
+/vgpetualang reload
+/vgpetualang setrank <player> <F|E|D|C|B|A|S|SS|SSS>
+/vgpetualang setrank <player> <nama rank khusus>
+```
+
+Contoh rank khusus owner:
+
+```text
+/vgpetualang setrank XandMe &4RAJA IBLIS
+```
+
+Placeholder TAB/PlaceholderAPI:
+
+```text
+%veliorasuite_adventure_rank%
+%veliorasuite_adventure_rank_plain%
+%veliorasuite_adventure_rank_next%
+%veliorasuite_adventure_exp%
+%veliorasuite_adventure_exp_next%
+%veliorasuite_adventure_exp_remaining%
+%veliorasuite_adventure_level%
+%veliorasuite_adventure_level_exp%
+%veliorasuite_adventure_level_exp_required%
+%veliorasuite_adventure_quests_completed%
+%veliorasuite_guild_level%
+%veliorasuite_guild_exp%
+%veliorasuite_guild_quests_completed%
+```
+
+Contoh TAB belowname:
+
+```text
+&aRank &f%veliorasuite_adventure_rank% &8| &aLv. &f%veliorasuite_adventure_level%
+```
+
+Module `notifications` menampilkan peringatan layar saat masuk Nether/The End yang tidak memakai keepInventory dan notifikasi layar saat pemain disebut menggunakan `@Nama`.
+
 ## Clear Lag
 
 Clear lag tidak ditangani oleh VelioraSuite.

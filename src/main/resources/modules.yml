@@ -17,3 +17,5 @@ modules:
   security: true
   chat: true
   warp: true
+  adventure: true
+  notifications: true

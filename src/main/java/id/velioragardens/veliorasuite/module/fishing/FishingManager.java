@@ -5,6 +5,7 @@ import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import id.velioragardens.veliorasuite.module.fishing.model.FishingBagEntry;
 import id.velioragardens.veliorasuite.module.fishing.model.PlayerFishingStats;
+import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -92,6 +93,9 @@ public final class FishingManager {
         dataManager.recordCatch(player, fish);
         collectionDataManager.unlock(player, fish);
         questHook.addFishingProgress(player);
+        AdventureModule adventure = plugin.getModuleManager().getModule("adventure")
+                .filter(AdventureModule.class::isInstance).map(AdventureModule.class::cast).orElse(null);
+        if (adventure != null && adventure.getManager() != null) adventure.getManager().addFishingProgress(player, 1);
         effectManager.play(player, fish);
 
         if (shouldAutoStore(fish)) {

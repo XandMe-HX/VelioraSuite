@@ -1,0 +1,737 @@
+config-version: 1
+
+settings:
+  enabled: true
+  hide-member-commands: true
+
+daily:
+  timezone: Asia/Jakarta
+  quest-count: 5
+  reset-hour: 0
+
+team:
+  minimum-online-members: 2
+
+locations:
+  world: world
+  min: -2000
+  max: 2000
+  completion-radius: 20
+  mob-activation-radius: 48
+  spawn-quest-mobs: true
+  max-spawned-mobs: 20
+
+level:
+  max: 100
+  base-exp: 500
+  growth-exp: 75
+
+ranks:
+  F:
+    display: '&7F'
+    required-exp: 0
+  E:
+    display: '&aE'
+    required-exp: 2500
+  D:
+    display: '&bD'
+    required-exp: 7500
+  C:
+    display: '&9C'
+    required-exp: 20000
+  B:
+    display: '&5B'
+    required-exp: 50000
+  A:
+    display: '&6A'
+    required-exp: 100000
+  S:
+    display: '&cS'
+    required-exp: 200000
+  SS:
+    display: '&dSS'
+    required-exp: 400000
+  SSS:
+    display: '&fSSS'
+    required-exp: 750000
+
+gui:
+  main-title: '&8Guild Petualang'
+  quests-title: '&8Misi Hari Ini'
+  submit-title: '&8Setor dan Riwayat'
+  team-title: '&8Team Petualang'
+
+messages:
+  prefix: '&8[&aVeliora Petualang&8] &r'
+  team-required: '&cKamu harus memiliki team terlebih dahulu.'
+  team-online-required: '&cMinimal &f%amount% &canggota team harus online.'
+  quest-active: '&cTeam kamu sudah mempunyai misi aktif.'
+  quest-not-daily: '&cMisi itu tidak tersedia hari ini.'
+  quest-not-ready: '&cMisi belum siap disetor.'
+  quest-expired: '&cMisi telah kedaluwarsa.'
+  rank-too-low: '&cRank kamu belum cukup. Butuh rank &f%rank%&c.'
+  quest-reward: '&aMisi selesai! Hadiah: &f$%money% &7+ &b%exp% EXP &7+ &b%mana% Mana.'
+  guide-cooldown: '&ePanduan bisa dibuka lagi dalam &f%seconds% detik&e.'
+  team-create-guide: '&eBuat team dengan &f/team create <nama>&e.'
+  team-invite-guide: '&eUndang teman dengan &f/team invite <nama>&e.'
+  guide:
+    - '&8&m--------------------------------'
+    - '&a&lGUILD PETUALANG'
+    - '&7Buat team dan pastikan minimal 2 anggota online.'
+    - '&7Buka NPC misi, pilih satu dari 5 misi harian.'
+    - '&7Ikuti koordinat dan selesaikan target bersama.'
+    - '&7Kembali ke NPC misi untuk menyetor hadiah.'
+    - '&7Misi berganti setiap pukul 00.00 WIB.'
+    - '&8&m--------------------------------'
+
+# Lima puluh template. Hanya quest dengan rank yang sudah dicapai yang dipilih.
+quests:
+  f_zombie:
+    name: Gangguan Zombie
+    rank: F
+    type: KILL
+    target: ZOMBIE
+    amount: 15
+    duration-minutes: 30
+    rewards:
+      money: 500
+      player-exp: 180
+      guild-exp: 50
+      mana: 2
+  f_skeleton:
+    name: Pemanah Malam
+    rank: F
+    type: KILL
+    target: SKELETON
+    amount: 12
+    duration-minutes: 30
+    
+    rewards:
+      money: 600
+      player-exp: 200
+      guild-exp: 55
+      mana: 2
+  f_spider:
+    name: Sarang Laba-laba
+    rank: F
+    type: KILL
+    target: SPIDER
+    amount: 14
+    duration-minutes: 30
+    
+    rewards:
+      money: 600
+      player-exp: 210
+      guild-exp: 55
+      mana: 2
+  f_oak:
+    name: Persediaan Kayu Oak
+    rank: F
+    type: BREAK
+    target: OAK_LOG
+    amount: 32
+    duration-minutes: 35
+    
+    rewards:
+      money: 700
+      player-exp: 220
+      guild-exp: 60
+      mana: 2
+  f_wheat:
+    name: Panen Gandum Guild
+    rank: F
+    type: FARM
+    target: WHEAT
+    amount: 40
+    duration-minutes: 35
+    
+    rewards:
+      money: 700
+      player-exp: 230
+      guild-exp: 60
+      mana: 2
+  f_fishing:
+    name: Persediaan Ikan
+    rank: F
+    type: FISH
+    target: ANY
+    amount: 8
+    duration-minutes: 40
+    
+    rewards:
+      money: 800
+      player-exp: 250
+      guild-exp: 70
+      mana: 3
+  f_explore:
+    name: Pemetaan Wilayah
+    rank: F
+    type: EXPLORE
+    target: ANY
+    amount: 1
+    duration-minutes: 45
+    
+    rewards:
+      money: 800
+      player-exp: 260
+      guild-exp: 75
+      mana: 3
+  e_husk:
+    name: Teror Gurun
+    rank: E
+    type: KILL
+    target: HUSK
+    amount: 20
+    duration-minutes: 35
+    
+    rewards:
+      money: 900
+      player-exp: 300
+      guild-exp: 80
+      mana: 3
+  e_drowned:
+    name: Ancaman Drowned
+    rank: E
+    type: KILL
+    target: DROWNED
+    amount: 18
+    duration-minutes: 35
+    
+    rewards:
+      money: 900
+      player-exp: 320
+      guild-exp: 85
+      mana: 3
+  e_slime:
+    name: Wabah Slime
+    rank: E
+    type: KILL
+    target: SLIME
+    amount: 20
+    duration-minutes: 35
+    
+    rewards:
+      money: 1000
+      player-exp: 340
+      guild-exp: 90
+      mana: 3
+  e_spruce:
+    name: Kayu Pegunungan
+    rank: E
+    type: BREAK
+    target: SPRUCE_LOG
+    amount: 48
+    duration-minutes: 40
+    
+    rewards:
+      money: 1000
+      player-exp: 350
+      guild-exp: 90
+      mana: 3
+  e_carrot:
+    name: Panen Wortel
+    rank: E
+    type: FARM
+    target: CARROTS
+    amount: 48
+    duration-minutes: 40
+    
+    rewards:
+      money: 1000
+      player-exp: 360
+      guild-exp: 95
+      mana: 3
+  e_coal:
+    name: Bahan Bakar Guild
+    rank: E
+    type: BREAK
+    target: COAL_ORE
+    amount: 24
+    duration-minutes: 40
+    
+    rewards:
+      money: 1100
+      player-exp: 380
+      guild-exp: 100
+      mana: 3
+  d_pillager:
+    name: Pengintai Pillager
+    rank: D
+    type: KILL
+    target: PILLAGER
+    amount: 20
+    duration-minutes: 40
+    
+    rewards:
+      money: 1300
+      player-exp: 450
+      guild-exp: 120
+      mana: 4
+  d_creeper:
+    name: Ledakan Hijau
+    rank: D
+    type: KILL
+    target: CREEPER
+    amount: 22
+    duration-minutes: 40
+    
+    rewards:
+      money: 1400
+      player-exp: 480
+      guild-exp: 125
+      mana: 4
+  d_enderman:
+    name: Mata dari Kegelapan
+    rank: D
+    type: KILL
+    target: ENDERMAN
+    amount: 12
+    duration-minutes: 45
+    
+    rewards:
+      money: 1500
+      player-exp: 520
+      guild-exp: 135
+      mana: 4
+  d_iron:
+    name: Besi untuk Pandai Besi
+    rank: D
+    type: BREAK
+    target: IRON_ORE
+    amount: 32
+    duration-minutes: 45
+    
+    rewards:
+      money: 1400
+      player-exp: 500
+      guild-exp: 130
+      mana: 4
+  d_copper:
+    name: Kontrak Tembaga
+    rank: D
+    type: BREAK
+    target: COPPER_ORE
+    amount: 48
+    duration-minutes: 45
+    
+    rewards:
+      money: 1300
+      player-exp: 480
+      guild-exp: 125
+      mana: 4
+  d_potato:
+    name: Dapur Guild
+    rank: D
+    type: FARM
+    target: POTATOES
+    amount: 64
+    duration-minutes: 45
+    
+    rewards:
+      money: 1300
+      player-exp: 460
+      guild-exp: 120
+      mana: 4
+  c_witch:
+    name: Penyihir Rawa
+    rank: C
+    type: KILL
+    target: WITCH
+    amount: 16
+    duration-minutes: 45
+    
+    rewards:
+      money: 1800
+      player-exp: 650
+      guild-exp: 160
+      mana: 5
+  c_guardian:
+    name: Penjaga Laut
+    rank: C
+    type: KILL
+    target: GUARDIAN
+    amount: 20
+    duration-minutes: 50
+    
+    rewards:
+      money: 1900
+      player-exp: 700
+      guild-exp: 170
+      mana: 5
+  c_phantom:
+    name: Bayangan Langit
+    rank: C
+    type: KILL
+    target: PHANTOM
+    amount: 18
+    duration-minutes: 50
+    
+    rewards:
+      money: 1800
+      player-exp: 680
+      guild-exp: 165
+      mana: 5
+  c_redstone:
+    name: Energi Redstone
+    rank: C
+    type: BREAK
+    target: REDSTONE_ORE
+    amount: 40
+    duration-minutes: 50
+    
+    rewards:
+      money: 1800
+      player-exp: 660
+      guild-exp: 160
+      mana: 5
+  c_gold:
+    name: Emas Persekutuan
+    rank: C
+    type: BREAK
+    target: GOLD_ORE
+    amount: 24
+    duration-minutes: 50
+    
+    rewards:
+      money: 2000
+      player-exp: 720
+      guild-exp: 175
+      mana: 5
+  c_boss:
+    name: Ujian Dungeon Pertama
+    rank: C
+    type: BOSS
+    target: ANY
+    amount: 1
+    duration-minutes: 90
+    
+    rewards:
+      money: 2500
+      player-exp: 900
+      guild-exp: 250
+      mana: 6
+  b_piglin:
+    name: Pasukan Piglin
+    rank: B
+    type: KILL
+    target: PIGLIN_BRUTE
+    amount: 16
+    duration-minutes: 55
+    
+    rewards:
+      money: 2600
+      player-exp: 1000
+      guild-exp: 280
+      mana: 6
+  b_blaze:
+    name: Bara Nether
+    rank: B
+    type: KILL
+    target: BLAZE
+    amount: 28
+    duration-minutes: 55
+    
+    rewards:
+      money: 2700
+      player-exp: 1050
+      guild-exp: 290
+      mana: 6
+  b_magma:
+    name: Inti Magma
+    rank: B
+    type: KILL
+    target: MAGMA_CUBE
+    amount: 30
+    duration-minutes: 55
+    
+    rewards:
+      money: 2600
+      player-exp: 1020
+      guild-exp: 285
+      mana: 6
+  b_lapis:
+    name: Kristal Biru
+    rank: B
+    type: BREAK
+    target: LAPIS_ORE
+    amount: 32
+    duration-minutes: 55
+    
+    rewards:
+      money: 2500
+      player-exp: 980
+      guild-exp: 270
+      mana: 6
+  b_fishing:
+    name: Ekspedisi Laut
+    rank: B
+    type: FISH
+    target: ANY
+    amount: 30
+    duration-minutes: 60
+    
+    rewards:
+      money: 2800
+      player-exp: 1100
+      guild-exp: 300
+      mana: 7
+  b_boss:
+    name: Pemburu Dungeon
+    rank: B
+    type: BOSS
+    target: ANY
+    amount: 2
+    duration-minutes: 120
+    
+    rewards:
+      money: 3500
+      player-exp: 1400
+      guild-exp: 400
+      mana: 8
+  a_vindicator:
+    name: Komandan Illager
+    rank: A
+    type: KILL
+    target: VINDICATOR
+    amount: 35
+    duration-minutes: 60
+    
+    rewards:
+      money: 3400
+      player-exp: 1500
+      guild-exp: 420
+      mana: 8
+  a_evoker:
+    name: Ritual Evoker
+    rank: A
+    type: KILL
+    target: EVOKER
+    amount: 20
+    duration-minutes: 65
+    
+    rewards:
+      money: 3600
+      player-exp: 1600
+      guild-exp: 440
+      mana: 8
+  a_shulker:
+    name: Benteng Shulker
+    rank: A
+    type: KILL
+    target: SHULKER
+    amount: 24
+    duration-minutes: 65
+    
+    rewards:
+      money: 3800
+      player-exp: 1700
+      guild-exp: 460
+      mana: 8
+  a_deepslate_iron:
+    name: Besi Kedalaman
+    rank: A
+    type: BREAK
+    target: DEEPSLATE_IRON_ORE
+    amount: 48
+    duration-minutes: 65
+    
+    rewards:
+      money: 3500
+      player-exp: 1550
+      guild-exp: 430
+      mana: 8
+  a_boss:
+    name: Penakluk Dungeon
+    rank: A
+    type: BOSS
+    target: ANY
+    amount: 3
+    duration-minutes: 150
+    
+    rewards:
+      money: 4500
+      player-exp: 2000
+      guild-exp: 600
+      mana: 10
+  s_ravager:
+    name: Amukan Ravager
+    rank: S
+    type: KILL
+    target: RAVAGER
+    amount: 20
+    duration-minutes: 70
+    
+    rewards:
+      money: 4200
+      player-exp: 2300
+      guild-exp: 650
+      mana: 10
+  s_wither_skeleton:
+    name: Legiun Hitam
+    rank: S
+    type: KILL
+    target: WITHER_SKELETON
+    amount: 50
+    duration-minutes: 75
+    
+    rewards:
+      money: 4300
+      player-exp: 2400
+      guild-exp: 680
+      mana: 10
+  s_ancient:
+    name: Jejak Ancient Debris
+    rank: S
+    type: BREAK
+    target: ANCIENT_DEBRIS
+    amount: 8
+    duration-minutes: 90
+    
+    rewards:
+      money: 4500
+      player-exp: 2600
+      guild-exp: 720
+      mana: 11
+  s_boss:
+    name: Perburuan Boss Besar
+    rank: S
+    type: BOSS
+    target: ANY
+    amount: 5
+    duration-minutes: 180
+    
+    rewards:
+      money: 5000
+      player-exp: 3000
+      guild-exp: 900
+      mana: 12
+  ss_warden:
+    name: Suara dari Deep Dark
+    rank: SS
+    type: KILL
+    target: WARDEN
+    amount: 2
+    duration-minutes: 120
+    
+    rewards:
+      money: 5000
+      player-exp: 4000
+      guild-exp: 1200
+      mana: 14
+  ss_elder:
+    name: Penguasa Monumen
+    rank: SS
+    type: KILL
+    target: ELDER_GUARDIAN
+    amount: 8
+    duration-minutes: 120
+    
+    rewards:
+      money: 5000
+      player-exp: 4200
+      guild-exp: 1250
+      mana: 14
+  ss_diamond:
+    name: Kontrak Berlian
+    rank: SS
+    type: BREAK
+    target: DEEPSLATE_DIAMOND_ORE
+    amount: 24
+    duration-minutes: 120
+    
+    rewards:
+      money: 5000
+      player-exp: 4300
+      guild-exp: 1300
+      mana: 14
+  ss_boss:
+    name: Raid Dungeon Elite
+    rank: SS
+    type: BOSS
+    target: ANY
+    amount: 8
+    duration-minutes: 240
+    
+    rewards:
+      money: 5000
+      player-exp: 5000
+      guild-exp: 1600
+      mana: 16
+  sss_warden:
+    name: Bencana Deep Dark
+    rank: SSS
+    type: KILL
+    target: WARDEN
+    amount: 5
+    duration-minutes: 180
+    
+    rewards:
+      money: 5000
+      player-exp: 6500
+      guild-exp: 2000
+      mana: 18
+  sss_boss:
+    name: Penakluk Sembilan Dungeon
+    rank: SSS
+    type: BOSS
+    target: ANY
+    amount: 9
+    duration-minutes: 360
+    
+    rewards:
+      money: 5000
+      player-exp: 7500
+      guild-exp: 2500
+      mana: 20
+  sss_explore:
+    name: Ujung Dunia
+    rank: SSS
+    type: EXPLORE
+    target: ANY
+    amount: 1
+    duration-minutes: 120
+    
+    rewards:
+      money: 5000
+      player-exp: 6000
+      guild-exp: 1800
+      mana: 18
+  sss_fishing:
+    name: Legenda Samudra
+    rank: SSS
+    type: FISH
+    target: ANY
+    amount: 150
+    duration-minutes: 240
+    
+    rewards:
+      money: 5000
+      player-exp: 7000
+      guild-exp: 2200
+      mana: 20
+  sss_obsidian:
+    name: Benteng Sang Raja
+    rank: SSS
+    type: BREAK
+    target: OBSIDIAN
+    amount: 128
+    duration-minutes: 240
+    
+    rewards:
+      money: 5000
+      player-exp: 6800
+      guild-exp: 2100
+      mana: 20
+  sss_enderman:
+    name: Seribu Mata Ender
+    rank: SSS
+    type: KILL
+    target: ENDERMAN
+    amount: 120
+    duration-minutes: 240
+    
+    rewards:
+      money: 5000
+      player-exp: 7200
+      guild-exp: 2300
+      mana: 20

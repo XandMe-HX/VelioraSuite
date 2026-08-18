@@ -186,6 +186,16 @@ commands:
     usage: /loginsecurity <help|reload|status>
     aliases: [vlogsec, vlogin]
     permission: veliorasuite.loginsecurity.admin
+  vgpetualang:
+    description: Membuka Guild Petualang dan misi harian team.
+    usage: /vgpetualang [accept|submit|setrank|reload]
+    aliases: [vgquest, petualang, guildquest]
+    permission: veliorasuite.adventure.use
+  vgteam:
+    description: Membuka GUI Team Petualang.
+    usage: /vgteam
+    aliases: [teamgui]
+    permission: veliorasuite.adventure.use
 
 permissions:
   veliorasuite.menu.use:
@@ -277,4 +287,8 @@ permissions:
   veliorasuite.pets.remove:
     default: op
   veliorasuite.pets.admin:
+    default: op
+  veliorasuite.adventure.use:
+    default: true
+  veliorasuite.adventure.admin:
     default: op

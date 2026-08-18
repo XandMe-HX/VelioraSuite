@@ -198,6 +198,12 @@ public final class QuestManager {
 
         int money = progress.getCurrentRewardMoney();
         rewardManager.depositMoney(player, money);
+        id.velioragardens.veliorasuite.module.adventure.AdventureModule adventure = plugin.getModuleManager().getModule("adventure")
+                .filter(id.velioragardens.veliorasuite.module.adventure.AdventureModule.class::isInstance)
+                .map(id.velioragardens.veliorasuite.module.adventure.AdventureModule.class::cast).orElse(null);
+        if (adventure != null && adventure.getManager() != null) {
+            adventure.getManager().addExperience(player, configManager.getAdventureExpPerCompletion());
+        }
         rewardManager.giveItems(player, configManager.getBaseItemRewards(category), 1);
         if (configManager.isGiveManaOnComplete() && skillsHook.isAvailable()) {
             skillsHook.giveMana(player, configManager.getManaReward(), "quest:reward:" + category.key());

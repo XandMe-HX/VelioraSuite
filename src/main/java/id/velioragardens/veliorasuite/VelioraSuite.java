@@ -7,6 +7,7 @@ import id.velioragardens.veliorasuite.core.MessageManager;
 import id.velioragardens.veliorasuite.core.ModuleManager;
 import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
 import id.velioragardens.veliorasuite.module.adminmonitor.AdminMonitorModule;
+import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
 import id.velioragardens.veliorasuite.module.chat.ChatModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
@@ -14,6 +15,7 @@ import id.velioragardens.veliorasuite.module.guide.GuideModule;
 import id.velioragardens.veliorasuite.module.kits.KitsModule;
 import id.velioragardens.veliorasuite.module.loginsecurity.LoginSecurityModule;
 import id.velioragardens.veliorasuite.module.menu.MenuModule;
+import id.velioragardens.veliorasuite.module.notifications.NotificationModule;
 import id.velioragardens.veliorasuite.module.pets.PetsModule;
 import id.velioragardens.veliorasuite.module.quest.QuestModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
@@ -91,6 +93,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new KitsModule(this));
         moduleManager.register(new ReportModule(this));
         moduleManager.register(new ChatModule(this));
+        moduleManager.register(new NotificationModule(this));
         moduleManager.register(new WarpModule(this));
         moduleManager.register(new SecurityModule(this));
         moduleManager.register(new FishingModule(this));
@@ -99,6 +102,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new TraderModule(this));
         moduleManager.register(new BossModule(this));
         moduleManager.register(new PetsModule(this));
+        moduleManager.register(new AdventureModule(this));
     }
 
     private void registerPlaceholderExpansion() {
@@ -107,7 +111,7 @@ public final class VelioraSuite extends JavaPlugin {
             return;
         }
         new VelioraPlaceholderExpansion(this).register();
-        getLogger().info("PlaceholderAPI VelioraSuite terdaftar: %veliorasuite_level%, %veliorasuite_mana%, %veliorasuite_mana_max%, %veliorasuite_team_tag%, %veliorasuite_playtime%.");
+        getLogger().info("PlaceholderAPI VelioraSuite terdaftar, termasuk Level, Mana, Team, Playtime, dan Rank Petualang.");
     }
 
     private void registerCoreCommand() {

@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.placeholder;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.quest.QuestModule;
+import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import id.velioragardens.veliorasuite.module.quest.model.PlayerCategoryProgress;
 import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
@@ -33,11 +34,26 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
             case "mana_max" -> String.valueOf(mana(player, true));
             case "team_tag" -> teamTag(player);
             case "playtime" -> playtime(player);
+            case "adventure_rank", "rank_petualang" -> adventure(player) == null ? "F" : adventure(player).rank(player);
+            case "adventure_rank_plain", "rank_petualang_plain" -> adventure(player) == null ? "F" : adventure(player).rankPlain(player);
+            case "adventure_exp", "petualang_exp" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).exp(player));
+            case "adventure_exp_next", "petualang_exp_next" -> String.valueOf(adventure(player) == null ? 2500 : adventure(player).rankNextExp(player));
+            case "adventure_exp_remaining", "petualang_exp_remaining" -> String.valueOf(adventure(player) == null ? 2500 : adventure(player).rankRemainingExp(player));
+            case "adventure_rank_next", "rank_petualang_next" -> adventure(player) == null ? "E" : adventure(player).nextRank(player);
+            case "adventure_level", "petualang_level" -> String.valueOf(adventure(player) == null ? level(player) : adventure(player).level(player));
+            case "adventure_level_exp" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).levelCurrentExp(player));
+            case "adventure_level_exp_required" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).levelRequiredExp(player));
+            case "adventure_quests_completed" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).completed(player));
+            case "guild_level" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).guildLevel(player));
+            case "guild_exp" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).guildExp(player));
+            case "guild_quests_completed" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).guildCompleted(player));
             default -> null;
         };
     }
 
     private int level(Player player) {
+        AdventureModule adventure = module("adventure", AdventureModule.class);
+        if (adventure != null && adventure.getManager() != null) return adventure.getManager().level(player);
         QuestModule module = module("quest", QuestModule.class);
         if (module == null || module.getQuestManager() == null) return 1;
         int total = 0, count = 0;
@@ -47,6 +63,11 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
             count++;
         }
         return count == 0 ? 1 : Math.max(1, Math.round((float) total / count));
+    }
+
+    private id.velioragardens.veliorasuite.module.adventure.AdventureManager adventure(Player player) {
+        AdventureModule module = module("adventure", AdventureModule.class);
+        return module == null ? null : module.getManager();
     }
 
     private int mana(Player player, boolean max) {
