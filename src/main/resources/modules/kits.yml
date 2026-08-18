@@ -1,5 +1,6 @@
 settings:
   enabled: true
+  config-version: 2
   prefix: '&6&l[ &e&lVELIORA &a&lKITS &6&l] &r'
   command: '/kits'
   open-gui-on-main-command: true
@@ -141,33 +142,97 @@ kits:
   build:
     enabled: true
     display-name: '&e&lB&6&lU&e&lI&6&lL&e&lD &f&lK&e&lI&6&lT'
-    description: ['&6&l✦ &fMaterial besar untuk proyek bangunan.', '&8Harga claim: &a5.000']
+    description: ['&6&l✦ &fLima shulker material untuk proyek bangunan.', '&8Harga claim: &a5.000']
     permission: ''
     premium-level: 0
     cooldown: '0s'
     buy: { enabled: true, price: 5000, one-time-purchase: false, first-claim-free: false }
     gui:
       slot: 24
-      material: OAK_LOG
+      material: YELLOW_SHULKER_BOX
       name: '&e&lB&6&lU&e&lI&6&lL&e&lD &f&lK&e&lI&6&lT'
-      lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fMaterial untuk membangun', '&7Log, Stone, Cobblestone, Grass', '&7dan Oak Fence dalam jumlah besar', '&8━━━━━━━━━━━━━━━━━━━━', '&aHarga claim: &f20.000']
+      lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&f5 Shulker material bangunan', '&7Kayuan, batu, tanah, dedaunan', '&7dan seluruh warna terracotta', '&8━━━━━━━━━━━━━━━━━━━━', '&aHarga claim: &f5.000', '&eKlik untuk preview dan konfirmasi']
     items:
-      - { material: OAK_FENCE, amount: 64, enchants: [] }
-      - { material: OAK_FENCE, amount: 64, enchants: [] }
-      - { material: OAK_LOG, amount: 64, enchants: [] }
-      - { material: OAK_LOG, amount: 64, enchants: [] }
-      - { material: OAK_LOG, amount: 64, enchants: [] }
-      - { material: COBBLESTONE, amount: 64, enchants: [] }
-      - { material: COBBLESTONE, amount: 64, enchants: [] }
-      - { material: COBBLESTONE, amount: 64, enchants: [] }
-      - { material: STONE, amount: 64, enchants: [] }
-      - { material: STONE, amount: 64, enchants: [] }
-      - { material: STONE, amount: 64, enchants: [] }
-      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
-      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
-      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
-      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
-      - { material: GRASS_BLOCK, amount: 64, enchants: [] }
+      - material: BROWN_SHULKER_BOX
+        amount: 1
+        name: '&6&lSHULKER KAYU'
+        lore: ['&7Koleksi log dan wood utama.', '&f12 jenis &8• &f64 per jenis']
+        contents:
+          - { material: OAK_LOG, amount: 64 }
+          - { material: OAK_WOOD, amount: 64 }
+          - { material: SPRUCE_LOG, amount: 64 }
+          - { material: SPRUCE_WOOD, amount: 64 }
+          - { material: BIRCH_LOG, amount: 64 }
+          - { material: BIRCH_WOOD, amount: 64 }
+          - { material: CHERRY_LOG, amount: 64 }
+          - { material: CHERRY_WOOD, amount: 64 }
+          - { material: JUNGLE_LOG, amount: 64 }
+          - { material: JUNGLE_WOOD, amount: 64 }
+          - { material: DARK_OAK_LOG, amount: 64 }
+          - { material: DARK_OAK_WOOD, amount: 64 }
+          - { material: MANGROVE_LOG, amount: 64 }
+          - { material: MANGROVE_WOOD, amount: 64 }
+      - material: GRAY_SHULKER_BOX
+        amount: 1
+        name: '&7&lSHULKER BATU'
+        lore: ['&7Material batu untuk fondasi.', '&f7 jenis &8• &f64 per jenis']
+        contents:
+          - { material: STONE, amount: 64 }
+          - { material: ANDESITE, amount: 64 }
+          - { material: TUFF, amount: 64 }
+          - { material: DEEPSLATE, amount: 64 }
+          - { material: GRANITE, amount: 64 }
+          - { material: DIORITE, amount: 64 }
+          - { material: CALCITE, amount: 64 }
+      - material: GREEN_SHULKER_BOX
+        amount: 1
+        name: '&a&lSHULKER TANAH'
+        lore: ['&7Material alam dan lanskap.', '&f8 jenis &8• &f64 per jenis']
+        contents:
+          - { material: GRASS_BLOCK, amount: 64 }
+          - { material: DIRT, amount: 64 }
+          - { material: COARSE_DIRT, amount: 64 }
+          - { material: ROOTED_DIRT, amount: 64 }
+          - { material: MUD, amount: 64 }
+          - { material: MUD_BRICKS, amount: 64 }
+          - { material: PACKED_MUD, amount: 64 }
+          - { material: MOSS_BLOCK, amount: 64 }
+      - material: LIME_SHULKER_BOX
+        amount: 1
+        name: '&2&lSHULKER DEDAUNAN'
+        lore: ['&7Dekorasi hijau untuk taman.', '&f10 jenis &8• &f64 per jenis']
+        contents:
+          - { material: OAK_LEAVES, amount: 64 }
+          - { material: SPRUCE_LEAVES, amount: 64 }
+          - { material: BIRCH_LEAVES, amount: 64 }
+          - { material: JUNGLE_LEAVES, amount: 64 }
+          - { material: AZALEA_LEAVES, amount: 64 }
+          - { material: FLOWERING_AZALEA_LEAVES, amount: 64 }
+          - { material: AZALEA, amount: 64 }
+          - { material: FLOWERING_AZALEA, amount: 64 }
+          - { material: LILY_PAD, amount: 64 }
+          - { material: VINE, amount: 64 }
+      - material: ORANGE_SHULKER_BOX
+        amount: 1
+        name: '&6&lSHULKER TERRACOTTA'
+        lore: ['&7Seluruh warna terracotta.', '&f16 warna &8• &f64 per warna']
+        contents:
+          - { material: WHITE_TERRACOTTA, amount: 64 }
+          - { material: ORANGE_TERRACOTTA, amount: 64 }
+          - { material: MAGENTA_TERRACOTTA, amount: 64 }
+          - { material: LIGHT_BLUE_TERRACOTTA, amount: 64 }
+          - { material: YELLOW_TERRACOTTA, amount: 64 }
+          - { material: LIME_TERRACOTTA, amount: 64 }
+          - { material: PINK_TERRACOTTA, amount: 64 }
+          - { material: GRAY_TERRACOTTA, amount: 64 }
+          - { material: LIGHT_GRAY_TERRACOTTA, amount: 64 }
+          - { material: CYAN_TERRACOTTA, amount: 64 }
+          - { material: PURPLE_TERRACOTTA, amount: 64 }
+          - { material: BLUE_TERRACOTTA, amount: 64 }
+          - { material: BROWN_TERRACOTTA, amount: 64 }
+          - { material: GREEN_TERRACOTTA, amount: 64 }
+          - { material: RED_TERRACOTTA, amount: 64 }
+          - { material: BLACK_TERRACOTTA, amount: 64 }
     rewards: { money: 0, exp: 0, commands: [] }
   premium_1:
     enabled: true

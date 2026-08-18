@@ -12,9 +12,13 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.block.ShulkerBox;
 
 import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +39,7 @@ public final class KitsConfigManager {
         plugin.saveResourceIfNotExists("modules/kits.yml");
         File file = new File(plugin.getDataFolder(), "modules/kits.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        migrateKitsV2(file);
         loadKits();
     }
 
@@ -225,45 +230,88 @@ public final class KitsConfigManager {
         List<Map<?, ?>> maps = config.getMapList(path);
 
         for (Map<?, ?> map : maps) {
-            String materialName = getMapString(map, "material", "STONE");
-            Material material = parseMaterial(materialName, null, path + ".material");
-
-            if (material == null) {
-                continue;
-            }
-
-            int amount = getMapInt(map, "amount", 1);
-            if (amount < 1) {
-                plugin.getLogger().warning("VelioraKits: amount kurang dari 1 pada " + path + ". Fallback ke 1.");
-                amount = 1;
-            }
-            if (amount > 64) {
-                plugin.getLogger().warning("VelioraKits: amount lebih dari 64 pada " + path + ". Dibatasi ke 64 agar aman.");
-                amount = 64;
-            }
-
-            ItemStack item = new ItemStack(material, amount);
-            ItemMeta meta = item.getItemMeta();
-
-            if (meta != null) {
-                String name = getMapString(map, "name", "");
-                if (!name.isBlank()) {
-                    meta.setDisplayName(color(name));
-                }
-
-                List<String> lore = getMapStringList(map, "lore");
-                if (!lore.isEmpty()) {
-                    meta.setLore(colorList(lore));
-                }
-
-                item.setItemMeta(meta);
-            }
-
-            applyEnchants(item, getMapStringList(map, "enchants"), path);
-            items.add(item);
+            ItemStack item = parseItemMap(map, path);
+            if (item != null) items.add(item);
         }
 
         return items;
+    }
+
+    private void migrateKitsV2(File file) {
+        if (config.getInt("settings.config-version", 0) >= 2) return;
+        try (InputStreamReader reader = new InputStreamReader(
+                java.util.Objects.requireNonNull(plugin.getResource("modules/kits.yml")), StandardCharsets.UTF_8)) {
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(reader);
+            config.set("settings.config-version", 2);
+            config.set("settings.first-join-kit.enabled", true);
+            config.set("settings.first-join-kit.kit", "starter");
+            copyDefaultSection(defaults, "kits.build");
+            for (int level = 1; level <= 5; level++) {
+                String path = "kits.premium_" + level;
+                config.set(path + ".buy.price", defaults.getDouble(path + ".buy.price", level * 5000.0D));
+                config.set(path + ".gui.lore", defaults.getStringList(path + ".gui.lore"));
+            }
+            config.save(file);
+            plugin.getLogger().info("VelioraKits diperbarui: Build Kit shulker dan harga premium baru aktif.");
+        } catch (Exception exception) {
+            plugin.getLogger().warning("VelioraKits: gagal migrasi config v2: " + exception.getMessage());
+        }
+    }
+
+    private void copyDefaultSection(YamlConfiguration defaults, String path) {
+        config.set(path, null);
+        ConfigurationSection section = defaults.getConfigurationSection(path);
+        if (section == null) return;
+        for (Map.Entry<String, Object> entry : section.getValues(true).entrySet()) {
+            if (entry.getValue() instanceof ConfigurationSection) continue;
+            config.set(path + "." + entry.getKey(), entry.getValue());
+        }
+    }
+
+    private ItemStack parseItemMap(Map<?, ?> map, String path) {
+        String materialName = getMapString(map, "material", "STONE");
+        Material material = parseMaterial(materialName, null, path + ".material");
+        if (material == null) return null;
+
+        int amount = getMapInt(map, "amount", 1);
+        if (amount < 1) {
+            plugin.getLogger().warning("VelioraKits: amount kurang dari 1 pada " + path + ". Fallback ke 1.");
+            amount = 1;
+        }
+        if (amount > 64) {
+            plugin.getLogger().warning("VelioraKits: amount lebih dari 64 pada " + path + ". Dibatasi ke 64 agar aman.");
+            amount = 64;
+        }
+
+        ItemStack item = new ItemStack(material, amount);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            String name = getMapString(map, "name", "");
+            if (!name.isBlank()) meta.setDisplayName(color(name));
+
+            List<String> lore = getMapStringList(map, "lore");
+            if (!lore.isEmpty()) meta.setLore(colorList(lore));
+
+            if (meta instanceof BlockStateMeta blockMeta && blockMeta.getBlockState() instanceof ShulkerBox shulker) {
+                List<Map<?, ?>> contents = getMapList(map, "contents");
+                int slot = 0;
+                for (Map<?, ?> content : contents) {
+                    if (slot >= shulker.getInventory().getSize()) {
+                        plugin.getLogger().warning("VelioraKits: isi shulker melebihi 27 slot pada " + path + ". Sisanya dilewati.");
+                        break;
+                    }
+                    ItemStack nested = parseItemMap(content, path + ".contents[" + slot + "]");
+                    if (nested != null) shulker.getInventory().setItem(slot++, nested);
+                }
+                blockMeta.setBlockState(shulker);
+                meta = blockMeta;
+            }
+
+            item.setItemMeta(meta);
+        }
+
+        applyEnchants(item, getMapStringList(map, "enchants"), path);
+        return item;
     }
 
     private void applyEnchants(ItemStack item, List<String> enchants, String path) {
@@ -393,5 +441,15 @@ public final class KitsConfigManager {
             return list.stream().map(String::valueOf).toList();
         }
         return List.of();
+    }
+
+    private List<Map<?, ?>> getMapList(Map<?, ?> map, String key) {
+        Object value = map.get(key);
+        if (!(value instanceof List<?> list)) return List.of();
+        List<Map<?, ?>> maps = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry instanceof Map<?, ?> nested) maps.add(nested);
+        }
+        return maps;
     }
 }

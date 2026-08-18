@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -28,6 +29,18 @@ public final class LoginSecurityConfigManager {
         plugin.saveResourceIfNotExists("modules/loginsecurity.yml");
         File file = new File(plugin.getDataFolder(), "modules/loginsecurity.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        migratePrefix(file);
+    }
+
+    private void migratePrefix(File file) {
+        String prefix = config.getString("settings.prefix", "");
+        if (!prefix.contains("VELIORA") || !prefix.contains("LOGIN") || !prefix.contains("&l")) return;
+        config.set("settings.prefix", "&6[&eVELIORA &aLOGIN&6] &r");
+        try {
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraLoginSecurity: gagal memperbarui prefix lama: " + exception.getMessage());
+        }
     }
 
     public boolean isEnabled() { return getBoolean("settings.enabled", true); }
