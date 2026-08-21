@@ -75,6 +75,29 @@ public final class FishingDataManager {
         save(stats);
     }
 
+    public long getCoins(OfflinePlayer player) {
+        return Math.max(0L, data.getLong("players." + player.getUniqueId() + ".coins", 0L));
+    }
+
+    public void depositCoins(OfflinePlayer player, long amount) {
+        if (amount <= 0L) return;
+        setCoins(player, Math.min(Long.MAX_VALUE / 2L, getCoins(player) + amount));
+    }
+
+    public boolean withdrawCoins(OfflinePlayer player, long amount) {
+        if (amount <= 0L) return true;
+        long balance = getCoins(player);
+        if (balance < amount) return false;
+        setCoins(player, balance - amount);
+        return true;
+    }
+
+    public void setCoins(OfflinePlayer player, long amount) {
+        data.set("players." + player.getUniqueId() + ".name", player.getName());
+        data.set("players." + player.getUniqueId() + ".coins", Math.max(0L, amount));
+        writer.markDirty();
+    }
+
     public List<PlayerFishingStats> top(int limit) {
         List<PlayerFishingStats> result = new ArrayList<>();
         ConfigurationSection players = data.getConfigurationSection("players");

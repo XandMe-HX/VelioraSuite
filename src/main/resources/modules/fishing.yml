@@ -3,22 +3,40 @@ settings:
   prefix: '&7[&eVELIORA &aFISHING&7] &r'
 
   rarity-chance:
-    trash: 18.0
-    vanilla: 16.0
-    common: 56.0
-    ornamental: 6.0
-    epic: 3.5
-    legendary: 0.40
-    mitologi: 0.10
+    trash: 24.0
+    vanilla: 20.0
+    common: 52.5
+    ornamental: 3.0
+    epic: 0.42
+    legendary: 0.07
+    mitologi: 0.009
+    secret: 0.001
 
   price:
     trash: {min: 1, max: 1, max-final: 1}
-    vanilla: {min: 15, max: 40, max-final: 50}
-    common: {min: 100, max: 170, max-final: 225}
-    ornamental: {min: 350, max: 700, max-final: 900}
-    epic: {min: 1800, max: 3200, max-final: 4200}
-    legendary: {min: 12000, max: 18000, max-final: 24000}
-    mitologi: {min: 35000, max: 55000, max-final: 70000}
+    vanilla: {min: 3, max: 8, max-final: 10}
+    common: {min: 8, max: 18, max-final: 24}
+    ornamental: {min: 20, max: 55, max-final: 75}
+    epic: {min: 75, max: 180, max-final: 240}
+    legendary: {min: 350, max: 900, max-final: 1200}
+    mitologi: {min: 1500, max: 3500, max-final: 5000}
+    secret: {min: 5000, max: 12000, max-final: 18000}
+
+  mutations:
+    gold: {chance: 1.4, price-multiplier: 2.0}
+    ghost: {chance: 1.2, price-multiplier: 2.4}
+    radioactive: {chance: 1.0, price-multiplier: 3.0}
+    lightning: {chance: 0.9, price-multiplier: 3.5}
+    midnight: {chance: 0.8, price-multiplier: 4.0}
+    fairy-dust: {chance: 0.7, price-multiplier: 4.5}
+    gemstone: {chance: 0.6, price-multiplier: 5.0}
+    corrupt: {chance: 0.5, price-multiplier: 6.0}
+
+  potions:
+    # Dibeli dengan Koin Fishing. Klik dua kali mencegah pembelian tidak sengaja.
+    luck: {price: 750, duration-seconds: 600}
+    mutation: {price: 1000, duration-seconds: 600}
+    lure: {price: 750, duration-seconds: 600}
 
   minigame:
     enabled: true
@@ -36,6 +54,7 @@ settings:
       epic: {enabled: true, spam-needed: 36, seconds: 7.0}
       legendary: {enabled: true, spam-needed: 55, seconds: 8.0}
       mitologi: {enabled: true, spam-needed: 80, seconds: 10.0}
+      secret: {enabled: true, spam-needed: 110, seconds: 12.0}
 
   # NONE means normal catches do not fill chat. Legendary/Mythic still use their global broadcast.
   catch-message-min-rarity: NONE
@@ -43,13 +62,29 @@ settings:
   rods:
     enabled: true
     bypass-permission: 'veliorasuite.fishing.rods.bypass'
-    # Rod bonuses only make minigames easier; they do not directly boost Legendary/Mythic odds.
+    # Harga memakai Koin Fishing, bukan Vault. Semua angka dapat diubah.
     items:
-      bamboo_drift: {tier: 1, name: 'Bamboo Drift', gradient-from: '#76C043', gradient-to: '#F3D36B', price: 0, required-catches: 0, seconds-bonus: 0, click-reduction: 0, aura: 'Rod awal yang sederhana.'}
-      coral_whisper: {tier: 2, name: 'Coral Whisper', gradient-from: '#FF8A65', gradient-to: '#FF70A6', price: 12000, required-catches: 75, seconds-bonus: 1, click-reduction: 0, aura: 'Buih coral lembut di kail.'}
-      tidecaller: {tier: 3, name: 'Tidecaller', gradient-from: '#55E6FF', gradient-to: '#3E7BFA', price: 35000, required-catches: 250, seconds-bonus: 1, click-reduction: 1, aura: 'Aura aqua di kail dan tangan.'}
-      abyssal_current: {tier: 4, name: 'Abyssal Current', gradient-from: '#2454C6', gradient-to: '#7837D6', price: 75000, required-catches: 750, seconds-bonus: 2, click-reduction: 2, aura: 'Gelombang laut gelap saat menarik.'}
-      celestial_leviathan: {tier: 5, name: 'Celestial Leviathan', gradient-from: '#93E9FF', gradient-to: '#8D52E7', price: 150000, required-catches: 1500, seconds-bonus: 3, click-reduction: 3, aura: 'Cahaya samudra surgawi yang lembut.'}
+      starter: {tier: 1, name: 'Starter Rod', gradient-from: '#B8FFB0', gradient-to: '#FFFFFF', price: 0, required-catches: 0, seconds-bonus: 0, click-reduction: 0, luck: 0, max-weight: 10, speed: 0, quest: false, aura: 'Awal perjalanan pemancing.'}
+      luck: {tier: 2, name: 'Luck Rod', gradient-from: '#7CFF93', gradient-to: '#E8FF9A', price: 250, required-catches: 25, seconds-bonus: 0, click-reduction: 1, luck: 50, max-weight: 15, speed: 2, quest: false, aura: 'Kilau keberuntungan lembut.'}
+      carbon: {tier: 3, name: 'Carbon Rod', gradient-from: '#A7B0BD', gradient-to: '#303845', price: 900, required-catches: 75, seconds-bonus: 0, click-reduction: 1, luck: 30, max-weight: 20, speed: 4, quest: false, aura: 'Partikel asap tipis.'}
+      grass: {tier: 4, name: 'Grass Rod', gradient-from: '#55E66A', gradient-to: '#D7FF8A', price: 1500, required-catches: 150, seconds-bonus: 1, click-reduction: 1, luck: 55, max-weight: 250, speed: 5, quest: false, aura: 'Daun hijau mengitari kail.'}
+      damascus: {tier: 5, name: 'Damascus Rod', gradient-from: '#D4D4D4', gradient-to: '#6C7A89', price: 3000, required-catches: 300, seconds-bonus: 1, click-reduction: 2, luck: 80, max-weight: 400, speed: 4, quest: false, aura: 'Pusaran metalik.'}
+      ice: {tier: 6, name: 'Ice Rod', gradient-from: '#BFFFFF', gradient-to: '#55AFFF', price: 5000, required-catches: 500, seconds-bonus: 1, click-reduction: 2, luck: 60, max-weight: 750, speed: 7, quest: false, aura: 'Kristal salju di kail.'}
+      lucky: {tier: 7, name: 'Lucky Rod', gradient-from: '#FFF36A', gradient-to: '#55FF88', price: 12500, required-catches: 800, seconds-bonus: 1, click-reduction: 3, luck: 110, max-weight: 1500, speed: 8, quest: false, aura: 'Bintang keberuntungan.'}
+      midnight: {tier: 8, name: 'Midnight Rod', gradient-from: '#795CFF', gradient-to: '#111A55', price: 25000, required-catches: 1200, seconds-bonus: 2, click-reduction: 3, luck: 150, max-weight: 4000, speed: 10, quest: false, aura: 'Kabut malam gelap.'}
+      steampunk: {tier: 9, name: 'Steampunk Rod', gradient-from: '#E3A45B', gradient-to: '#6E4426', price: 60000, required-catches: 1800, seconds-bonus: 2, click-reduction: 4, luck: 210, max-weight: 8500, speed: 15, quest: false, aura: 'Percikan tembaga berputar.'}
+      fluorescent: {tier: 10, name: 'Fluorescent Rod', gradient-from: '#55FFF0', gradient-to: '#B5FF55', price: 125000, required-catches: 2600, seconds-bonus: 2, click-reduction: 5, luck: 280, max-weight: 15000, speed: 20, quest: false, aura: 'Cahaya neon samudra.'}
+      lava: {tier: 11, name: 'Lava Rod', gradient-from: '#FFCA55', gradient-to: '#FF3A20', price: 250000, required-catches: 3600, seconds-bonus: 3, click-reduction: 5, luck: 350, max-weight: 35000, speed: 25, quest: false, aura: 'Bara api membentuk spiral.'}
+      radioactive: {tier: 12, name: 'Radioactive Rod', gradient-from: '#C8FF3D', gradient-to: '#32A852', price: 500000, required-catches: 4800, seconds-bonus: 3, click-reduction: 6, luck: 420, max-weight: 75000, speed: 32, quest: false, aura: 'Energi hijau berdenyut.'}
+      obsidian: {tier: 13, name: 'Obsidian Rod', gradient-from: '#9C6BFF', gradient-to: '#21152F', price: 1000000, required-catches: 6200, seconds-bonus: 3, click-reduction: 6, luck: 480, max-weight: 120000, speed: 40, quest: false, aura: 'Pecahan obsidian gelap.'}
+      chrome: {tier: 14, name: 'Chrome Rod', gradient-from: '#FFFFFF', gradient-to: '#7FA7C9', price: 2500000, required-catches: 8000, seconds-bonus: 4, click-reduction: 7, luck: 520, max-weight: 190000, speed: 50, quest: false, aura: 'Kilau chrome tajam.'}
+      coral: {tier: 15, name: 'Coral Rod', gradient-from: '#FF8BA7', gradient-to: '#55E6FF', price: 7500000, required-catches: 10000, seconds-bonus: 4, click-reduction: 8, luck: 580, max-weight: 280000, speed: 62, quest: false, aura: 'Gelembung coral berwarna.'}
+      poseidon: {tier: 16, name: 'Poseidon Rod', gradient-from: '#55E6FF', gradient-to: '#3154FF', price: 15000000, required-catches: 12500, seconds-bonus: 5, click-reduction: 9, luck: 650, max-weight: 400000, speed: 75, quest: false, aura: 'Ombak kerajaan laut.'}
+      ghostfinn: {tier: 17, name: 'Ghostfinn Rod', gradient-from: '#D7E8FF', gradient-to: '#785CFF', price: 1000000, required-catches: 15000, seconds-bonus: 5, click-reduction: 10, luck: 750, max-weight: 550000, speed: 90, quest: true, aura: 'Jiwa ikan purba.'}
+      angler: {tier: 18, name: 'Angler Rod', gradient-from: '#FFE46A', gradient-to: '#C77828', price: 2000000, required-catches: 18000, seconds-bonus: 6, click-reduction: 11, luck: 850, max-weight: 700000, speed: 105, quest: true, aura: 'Cahaya blueprint kuno.'}
+      ares: {tier: 19, name: 'Ares Rod', gradient-from: '#FF7A55', gradient-to: '#8A0D18', price: 3500000, required-catches: 22000, seconds-bonus: 6, click-reduction: 12, luck: 980, max-weight: 850000, speed: 115, quest: true, aura: 'Bara pertempuran Ares.'}
+      element: {tier: 20, name: 'Element Rod', gradient-from: '#55E6FF', gradient-to: '#FF55C8', price: 8000000, required-catches: 28000, seconds-bonus: 7, click-reduction: 13, luck: 1111, max-weight: 900000, speed: 130, quest: true, aura: 'Empat elemen berputar.'}
+      diamond: {tier: 21, name: 'Diamond Rod', gradient-from: '#E6FFFF', gradient-to: '#37D7FF', price: 15000000, required-catches: 35000, seconds-bonus: 8, click-reduction: 15, luck: 1300, max-weight: 1000000, speed: 167, quest: true, aura: 'Kristal samudra tertinggi.'}
 
   sell-gui:
     enabled: true
@@ -81,6 +116,7 @@ effects:
   epic: {enabled: true, sound: ENTITY_PLAYER_LEVELUP, particle: ENCHANT, amount: 20}
   legendary: {enabled: true, sound: UI_TOAST_CHALLENGE_COMPLETE, particle: TOTEM_OF_UNDYING, amount: 35, broadcast: true}
   mitologi: {enabled: true, sound: ENTITY_ENDER_DRAGON_GROWL, particle: DRAGON_BREATH, amount: 60, visual-lightning: true, broadcast: true}
+  secret: {enabled: true, sound: ENTITY_WITHER_SPAWN, particle: END_ROD, amount: 90, visual-lightning: true, broadcast: true}
 
 permissions:
   use: 'veliorasuite.fishing.use'
@@ -161,34 +197,72 @@ fish:
   azure_dragonfish: {name: 'Azure Dragonfish', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Langit Timur', weight: {min: 150.0, max: 1200.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
   phoenix_fish: {name: 'Phoenix Fish', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Sungai Api Abadi', weight: {min: 50.0, max: 500.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
   celestial_whale: {name: 'Celestial Whale', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Galaksi Laut', weight: {min: 2000.0, max: 12000.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
-  abyss_emperor: {name: 'Abyss Emperor', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Abyss', weight: {min: 700.0, max: 4500.0}, price: {min: 50000, max: 150000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  abyss_emperor: {name: 'Abyss Emperor', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Abyss', weight: {min: 700.0, max: 4500.0}, price: {min: 1500, max: 3500}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+
+  # Koleksi laut baru. Biome sederhana: Ocean, Deep Ocean, dan Beach.
+  darwin_clownfish: {name: 'Darwin Clownfish', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 0.2, max: 1.2}, price: {min: 20, max: 55}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  fire_goby: {name: 'Fire Goby', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Beach', weight: {min: 0.1, max: 0.8}, price: {min: 20, max: 55}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  red_koi: {name: 'Red Koi', rarity: ORNAMENTAL, material: SALMON, origin: 'VelioraFishing', region: 'Beach', weight: {min: 0.5, max: 4.0}, price: {min: 20, max: 55}, head: {enabled: false, texture-base64: '', fallback-material: SALMON}}
+  frog_fish: {name: 'Frog Fish', rarity: ORNAMENTAL, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Beach', weight: {min: 0.2, max: 2.0}, price: {min: 20, max: 55}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  lined_cardinal: {name: 'Lined Cardinal Fish', rarity: EPIC, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 1.0, max: 8.0}, price: {min: 75, max: 180}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  tropical_puffer: {name: 'Tropical Pufferfish', rarity: EPIC, material: PUFFERFISH, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 1.0, max: 12.0}, price: {min: 75, max: 180}, head: {enabled: false, texture-base64: '', fallback-material: PUFFERFISH}}
+  dorhey_tang: {name: 'Dorhey Tang', rarity: EPIC, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 1.0, max: 10.0}, price: {min: 75, max: 180}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  unicorn_tang: {name: 'Unicorn Tang', rarity: EPIC, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 2.0, max: 18.0}, price: {min: 75, max: 180}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  lionfish: {name: 'Lionfish', rarity: EPIC, material: TROPICAL_FISH, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 2.0, max: 20.0}, price: {min: 75, max: 180}, head: {enabled: false, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  ruby_fish: {name: 'Ruby Fish', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 10.0, max: 120.0}, price: {min: 350, max: 900}, head: {enabled: true, texture-base64: '', fallback-material: SALMON}}
+  yellowfin_tuna: {name: 'Yellowfin Tuna', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 30.0, max: 240.0}, price: {min: 350, max: 900}, head: {enabled: true, texture-base64: '', fallback-material: SALMON}}
+  mako_shark: {name: 'Mako Shark', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 80.0, max: 600.0}, price: {min: 350, max: 900}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  hammerhead_shark: {name: 'Hammerhead Shark', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 120.0, max: 800.0}, price: {min: 350, max: 900}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  golden_dorado: {name: 'Golden Dorado', rarity: LEGENDARY, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 20.0, max: 180.0}, price: {min: 350, max: 900}, head: {enabled: true, texture-base64: '', fallback-material: SALMON}}
+  thresher_shark: {name: 'Thresher Shark', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 300.0, max: 2200.0}, price: {min: 1500, max: 3500}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  dotted_stingray: {name: 'Dotted Stingray', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 120.0, max: 900.0}, price: {min: 1500, max: 3500}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  abyssal_eel: {name: 'Abyssal Eel', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 200.0, max: 1600.0}, price: {min: 1500, max: 3500}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  lava_ray: {name: 'Lava Ray', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 250.0, max: 1800.0}, price: {min: 1500, max: 3500}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  deepsea_isopod: {name: 'Deepsea Isopod', rarity: MITOLOGI, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 100.0, max: 850.0}, price: {min: 1500, max: 3500}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  orca: {name: 'Orca', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 2500.0, max: 12000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  grand_maja: {name: 'Grand Maja', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 1800.0, max: 9000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  megalodon: {name: 'Megalodon', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 5000.0, max: 20000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  robot_kraken: {name: 'Robot Kraken', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 3500.0, max: 15000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  lochness_monster: {name: 'Lochness Monster', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 3000.0, max: 14000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  monster_shark: {name: 'Monster Shark', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 3500.0, max: 16000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  hacker_shark: {name: 'Hacker Shark', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Ocean', weight: {min: 2800.0, max: 13000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  bone_whale: {name: 'Bone Whale', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 4500.0, max: 18000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  great_whale: {name: 'Great Whale', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 5000.0, max: 19000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  queen_crab: {name: 'Queen Crab', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Beach', weight: {min: 800.0, max: 5000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  giant_squid: {name: 'Giant Squid', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 2000.0, max: 10000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  crystal_crab: {name: 'Crystal Crab', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Beach', weight: {min: 500.0, max: 4000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: TROPICAL_FISH}}
+  skeleton_narwhal: {name: 'Skeleton Narwhal', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 1800.0, max: 9500.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
+  ghost_shark: {name: 'Ghost Shark', rarity: SECRET, material: PLAYER_HEAD, origin: 'VelioraFishing', region: 'Deep Ocean', weight: {min: 2200.0, max: 11000.0}, price: {min: 5000, max: 12000}, head: {enabled: true, texture-base64: '', fallback-material: COD}}
 
 messages:
   no-permission: '%prefix% &cKamu tidak punya izin.'
   player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
   reload-success: '%prefix% &aVelioraFishing berhasil direload.'
   main-info: '%prefix% &bGunakan &f/fish bag&b, &f/fish sell&b, &f/fish collection&b, dan &f/fish top&b.'
-  catch-success: '%prefix% &aKamu mendapatkan %rarity_color%%fish% &7(&f%weight%&7) senilai &a%price%&7.'
+  catch-success: '%prefix% &aKamu mendapatkan %rarity_color%%fish% &7(&f%weight%&7) mutasi &d%mutation% &7senilai &6%price% Koin&7.'
   bag-auto-store: '%prefix% &b%fish% &7masuk ke Fish Bag.'
   bag-empty: '%prefix% &eFish Bag kamu kosong.'
-  vault-not-found: '%prefix% &eVault economy belum aktif, sell dibatalkan.'
+  coin-balance: '%prefix% &7Saldo Fishing kamu: &e%money% Koin&7.'
   legendary-broadcast: '%prefix% &6%player% mendapatkan ikan Legendary: &f%fish% &7(&f%weight%&7)!'
   mitologi-broadcast: '%prefix% &c%player% mendapatkan ikan Mitologi: &f%fish% &7(&f%weight%&7)!'
   minigame-start: '%prefix% &eTarikan kuat! Spam klik untuk menarik ikan!'
   minigame-success: '%prefix% &aBerhasil menarik ikan!'
   minigame-fail: '%prefix% &cIkan lepas.'
   sell-empty: '%prefix% &eTidak ada ikan yang bisa dijual.'
-  sell-success: '%prefix% &aBerhasil menjual &f%amount% &aikan seharga &f%money%&a.'
+  sell-success: '%prefix% &aBerhasil menjual &f%amount% &aikan seharga &6%money% Koin&a.'
+  secret-broadcast: '%prefix% &5%player% menemukan ikan Secret: &f%fish% &7(&f%weight%&7)!'
   top-header: '%prefix% &bTop Fishing'
   top-empty: '%prefix% &eBelum ada data fishing.'
   help:
     - '&8&m--------------------------------'
-    - '&b&lVelioraFishing'
+    - '&bVelioraFishing'
     - '&f/fish &7- Buka GUI fishing.'
     - '&f/fish bag &7- Buka Fish Bag.'
     - '&f/fish sell &7- Jual ikan.'
     - '&f/fish collection &7- Buka koleksi ikan.'
     - '&f/fish rods &7- Buka Rod Shop.'
+    - '&f/fish questrods &7- Buka Rod Misi.'
+    - '&f/fish coins &7- Lihat saldo Koin Fishing.'
     - '&f/fish top &7- Leaderboard fishing.'
     - '&f/fish reload &7- Reload config.'
     - '&8&m--------------------------------'

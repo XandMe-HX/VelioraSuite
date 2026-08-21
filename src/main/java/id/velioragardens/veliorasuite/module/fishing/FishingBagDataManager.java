@@ -51,7 +51,9 @@ public final class FishingBagDataManager {
                     data.getDouble(path + ".weight", 0.0D),
                     data.getInt(path + ".price", 0),
                     data.getString(path + ".origin", "VelioraFishing"),
-                    data.getString(path + ".region", "Veliora")
+                    data.getString(path + ".region", "Veliora"),
+                    data.getString(path + ".mutation", "Normal"),
+                    data.getDouble(path + ".mutation-multiplier", 1.0D)
             );
             int amount = data.getInt(path + ".amount", 0);
             if (amount > 0) result.add(new FishingBagEntry(key, fish, amount));
@@ -76,6 +78,8 @@ public final class FishingBagDataManager {
         data.set(path + ".price", fish.price());
         data.set(path + ".origin", fish.origin());
         data.set(path + ".region", fish.region());
+        data.set(path + ".mutation", fish.mutation());
+        data.set(path + ".mutation-multiplier", fish.mutationMultiplier());
         data.set(path + ".amount", data.getInt(path + ".amount", 0) + amount);
         writer.markDirty();
     }
@@ -99,7 +103,7 @@ public final class FishingBagDataManager {
     }
 
     private String key(CaughtFish fish) {
-        String raw = fish.id() + "|" + fish.rarity().name() + "|" + fish.weight() + "|" + fish.price() + "|" + fish.origin() + "|" + fish.region();
+        String raw = fish.id() + "|" + fish.rarity().name() + "|" + fish.weight() + "|" + fish.price() + "|" + fish.origin() + "|" + fish.region() + "|" + fish.mutation();
         return Integer.toHexString(raw.hashCode()).replace('-', 'n');
     }
 }

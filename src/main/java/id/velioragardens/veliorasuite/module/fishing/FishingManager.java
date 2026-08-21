@@ -24,7 +24,6 @@ public final class FishingManager {
     private final FishingRodDataManager rodDataManager;
     private final FishGenerator generator;
     private final FishItemFactory itemFactory;
-    private final FishingEconomyHook economyHook;
     private final FishingQuestHook questHook;
     private final FishingEffectManager effectManager;
     private FishingMainGuiManager mainGuiManager;
@@ -33,6 +32,8 @@ public final class FishingManager {
     private FishingCollectionGuiManager collectionGuiManager;
     private FishingRodManager rodManager;
     private FishingMinigameManager minigameManager;
+    private FishingRelicManager relicManager;
+    private FishingPotionManager potionManager;
 
     public FishingManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -43,7 +44,6 @@ public final class FishingManager {
         this.rodDataManager = new FishingRodDataManager(plugin);
         this.generator = new FishGenerator(configManager);
         this.itemFactory = new FishItemFactory(plugin, configManager);
-        this.economyHook = new FishingEconomyHook(plugin);
         this.questHook = new FishingQuestHook(plugin, configManager);
         this.effectManager = new FishingEffectManager(configManager, itemFactory);
     }
@@ -60,6 +60,8 @@ public final class FishingManager {
         collectionGuiManager = new FishingCollectionGuiManager(this);
         rodManager = new FishingRodManager(this);
         minigameManager = new FishingMinigameManager(plugin, this);
+        relicManager = new FishingRelicManager(this);
+        potionManager = new FishingPotionManager(this);
     }
 
     public void reload() {
@@ -87,6 +89,8 @@ public final class FishingManager {
     public FishingCollectionGuiManager getCollectionGuiManager() { return collectionGuiManager; }
     public FishingRodManager getRodManager() { return rodManager; }
     public FishingMinigameManager getMinigameManager() { return minigameManager; }
+    public FishingRelicManager getRelicManager() { return relicManager; }
+    public FishingPotionManager getPotionManager() { return potionManager; }
 
     public void giveGeneratedFish(Player player, FishGenerator.GeneratedFish generatedFish) {
         CaughtFish fish = generatedFish.fish();
@@ -97,6 +101,7 @@ public final class FishingManager {
                 .filter(AdventureModule.class::isInstance).map(AdventureModule.class::cast).orElse(null);
         if (adventure != null && adventure.getManager() != null) adventure.getManager().addFishingProgress(player, 1);
         effectManager.play(player, fish);
+        relicManager.rollDrop(player, fish);
 
         if (shouldAutoStore(fish)) {
             bagDataManager.add(player, fish, 1);
@@ -115,10 +120,17 @@ public final class FishingManager {
     public void openBagGui(Player player) { bagGuiManager.open(player); }
     public void openCollectionGui(Player player) { collectionGuiManager.open(player); }
     public void openRodShop(Player player) { rodManager.open(player); }
+    public void openQuestRodShop(Player player) { rodManager.openQuest(player); }
+    public void openPotionShop(Player player) { potionManager.open(player); }
+
+    public void giveItemSafely(Player player, ItemStack item) { giveItem(player, item); }
 
     public boolean withdrawRodCost(Player player, int amount) {
-        return amount <= 0 || economyHook.withdraw(player, amount);
+        return amount <= 0 || dataManager.withdrawCoins(player, amount);
     }
+
+    public long coins(Player player) { return dataManager.getCoins(player); }
+    public String formattedCoins(Player player) { return configManager.formatCoins(coins(player)); }
 
     public void withdrawFromBag(Player player, FishingBagEntry entry, int amount) {
         if (player == null || entry == null || amount <= 0) return;
@@ -253,12 +265,10 @@ public final class FishingManager {
     }
 
     private boolean depositSale(Player player, int sold, int total) {
-        if (!economyHook.deposit(player, total)) {
-            send(player, "vault-not-found", "%prefix% &eVault economy belum aktif, sell dibatalkan.", Map.of());
-            return false;
-        }
+        dataManager.depositCoins(player, total);
         dataManager.recordSale(player, sold, total);
-        send(player, "sell-success", "%prefix% &aBerhasil menjual &f%amount% &aikan seharga &f%money%&a.", Map.of("%amount%", String.valueOf(sold), "%money%", String.valueOf(total)));
+        send(player, "sell-success", "%prefix% &aBerhasil menjual &f%amount% &aikan seharga &6%money% Koin&a.",
+                Map.of("%amount%", String.valueOf(sold), "%money%", configManager.formatCoins(total)));
         return true;
     }
 
@@ -278,7 +288,8 @@ public final class FishingManager {
         map.put("%rarity_display%", fish.rarity().displayName());
         map.put("%rarity_color%", fish.rarity().color());
         map.put("%weight%", itemFactory.formatWeight(fish.weight()));
-        map.put("%price%", String.valueOf(fish.price()));
+        map.put("%price%", configManager.formatCoins(fish.price()));
+        map.put("%mutation%", fish.mutation());
         return map;
     }
 

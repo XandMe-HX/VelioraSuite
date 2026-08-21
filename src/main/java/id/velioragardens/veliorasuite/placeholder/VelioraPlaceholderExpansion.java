@@ -6,6 +6,7 @@ import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import id.velioragardens.veliorasuite.module.quest.model.PlayerCategoryProgress;
 import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
+import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
@@ -34,6 +35,8 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
             case "mana_max" -> String.valueOf(mana(player, true));
             case "team_tag" -> teamTag(player);
             case "playtime" -> playtime(player);
+            case "fishing_coins" -> String.valueOf(fishingCoins(player));
+            case "fishing_coins_formatted" -> fishingCoinsFormatted(player);
             case "adventure_rank", "rank_petualang" -> adventure(player) == null ? "F" : adventure(player).rank(player);
             case "adventure_rank_plain", "rank_petualang_plain" -> adventure(player) == null ? "F" : adventure(player).rankPlain(player);
             case "adventure_exp", "petualang_exp" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).exp(player));
@@ -89,6 +92,16 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
         long hours = (seconds % 86400L) / 3600L;
         long minutes = (seconds % 3600L) / 60L;
         return days > 0 ? days + "h " + hours + "j" : hours > 0 ? hours + "j " + minutes + "m" : minutes + "m";
+    }
+
+    private long fishingCoins(Player player) {
+        FishingModule module = module("fishing", FishingModule.class);
+        return module == null || module.getFishingManager() == null ? 0L : module.getFishingManager().coins(player);
+    }
+
+    private String fishingCoinsFormatted(Player player) {
+        FishingModule module = module("fishing", FishingModule.class);
+        return module == null || module.getFishingManager() == null ? "0" : module.getFishingManager().formattedCoins(player);
     }
 
     private <T> T module(String name, Class<T> type) {
