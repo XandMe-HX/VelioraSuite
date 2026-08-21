@@ -22,25 +22,37 @@ public final class FishingBagGuiManager implements Listener {
 
     private final FishingManager manager;
     private final Map<UUID, Map<Integer, String>> slotKeys = new HashMap<>();
+    private final Map<UUID, Integer> pages = new HashMap<>();
 
     public FishingBagGuiManager(FishingManager manager) {
         this.manager = manager;
     }
 
     public void open(Player player) {
-        int size = manager.getConfigManager().getBagSize();
-        Inventory inventory = Bukkit.createInventory(null, size, manager.getConfigManager().color(manager.getConfigManager().getBagTitle()));
+        open(player, pages.getOrDefault(player.getUniqueId(), 0));
+    }
+
+    public void open(Player player, int requestedPage) {
+        int size = 54;
+        int page = Math.max(0, Math.min(FishingBagDataManager.MAX_PAGES - 1, requestedPage));
+        String title = title(page);
+        Inventory inventory = Bukkit.createInventory(null, size, title);
         Map<Integer, String> map = new HashMap<>();
         List<FishingBagEntry> entries = manager.getBagDataManager().entries(player);
-        int maxItems = Math.max(0, size - 9);
-        for (int i = 0; i < entries.size() && i < maxItems; i++) {
-            FishingBagEntry entry = entries.get(i);
-            inventory.setItem(i, display(entry));
-            map.put(i, entry.getKey());
+        int start = page * FishingBagDataManager.ITEMS_PER_PAGE;
+        for (int slot = 0; slot < FishingBagDataManager.ITEMS_PER_PAGE && start + slot < entries.size(); slot++) {
+            FishingBagEntry entry = entries.get(start + slot);
+            inventory.setItem(slot, display(entry));
+            map.put(slot, entry.getKey());
         }
-        inventory.setItem(size - 9, button(Material.ARROW, "&aBack", List.of("&7Kembali ke menu fishing.")));
-        inventory.setItem(size - 5, button(Material.EMERALD, "&aSell All Fish Bag", List.of("&7Klik untuk menjual semua ikan di bag.")));
-        inventory.setItem(size - 4, button(Material.HOPPER, "&bStore All Fish", List.of("&7Masukkan semua ikan dari inventory", "&7ke Fish Bag.")));
+        inventory.setItem(45, button(Material.ARROW, "&eHalaman Sebelumnya", List.of("&7Buka halaman " + Math.max(1, page) + ".")));
+        inventory.setItem(46, button(Material.OAK_DOOR, "&aKembali", List.of("&7Kembali ke menu Fishing.")));
+        inventory.setItem(48, button(Material.EMERALD, "&aJual Semua", List.of("&7Menjual seluruh isi Fish Bag.")));
+        inventory.setItem(49, button(Material.BOOK, "&bFish Bag &f" + (page + 1) + "&7/&f" + FishingBagDataManager.MAX_PAGES,
+                List.of("&7Kapasitas: &f" + entries.size() + "&7/&f" + FishingBagDataManager.MAX_UNIQUE_ITEMS + " jenis")));
+        inventory.setItem(50, button(Material.HOPPER, "&bSimpan Semua Ikan", List.of("&7Pindahkan seluruh ikan", "&7dari inventory ke Fish Bag.")));
+        inventory.setItem(53, button(Material.ARROW, "&eHalaman Berikutnya", List.of("&7Buka halaman " + Math.min(FishingBagDataManager.MAX_PAGES, page + 2) + ".")));
+        pages.put(player.getUniqueId(), page);
         slotKeys.put(player.getUniqueId(), map);
         player.openInventory(inventory);
     }
@@ -48,10 +60,10 @@ public final class FishingBagGuiManager implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getBagTitle()))) return;
+        if (!isBagTitle(event.getView().getTitle())) return;
 
         int slot = event.getRawSlot();
-        int size = manager.getConfigManager().getBagSize();
+        int size = 54;
         event.setCancelled(true);
 
         if (slot >= size) {
@@ -60,51 +72,67 @@ public final class FishingBagGuiManager implements Listener {
             int amount = event.getClick().isShiftClick() ? clicked.getAmount() : 1;
             if (manager.storeItemToBag(player, clicked, amount) > 0) {
                 player.updateInventory();
-                open(player);
+                open(player, pages.getOrDefault(player.getUniqueId(), 0));
             }
             return;
         }
 
-        if (slot == size - 9) {
+        if (slot == 45) {
+            open(player, pages.getOrDefault(player.getUniqueId(), 0) - 1);
+            return;
+        }
+        if (slot == 46) {
             manager.openMainGui(player);
             return;
         }
-        if (slot == size - 5) {
+        if (slot == 48) {
             manager.sellAllBag(player);
-            open(player);
+            open(player, 0);
             return;
         }
-        if (slot == size - 4) {
+        if (slot == 50) {
             manager.storeAllInventoryFish(player);
-            open(player);
+            open(player, pages.getOrDefault(player.getUniqueId(), 0));
+            return;
+        }
+        if (slot == 53) {
+            open(player, pages.getOrDefault(player.getUniqueId(), 0) + 1);
             return;
         }
         String key = slotKeys.getOrDefault(player.getUniqueId(), Map.of()).get(slot);
         if (key == null) return;
         FishingBagEntry entry = manager.getBagDataManager().get(player, key);
-        if (entry == null) { open(player); return; }
+        if (entry == null) { open(player, pages.getOrDefault(player.getUniqueId(), 0)); return; }
         ClickType click = event.getClick();
         if (click.isLeftClick()) {
             int amount = click.isShiftClick() ? entry.getAmount() : 1;
             manager.withdrawFromBag(player, entry, amount);
-            open(player);
+            open(player, pages.getOrDefault(player.getUniqueId(), 0));
         } else if (click.isRightClick()) {
             int amount = click.isShiftClick() ? entry.getAmount() : 1;
             manager.sellFromBag(player, entry, amount);
-            open(player);
+            open(player, pages.getOrDefault(player.getUniqueId(), 0));
         }
     }
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (!event.getView().getTitle().equals(manager.getConfigManager().color(manager.getConfigManager().getBagTitle()))) return;
-        int size = manager.getConfigManager().getBagSize();
+        if (!isBagTitle(event.getView().getTitle())) return;
+        int size = 54;
         for (int rawSlot : event.getRawSlots()) {
             if (rawSlot < size) {
                 event.setCancelled(true);
                 return;
             }
         }
+    }
+
+    private String title(int page) {
+        return manager.getConfigManager().color(manager.getConfigManager().getBagTitle() + " &8- &f" + (page + 1) + "/" + FishingBagDataManager.MAX_PAGES);
+    }
+
+    private boolean isBagTitle(String title) {
+        return title != null && title.startsWith(manager.getConfigManager().color(manager.getConfigManager().getBagTitle() + " &8- &f"));
     }
 
     private ItemStack display(FishingBagEntry entry) {

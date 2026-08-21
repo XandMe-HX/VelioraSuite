@@ -103,11 +103,16 @@ commands:
     permission: veliorasuite.quest.use
   fish:
     description: Open and manage VelioraFishing.
-    usage: /fish <help|bag|sell|collection|top|reload>
+    usage: /fish <help|bag|sell|collection|top|give|take|reload>
     aliases:
       - vfish
       - vfishing
     permission: veliorasuite.fishing.use
+  vtrading:
+    description: Trade item dengan pemain lain secara aman.
+    usage: /vtrading <player|accept|deny|cancel>
+    aliases: [vgtrade]
+    permission: veliorasuite.fishing.trade
   trader:
     description: Show VelioraTrader status.
     usage: /trader [spawn|riset|reload]
@@ -198,6 +203,9 @@ commands:
     permission: veliorasuite.adventure.use
 
 permissions:
+  veliorasuite.fishing.trade:
+    description: Menggunakan sistem trade aman antarpemain.
+    default: true
   veliorasuite.menu.use:
     default: true
   veliorasuite.staff:

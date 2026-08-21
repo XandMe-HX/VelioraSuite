@@ -18,6 +18,10 @@ import java.util.List;
 
 public final class FishingBagDataManager {
 
+    public static final int ITEMS_PER_PAGE = 45;
+    public static final int MAX_PAGES = 5;
+    public static final int MAX_UNIQUE_ITEMS = ITEMS_PER_PAGE * MAX_PAGES;
+
     private final VelioraSuite plugin;
     private File file;
     private FileConfiguration data;
@@ -67,10 +71,11 @@ public final class FishingBagDataManager {
         return null;
     }
 
-    public void add(OfflinePlayer player, CaughtFish fish, int amount) {
-        if (player == null || fish == null || amount <= 0) return;
+    public boolean add(OfflinePlayer player, CaughtFish fish, int amount) {
+        if (player == null || fish == null || amount <= 0) return false;
         String key = key(fish);
         String path = base(player) + "." + key;
+        if (!data.contains(path) && entries(player).size() >= MAX_UNIQUE_ITEMS) return false;
         data.set(path + ".id", fish.id());
         data.set(path + ".name", fish.name());
         data.set(path + ".rarity", fish.rarity().name());
@@ -82,6 +87,7 @@ public final class FishingBagDataManager {
         data.set(path + ".mutation-multiplier", fish.mutationMultiplier());
         data.set(path + ".amount", data.getInt(path + ".amount", 0) + amount);
         writer.markDirty();
+        return true;
     }
 
     public void remove(OfflinePlayer player, String key, int amount) {

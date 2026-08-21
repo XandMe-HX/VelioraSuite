@@ -124,6 +124,10 @@ public final class FishingConfigManager {
     public boolean isQuestFishingProgressEnabled() { return bool("settings.quest-integration.enabled", true); }
     public int getPotionPrice(String type) { return Math.max(0, integer("settings.potions." + type + ".price", type.equals("mutation") ? 1000 : 750)); }
     public int getPotionDurationSeconds(String type) { return Math.max(60, integer("settings.potions." + type + ".duration-seconds", 600)); }
+    public boolean isTradeEnabled() { return bool("settings.trade.enabled", true); }
+    public int getTradeRequestTimeoutSeconds() { return Math.max(10, integer("settings.trade.request-timeout-seconds", 60)); }
+    public int getTradeCountdownSeconds() { return Math.max(1, integer("settings.trade.countdown-seconds", 3)); }
+    public double getTradeMaxDistance() { return Math.max(2.0D, number("settings.trade.max-distance", 10.0D)); }
 
     public boolean isBagEnabled() { return bool("settings.bag.enabled", true); }
     public String getBagTitle() { return str("settings.bag.title", "&8Fish Bag"); }

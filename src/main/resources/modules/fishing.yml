@@ -38,6 +38,12 @@ settings:
     mutation: {price: 1000, duration-seconds: 600}
     lure: {price: 750, duration-seconds: 600}
 
+  trade:
+    enabled: true
+    request-timeout-seconds: 60
+    countdown-seconds: 3
+    max-distance: 10.0
+
   minigame:
     enabled: true
     trigger-chance: 100.0
@@ -96,6 +102,7 @@ settings:
     enabled: true
     title: '&8Fish Bag'
     size: 54
+    max-pages: 5
     auto-store:
       enabled: false
       rarities: [ORNAMENTAL, EPIC, LEGENDARY, MITOLOGI]
@@ -241,6 +248,8 @@ messages:
   main-info: '%prefix% &bGunakan &f/fish bag&b, &f/fish sell&b, &f/fish collection&b, dan &f/fish top&b.'
   catch-success: '%prefix% &aKamu mendapatkan %rarity_color%%fish% &7(&f%weight%&7) mutasi &d%mutation% &7senilai &6%price% Koin&7.'
   bag-auto-store: '%prefix% &b%fish% &7masuk ke Fish Bag.'
+  bag-inventory-full: '%prefix% &eInventory penuh. &b%fish% &7otomatis masuk Fish Bag.'
+  bag-full: '%prefix% &cFish Bag penuh. Ikan dijatuhkan dengan aman di dekatmu.'
   bag-empty: '%prefix% &eFish Bag kamu kosong.'
   coin-balance: '%prefix% &7Saldo Fishing kamu: &e%money% Koin&7.'
   legendary-broadcast: '%prefix% &6%player% mendapatkan ikan Legendary: &f%fish% &7(&f%weight%&7)!'
@@ -263,6 +272,8 @@ messages:
     - '&f/fish rods &7- Buka Rod Shop.'
     - '&f/fish questrods &7- Buka Rod Misi.'
     - '&f/fish coins &7- Lihat saldo Koin Fishing.'
+    - '&f/fish give coins <player|*> <jumlah> &7- Tambah Koin (admin).'
+    - '&f/fish take coins <player|*> <jumlah> &7- Kurangi Koin (admin).'
     - '&f/fish top &7- Leaderboard fishing.'
     - '&f/fish reload &7- Reload config.'
     - '&8&m--------------------------------'

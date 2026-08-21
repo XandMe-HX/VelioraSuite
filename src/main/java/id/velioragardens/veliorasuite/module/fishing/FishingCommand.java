@@ -30,6 +30,11 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if ((args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("take"))
+                && args.length >= 2 && args[1].equalsIgnoreCase("coins")) {
+            return handleCoinAdmin(sender, args, args[0].equalsIgnoreCase("give"));
+        }
+
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "coins", "coin", "saldo" -> {
                 if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
@@ -102,6 +107,15 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 2 && hasAdmin(sender) && (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("take"))) {
+            return filter(List.of("coins"), args[1]);
+        }
+        if (args.length == 3 && hasAdmin(sender) && args[1].equalsIgnoreCase("coins")) {
+            List<String> targets = new ArrayList<>();
+            targets.add("*");
+            Bukkit.getOnlinePlayers().forEach(player -> targets.add(player.getName()));
+            return filter(targets, args[2]);
+        }
         if (args.length != 1) return new ArrayList<>();
         List<String> options = new ArrayList<>(Arrays.asList("help"));
         if (hasBag(sender)) options.add("bag");
@@ -109,7 +123,47 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
         if (hasUse(sender)) { options.add("collection"); options.add("rods"); options.add("questrods"); options.add("coins"); }
         if (hasTop(sender)) options.add("top");
         if (hasReload(sender)) options.add("reload");
+        if (hasAdmin(sender)) { options.add("give"); options.add("take"); }
         return filter(options, args[0]);
+    }
+
+    private boolean handleCoinAdmin(CommandSender sender, String[] args, boolean give) {
+        if (!hasAdmin(sender)) { manager.sendNoPermission(sender); return true; }
+        if (args.length != 4) {
+            sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
+                    + "&eGunakan /fish " + (give ? "give" : "take") + " coins <player|*> <jumlah>."));
+            return true;
+        }
+        long amount;
+        try { amount = Long.parseLong(args[3]); }
+        catch (NumberFormatException exception) { amount = 0L; }
+        if (amount <= 0L) {
+            sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cJumlah harus lebih dari 0."));
+            return true;
+        }
+
+        int affected = 0;
+        if (args[2].equals("*")) {
+            for (Player target : Bukkit.getOnlinePlayers()) {
+                if (give) manager.getDataManager().depositCoins(target, amount);
+                else manager.getDataManager().takeCoins(target, amount);
+                affected++;
+            }
+        } else {
+            OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
+            if (!target.hasPlayedBefore() && !target.isOnline()) {
+                sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cPlayer tidak ditemukan."));
+                return true;
+            }
+            if (give) manager.getDataManager().depositCoins(target, amount);
+            else manager.getDataManager().takeCoins(target, amount);
+            affected = 1;
+        }
+        manager.getConfigManager().getPlugin().getLogger().info("[FishingCoins] " + sender.getName() + " "
+                + (give ? "memberikan " : "mengambil ") + amount + " Koin kepada/dari " + args[2] + ".");
+        sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aBerhasil memproses &f"
+                + manager.getConfigManager().formatCoins(amount) + " Koin &auntuk &f" + affected + " player&a."));
+        return true;
     }
 
     private boolean hasUse(CommandSender sender) {
