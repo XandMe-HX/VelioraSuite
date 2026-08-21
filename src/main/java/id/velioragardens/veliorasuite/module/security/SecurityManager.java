@@ -48,6 +48,7 @@ public final class SecurityManager {
     private final File xrayEvidenceFile;
 
     private final Map<UUID, List<OreRecord>> oreRecords = new HashMap<>();
+    private final Map<UUID, List<MiningRecord>> miningRecords = new HashMap<>();
     private final Map<UUID, String> oreNames = new HashMap<>();
     private final Set<String> placedOre = new HashSet<>();
     private final Set<String> exemptOreNames = new HashSet<>();
@@ -58,6 +59,8 @@ public final class SecurityManager {
     private final Map<UUID, Long> pendingXrayBans = new HashMap<>();
     private final Map<UUID, Integer> visualOreAlerts = new HashMap<>();
     private final Map<UUID, Map<Material, Integer>> xrayInventoryBaselines = new HashMap<>();
+    private final Map<UUID, Honeypot> activeHoneypots = new HashMap<>();
+    private final Map<UUID, Integer> honeypotHits = new HashMap<>();
 
     public SecurityManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -134,8 +137,25 @@ public final class SecurityManager {
         if (placedOre.size() > 10000) placedOre.clear();
     }
 
+    public void trackMiningBreak(Player player, Block block) {
+        if (player == null || block == null || player.hasMetadata("velioraftb_vein_secondary")) return;
+        handleHoneypotBreak(player, block);
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
+        Location location = block.getLocation();
+        List<MiningRecord> records = miningRecords.computeIfAbsent(player.getUniqueId(), ignored -> new ArrayList<>());
+        records.add(new MiningRecord(System.currentTimeMillis(), location.getWorld().getName(),
+                location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        long cutoff = System.currentTimeMillis() - 60L * 60_000L;
+        records.removeIf(record -> record.time() < cutoff);
+        if (records.size() > 2500) records.subList(0, records.size() - 2500).clear();
+    }
+
     public void trackOreBreak(Player player, Block block) {
+        // VelioraFTB calls Player#breakBlock for every secondary Vein Miner block.
+        // Only the player's original/manual break is evidence; generated secondary
+        // breaks must not inflate OreWatch ratios or trigger automatic punishment.
         if (player == null || block == null || !isOre(block.getType())) return;
+        if (player.hasMetadata("velioraftb_vein_secondary")) return;
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
         if (configManager.hasBypass(player) || exemptOreNames.contains(player.getName().toLowerCase(Locale.ROOT))) return;
         if (placedOre.remove(locationKey(block.getLocation()))) return;
@@ -149,14 +169,25 @@ public final class SecurityManager {
         boolean silkTouch = tool.getEnchantments().keySet().stream()
                 .anyMatch(enchantment -> enchantment.getKey().getKey().equalsIgnoreCase("silk_touch"));
         Location location = block.getLocation();
+        OreRecord previousRare = latestRareRecord(uuid, location.getWorld().getName());
+        double transitionDistance = previousRare == null ? 0.0D : distance(previousRare, location);
+        double transitionSeconds = previousRare == null ? 0.0D : Math.max(0.001D, (System.currentTimeMillis() - previousRare.time()) / 1000.0D);
+        long breaksBetween = previousRare == null ? 0L : miningRecords.getOrDefault(uuid, List.of()).stream()
+                .filter(record -> record.time() > previousRare.time() && record.world().equals(location.getWorld().getName())).count();
+        double pathEfficiency = previousRare == null ? 0.0D : Math.min(1.0D, transitionDistance / Math.max(1.0D, breaksBetween));
+        boolean fastTransition = transitionDistance >= 24.0D && transitionSeconds < Math.max(12.0D, transitionDistance * 0.70D);
+        boolean preciseTransition = transitionDistance >= 16.0D && breaksBetween >= 4L && pathEfficiency >= 0.78D;
+        boolean exposedToCave = exposedFaces(block) >= 2;
         oreRecords.computeIfAbsent(uuid, ignored -> new ArrayList<>()).add(new OreRecord(
                 System.currentTimeMillis(), block.getType().name(), location.getWorld().getName(),
                 location.getBlockX(), location.getBlockY(), location.getBlockZ(),
-                tool.getType().name(), fortune, silkTouch));
+                tool.getType().name(), fortune, silkTouch, fastTransition, preciseTransition,
+                exposedToCave, transitionDistance, transitionSeconds, pathEfficiency));
         trim(uuid);
         OreReport fiveMinuteReport = report(uuid, 5);
         OreReport report = strongest(fiveMinuteReport, report(uuid, 15), report(uuid, 60));
         if (!report.level().equals("NORMAL")) addOreAlert(player, report);
+        if (report.level().equals("HIGH")) armHoneypot(player, report);
         if (fiveMinuteReport.level().equals("EXTREME")) handleExtremeXray(player, fiveMinuteReport);
     }
 
@@ -399,6 +430,15 @@ public final class SecurityManager {
         long cooldown = configManager.getXrayStrikeCooldownMinutes() * 60_000L;
         if (now - xrayLastAction.getOrDefault(uuid, 0L) < cooldown) return;
 
+        // Geyser/Bedrock mining packets and reach timing differ from Java. Keep the
+        // full evidence, but require staff review instead of automatic punishment.
+        if (isBedrock(player)) {
+            xrayLastAction.put(uuid, now);
+            saveXrayEvidence(player, report, "BEDROCK_REVIEW_ONLY");
+            notifyXrayOwners(player.getName(), "&bBedrock review-only &7- bukti tersimpan, tidak ada auto-ban.", report);
+            return;
+        }
+
         int warning = Math.min(4, xrayWarnings.getOrDefault(uuid, 0) + 1);
         xrayWarnings.put(uuid, warning);
         xrayLastAction.put(uuid, now);
@@ -493,15 +533,22 @@ public final class SecurityManager {
                 + " &8| &7Tool: &f" + report.tool() + " &7Fortune " + report.fortune()
                 + (report.silkTouch() ? " &bSilk Touch" : "")
                 + (report.caveLikely() ? " &8| &aKonteks cave terdeteksi" : "")));
+        sender.sendMessage(color("&7Pola jalur: &f" + report.preciseTransitions() + " presisi &8| &f"
+                + report.fastTransitions() + " perpindahan cepat"
+                + (report.caveLikely() ? " &8| &aSkor dilonggarkan karena cave" : "")));
     }
 
     private OreReport report(UUID uuid, int minutes) {
         long since = System.currentTimeMillis() - minutes * 60000L;
         int diamond = 0, debris = 0, gold = 0, iron = 0, emerald = 0, total = 0;
+        int fastTransitions = 0, preciseTransitions = 0, caveDiscoveries = 0;
         OreRecord latest = null;
         for (OreRecord record : oreRecords.getOrDefault(uuid, List.of())) {
             if (record.time() < since) continue;
             total++;
+            if (record.fastTransition()) fastTransitions++;
+            if (record.preciseTransition()) preciseTransitions++;
+            if (record.exposedToCave()) caveDiscoveries++;
             if (latest == null || record.time() > latest.time()) latest = record;
             String ore = record.ore();
             if (ore.contains("DIAMOND_ORE")) diamond++;
@@ -511,19 +558,35 @@ public final class SecurityManager {
             else if (ore.contains("EMERALD_ORE")) emerald++;
         }
         double rareRatio = (diamond + debris + emerald) / (double) Math.max(1, total);
-        boolean caveLikely = total >= 30 && rareRatio < 0.18D;
-        String level = level(minutes, diamond, debris, gold, iron, emerald, total);
-        int score = diamond * 3 + debris * 10 + emerald * 4 + gold + iron / 2;
+        boolean caveLikely = (total >= 30 && rareRatio < 0.18D) || caveDiscoveries >= Math.max(3, (diamond + debris + emerald) / 2);
+        String level = level(minutes, diamond, debris, gold, iron, emerald, total, fastTransitions, preciseTransitions, caveLikely);
+        int score = diamond * 3 + debris * 10 + emerald * 4 + gold + iron / 2
+                + fastTransitions * 18 + preciseTransitions * 14 - (caveLikely ? 20 : 0);
         long latestTime = latest == null ? System.currentTimeMillis() : latest.time();
         return new OreReport(uuid, oreNames.getOrDefault(uuid, "unknown"), minutes, diamond, debris, gold, iron,
                 emerald, total, rareRatio, caveLikely, level, score, latestTime,
                 latest == null ? "unknown" : latest.world(), latest == null ? 0 : latest.x(),
                 latest == null ? 0 : latest.y(), latest == null ? 0 : latest.z(),
                 latest == null ? "unknown" : latest.tool(), latest == null ? 0 : latest.fortune(),
-                latest != null && latest.silkTouch());
+                latest != null && latest.silkTouch(), fastTransitions, preciseTransitions);
     }
 
-    private String level(int minutes, int diamond, int debris, int gold, int iron, int emerald, int total) {
+    private boolean isBedrock(Player player) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("floodgate")) return false;
+        try {
+            Class<?> apiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            Object api = apiClass.getMethod("getInstance").invoke(null);
+            Object result = apiClass.getMethod("isFloodgatePlayer", UUID.class).invoke(api, player.getUniqueId());
+            if (result instanceof Boolean value) return value;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            // Older Floodgate: use the configured username prefix as fallback.
+        }
+        String name = player.getName();
+        return name.startsWith("_") || name.startsWith(".") || name.startsWith("*");
+    }
+
+    private String level(int minutes, int diamond, int debris, int gold, int iron, int emerald, int total,
+                         int fastTransitions, int preciseTransitions, boolean caveLikely) {
         double factor = minutes / 5.0D;
         double rareRatio = (diamond + debris + emerald) / (double) Math.max(1, total);
 
@@ -531,12 +594,89 @@ public final class SecurityManager {
         // is always one record. A broad cave vein is softened by the rare/total ratio.
         boolean rareExtreme = debris >= 12 * factor || diamond >= 55 * factor;
         boolean directPattern = rareRatio >= 0.18D || debris >= 16 * factor || diamond >= 80 * factor;
-        if (rareExtreme && directPattern) return "EXTREME";
+        boolean navigationPattern = fastTransitions + preciseTransitions >= 3;
+        if ((rareExtreme && directPattern && !caveLikely) || (navigationPattern && (diamond >= 25 * factor || debris >= 5 * factor))) return "EXTREME";
         if (debris >= 9 * factor || diamond >= 40 * factor || emerald >= 15 * factor
                 || gold >= 75 * factor || iron >= 150 * factor) return "HIGH";
         if (debris >= 5 * factor || diamond >= 25 * factor || emerald >= 8 * factor
                 || gold >= 40 * factor || iron >= 80 * factor) return "ALERT";
         return "NORMAL";
+    }
+
+    private OreRecord latestRareRecord(UUID uuid, String world) {
+        List<OreRecord> records = oreRecords.getOrDefault(uuid, List.of());
+        for (int i = records.size() - 1; i >= 0; i--) {
+            OreRecord record = records.get(i);
+            if (record.world().equals(world) && (record.ore().contains("DIAMOND_ORE")
+                    || record.ore().equals("ANCIENT_DEBRIS") || record.ore().contains("EMERALD_ORE"))) return record;
+        }
+        return null;
+    }
+
+    private double distance(OreRecord record, Location location) {
+        double dx = record.x() - location.getBlockX();
+        double dy = record.y() - location.getBlockY();
+        double dz = record.z() - location.getBlockZ();
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    private int exposedFaces(Block block) {
+        int exposed = 0;
+        for (org.bukkit.block.BlockFace face : List.of(org.bukkit.block.BlockFace.NORTH, org.bukkit.block.BlockFace.SOUTH,
+                org.bukkit.block.BlockFace.EAST, org.bukkit.block.BlockFace.WEST, org.bukkit.block.BlockFace.UP, org.bukkit.block.BlockFace.DOWN)) {
+            if (block.getRelative(face).isPassable()) exposed++;
+        }
+        return exposed;
+    }
+
+    private void armHoneypot(Player player, OreReport report) {
+        if (!configManager.config().getBoolean("settings.xray-enforcement.honeypot.enabled", true)
+                || isBedrock(player) || player.getLocation().getBlockY() > 16
+                || activeHoneypots.containsKey(player.getUniqueId())) return;
+        int lifetimeSeconds = Math.max(5, configManager.config().getInt("settings.xray-enforcement.honeypot.lifetime-seconds", 20));
+        Location origin = player.getLocation();
+        for (int attempt = 0; attempt < 12; attempt++) {
+            int dx = 5 + (attempt % 4);
+            if ((attempt & 1) == 1) dx = -dx;
+            int dz = 4 + ((attempt * 3) % 5);
+            if ((attempt & 2) != 0) dz = -dz;
+            Block candidate = origin.getBlock().getRelative(dx, (attempt % 3) - 1, dz);
+            if (!isHoneypotStone(candidate) || exposedFaces(candidate) != 0) continue;
+            Honeypot honeypot = new Honeypot(candidate.getLocation(), candidate.getBlockData(),
+                    System.currentTimeMillis() + lifetimeSeconds * 1000L, report.score());
+            activeHoneypots.put(player.getUniqueId(), honeypot);
+            player.sendBlockChange(candidate.getLocation(), Material.DIAMOND_ORE.createBlockData());
+            Bukkit.getScheduler().runTaskLater(plugin, () -> clearHoneypot(player), lifetimeSeconds * 20L);
+            return;
+        }
+    }
+
+    private void handleHoneypotBreak(Player player, Block block) {
+        Honeypot honeypot = activeHoneypots.get(player.getUniqueId());
+        if (honeypot == null || !sameBlock(honeypot.location(), block.getLocation())) return;
+        activeHoneypots.remove(player.getUniqueId());
+        player.sendBlockChange(honeypot.location(), honeypot.originalData());
+        int hits = honeypotHits.merge(player.getUniqueId(), 1, Integer::sum);
+        OreReport report = strongest(report(player.getUniqueId(), 5), report(player.getUniqueId(), 15), report(player.getUniqueId(), 60));
+        saveXrayEvidence(player, report, "HONEYPOT_HIT_" + hits);
+        notifyXrayOwners(player.getName(), "&cHoneypot tersentuh &7(" + hits + "/2). Bukti disimpan.", report);
+        int highScore = Math.max(100, configManager.config().getInt("settings.xray-enforcement.honeypot.hit-plus-high-score", 180));
+        if (hits >= 2 || honeypot.reportScore() >= highScore) handleExtremeXray(player, report);
+    }
+
+    private void clearHoneypot(Player player) {
+        Honeypot honeypot = activeHoneypots.remove(player.getUniqueId());
+        if (honeypot != null && player.isOnline()) player.sendBlockChange(honeypot.location(), honeypot.originalData());
+    }
+
+    private boolean isHoneypotStone(Block block) {
+        return block.getType() == Material.STONE || block.getType() == Material.DEEPSLATE;
+    }
+
+    private boolean sameBlock(Location first, Location second) {
+        return first.getWorld() != null && first.getWorld().equals(second.getWorld())
+                && first.getBlockX() == second.getBlockX() && first.getBlockY() == second.getBlockY()
+                && first.getBlockZ() == second.getBlockZ();
     }
 
     private OreReport strongest(OreReport a, OreReport b, OreReport c) {
@@ -713,11 +853,18 @@ public final class SecurityManager {
 
     private String color(String text) { return configManager.color(text); }
 
+    private record MiningRecord(long time, String world, int x, int y, int z) { }
+
+    private record Honeypot(Location location, org.bukkit.block.data.BlockData originalData,
+                            long expiresAt, int reportScore) { }
+
     private record OreRecord(long time, String ore, String world, int x, int y, int z,
-                             String tool, int fortune, boolean silkTouch) { }
+                             String tool, int fortune, boolean silkTouch, boolean fastTransition,
+                             boolean preciseTransition, boolean exposedToCave, double transitionDistance,
+                             double transitionSeconds, double pathEfficiency) { }
 
     private record OreReport(UUID uuid, String name, int window, int diamond, int debris, int gold, int iron,
                              int emerald, int total, double rareRatio, boolean caveLikely, String level, int score,
                              long latestTime, String world, int x, int y, int z, String tool, int fortune,
-                             boolean silkTouch) { }
+                             boolean silkTouch, int fastTransitions, int preciseTransitions) { }
 }

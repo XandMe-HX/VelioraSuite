@@ -256,7 +256,7 @@ pets:
     food: { material: WHEAT, exp: 25 }
 
 messages:
-  prefix: '&6&l[ &e&lVELIORA &a&lPETS &6&l] &r'
+  prefix: '&7[&eVELIORA &aPETS&7] &r'
   no-permission: '%prefix% &cKamu tidak punya izin.'
   vault-missing: '%prefix% &cEconomy tidak aktif.'
   not-enough-money: '%prefix% &cUang kamu tidak cukup.'

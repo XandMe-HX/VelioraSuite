@@ -67,6 +67,9 @@ public final class BossManager implements Listener {
     private final NamespacedKey bossIdKey;
     private final NamespacedKey bossNameKey;
     private final NamespacedKey bossRarityKey;
+    private final NamespacedKey bossExpiresAtKey;
+    private final NamespacedKey bossVirtualHealthKey;
+    private final NamespacedKey bossVirtualMaxHealthKey;
     private final NamespacedKey minionOwnerKey;
     private BukkitTask schedulerTask;
     private LivingEntity activeBoss;
@@ -94,6 +97,9 @@ public final class BossManager implements Listener {
         this.bossIdKey = new NamespacedKey(plugin, "velioraboss_id");
         this.bossNameKey = new NamespacedKey(plugin, "velioraboss_name");
         this.bossRarityKey = new NamespacedKey(plugin, "velioraboss_rarity");
+        this.bossExpiresAtKey = new NamespacedKey(plugin, "velioraboss_expires_at");
+        this.bossVirtualHealthKey = new NamespacedKey(plugin, "velioraboss_virtual_health");
+        this.bossVirtualMaxHealthKey = new NamespacedKey(plugin, "velioraboss_virtual_max_health");
         this.minionOwnerKey = new NamespacedKey(plugin, "velioraboss_minion_owner");
     }
 
@@ -105,14 +111,14 @@ public final class BossManager implements Listener {
 
     public void start() {
         stopScheduler();
-        cleanupTaggedEntities();
+        recoverActiveBoss();
         schedulerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
     }
 
     public void shutdown() {
         stopScheduler();
-        stopActive(false);
-        cleanupTaggedEntities();
+        persistActiveState();
+        clearRuntime();
         data.shutdown();
     }
 
@@ -484,6 +490,7 @@ public final class BossManager implements Listener {
         living.getPersistentDataContainer().set(bossIdKey, PersistentDataType.STRING, definition.id());
         living.getPersistentDataContainer().set(bossNameKey, PersistentDataType.STRING, org.bukkit.ChatColor.stripColor(config.color(definition.displayName())));
         living.getPersistentDataContainer().set(bossRarityKey, PersistentDataType.STRING, definition.rarity().name());
+        living.getPersistentDataContainer().set(bossExpiresAtKey, PersistentDataType.LONG, despawnAt);
         living.setCustomName(config.color(definition.displayName()));
         living.setCustomNameVisible(true);
         living.setRemoveWhenFarAway(false);
@@ -500,6 +507,7 @@ public final class BossManager implements Listener {
         double spawnHealth = calculateSpawnHealth(definition.health(), location);
         activeVirtualMaxHealth = spawnHealth;
         activeVirtualHealth = spawnHealth;
+        persistActiveState();
         double spawnScale = calculateSpawnScale(definition);
         scaleHelper.setMaxHealth(living, NATIVE_BOSS_HEALTH);
         scaleHelper.applyCombatDefense(living, 0.0D, 0.0D, config.bossKnockbackResistance());
@@ -645,7 +653,7 @@ public final class BossManager implements Listener {
     }
 
     private double calculateSpawnHealth(double baseHealth, Location location) {
-        double cappedBaseHealth = Math.min(config.maximumBossHealth(), Math.max(1.0D, baseHealth));
+        double cappedBaseHealth = Math.min(config.maximumBossHealth(), Math.max(1.0D, baseHealth * config.globalHealthMultiplier()));
         if (!config.healthScalingEnabled()) return cappedBaseHealth;
         int nearbyPlayers = Math.max(1, targetManager.validPlayers(location, location, config.targetRadius()).size());
         double multiplier = Math.min(config.maxHealthMultiplier(), 1.0D + ((nearbyPlayers - 1) * config.healthPerPlayerMultiplier()));
@@ -742,6 +750,7 @@ public final class BossManager implements Listener {
         if (!isActive() || player == null || damage <= 0.0D) return;
         double applied = Math.min(activeVirtualHealth, damage);
         activeVirtualHealth -= applied;
+        persistActiveState();
         damageTracker.add(player, applied);
         data.addDamage(player, applied);
         if (activeVirtualHealth <= 0.0D) activeBoss.setHealth(0.0D);
@@ -777,6 +786,56 @@ public final class BossManager implements Listener {
                 if (entity.getScoreboardTags().contains("velioraboss_boss") || entity.getScoreboardTags().contains("velioraboss_minion")) entity.remove();
             }
         }
+    }
+
+    /** Recovers one valid boss after reload/restart and removes only expired or duplicate copies. */
+    private void recoverActiveBoss() {
+        long now = System.currentTimeMillis();
+        LivingEntity recovered = null;
+        BossDefinition recoveredDefinition = null;
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                if (entity.getScoreboardTags().contains("velioraboss_minion")) {
+                    entity.remove();
+                    continue;
+                }
+                if (!(entity instanceof LivingEntity living) || !entity.getScoreboardTags().contains("velioraboss_boss")) continue;
+                String bossId = living.getPersistentDataContainer().get(bossIdKey, PersistentDataType.STRING);
+                Long expiresAt = living.getPersistentDataContainer().get(bossExpiresAtKey, PersistentDataType.LONG);
+                BossDefinition definition = bossId == null ? null : config.bosses().get(bossId);
+                if (definition == null || expiresAt == null || expiresAt <= now || recovered != null) {
+                    living.remove();
+                    continue;
+                }
+                recovered = living;
+                recoveredDefinition = definition;
+                despawnAt = expiresAt;
+            }
+        }
+        if (recovered == null || recoveredDefinition == null) {
+            clearRuntime();
+            scheduleNextSpawn();
+            return;
+        }
+        activeBoss = recovered;
+        activeDefinition = recoveredDefinition;
+        lastKnownLocation = recovered.getLocation();
+        arenaCenter = recovered.getLocation().clone();
+        Double storedMax = recovered.getPersistentDataContainer().get(bossVirtualMaxHealthKey, PersistentDataType.DOUBLE);
+        Double storedHealth = recovered.getPersistentDataContainer().get(bossVirtualHealthKey, PersistentDataType.DOUBLE);
+        activeVirtualMaxHealth = storedMax == null ? calculateSpawnHealth(recoveredDefinition.health(), recovered.getLocation()) : Math.max(1.0D, storedMax);
+        activeVirtualHealth = storedHealth == null ? activeVirtualMaxHealth : Math.max(1.0D, Math.min(activeVirtualMaxHealth, storedHealth));
+        bossBarManager.create(recoveredDefinition);
+        skillManager.start(recoveredDefinition);
+        retarget(true);
+        notifyConsole("recovered: " + recoveredDefinition.id() + " expires-in=" + timeLeft(despawnAt));
+    }
+
+    private void persistActiveState() {
+        if (activeBoss == null || activeBoss.isDead()) return;
+        activeBoss.getPersistentDataContainer().set(bossExpiresAtKey, PersistentDataType.LONG, despawnAt);
+        activeBoss.getPersistentDataContainer().set(bossVirtualHealthKey, PersistentDataType.DOUBLE, activeVirtualHealth);
+        activeBoss.getPersistentDataContainer().set(bossVirtualMaxHealthKey, PersistentDataType.DOUBLE, activeVirtualMaxHealth);
     }
 
     private void scheduleNextSpawn() {

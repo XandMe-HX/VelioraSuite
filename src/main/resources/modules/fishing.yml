@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lFISHING &6&l] &r'
+  prefix: '&7[&eVELIORA &aFISHING&7] &r'
 
   rarity-chance:
     trash: 18.0

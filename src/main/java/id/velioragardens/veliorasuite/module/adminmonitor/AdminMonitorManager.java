@@ -28,6 +28,8 @@ public final class AdminMonitorManager {
     private final Map<UUID, Long> sessions = new HashMap<>();
     private final Object bufferLock = new Object();
     private final Map<LocalDate, List<Map<String, Object>>> pendingEntries = new HashMap<>();
+    private final Map<String, Long> recentEvents = new HashMap<>();
+    private boolean flushRunning;
     private AdminMonitorDatabase database;
     private FileConfiguration config;
     private ZoneId zoneId;
@@ -71,6 +73,13 @@ public final class AdminMonitorManager {
     private void record(Player player, String type, String detail, Location location) {
         if (!isStaff(player)) return;
         long now = System.currentTimeMillis();
+        String eventKey = player.getUniqueId() + "|" + type + "|" + detail;
+        synchronized (bufferLock) {
+            long deduplicateMillis = Math.max(0, integer("settings.storage.deduplicate-seconds", 2)) * 1000L;
+            if (now - recentEvents.getOrDefault(eventKey, 0L) < deduplicateMillis) return;
+            recentEvents.put(eventKey, now);
+            if (recentEvents.size() > 2000) recentEvents.entrySet().removeIf(entry -> now - entry.getValue() > 60_000L);
+        }
         LocalDate date = Instant.ofEpochMilli(now).atZone(zoneId).toLocalDate();
         Map<String, Object> entry = new HashMap<>();
         entry.put("time", now);
@@ -165,6 +174,12 @@ public final class AdminMonitorManager {
         synchronized (bufferLock) {
             pendingEntries.computeIfAbsent(date, ignored -> new ArrayList<>()).add(entry);
             pendingSize = pendingEntries.values().stream().mapToInt(List::size).sum();
+            int hardLimit = Math.max(100, integer("settings.storage.max-pending", 1000));
+            if (pendingSize > hardLimit) {
+                pendingEntries.values().stream().filter(entries -> !entries.isEmpty()).findFirst()
+                        .ifPresent(entries -> entries.remove(0));
+                pendingSize--;
+            }
         }
         if (pendingSize >= Math.max(10, integer("settings.storage.flush-max-pending", 250))) {
             flushAsync();
@@ -184,7 +199,14 @@ public final class AdminMonitorManager {
     }
 
     private void flushAsync() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::flushPendingEntries);
+        synchronized (bufferLock) {
+            if (flushRunning) return;
+            flushRunning = true;
+        }
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try { flushPendingEntries(); }
+            finally { synchronized (bufferLock) { flushRunning = false; } }
+        });
     }
 
     private void flushNow() {

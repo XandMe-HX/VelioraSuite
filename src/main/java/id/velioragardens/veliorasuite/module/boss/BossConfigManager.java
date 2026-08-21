@@ -174,6 +174,7 @@ public final class BossConfigManager {
     public double bossArmorToughness() { return Math.max(0.0D, number("settings.combat.armor-toughness", 12.0D)); }
     public double bossKnockbackResistance() { return clamp(number("settings.combat.knockback-resistance", 0.85D), 0.0D, 1.0D); }
     public boolean healthScalingEnabled() { return bool("settings.combat.health-scale-by-nearby-players", true); }
+    public double globalHealthMultiplier() { return clamp(number("settings.combat.global-health-multiplier", 0.80D), 0.05D, 10.0D); }
     public double healthPerPlayerMultiplier() { return Math.max(0.0D, number("settings.combat.health-per-player-multiplier", 0.20D)); }
     public double maxHealthMultiplier() { return Math.max(1.0D, number("settings.combat.max-health-multiplier", 2.75D)); }
     public boolean bossCollisionEnabled() { return bool("settings.combat.collision-enabled", false); }

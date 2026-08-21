@@ -244,7 +244,7 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
             // Fallback below keeps compatibility with older Floodgate installations.
         }
         String name = player.getName();
-        return name.startsWith(".") || name.startsWith("*");
+        return name.startsWith("_") || name.startsWith(".") || name.startsWith("*");
     }
 
     private double reach(Player player, LivingEntity target) {

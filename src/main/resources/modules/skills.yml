@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lSKILLS &6&l] &r'
+  prefix: '&7[&eVELIORA &aSKILLS&7] &r'
 
   mana:
     config-version: 3

@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lSECURITY &6&l] &r'
+  prefix: '&7[&eVELIORA &aSECURITY&7] &r'
   alerts:
     enabled: true
     cooldown-seconds: 5
@@ -12,19 +12,19 @@ settings:
     # Bedrock/touch diberi toleransi lebih besar dan tidak ditindak dari satu sinyal saja.
     java-max-reach: 3.45
     java-hard-reach-extra: 0.35
-    bedrock-max-reach: 4.10
-    bedrock-hard-reach-extra: 0.45
+    bedrock-max-reach: 4.25
+    bedrock-hard-reach-extra: 0.55
     minimum-facing-dot: 0.05
     bedrock-minimum-facing-dot: -0.25
-    bedrock-strong-signals-required: 2
+    bedrock-strong-signals-required: 3
     minimum-tps-for-geometry: 18.0
     multi-target-count: 3
     maximum-cps: 22
     minimum-event-score: 8
-    score-decay-per-second: 4.0
-    stage-1-score: 70
-    stage-2-score: 140
-    stage-3-score: 230
+    score-decay-per-second: 5.5
+    stage-1-score: 90
+    stage-2-score: 175
+    stage-3-score: 275
     max-evidence-per-player: 20
     # Maksimal tiga alert per sesi. Stage 3 hanya kick + case; ban tetap keputusan staff.
     require-human-confirmation-for-ip-ban: true
@@ -86,6 +86,12 @@ settings:
     first-ban-days: 3
     repeat-ban-days: 15
     appeal-contact: 'WhatsApp Owner'
+    honeypot:
+      enabled: true
+      # Hanya dikirim ke satu pemain Java yang sudah HIGH dan sedang di bawah tanah.
+      lifetime-seconds: 20
+      # Satu sentuhan baru dapat menindak jika skor lain juga sangat tinggi; selain itu perlu dua sentuhan.
+      hit-plus-high-score: 180
     # Tetap dibaca agar command lama tidak rusak.
     confirmation-expiry-minutes: 60
   anti-dupe:

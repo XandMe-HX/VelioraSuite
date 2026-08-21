@@ -1,7 +1,7 @@
 settings:
   config-version: 3
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lTRADER &6&l] &r'
+  prefix: '&7[&eVELIORA &aTRADER&7] &r'
   spawn:
     enabled: true
     interval-hours: 3

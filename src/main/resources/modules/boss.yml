@@ -17,7 +17,7 @@ settings:
       times: ['20:00']
     interval-minutes: 60
     retry-minutes: 5
-    despawn-minutes: 35
+    despawn-minutes: 30
     announce-spawn: true
     announce-death: true
     announce-despawn: true
@@ -36,6 +36,8 @@ settings:
     min: 3.2
     max: 6.0
   combat:
+    # Semua HP definisi boss dikurangi 20% tanpa merusak data boss lama.
+    global-health-multiplier: 0.80
     armor: 18.0
     armor-toughness: 12.0
     knockback-resistance: 0.85
@@ -437,7 +439,7 @@ effects:
     particle: TOTEM_OF_UNDYING
 
 messages:
-  prefix: '&6&l[ &e&lVELIORA &a&lBOSS &6&l] &r'
+  prefix: '&7[&eVELIORA &aBOSS&7] &r'
   boss-spawn: '%prefix% &c%boss% &7muncul di dungeon. &f/boss status &7untuk lokasi.'
   boss-death: '%prefix% &a%boss% berhasil dikalahkan!'
   boss-despawn: '%prefix% &e%boss% menghilang.'

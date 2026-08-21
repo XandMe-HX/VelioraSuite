@@ -97,11 +97,11 @@ public final class ConfigManager {
             File file = new File(plugin.getDataFolder(), "modules/" + module[0] + ".yml");
             if (!file.exists()) continue;
             YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-            yaml.set("settings.prefix", "&6&l[ &e&lVELIORA &a&l" + module[1] + " &6&l] &r");
+            yaml.set("settings.prefix", "&7[&eVELIORA &a" + module[1] + "&7] &r");
             try { yaml.save(file); }
             catch (IOException exception) { plugin.getLogger().warning("Gagal menerapkan tema ke " + module[0] + ": " + exception.getMessage()); }
         }
-        plugin.getConfig().set("settings.prefix", "&6&l[ &e&lVELIORA &a&lSUITE &6&l] &r");
+        plugin.getConfig().set("settings.prefix", "&7[&eVELIORA &aSUITE&7] &r");
         plugin.getConfig().set("settings.brand-version", 1);
         plugin.saveConfig();
     }
