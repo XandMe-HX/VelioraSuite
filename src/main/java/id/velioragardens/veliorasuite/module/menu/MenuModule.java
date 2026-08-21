@@ -253,10 +253,11 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         Holder holder = new Holder(Page.WARPS);
         Inventory gui = inventory(holder, 27, title("warps", "&6&l[ &e&lVELIORA &a&lWARP &6&l]"));
         fill(gui);
-        addWarp(gui, 10, Material.GRASS_BLOCK, "lobby", "&a&lLOBBY");
-        addWarp(gui, 12, Material.SPAWNER, "dungeon", "&c&lDUNGEON");
-        addWarp(gui, 14, Material.DIAMOND_SWORD, "pvp", "&e&lPVP");
-        addWarp(gui, 16, Material.WHITE_BANNER, "guild", "&b&lGUILD");
+        addWarp(gui, 9, Material.GRASS_BLOCK, "lobby", "&a&lLOBBY");
+        addWarp(gui, 11, Material.SPAWNER, "dungeon", "&c&lDUNGEON");
+        addWarp(gui, 13, Material.DIAMOND_SWORD, "pvp", "&e&lPVP");
+        addWarp(gui, 15, Material.WHITE_BANNER, "guild", "&b&lGUILD");
+        addWarp(gui, 17, Material.FISHING_ROD, "fishing", "&3&lFISHING");
         gui.setItem(22, back());
         player.openInventory(gui);
     }
@@ -270,7 +271,14 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
 
     private void clickWarps(Player player, int slot) {
         if (slot == 22) { openMain(player); return; }
-        String warp = switch (slot) { case 10 -> "lobby"; case 12 -> "dungeon"; case 14 -> "pvp"; case 16 -> "guild"; default -> null; };
+        String warp = switch (slot) {
+            case 9 -> "lobby";
+            case 11 -> "dungeon";
+            case 13 -> "pvp";
+            case 15 -> "guild";
+            case 17 -> "fishing";
+            default -> null;
+        };
         if (warp == null) return;
         WarpModule module = module("warp", WarpModule.class);
         if (module == null || module.getManager() == null || !module.getManager().hasDirectAlias(warp)) {

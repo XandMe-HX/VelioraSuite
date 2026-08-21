@@ -173,7 +173,23 @@ announcements:
     worlds: []
     lines:
       - '&bMau pergi ke tempat lain?'
-      - '&7Gunakan &f/lobby&7, &f/dungeon&7, atau &f/pvp&7.'
+      - '&7Gunakan &f/lobby&7, &f/dungeon&7, &f/pvp&7, &f/fishing&7, atau &f/menu&7.'
+
+  fishing-travel:
+    enabled: true
+    permission: ''
+    worlds: []
+    lines:
+      - '&bMau bersantai sambil memancing?'
+      - '&7Ketik &f/fishing &7atau buka &f/menu &7untuk menuju area fishing.'
+
+  community:
+    enabled: true
+    permission: ''
+    worlds: []
+    lines:
+      - '&aMari jaga komunitas Veliora Gardens.'
+      - '&7Selalu saling membantu sesama pemain dan tetap menjaga sikap.'
 
   rules:
     enabled: true
