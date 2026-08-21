@@ -55,6 +55,7 @@ public final class VelioraSuite extends JavaPlugin {
 
         this.hookManager = new HookManager(this);
         this.hookManager.loadHooks();
+        getServer().getPluginManager().registerEvents(this.hookManager, this);
 
         this.moduleManager = new ModuleManager(this);
         registerModules();

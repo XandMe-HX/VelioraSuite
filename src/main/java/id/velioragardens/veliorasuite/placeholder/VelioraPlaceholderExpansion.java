@@ -37,6 +37,10 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
             case "playtime" -> playtime(player);
             case "fishing_coins" -> String.valueOf(fishingCoins(player));
             case "fishing_coins_formatted" -> fishingCoinsFormatted(player);
+            case "integration_war" -> integration("VelioraWar");
+            case "integration_gacha" -> integration("VelioraGacha");
+            case "integration_ftb" -> integration("VelioraFTB");
+            case "integrations_online" -> String.valueOf(integrationsOnline());
             case "adventure_rank", "rank_petualang" -> adventure(player) == null ? "F" : adventure(player).rank(player);
             case "adventure_rank_plain", "rank_petualang_plain" -> adventure(player) == null ? "F" : adventure(player).rankPlain(player);
             case "adventure_exp", "petualang_exp" -> String.valueOf(adventure(player) == null ? 0 : adventure(player).exp(player));
@@ -102,6 +106,18 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
     private String fishingCoinsFormatted(Player player) {
         FishingModule module = module("fishing", FishingModule.class);
         return module == null || module.getFishingManager() == null ? "0" : module.getFishingManager().formattedCoins(player);
+    }
+
+    private String integration(String name) {
+        return plugin.getHookManager().hasHook(name) ? "ON" : "OFF";
+    }
+
+    private int integrationsOnline() {
+        int online = 0;
+        for (String name : java.util.List.of("VelioraWar", "VelioraGacha", "VelioraFTB")) {
+            if (plugin.getHookManager().hasHook(name)) online++;
+        }
+        return online;
     }
 
     private <T> T module(String name, Class<T> type) {

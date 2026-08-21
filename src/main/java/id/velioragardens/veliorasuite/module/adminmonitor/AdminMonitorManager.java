@@ -29,6 +29,7 @@ public final class AdminMonitorManager {
     private final Object bufferLock = new Object();
     private final Map<LocalDate, List<Map<String, Object>>> pendingEntries = new HashMap<>();
     private final Map<String, Long> recentEvents = new HashMap<>();
+    private int pendingCount;
     private boolean flushRunning;
     private AdminMonitorDatabase database;
     private FileConfiguration config;
@@ -173,11 +174,13 @@ public final class AdminMonitorManager {
         int pendingSize;
         synchronized (bufferLock) {
             pendingEntries.computeIfAbsent(date, ignored -> new ArrayList<>()).add(entry);
-            pendingSize = pendingEntries.values().stream().mapToInt(List::size).sum();
+            pendingCount++;
+            pendingSize = pendingCount;
             int hardLimit = Math.max(100, integer("settings.storage.max-pending", 1000));
             if (pendingSize > hardLimit) {
                 pendingEntries.values().stream().filter(entries -> !entries.isEmpty()).findFirst()
                         .ifPresent(entries -> entries.remove(0));
+                pendingCount--;
                 pendingSize--;
             }
         }
@@ -220,6 +223,7 @@ public final class AdminMonitorManager {
             snapshot = new HashMap<>();
             pendingEntries.forEach((date, entries) -> snapshot.put(date, new ArrayList<>(entries)));
             pendingEntries.clear();
+            pendingCount = 0;
         }
 
         for (Map.Entry<LocalDate, List<Map<String, Object>>> batch : snapshot.entrySet()) {
@@ -228,6 +232,7 @@ public final class AdminMonitorManager {
             } catch (SQLException exception) {
                 synchronized (bufferLock) {
                     pendingEntries.computeIfAbsent(batch.getKey(), ignored -> new ArrayList<>()).addAll(batch.getValue());
+                    pendingCount += batch.getValue().size();
                 }
                 plugin.getLogger().warning("Gagal menyimpan log AdminMonitor: " + exception.getMessage());
             }
