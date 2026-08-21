@@ -34,6 +34,7 @@ public final class FishingManager {
     private FishingMinigameManager minigameManager;
     private FishingRelicManager relicManager;
     private FishingPotionManager potionManager;
+    private SecureTradeManager tradeManager;
 
     public FishingManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -62,6 +63,7 @@ public final class FishingManager {
         minigameManager = new FishingMinigameManager(plugin, this);
         relicManager = new FishingRelicManager(this);
         potionManager = new FishingPotionManager(this);
+        tradeManager = new SecureTradeManager(plugin, this);
     }
 
     public void reload() {
@@ -71,6 +73,7 @@ public final class FishingManager {
 
     public void shutdown() {
         if (minigameManager != null) minigameManager.clear();
+        if (tradeManager != null) tradeManager.shutdown();
         dataManager.flush();
         bagDataManager.flush();
         collectionDataManager.flush();
@@ -91,6 +94,7 @@ public final class FishingManager {
     public FishingMinigameManager getMinigameManager() { return minigameManager; }
     public FishingRelicManager getRelicManager() { return relicManager; }
     public FishingPotionManager getPotionManager() { return potionManager; }
+    public SecureTradeManager getTradeManager() { return tradeManager; }
 
     public void giveGeneratedFish(Player player, FishGenerator.GeneratedFish generatedFish) {
         CaughtFish fish = generatedFish.fish();
@@ -103,11 +107,19 @@ public final class FishingManager {
         effectManager.play(player, fish);
         relicManager.rollDrop(player, fish);
 
-        if (shouldAutoStore(fish)) {
-            bagDataManager.add(player, fish, 1);
+        if (shouldAutoStore(fish) && bagDataManager.add(player, fish, 1)) {
             send(player, "bag-auto-store", "%prefix% &b%fish% &7masuk ke Fish Bag.", fishPlaceholders(fish));
         } else {
-            giveItem(player, itemFactory.create(generatedFish.definition(), fish));
+            ItemStack caught = itemFactory.create(generatedFish.definition(), fish);
+            Map<Integer, ItemStack> leftovers = player.getInventory().addItem(caught);
+            if (!leftovers.isEmpty()) {
+                if (configManager.isBagEnabled() && bagDataManager.add(player, fish, 1)) {
+                    send(player, "bag-inventory-full", "%prefix% &eInventory penuh. &b%fish% &7otomatis masuk Fish Bag.", fishPlaceholders(fish));
+                } else {
+                    leftovers.values().forEach(left -> player.getWorld().dropItemNaturally(player.getLocation(), left));
+                    send(player, "bag-full", "%prefix% &cFish Bag penuh. Ikan dijatuhkan dengan aman di dekatmu.", Map.of());
+                }
+            }
         }
         FishRarity minimumCatchMessage = configManager.getCatchMessageMinRarity();
         if (minimumCatchMessage != null && fish.rarity().power() >= minimumCatchMessage.power()) {
@@ -151,7 +163,10 @@ public final class FishingManager {
             return 0;
         }
         int moved = Math.min(amount, item.getAmount());
-        bagDataManager.add(player, fish, moved);
+        if (!bagDataManager.add(player, fish, moved)) {
+            send(player, "bag-full", "%prefix% &cFish Bag sudah mencapai batas 5 halaman.", Map.of());
+            return 0;
+        }
         item.setAmount(item.getAmount() - moved);
         send(player, "bag-store-success", "%prefix% &aBerhasil menyimpan &f%amount% &aikan ke Fish Bag.", Map.of("%amount%", String.valueOf(moved)));
         return moved;
@@ -172,7 +187,7 @@ public final class FishingManager {
             CaughtFish fish = itemFactory.read(item);
             if (fish == null) continue;
             int amount = item.getAmount();
-            bagDataManager.add(player, fish, amount);
+            if (!bagDataManager.add(player, fish, amount)) continue;
             contents[slot] = null;
             moved += amount;
         }

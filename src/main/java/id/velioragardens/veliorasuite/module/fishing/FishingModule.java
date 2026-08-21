@@ -73,6 +73,11 @@ public final class FishingModule implements VelioraModule {
         FishingCommand fishingCommand = new FishingCommand(manager);
         command.setExecutor(fishingCommand);
         command.setTabCompleter(fishingCommand);
+        PluginCommand trade = plugin.getCommand("vtrading");
+        if (trade != null) {
+            trade.setExecutor(manager.getTradeManager());
+            trade.setTabCompleter(manager.getTradeManager());
+        }
     }
 
     private void registerListeners() {
@@ -85,6 +90,7 @@ public final class FishingModule implements VelioraModule {
         listeners.add(manager.getRodManager());
         listeners.add(manager.getRelicManager());
         listeners.add(manager.getPotionManager());
+        listeners.add(manager.getTradeManager());
         for (Listener listener : listeners) plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 
@@ -94,5 +100,10 @@ public final class FishingModule implements VelioraModule {
         DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraFishing");
         command.setExecutor(disabledCommand);
         command.setTabCompleter(disabledCommand);
+        PluginCommand trade = plugin.getCommand("vtrading");
+        if (trade != null) {
+            trade.setExecutor(disabledCommand);
+            trade.setTabCompleter(disabledCommand);
+        }
     }
 }

@@ -81,7 +81,9 @@ public final class FishingDataManager {
 
     public void depositCoins(OfflinePlayer player, long amount) {
         if (amount <= 0L) return;
-        setCoins(player, Math.min(Long.MAX_VALUE / 2L, getCoins(player) + amount));
+        long current = getCoins(player);
+        long ceiling = Long.MAX_VALUE / 2L;
+        setCoins(player, amount >= ceiling - current ? ceiling : current + amount);
     }
 
     public boolean withdrawCoins(OfflinePlayer player, long amount) {
@@ -90,6 +92,11 @@ public final class FishingDataManager {
         if (balance < amount) return false;
         setCoins(player, balance - amount);
         return true;
+    }
+
+    public void takeCoins(OfflinePlayer player, long amount) {
+        if (amount <= 0L) return;
+        setCoins(player, Math.max(0L, getCoins(player) - Math.min(getCoins(player), amount)));
     }
 
     public void setCoins(OfflinePlayer player, long amount) {
