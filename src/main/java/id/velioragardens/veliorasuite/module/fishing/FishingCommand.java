@@ -5,6 +5,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +31,24 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
         }
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "coins", "coin", "saldo" -> {
+                if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
+                if (args.length >= 4 && hasAdmin(sender)) {
+                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+                    long amount;
+                    try { amount = Math.max(0L, Long.parseLong(args[3])); }
+                    catch (NumberFormatException exception) { sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cJumlah Koin tidak valid.")); return true; }
+                    if (args[2].equalsIgnoreCase("set")) manager.getDataManager().setCoins(target, amount);
+                    else if (args[2].equalsIgnoreCase("add")) manager.getDataManager().depositCoins(target, amount);
+                    else { sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eGunakan /fish coins <player> <set|add> <jumlah>.")); return true; }
+                    sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aSaldo Koin &f" + target.getName() + " &aberhasil diperbarui."));
+                    return true;
+                }
+                if (!(sender instanceof Player player)) { sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eGunakan /fish coins <player> <set|add> <jumlah>.")); return true; }
+                player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
+                        + "&fSaldo Fishing: &6" + manager.formattedCoins(player) + " Koin"));
+                return true;
+            }
             case "bag" -> {
                 if (!hasBag(sender)) { manager.sendNoPermission(sender); return true; }
                 if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
@@ -45,6 +65,12 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
                 if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
                 if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
                 manager.openRodShop(player);
+                return true;
+            }
+            case "questrods", "rodquests" -> {
+                if (!hasUse(sender)) { manager.sendNoPermission(sender); return true; }
+                if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
+                manager.openQuestRodShop(player);
                 return true;
             }
             case "collection" -> {
@@ -80,7 +106,7 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
         List<String> options = new ArrayList<>(Arrays.asList("help"));
         if (hasBag(sender)) options.add("bag");
         if (hasSell(sender)) options.add("sell");
-        if (hasUse(sender)) { options.add("collection"); options.add("rods"); }
+        if (hasUse(sender)) { options.add("collection"); options.add("rods"); options.add("questrods"); options.add("coins"); }
         if (hasTop(sender)) options.add("top");
         if (hasReload(sender)) options.add("reload");
         return filter(options, args[0]);

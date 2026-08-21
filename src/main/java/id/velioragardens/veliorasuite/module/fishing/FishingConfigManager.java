@@ -14,6 +14,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,6 +43,7 @@ public final class FishingConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/fishing.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
         migrateHardMinigame(file);
+        migrateProgressTwo(file);
         loadRarityChances();
         loadFishDefinitions();
     }
@@ -101,7 +107,9 @@ public final class FishingConfigManager {
             result.add(new FishingRodDefinition(tier, rod.getString("name", key), rod.getString("gradient-from", "#55D6FF"),
                     rod.getString("gradient-to", "#3E7BFA"), Math.max(0, rod.getInt("price", 0)),
                     Math.max(0, rod.getInt("required-catches", 0)), Math.max(0, rod.getInt("seconds-bonus", 0)),
-                    Math.max(0, rod.getInt("click-reduction", 0)), rod.getString("aura", "Aura fishing.")));
+                    Math.max(0, rod.getInt("click-reduction", 0)), rod.getString("aura", "Aura fishing."),
+                    Math.max(0, rod.getInt("luck", 0)), Math.max(1.0D, rod.getDouble("max-weight", 10.0D)),
+                    Math.max(0, rod.getInt("speed", 0)), rod.getBoolean("quest", false)));
         }
         result.sort(java.util.Comparator.comparingInt(FishingRodDefinition::tier));
         return result.isEmpty() ? fallback : result;
@@ -114,6 +122,8 @@ public final class FishingConfigManager {
     public boolean isTopGuiEnabled() { return bool("settings.top.gui-enabled", false); }
     public int getTopLimit() { return Math.max(1, integer("settings.top.limit", 5)); }
     public boolean isQuestFishingProgressEnabled() { return bool("settings.quest-integration.enabled", true); }
+    public int getPotionPrice(String type) { return Math.max(0, integer("settings.potions." + type + ".price", type.equals("mutation") ? 1000 : 750)); }
+    public int getPotionDurationSeconds(String type) { return Math.max(60, integer("settings.potions." + type + ".duration-seconds", 600)); }
 
     public boolean isBagEnabled() { return bool("settings.bag.enabled", true); }
     public String getBagTitle() { return str("settings.bag.title", "&8Fish Bag"); }
@@ -183,7 +193,83 @@ public final class FishingConfigManager {
         rarityChances.put(FishRarity.EPIC, number(rarityPath("settings.rarity-chance", FishRarity.EPIC, ""), 1.2D));
         rarityChances.put(FishRarity.LEGENDARY, number("settings.rarity-chance.legendary", 0.08D));
         rarityChances.put(FishRarity.MITOLOGI, number("settings.rarity-chance.mitologi", 0.02D));
+        rarityChances.put(FishRarity.SECRET, number("settings.rarity-chance.secret", 0.002D));
     }
+
+    public FishingRodDefinition getRodDefinition(int tier) {
+        return getRodDefinitions().stream().filter(rod -> rod.tier() == tier).findFirst().orElse(null);
+    }
+
+    private void migrateProgressTwo(File file) {
+        if (config.getInt("settings.progress-two-version", 0) >= 1) return;
+        try (InputStream stream = plugin.getResource("modules/fishing.yml")) {
+            if (stream == null) return;
+            File backup = new File(file.getParentFile(), "fishing-before-progress-2.yml");
+            if (file.isFile() && !backup.exists()) Files.copy(file.toPath(), backup.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+            FileConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
+            for (String path : List.of("settings.rarity-chance", "settings.price", "settings.mutations",
+                    "settings.rods", "settings.minigame.difficulty.secret", "effects.secret")) {
+                config.set(path, defaults.get(path));
+            }
+            ConfigurationSection defaultFish = defaults.getConfigurationSection("fish");
+            if (defaultFish != null) {
+                for (String id : defaultFish.getKeys(false)) {
+                    if (!config.contains("fish." + id)) config.set("fish." + id, defaultFish.get(id));
+                }
+            }
+            config.set("settings.progress-two-version", 1);
+            config.save(file);
+            plugin.getLogger().info("VelioraFishing: ekonomi Koin dan konten Progres 2 diterapkan tanpa menghapus data pemain.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraFishing: gagal menyimpan migrasi Progres 2: " + exception.getMessage());
+        }
+    }
+
+    public MutationRoll rollMutation(org.bukkit.entity.Player player) {
+        Long boostUntil = player == null ? null : player.getPersistentDataContainer().get(
+                new org.bukkit.NamespacedKey(plugin, "fishing_potion_mutation"), org.bukkit.persistence.PersistentDataType.LONG);
+        double boost = boostUntil != null && boostUntil > System.currentTimeMillis() ? 2.0D : 1.0D;
+        double roll = ThreadLocalRandom.current().nextDouble(100.0D);
+        double current = 0.0D;
+        ConfigurationSection section = config == null ? null : config.getConfigurationSection("settings.mutations");
+        Map<String, Double> fallback = new LinkedHashMap<>();
+        fallback.put("Gold", 1.4D); fallback.put("Ghost", 1.2D); fallback.put("Radioactive", 1.0D);
+        fallback.put("Lightning", 0.9D); fallback.put("Midnight", 0.8D); fallback.put("Fairy Dust", 0.7D);
+        fallback.put("Gemstone", 0.6D); fallback.put("Corrupt", 0.5D);
+        for (Map.Entry<String, Double> entry : fallback.entrySet()) {
+            String key = entry.getKey().toLowerCase(Locale.ROOT).replace(' ', '-');
+            double chance = section == null ? entry.getValue() : section.getDouble(key + ".chance", entry.getValue());
+            double multiplier = section == null ? mutationMultiplier(key) : section.getDouble(key + ".price-multiplier", mutationMultiplier(key));
+            current += Math.max(0.0D, chance) * boost;
+            if (roll <= current) return new MutationRoll(entry.getKey(), Math.max(1.0D, multiplier));
+        }
+        return new MutationRoll("Normal", 1.0D);
+    }
+
+    public String formatCoins(long value) {
+        long safe = Math.max(0L, value);
+        if (safe >= 1_000_000_000_000L) return compact(safe, 1_000_000_000_000D, "T");
+        if (safe >= 1_000_000L) return compact(safe, 1_000_000D, "M");
+        if (safe >= 1_000L) return compact(safe, 1_000D, "K");
+        return String.valueOf(safe);
+    }
+
+    private String compact(long value, double divisor, String suffix) {
+        double amount = value / divisor;
+        return (amount >= 100.0D ? String.format(Locale.US, "%.0f", amount)
+                : amount >= 10.0D ? String.format(Locale.US, "%.1f", amount)
+                : String.format(Locale.US, "%.2f", amount)).replaceAll("\\.0+$", "") + suffix;
+    }
+
+    private double mutationMultiplier(String key) {
+        return switch (key) {
+            case "gold" -> 2.0D; case "ghost" -> 2.4D; case "radioactive" -> 3.0D;
+            case "lightning" -> 3.5D; case "midnight" -> 4.0D; case "fairy-dust" -> 4.5D;
+            case "gemstone" -> 5.0D; case "corrupt" -> 6.0D; default -> 1.0D;
+        };
+    }
+
+    public record MutationRoll(String name, double multiplier) { }
 
     private void loadFishDefinitions() {
         fishDefinitions.clear();
@@ -215,7 +301,7 @@ public final class FishingConfigManager {
                 safeMax,
                 section.getString("origin", "VelioraFishing"),
                 section.getString("region", "Veliora"),
-                section.getBoolean("head.enabled", rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI),
+                section.getBoolean("head.enabled", rarity.power() >= FishRarity.LEGENDARY.power()),
                 section.getString("head.texture-base64", ""),
                 fallback
         );
@@ -232,20 +318,20 @@ public final class FishingConfigManager {
     }
 
     private void add(String id, String name, FishRarity rarity, Material material, double minWeight, double maxWeight, String origin, String region) {
-        fishDefinitions.put(id, new FishDefinition(id, name, rarity, material, minWeight, maxWeight, minPrice(rarity), maxPrice(rarity), origin, region, rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI, "", Material.TROPICAL_FISH));
+        fishDefinitions.put(id, new FishDefinition(id, name, rarity, material, minWeight, maxWeight, minPrice(rarity), maxPrice(rarity), origin, region, rarity.power() >= FishRarity.LEGENDARY.power(), "", Material.TROPICAL_FISH));
     }
 
-    private int fallbackSpam(FishRarity rarity) { return switch (rarity) { case TRASH -> 0; case VANILLA -> 5; case COMMON -> 10; case ORNAMENTAL -> 22; case EPIC -> 35; case LEGENDARY -> 65; case MITOLOGI -> 120; }; }
-    private double fallbackSeconds(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 12.0D; case EPIC -> 14.0D; case LEGENDARY -> 28.0D; case MITOLOGI -> 35.0D; }; }
-    private int fallbackMinPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 5; case COMMON -> 10; case ORNAMENTAL -> 30; case EPIC -> 150; case LEGENDARY -> 1500; case MITOLOGI -> 8000; }; }
-    private int fallbackMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 15; case COMMON -> 25; case ORNAMENTAL -> 120; case EPIC -> 450; case LEGENDARY -> 7000; case MITOLOGI -> 25000; }; }
-    private int fallbackFinalMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 15; case COMMON -> 25; case ORNAMENTAL -> 120; case EPIC -> 450; case LEGENDARY -> 7000; case MITOLOGI -> 35000; }; }
-    private double fallbackMinWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.1D; case VANILLA -> 0.5D; case COMMON -> 1.0D; case ORNAMENTAL -> 0.2D; case EPIC -> 10.0D; case LEGENDARY -> 10.0D; case MITOLOGI -> 100.0D; }; }
-    private double fallbackMaxWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 1.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 3.0D; case EPIC -> 200.0D; case LEGENDARY -> 1000.0D; case MITOLOGI -> 2500.0D; }; }
-    private Material fallbackMaterial(FishRarity rarity) { return switch (rarity) { case TRASH -> Material.LEATHER_BOOTS; case VANILLA, COMMON -> Material.COD; case ORNAMENTAL -> Material.TROPICAL_FISH; case EPIC -> Material.SALMON; case LEGENDARY, MITOLOGI -> Material.PLAYER_HEAD; }; }
-    private Sound fallbackSound(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; case EPIC -> Sound.ENTITY_PLAYER_LEVELUP; case LEGENDARY -> Sound.UI_TOAST_CHALLENGE_COMPLETE; case MITOLOGI -> Sound.ENTITY_ENDER_DRAGON_GROWL; default -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; }; }
-    private Particle fallbackParticle(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Particle.HAPPY_VILLAGER; case EPIC -> Particle.ENCHANT; case LEGENDARY -> Particle.TOTEM_OF_UNDYING; case MITOLOGI -> Particle.DRAGON_BREATH; default -> Particle.HAPPY_VILLAGER; }; }
-    private int fallbackParticleAmount(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> 10; case EPIC -> 20; case LEGENDARY -> 35; case MITOLOGI -> 60; default -> 0; }; }
+    private int fallbackSpam(FishRarity rarity) { return switch (rarity) { case TRASH -> 0; case VANILLA -> 8; case COMMON -> 14; case ORNAMENTAL -> 26; case EPIC -> 42; case LEGENDARY -> 68; case MITOLOGI -> 92; case SECRET -> 120; }; }
+    private double fallbackSeconds(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.0D; case VANILLA -> 4.0D; case COMMON -> 5.0D; case ORNAMENTAL -> 6.0D; case EPIC -> 7.0D; case LEGENDARY -> 8.0D; case MITOLOGI -> 10.0D; case SECRET -> 12.0D; }; }
+    private int fallbackMinPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 3; case COMMON -> 8; case ORNAMENTAL -> 20; case EPIC -> 75; case LEGENDARY -> 350; case MITOLOGI -> 1500; case SECRET -> 5000; }; }
+    private int fallbackMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 8; case COMMON -> 18; case ORNAMENTAL -> 55; case EPIC -> 180; case LEGENDARY -> 900; case MITOLOGI -> 3500; case SECRET -> 12000; }; }
+    private int fallbackFinalMaxPrice(FishRarity rarity) { return switch (rarity) { case TRASH -> 1; case VANILLA -> 10; case COMMON -> 24; case ORNAMENTAL -> 75; case EPIC -> 240; case LEGENDARY -> 1200; case MITOLOGI -> 5000; case SECRET -> 18000; }; }
+    private double fallbackMinWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.1D; case VANILLA -> 0.5D; case COMMON -> 1.0D; case ORNAMENTAL -> 0.2D; case EPIC -> 10.0D; case LEGENDARY -> 10.0D; case MITOLOGI -> 100.0D; case SECRET -> 500.0D; }; }
+    private double fallbackMaxWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 1.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 3.0D; case EPIC -> 200.0D; case LEGENDARY -> 1000.0D; case MITOLOGI -> 5000.0D; case SECRET -> 20000.0D; }; }
+    private Material fallbackMaterial(FishRarity rarity) { return switch (rarity) { case TRASH -> Material.LEATHER_BOOTS; case VANILLA, COMMON -> Material.COD; case ORNAMENTAL -> Material.TROPICAL_FISH; case EPIC -> Material.SALMON; case LEGENDARY, MITOLOGI, SECRET -> Material.PLAYER_HEAD; }; }
+    private Sound fallbackSound(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; case EPIC -> Sound.ENTITY_PLAYER_LEVELUP; case LEGENDARY -> Sound.UI_TOAST_CHALLENGE_COMPLETE; case MITOLOGI, SECRET -> Sound.ENTITY_ENDER_DRAGON_GROWL; default -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; }; }
+    private Particle fallbackParticle(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Particle.HAPPY_VILLAGER; case EPIC -> Particle.ENCHANT; case LEGENDARY -> Particle.TOTEM_OF_UNDYING; case MITOLOGI, SECRET -> Particle.DRAGON_BREATH; default -> Particle.HAPPY_VILLAGER; }; }
+    private int fallbackParticleAmount(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> 10; case EPIC -> 20; case LEGENDARY -> 35; case MITOLOGI -> 60; case SECRET -> 90; default -> 0; }; }
     private Material material(String name, Material fallback) { Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
     private Sound sound(String name, Sound fallback) { try { return Sound.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
     private Particle particle(String name, Particle fallback) { try { return Particle.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }

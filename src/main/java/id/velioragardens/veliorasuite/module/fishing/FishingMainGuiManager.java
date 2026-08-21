@@ -23,14 +23,18 @@ public final class FishingMainGuiManager implements Listener {
     }
 
     public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 27, manager.getConfigManager().color("&8VelioraFishing"));
+        Inventory inventory = Bukkit.createInventory(null, 36, manager.getConfigManager().color("&8VelioraFishing"));
         inventory.setItem(10, item(Material.CHEST, "&bFish Bag", List.of("&7Buka tas ikan virtual.", "&f/fish bag")));
         inventory.setItem(11, item(Material.BARREL, "&aSell Fish", List.of("&7Buka GUI jual ikan.", "&f/fish sell")));
-        inventory.setItem(13, item(Material.FISHING_ROD, "&aRod Shop", List.of("&7Beli rod dan lihat bonus", "&7minigame serta aura memancing.")));
+        inventory.setItem(12, item(Material.FISHING_ROD, "&aRod Shop", List.of("&7Rod tier 1-16 yang dapat dibeli", "&7menggunakan Koin Fishing.")));
+        inventory.setItem(14, item(Material.ENCHANTED_BOOK, "&dQuest Rods", List.of("&7Rod tier 17-21 untuk pemancing", "&7yang menuntaskan syarat panjang.")));
         inventory.setItem(15, item(Material.BOOK, "&dFish Collection", List.of("&7Lihat ikan yang sudah kamu temukan.", "&f/fish collection")));
         inventory.setItem(16, item(Material.OAK_SIGN, "&eFish Top", List.of("&7Lihat leaderboard gabungan.", "&f/fish top")));
-        inventory.setItem(22, item(Material.PLAYER_HEAD, "&fFishing Stats", List.of("&7Gunakan &f/fish top &7untuk data ranking.")));
-        inventory.setItem(26, item(Material.BARRIER, "&cClose", List.of("&7Tutup menu.")));
+        inventory.setItem(20, item(Material.SUNFLOWER, "&6Fishing Coins", List.of("&7Saldo: &f" + manager.formattedCoins(player) + " Koin", "&7Terpisah aman dari Vault.")));
+        inventory.setItem(22, item(Material.AMETHYST_SHARD, "&dRelic & Rod Enchant", List.of("&7Relic dapat ditemukan saat memancing.", "&7Sistem altar enchant tersedia bertahap.")));
+        inventory.setItem(24, item(Material.POTION, "&bFishing Potions", List.of("&7Luck, Mutation, dan Lure Speed.", "&7Boost tidak menyentuh ekonomi utama.")));
+        inventory.setItem(31, item(Material.PLAYER_HEAD, "&fFishing Stats", List.of("&7Gunakan &f/fish top &7untuk data ranking.")));
+        inventory.setItem(35, item(Material.BARRIER, "&cClose", List.of("&7Tutup menu.")));
         player.openInventory(inventory);
     }
 
@@ -46,10 +50,12 @@ public final class FishingMainGuiManager implements Listener {
         switch (slot) {
             case 10 -> openNextTick(player, () -> manager.openBagGui(player));
             case 11 -> openNextTick(player, () -> manager.openSellGui(player));
-            case 13 -> openNextTick(player, () -> manager.openRodShop(player));
+            case 12 -> openNextTick(player, () -> manager.openRodShop(player));
+            case 14 -> openNextTick(player, () -> manager.openQuestRodShop(player));
             case 15 -> openNextTick(player, () -> manager.openCollectionGui(player));
-            case 16, 22 -> openNextTick(player, () -> manager.sendTop(player));
-            case 26 -> player.closeInventory();
+            case 16, 31 -> openNextTick(player, () -> manager.sendTop(player));
+            case 24 -> openNextTick(player, () -> manager.openPotionShop(player));
+            case 35 -> player.closeInventory();
             default -> { }
         }
     }

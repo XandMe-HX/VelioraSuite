@@ -25,6 +25,7 @@ import java.util.List;
 public final class FishingRodManager implements Listener {
 
     private static final String SHOP_TITLE = "§8Fishing Rod Shop";
+    private static final String QUEST_TITLE = "§8Fishing Quest Rods";
 
     private final FishingManager manager;
     private final NamespacedKey tierKey;
@@ -40,14 +41,19 @@ public final class FishingRodManager implements Listener {
     }
 
     private void startAmbientAura() {
+        final double[] phase = {0.0D};
         Bukkit.getScheduler().runTaskTimer(manager.getConfigManager().getPlugin(), () -> {
+            phase[0] += Math.PI / 5.0D;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 int tier = getTier(player);
                 if (tier < 3 || player.isDead()) continue;
                 Particle particle = tier == 3 ? Particle.ENCHANT : tier == 4 ? Particle.SOUL_FIRE_FLAME : Particle.END_ROD;
                 int count = tier == 5 ? 4 : 2;
-                player.getWorld().spawnParticle(particle, player.getLocation().add(0.0D, 1.0D, 0.0D),
-                        count, 0.28D, 0.38D, 0.28D, 0.01D);
+                for (int i = 0; i < count; i++) {
+                    double angle = phase[0] + (Math.PI * 2.0D * i / count);
+                    player.getWorld().spawnParticle(particle, player.getLocation().add(Math.cos(angle) * 0.55D,
+                            0.45D + ((phase[0] + i) % 1.4D), Math.sin(angle) * 0.55D), 1, 0, 0, 0, 0);
+                }
             }
         }, 20L, 20L);
     }
@@ -57,14 +63,25 @@ public final class FishingRodManager implements Listener {
     }
 
     public void open(Player player) {
+        open(player, false);
+    }
+
+    public void openQuest(Player player) {
+        open(player, true);
+    }
+
+    private void open(Player player, boolean quests) {
         if (!manager.getConfigManager().isRodsEnabled()) {
             player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eRod Shop sedang dimatikan."));
             return;
         }
-        Inventory inventory = Bukkit.createInventory(null, 27, SHOP_TITLE);
-        for (int slot = 0; slot < 27; slot++) inventory.setItem(slot, filler());
-        for (FishingRodDefinition rod : rods) inventory.setItem(10 + rod.tier(), createShopItem(player, rod));
-        inventory.setItem(22, basic(Material.BARRIER, "§cKembali", List.of("§7Kembali ke menu Fishing.")));
+        Inventory inventory = Bukkit.createInventory(null, 54, quests ? QUEST_TITLE : SHOP_TITLE);
+        int[] slots = rodSlots();
+        List<FishingRodDefinition> shown = shownRods(quests);
+        for (int i = 0; i < shown.size() && i < slots.length; i++) inventory.setItem(slots[i], createShopItem(player, shown.get(i)));
+        inventory.setItem(45, basic(Material.ARROW, "§aKembali", List.of("§7Kembali ke menu Fishing.")));
+        inventory.setItem(49, basic(Material.SUNFLOWER, "§6Saldo: §f" + manager.formattedCoins(player) + " Koin", List.of("§7Mata uang khusus VelioraFishing.", "§7Tidak memengaruhi ekonomi Vault.")));
+        inventory.setItem(53, basic(Material.BARRIER, "§cTutup", List.of("§7Tutup Rod Shop.")));
         player.openInventory(inventory);
     }
 
@@ -87,9 +104,20 @@ public final class FishingRodManager implements Listener {
         return definition(getTier(player)).secondsBonus();
     }
 
+    public int speedPercent(Player player) {
+        return definition(getTier(player)).speedPercent();
+    }
+
     public void showAura(Player player, FishHook hook) {
         int tier = getTier(player);
         if (tier < 3 || hook == null || !hook.isValid()) return;
+        Particle spiral = tier >= 16 ? Particle.END_ROD : tier >= 11 ? Particle.FLAME : tier >= 6 ? Particle.ENCHANT : Particle.BUBBLE_POP;
+        for (int i = 0; i < Math.min(18, 5 + tier); i++) {
+            double angle = i * (Math.PI / 4.0D);
+            double radius = 0.12D + (i * 0.025D);
+            hook.getWorld().spawnParticle(spiral, hook.getLocation().add(Math.cos(angle) * radius, i * 0.035D,
+                    Math.sin(angle) * radius), 1, 0, 0, 0, 0);
+        }
         if (tier == 3) {
             hook.getWorld().spawnParticle(Particle.BUBBLE_POP, hook.getLocation(), 4, 0.16D, 0.16D, 0.16D, 0.02D);
             player.getWorld().spawnParticle(Particle.ENCHANT, player.getLocation().add(0.0D, 1.0D, 0.0D), 2, 0.25D, 0.35D, 0.25D, 0.01D);
@@ -112,21 +140,24 @@ public final class FishingRodManager implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(SHOP_TITLE)) return;
+        if (!event.getView().getTitle().equals(SHOP_TITLE) && !event.getView().getTitle().equals(QUEST_TITLE)) return;
         event.setCancelled(true);
         int slot = event.getRawSlot();
-        if (slot == 22) {
+        if (slot == 45) {
             player.closeInventory();
             Bukkit.getScheduler().runTask(manager.getConfigManager().getPlugin(), () -> manager.openMainGui(player));
             return;
         }
-        if (slot < 11 || slot > 15) return;
-        buy(player, definition(slot - 10));
+        if (slot == 53) { player.closeInventory(); return; }
+        int index = rodIndex(slot);
+        List<FishingRodDefinition> shown = shownRods(event.getView().getTitle().equals(QUEST_TITLE));
+        if (index < 0 || index >= shown.size()) return;
+        buy(player, shown.get(index));
     }
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTitle().equals(SHOP_TITLE)) event.setCancelled(true);
+        if (event.getView().getTitle().equals(SHOP_TITLE) || event.getView().getTitle().equals(QUEST_TITLE)) event.setCancelled(true);
     }
 
     private void buy(Player player, FishingRodDefinition rod) {
@@ -163,7 +194,7 @@ public final class FishingRodManager implements Listener {
             return;
         }
         if (!bypass && !manager.withdrawRodCost(player, rod.price())) {
-            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cUang kamu tidak cukup atau Vault tidak aktif."));
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cKoin Fishing tidak cukup."));
             return;
         }
         manager.getRodDataManager().unlock(player.getUniqueId(), rod.tier());
@@ -191,12 +222,14 @@ public final class FishingRodManager implements Listener {
                 Component.text("Minigame", TextColor.color(0x55D6FF)),
                 Component.text(" +" + rod.secondsBonus() + ".0 detik waktu", TextColor.color(0xB8C4D2)),
                 Component.text(" -" + rod.clickReduction() + " klik diperlukan", TextColor.color(0xB8C4D2)),
+                Component.text(" Luck " + rod.luckPercent() + "% • Speed " + rod.speedPercent() + "%", TextColor.color(0x70E0C0)),
+                Component.text(" Max Weight " + Math.round(rod.maxWeight()) + " Kg", TextColor.color(0x70E0C0)),
                 Component.text(""),
                 Component.text("Aura", TextColor.color(0x55D6FF)),
                 Component.text(" " + rod.aura(), TextColor.color(0xB8C4D2)),
                 Component.text(""),
                 Component.text(bypass ? " Admin bypass aktif" : " Syarat: " + rod.requiredCatches() + " tangkapan", TextColor.color(bypass ? 0x70E090 : 0xE6CE79)),
-                Component.text(bypass ? " Gratis untuk admin" : " Harga: " + rod.price(), TextColor.color(bypass ? 0x70E090 : 0xE6CE79)),
+                Component.text(bypass ? " Gratis untuk admin" : rod.questRod() ? " Rod misi khusus" : " Harga: " + manager.getConfigManager().formatCoins(rod.price()) + " Koin", TextColor.color(bypass ? 0x70E090 : 0xE6CE79)),
                 Component.text(" Kamu: " + catches + " tangkapan", TextColor.color(0x8391A5)),
                 Component.text(""),
                 Component.text("Klik untuk membeli", TextColor.color(0xFFFFFF))
@@ -214,6 +247,7 @@ public final class FishingRodManager implements Listener {
         meta.lore(List.of(
                 Component.text("VelioraFishing Rod • Tier " + rod.tier(), TextColor.color(0x55D6FF)),
                 Component.text("+" + rod.secondsBonus() + ".0 detik • -" + rod.clickReduction() + " klik", TextColor.color(0xD6E0EB)),
+                Component.text("Luck " + rod.luckPercent() + "% • Speed " + rod.speedPercent() + "% • Max " + Math.round(rod.maxWeight()) + " Kg", TextColor.color(0x70E0C0)),
                 Component.text("Custom: " + customEnchantName(rod.tier()), TextColor.color(0xB56CFF)),
                 Component.text("Enchant: Lure " + rod.tier() + " • Luck " + rod.tier() + " • Unbreaking " + (rod.tier() + 2), TextColor.color(0x70E0C0)),
                 Component.text("Terikat: " + owner.getName(), TextColor.color(0x8391A5))
@@ -263,6 +297,20 @@ public final class FishingRodManager implements Listener {
 
     private int maxTier() {
         return rods.stream().mapToInt(FishingRodDefinition::tier).max().orElse(1);
+    }
+
+    private int[] rodSlots() {
+        return new int[]{10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34};
+    }
+
+    private List<FishingRodDefinition> shownRods(boolean quests) {
+        return rods.stream().filter(rod -> rod.questRod() == quests).toList();
+    }
+
+    private int rodIndex(int slot) {
+        int[] slots = rodSlots();
+        for (int i = 0; i < slots.length; i++) if (slots[i] == slot) return i;
+        return -1;
     }
 
     private ItemStack filler() {

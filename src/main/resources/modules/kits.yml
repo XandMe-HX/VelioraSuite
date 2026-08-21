@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  config-version: 2
+  config-version: 3
   prefix: '&7[&eVELIORA &aKITS&7] &r'
   command: '/kits'
   open-gui-on-main-command: true

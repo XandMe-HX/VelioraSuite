@@ -28,6 +28,8 @@ public final class FishItemFactory {
     private final NamespacedKey priceKey;
     private final NamespacedKey originKey;
     private final NamespacedKey regionKey;
+    private final NamespacedKey mutationKey;
+    private final NamespacedKey mutationMultiplierKey;
 
     public FishItemFactory(VelioraSuite plugin, FishingConfigManager configManager) {
         this.configManager = configManager;
@@ -37,6 +39,8 @@ public final class FishItemFactory {
         this.priceKey = new NamespacedKey(plugin, "veliorafishing_price");
         this.originKey = new NamespacedKey(plugin, "veliorafishing_origin");
         this.regionKey = new NamespacedKey(plugin, "veliorafishing_region");
+        this.mutationKey = new NamespacedKey(plugin, "veliorafishing_mutation");
+        this.mutationMultiplierKey = new NamespacedKey(plugin, "veliorafishing_mutation_multiplier");
     }
 
     public ItemStack create(CaughtFish fish) {
@@ -60,7 +64,8 @@ public final class FishItemFactory {
                     configManager.color("&7Berat: &f" + formatWeight(fish.weight())),
                     configManager.color("&7Origin: &f" + fish.origin()),
                     configManager.color("&7Region: &f" + fish.region()),
-                    configManager.color("&7Harga: &a" + fish.price())
+                    configManager.color("&7Mutasi: &d" + fish.mutation() + " &7(x" + trimMultiplier(fish.mutationMultiplier()) + ")"),
+                    configManager.color("&7Harga: &6" + configManager.formatCoins(fish.price()) + " Koin")
             ));
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(idKey, PersistentDataType.STRING, fish.id());
@@ -69,6 +74,8 @@ public final class FishItemFactory {
             pdc.set(priceKey, PersistentDataType.INTEGER, fish.price());
             pdc.set(originKey, PersistentDataType.STRING, fish.origin());
             pdc.set(regionKey, PersistentDataType.STRING, fish.region());
+            pdc.set(mutationKey, PersistentDataType.STRING, fish.mutation());
+            pdc.set(mutationMultiplierKey, PersistentDataType.DOUBLE, fish.mutationMultiplier());
             item.setItemMeta(meta);
         }
         return item;
@@ -115,6 +122,8 @@ public final class FishItemFactory {
         Integer price = pdc.get(priceKey, PersistentDataType.INTEGER);
         String origin = pdc.get(originKey, PersistentDataType.STRING);
         String region = pdc.get(regionKey, PersistentDataType.STRING);
+        String mutation = pdc.get(mutationKey, PersistentDataType.STRING);
+        Double mutationMultiplier = pdc.get(mutationMultiplierKey, PersistentDataType.DOUBLE);
 
         return new CaughtFish(
                 id,
@@ -123,7 +132,9 @@ public final class FishItemFactory {
                 weight == null ? 0.0D : Math.max(0.0D, weight),
                 price == null ? 0 : Math.max(0, price),
                 origin == null || origin.isBlank() ? "VelioraFishing" : origin,
-                region == null || region.isBlank() ? "Veliora" : region
+                region == null || region.isBlank() ? "Veliora" : region,
+                mutation == null || mutation.isBlank() ? "Normal" : mutation,
+                mutationMultiplier == null ? 1.0D : Math.max(1.0D, mutationMultiplier)
         );
     }
 
@@ -167,13 +178,13 @@ public final class FishItemFactory {
             case VANILLA, COMMON -> Material.COD;
             case ORNAMENTAL -> Material.TROPICAL_FISH;
             case EPIC -> Material.SALMON;
-            case LEGENDARY, MITOLOGI -> Material.PLAYER_HEAD;
+            case LEGENDARY, MITOLOGI, SECRET -> Material.PLAYER_HEAD;
         };
-        return new FishDefinition(fish.id(), fish.name(), fish.rarity(), material, fish.weight(), fish.weight(), fish.price(), fish.price(), fish.origin(), fish.region(), fish.rarity() == FishRarity.LEGENDARY || fish.rarity() == FishRarity.MITOLOGI, "", Material.TROPICAL_FISH);
+        return new FishDefinition(fish.id(), fish.name(), fish.rarity(), material, fish.weight(), fish.weight(), fish.price(), fish.price(), fish.origin(), fish.region(), fish.rarity().power() >= FishRarity.LEGENDARY.power(), "", Material.TROPICAL_FISH);
     }
 
     private Material itemMaterial(FishDefinition definition) {
-        if ((definition.rarity() == FishRarity.LEGENDARY || definition.rarity() == FishRarity.MITOLOGI) && definition.headEnabled()) return Material.PLAYER_HEAD;
+        if (definition.rarity().power() >= FishRarity.LEGENDARY.power() && definition.headEnabled()) return Material.PLAYER_HEAD;
         return definition.material() == null ? definition.fallbackMaterial() : definition.material();
     }
 
@@ -197,5 +208,9 @@ public final class FishItemFactory {
                 // Head texture is optional; fallback head remains safe.
             }
         }
+    }
+
+    private String trimMultiplier(double value) {
+        return value == Math.rint(value) ? String.valueOf((int) value) : String.format(Locale.US, "%.1f", value);
     }
 }

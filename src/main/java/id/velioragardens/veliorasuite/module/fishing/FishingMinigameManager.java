@@ -35,6 +35,15 @@ public final class FishingMinigameManager implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onFish(PlayerFishEvent event) {
+        if (event.getState() == PlayerFishEvent.State.FISHING) {
+            int potionSpeed = manager.getPotionManager().active(event.getPlayer(), "lure") ? 25 : 0;
+            int speed = Math.min(80, manager.getRodManager().speedPercent(event.getPlayer()) + potionSpeed);
+            int min = Math.max(20, (int) Math.round(100 * (1.0D - speed / 100.0D)));
+            int max = Math.max(min + 20, (int) Math.round(600 * (1.0D - speed / 100.0D)));
+            event.getHook().setMinWaitTime(min);
+            event.getHook().setMaxWaitTime(max);
+            return;
+        }
         if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH) return;
         Player player = event.getPlayer();
         removeCaught(event.getCaught());
@@ -133,13 +142,14 @@ public final class FishingMinigameManager implements Listener {
     private void showRodAndHookEffect(Player player, Session session) {
         FishRarity rarity = session.generatedFish.fish().rarity();
         if (rarity.power() < FishRarity.EPIC.power()) return;
-        Particle playerParticle = rarity == FishRarity.MITOLOGI ? Particle.DRAGON_BREATH : Particle.ENCHANT;
-        Particle hookParticle = rarity == FishRarity.MITOLOGI ? Particle.TOTEM_OF_UNDYING : Particle.END_ROD;
+        boolean mythic = rarity.power() >= FishRarity.MITOLOGI.power();
+        Particle playerParticle = mythic ? Particle.DRAGON_BREATH : Particle.ENCHANT;
+        Particle hookParticle = mythic ? Particle.TOTEM_OF_UNDYING : Particle.END_ROD;
         player.getWorld().spawnParticle(playerParticle, player.getLocation().add(0.0D, 1.0D, 0.0D),
-                rarity == FishRarity.MITOLOGI ? 7 : 3, 0.35D, 0.55D, 0.35D, 0.01D);
+                mythic ? 7 : 3, 0.35D, 0.55D, 0.35D, 0.01D);
         if (session.hook != null && session.hook.isValid()) {
             session.hook.getWorld().spawnParticle(hookParticle, session.hook.getLocation(),
-                    rarity == FishRarity.MITOLOGI ? 10 : 4, 0.18D, 0.18D, 0.18D, 0.01D);
+                    mythic ? 10 : 4, 0.18D, 0.18D, 0.18D, 0.01D);
         }
     }
 

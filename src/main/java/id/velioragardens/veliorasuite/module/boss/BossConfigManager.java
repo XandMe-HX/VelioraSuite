@@ -39,6 +39,7 @@ public final class BossConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/boss.yml");
         config = YamlConfiguration.loadConfiguration(file);
         migrateBalanceV3(file);
+        migrateStabilityV4(file);
         migrateBossBarV3(file);
         migrateArenaV4(file);
         migrateNotificationDefaults(file);
@@ -79,6 +80,20 @@ public final class BossConfigManager {
             plugin.getLogger().info("VelioraBoss: balance config v3 diterapkan (HP maksimal 30K, Mace, collision, dan knockback skill).");
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraBoss: gagal menerapkan balance config v3: " + exception.getMessage());
+        }
+    }
+
+    /** Applies the Progress 1 health/despawn values without replacing custom bosses or rewards. */
+    private void migrateStabilityV4(File file) {
+        if (config.getInt("settings.balance-version", 0) >= 4) return;
+        config.set("settings.spawn.despawn-minutes", 30);
+        config.set("settings.combat.global-health-multiplier", 0.80D);
+        config.set("settings.balance-version", 4);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: stabilitas v4 diterapkan (despawn 30 menit dan HP -20%).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menerapkan stabilitas v4: " + exception.getMessage());
         }
     }
 

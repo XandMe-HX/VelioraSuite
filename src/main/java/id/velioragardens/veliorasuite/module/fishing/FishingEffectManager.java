@@ -30,13 +30,13 @@ public final class FishingEffectManager {
         player.getWorld().playSound(player.getLocation(), configManager.getEffectSound(rarity), 1.0F, 1.0F);
         int amount = configManager.getEffectAmount(rarity);
         if (amount > 0) player.getWorld().spawnParticle(configManager.getEffectParticle(rarity), location, amount, 0.6D, 0.8D, 0.6D, 0.02D);
-        if (rarity == FishRarity.LEGENDARY || rarity == FishRarity.MITOLOGI) playGrandCatchEffect(player, rarity);
+        if (rarity.power() >= FishRarity.LEGENDARY.power()) playGrandCatchEffect(player, rarity);
         if (configManager.isVisualLightning(rarity)) player.getWorld().strikeLightningEffect(player.getLocation());
         if (configManager.isEffectBroadcast(rarity)) broadcast(player, fish);
     }
 
     private void playGrandCatchEffect(Player player, FishRarity rarity) {
-        boolean mythic = rarity == FishRarity.MITOLOGI;
+        boolean mythic = rarity.power() >= FishRarity.MITOLOGI.power();
         Location center = player.getLocation().add(0.0D, 1.0D, 0.0D);
         player.getWorld().playSound(center, mythic ? Sound.ENTITY_LIGHTNING_BOLT_THUNDER : Sound.UI_TOAST_CHALLENGE_COMPLETE,
                 mythic ? 0.9F : 0.75F, mythic ? 0.8F : 1.15F);
@@ -65,8 +65,10 @@ public final class FishingEffectManager {
     }
 
     private void broadcast(Player player, CaughtFish fish) {
-        String key = fish.rarity() == FishRarity.MITOLOGI ? "mitologi-broadcast" : "legendary-broadcast";
-        String fallback = fish.rarity() == FishRarity.MITOLOGI
+        String key = fish.rarity() == FishRarity.SECRET ? "secret-broadcast" : fish.rarity() == FishRarity.MITOLOGI ? "mitologi-broadcast" : "legendary-broadcast";
+        String fallback = fish.rarity() == FishRarity.SECRET
+                ? "%prefix% &5%player% menemukan ikan Secret: &f%fish% &7(&f%weight%&7)!"
+                : fish.rarity() == FishRarity.MITOLOGI
                 ? "%prefix% &c%player% mendapatkan ikan Mitologi: &f%fish% &7(&f%weight%&7)!"
                 : "%prefix% &6%player% mendapatkan ikan Legendary: &f%fish% &7(&f%weight%&7)!";
         Map<String, String> placeholders = new HashMap<>();
