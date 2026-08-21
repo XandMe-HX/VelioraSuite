@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  balance-version: 3
+  balance-version: 4
   # Memaksa tampilan BossBar lama ikut diperbarui sekali pada server yang sudah berjalan.
   bossbar-version: 3
   arena-version: 4

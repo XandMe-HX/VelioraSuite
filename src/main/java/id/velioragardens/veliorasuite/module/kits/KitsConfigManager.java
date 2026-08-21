@@ -40,6 +40,7 @@ public final class KitsConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/kits.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
         migrateKitsV2(file);
+        migrateKitsV3(file);
         loadKits();
     }
 
@@ -255,6 +256,26 @@ public final class KitsConfigManager {
             plugin.getLogger().info("VelioraKits diperbarui: Build Kit shulker dan harga premium baru aktif.");
         } catch (Exception exception) {
             plugin.getLogger().warning("VelioraKits: gagal migrasi config v2: " + exception.getMessage());
+        }
+    }
+
+    /** Applies only the approved starter/build changes and preserves every custom kit. */
+    private void migrateKitsV3(File file) {
+        if (config.getInt("settings.config-version", 0) >= 3) return;
+        try (InputStreamReader reader = new InputStreamReader(
+                java.util.Objects.requireNonNull(plugin.getResource("modules/kits.yml")), StandardCharsets.UTF_8)) {
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(reader);
+            config.set("kits.starter.items", defaults.getMapList("kits.starter.items"));
+            config.set("kits.starter.gui.lore", defaults.getStringList("kits.starter.gui.lore"));
+            config.set("kits.build.description", defaults.getStringList("kits.build.description"));
+            config.set("kits.build.buy.price", 2000.0D);
+            config.set("kits.build.buy.first-claim-free", true);
+            config.set("kits.build.gui.lore", defaults.getStringList("kits.build.gui.lore"));
+            config.set("settings.config-version", 3);
+            config.save(file);
+            plugin.getLogger().info("VelioraKits: starter chainmail dan Build Kit gratis pertama/2K diterapkan.");
+        } catch (Exception exception) {
+            plugin.getLogger().warning("VelioraKits: gagal migrasi config v3: " + exception.getMessage());
         }
     }
 

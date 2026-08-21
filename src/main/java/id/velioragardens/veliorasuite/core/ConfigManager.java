@@ -85,7 +85,7 @@ public final class ConfigManager {
     }
 
     private void applyBrandThemeV1() {
-        if (plugin.getConfig().getInt("settings.brand-version", 0) >= 1) return;
+        if (plugin.getConfig().getInt("settings.brand-version", 0) >= 2) return;
         String[][] modules = {
                 {"adminmonitor", "MONITOR"}, {"announcement", "NEWS"}, {"boss", "BOSS"},
                 {"chat", "CHAT"}, {"fishing", "FISHING"}, {"kits", "KITS"},
@@ -102,7 +102,7 @@ public final class ConfigManager {
             catch (IOException exception) { plugin.getLogger().warning("Gagal menerapkan tema ke " + module[0] + ": " + exception.getMessage()); }
         }
         plugin.getConfig().set("settings.prefix", "&7[&eVELIORA &aSUITE&7] &r");
-        plugin.getConfig().set("settings.brand-version", 1);
+        plugin.getConfig().set("settings.brand-version", 2);
         plugin.saveConfig();
     }
 
