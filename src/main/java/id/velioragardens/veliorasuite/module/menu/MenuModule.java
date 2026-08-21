@@ -555,7 +555,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     }
 
     private String title(String key, String fallback) { return config.getString("titles." + key, fallback); }
-    private String prefix() { return color(config.getString("settings.prefix", "&6&l[ &e&lVELIORA &a&lMENU &6&l] &r")); }
+    private String prefix() { return color(config.getString("settings.prefix", "&7[&eVELIORA &aMENU&7] &r")); }
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value == null ? "" : value); }
     private List<String> color(List<String> values) { return values.stream().map(this::color).toList(); }
     private String format(double value) { return String.format(Locale.US, "%,.0f", value); }

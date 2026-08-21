@@ -3,7 +3,7 @@ integrations:
 
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lQUEST &6&l] &r'
+  prefix: '&7[&eVELIORA &aQUEST&7] &r'
   # Mode otomatis seperti skill progression: aktivitas langsung memulai quest terkait.
   # Mana tetap milik VelioraSkills, tetapi tidak dipotong untuk memulai quest.
   require-skills-mana: false

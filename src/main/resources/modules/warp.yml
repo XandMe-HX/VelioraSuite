@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lWARP &6&l] &r'
+  prefix: '&7[&eVELIORA &aWARP&7] &r'
   cooldown-seconds: 3
   sound:
     enabled: true

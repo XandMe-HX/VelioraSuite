@@ -9,8 +9,11 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
 
 public final class KitsManager {
+    private final Map<UUID, PendingPaidClaim> pendingPaidClaims = new HashMap<>();
 
     private final VelioraSuite plugin;
     private final KitsConfigManager configManager;
@@ -110,6 +113,9 @@ public final class KitsManager {
             return;
         }
 
+        boolean freeClaim = isFreeClaimAvailable(player, kit);
+        if (!firstJoin && requiresPerClaimPayment(player, kit, freeClaim) && !confirmPaidClaim(player, kit)) return;
+
         if (configManager.isBlockClaimWhenInventoryFull()) {
             int missingSlots = rewardManager.getMissingSlots(player, kit);
             if (missingSlots > 0) {
@@ -119,7 +125,6 @@ public final class KitsManager {
             }
         }
 
-        boolean freeClaim = isFreeClaimAvailable(player, kit);
         boolean armorEquipped = rewardManager.hasArmorToEquip(kit);
         boolean armorReplaced = rewardManager.willReplaceArmor(player, kit);
         if (!handlePriceBeforeClaim(player, kit, freeClaim)) return;
@@ -276,6 +281,27 @@ public final class KitsManager {
         return chargePlayer(player, kit);
     }
 
+    private boolean requiresPerClaimPayment(Player player, Kit kit, boolean freeClaim) {
+        return effectiveBuyEnabled(kit)
+                && !kit.isOneTimePurchase()
+                && !freeClaim
+                && !player.hasPermission(configManager.getBypassPricePermission())
+                && !player.hasPermission(configManager.getAdminPermission())
+                && effectivePrice(kit) > 0.0D;
+    }
+
+    private boolean confirmPaidClaim(Player player, Kit kit) {
+        long now = System.currentTimeMillis();
+        PendingPaidClaim pending = pendingPaidClaims.get(player.getUniqueId());
+        if (pending != null && pending.kitId().equals(kit.getId()) && pending.expiresAt() >= now) {
+            pendingPaidClaims.remove(player.getUniqueId());
+            return true;
+        }
+        pendingPaidClaims.put(player.getUniqueId(), new PendingPaidClaim(kit.getId(), now + 15_000L));
+        send(player, "confirm-paid-claim", "%prefix% &eKonfirmasi pembelian kit &f%kit% &eseharga &a$%price%&e. Ketik ulang &f/kits claim %kit% &edalam 15 detik.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(effectivePrice(kit))));
+        return false;
+    }
+
     private boolean chargePlayer(Player player, Kit kit) {
         double price = effectivePrice(kit);
         if (price <= 0.0D || !configManager.isEconomyEnabled()) return true;
@@ -334,4 +360,6 @@ public final class KitsManager {
         if (price == Math.rint(price)) return String.valueOf((long) price);
         return String.format(Locale.US, "%.2f", price);
     }
+
+    private record PendingPaidClaim(String kitId, long expiresAt) { }
 }

@@ -1,7 +1,7 @@
 settings:
   enabled: true
   config-version: 2
-  prefix: '&6&l[ &e&lVELIORA &a&lKITS &6&l] &r'
+  prefix: '&7[&eVELIORA &aKITS&7] &r'
   command: '/kits'
   open-gui-on-main-command: true
   use-per-kit-permission: true
@@ -69,6 +69,7 @@ messages:
   buy-not-required: '%prefix% &cKit ini tidak perlu dibeli.'
   buy-each-claim: '%prefix% &cKit ini dibayar setiap claim. Gunakan &f/kits claim %kit%&c.'
   kit-paid-claim: '%prefix% &aKamu membayar &f$%price% &auntuk claim kit &f%kit%&a.'
+  confirm-paid-claim: '%prefix% &eKonfirmasi pembelian kit &f%kit% &eseharga &a$%price%&e. Ketik ulang &f/kits claim %kit% &edalam 15 detik.'
   kit-first-claim-free: '%prefix% &aKit &f%kit% &aberhasil diambil gratis 1x.'
   premium-first-claim-free: '%prefix% &aPremium kit &f%kit% &aberhasil diambil gratis 1x. Claim berikutnya bayar &f$%price%&a.'
   first-join-given: '%prefix% &aKamu menerima first join kit &f%kit%&a.'
@@ -109,10 +110,10 @@ kits:
       name: '&a&lS&e&lT&a&lA&e&lR&a&lT&e&lE&a&lR &f&lK&a&lI&e&lT'
       lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&fPerlengkapan awal survival', '&7Leather Armor &8• &7Stone Tools', '&7Oak Fence &fx192', '&8━━━━━━━━━━━━━━━━━━━━', '&a&lGRATIS &8• &7Cooldown: &f3 hari']
     items:
-      - { material: LEATHER_HELMET, amount: 1, enchants: [] }
-      - { material: LEATHER_CHESTPLATE, amount: 1, enchants: [] }
-      - { material: LEATHER_LEGGINGS, amount: 1, enchants: [] }
-      - { material: LEATHER_BOOTS, amount: 1, enchants: [] }
+      - { material: CHAINMAIL_HELMET, amount: 1, enchants: [] }
+      - { material: CHAINMAIL_CHESTPLATE, amount: 1, enchants: [] }
+      - { material: CHAINMAIL_LEGGINGS, amount: 1, enchants: [] }
+      - { material: CHAINMAIL_BOOTS, amount: 1, enchants: [] }
       - { material: STONE_SWORD, amount: 1, enchants: [] }
       - { material: STONE_PICKAXE, amount: 1, enchants: [] }
       - { material: STONE_AXE, amount: 1, enchants: [] }
@@ -142,16 +143,16 @@ kits:
   build:
     enabled: true
     display-name: '&e&lB&6&lU&e&lI&6&lL&e&lD &f&lK&e&lI&6&lT'
-    description: ['&6&l✦ &fLima shulker material untuk proyek bangunan.', '&8Harga claim: &a5.000']
+    description: ['&6&l✦ &fLima shulker material untuk proyek bangunan.', '&8Pertama gratis, berikutnya: &a2.000']
     permission: ''
     premium-level: 0
     cooldown: '0s'
-    buy: { enabled: true, price: 5000, one-time-purchase: false, first-claim-free: false }
+    buy: { enabled: true, price: 2000, one-time-purchase: false, first-claim-free: true }
     gui:
       slot: 24
       material: YELLOW_SHULKER_BOX
       name: '&e&lB&6&lU&e&lI&6&lL&e&lD &f&lK&e&lI&6&lT'
-      lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&f5 Shulker material bangunan', '&7Kayuan, batu, tanah, dedaunan', '&7dan seluruh warna terracotta', '&8━━━━━━━━━━━━━━━━━━━━', '&aHarga claim: &f5.000', '&eKlik untuk preview dan konfirmasi']
+      lore: ['&8━━━━━━━━━━━━━━━━━━━━', '&f5 Shulker material bangunan', '&7Kayuan, batu, tanah, dedaunan', '&7dan seluruh warna terracotta', '&8━━━━━━━━━━━━━━━━━━━━', '&aPertama gratis &8• &7Berikutnya: &f2.000', '&eKlik untuk preview dan konfirmasi']
     items:
       - material: BROWN_SHULKER_BOX
         amount: 1

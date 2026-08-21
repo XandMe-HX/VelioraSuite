@@ -90,6 +90,7 @@ public final class SecurityListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         manager.handleSpawnerBreak(event.getBlock());
+        manager.trackMiningBreak(event.getPlayer(), event.getBlock());
         manager.trackOreBreak(event.getPlayer(), event.getBlock());
     }
 

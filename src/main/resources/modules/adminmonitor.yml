@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  prefix: '&6&l[ &e&lVELIORA &a&lMONITOR &6&l] &r'
+  prefix: '&7[&eVELIORA &aMONITOR&7] &r'
   timezone: 'Asia/Jakarta'
   staff-permission: 'veliorasuite.staff'
   admin-permission: 'veliorasuite.adminmonitor.admin'
@@ -10,6 +10,10 @@ settings:
     # Log disimpan ke adminmonitor.db secara batch agar tidak membebani main thread.
     flush-interval-seconds: 30
     flush-max-pending: 100
+    # Event identik beruntun (misalnya teleport dari plugin lain) digabung.
+    deduplicate-seconds: 2
+    # Pengaman RAM jika database sedang terkunci atau disk lambat.
+    max-pending: 1000
   track:
     login: true
     logout: true
