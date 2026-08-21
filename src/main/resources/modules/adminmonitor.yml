@@ -8,8 +8,8 @@ settings:
   keep-days: 30
   storage:
     # Log disimpan ke adminmonitor.db secara batch agar tidak membebani main thread.
-    flush-interval-seconds: 30
-    flush-max-pending: 100
+    flush-interval-seconds: 60
+    flush-max-pending: 250
     # Event identik beruntun (misalnya teleport dari plugin lain) digabung.
     deduplicate-seconds: 2
     # Pengaman RAM jika database sedang terkunci atau disk lambat.

@@ -46,6 +46,11 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
+            case "integrations" -> {
+                sendIntegrations(sender);
+                return true;
+            }
+
             case "version" -> {
                 send(sender, "&aVelioraSuite &7version &f" + plugin.getDescription().getVersion());
                 return true;
@@ -70,6 +75,7 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&e/" + label + " help &7- Melihat bantuan command."));
         sender.sendMessage(color("&e/" + label + " reload &7- Reload config utama."));
         sender.sendMessage(color("&e/" + label + " modules &7- Melihat status module."));
+        sender.sendMessage(color("&e/" + label + " integrations &7- Melihat koneksi plugin."));
         sender.sendMessage(color("&e/" + label + " version &7- Melihat versi plugin."));
         sender.sendMessage(color("&e/" + label + " debug &7- Melihat status debug."));
         sender.sendMessage(color("&8&m--------------------------------"));
@@ -95,8 +101,19 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&8&m--------------------------------"));
     }
 
+    private void sendIntegrations(CommandSender sender) {
+        sender.sendMessage(color("&8&m--------------------------------"));
+        sender.sendMessage(color("&aVeliora Integrations"));
+        plugin.getHookManager().loadHooks();
+        for (var entry : plugin.getHookManager().getHooks().entrySet()) {
+            String status = entry.getValue() ? "&aTERHUBUNG" : "&7TIDAK AKTIF";
+            sender.sendMessage(color("&7- &f" + entry.getKey() + " &8: " + status));
+        }
+        sender.sendMessage(color("&8&m--------------------------------"));
+    }
+
     private void send(CommandSender sender, String message) {
-        sender.sendMessage(color("&8【&aVelioraSuite&8】 &r" + message));
+        sender.sendMessage(color("&8[&aVelioraSuite&8] &r" + message));
     }
 
     private String color(String text) {
@@ -110,7 +127,7 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filter(Arrays.asList("help", "reload", "modules", "version", "debug"), args[0]);
+            return filter(Arrays.asList("help", "reload", "modules", "integrations", "version", "debug"), args[0]);
         }
 
         return new ArrayList<>();

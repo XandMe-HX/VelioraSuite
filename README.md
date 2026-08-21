@@ -169,6 +169,10 @@ Placeholder TAB/PlaceholderAPI:
 %veliorasuite_guild_level%
 %veliorasuite_guild_exp%
 %veliorasuite_guild_quests_completed%
+%veliorasuite_integration_war%
+%veliorasuite_integration_gacha%
+%veliorasuite_integration_ftb%
+%veliorasuite_integrations_online%
 ```
 
 Contoh TAB belowname:
@@ -178,6 +182,14 @@ Contoh TAB belowname:
 ```
 
 Module `notifications` menampilkan peringatan layar saat masuk Nether/The End yang tidak memakai keepInventory dan notifikasi layar saat pemain disebut menggunakan `@Nama`.
+
+Status koneksi plugin dapat diperiksa tanpa menjadikan plugin lain sebagai dependency wajib:
+
+```text
+/veliorasuite integrations
+```
+
+VelioraWar, VelioraGacha, dan VelioraFTB tetap berupa JAR serta folder data terpisah. Jika salah satunya tidak aktif, VelioraSuite tetap berjalan dan tombol menu memakai pesan fallback aman.
 
 ## Clear Lag
 
