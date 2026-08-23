@@ -372,6 +372,8 @@ public final class LoginSecurityManager {
 
     private void finishAuthentication(Player player) {
         LoginSecurityBlindnessManager.removeSafe(player);
+        // Hentikan title login yang mungkin masih tersisa di layar client setelah autentikasi berhasil.
+        player.clearTitle();
     }
 
     private AuthPlayerData getPlayerData(Player player) {
