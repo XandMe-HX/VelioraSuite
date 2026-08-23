@@ -19,3 +19,5 @@ modules:
   warp: true
   adventure: true
   notifications: true
+  npc: true
+  home: true
