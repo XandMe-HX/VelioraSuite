@@ -43,19 +43,60 @@ public final class FishingRodManager implements Listener {
     private void startAmbientAura() {
         final double[] phase = {0.0D};
         Bukkit.getScheduler().runTaskTimer(manager.getConfigManager().getPlugin(), () -> {
-            phase[0] += Math.PI / 5.0D;
+            phase[0] += Math.PI / 8.0D;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 int tier = getTier(player);
-                if (tier < 3 || player.isDead()) continue;
-                Particle particle = tier == 3 ? Particle.ENCHANT : tier == 4 ? Particle.SOUL_FIRE_FLAME : Particle.END_ROD;
-                int count = tier == 5 ? 4 : 2;
-                for (int i = 0; i < count; i++) {
-                    double angle = phase[0] + (Math.PI * 2.0D * i / count);
-                    player.getWorld().spawnParticle(particle, player.getLocation().add(Math.cos(angle) * 0.55D,
-                            0.45D + ((phase[0] + i) % 1.4D), Math.sin(angle) * 0.55D), 1, 0, 0, 0, 0);
-                }
+                if (tier < 1 || player.isDead()) continue;
+                showHeldAura(player, tier, phase[0]);
             }
-        }, 20L, 20L);
+        }, 20L, 10L);
+    }
+
+    /**
+     * Aura ketika rod dipegang. Jumlah partikel sengaja kecil dan hanya untuk
+     * pemilik rod, supaya efek tetap terlihat mewah tanpa membebani server.
+     */
+    private void showHeldAura(Player player, int tier, double phase) {
+        Particle particle = tier >= 17 ? Particle.END_ROD : tier >= 13 ? Particle.TOTEM_OF_UNDYING
+                : tier >= 9 ? Particle.ELECTRIC_SPARK : tier >= 5 ? Particle.ENCHANT : Particle.BUBBLE_POP;
+        // Tier 1-4: cincin kecil di sekitar tangan/pinggang.
+        if (tier <= 4) {
+            for (int i = 0; i < 4; i++) point(player, particle, phase + i * Math.PI / 2.0D, 0.38D, 0.85D);
+            return;
+        }
+        // Tier 5-8: spiral air/arcane yang naik ke atas kepala.
+        if (tier <= 8) {
+            for (int i = 0; i < 4; i++) {
+                double angle = phase + i * 0.85D;
+                point(player, particle, angle, 0.28D + i * 0.06D, 0.55D + i * 0.28D);
+            }
+            return;
+        }
+        // Tier 9-12: sayap partikel tipis di belakang badan.
+        if (tier <= 12) {
+            for (int i = 0; i < 4; i++) {
+                double x = 0.22D + i * 0.13D;
+                double y = 1.1D + Math.sin(phase + i * 0.7D) * 0.16D + i * 0.05D;
+                player.getWorld().spawnParticle(particle, player.getLocation().add(x, y, 0.18D), 1, 0, 0, 0, 0);
+                player.getWorld().spawnParticle(particle, player.getLocation().add(-x, y, 0.18D), 1, 0, 0, 0, 0);
+            }
+            return;
+        }
+        // Tier 13-16: halo/crown di atas kepala dengan dua kilau kecil.
+        if (tier <= 16) {
+            for (int i = 0; i < 6; i++) point(player, particle, phase + i * Math.PI / 3.0D, 0.45D, 2.12D);
+            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0.35D, 2.28D, 0), 1, 0, 0, 0, 0);
+            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(-0.35D, 2.28D, 0), 1, 0, 0, 0, 0);
+            return;
+        }
+        // Tier 17+: sayap malaikat + lingkaran mahkota; efek tertinggi.
+        for (int i = 0; i < 4; i++) {
+            double x = 0.24D + i * 0.15D;
+            double y = 1.08D + Math.sin(phase + i * 0.7D) * 0.18D + i * 0.08D;
+            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(x, y, 0.18D), 1, 0, 0, 0, 0);
+            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(-x, y, 0.18D), 1, 0, 0, 0, 0);
+        }
+        for (int i = 0; i < 6; i++) point(player, Particle.ELECTRIC_SPARK, phase + i * Math.PI / 3.0D, 0.48D, 2.18D);
     }
 
     public void reload() {

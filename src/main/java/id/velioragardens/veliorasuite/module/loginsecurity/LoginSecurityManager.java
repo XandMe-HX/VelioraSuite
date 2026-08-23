@@ -93,7 +93,7 @@ public final class LoginSecurityManager {
                 if (!player.isOnline() || isAuthenticated(player)) { cancel(); return; }
                 String title = register ? "&eDAFTARKAN AKUN" : "&aLOGIN AKUN";
                 String subtitle = register ? "&f/register <password> <ulangi password>"
-                        : "&f/login <password> &8| &7Bantuan: TikTok Veliora Gardens Official";
+                        : "&f/login <password> &8| &7Video tutorial ada di TikTok &fvelioragardensofficial";
                 player.sendTitle(configManager.color(title), configManager.color(subtitle), 5, 50, 5);
             }
         }.runTaskTimer(plugin, 1L, 40L);
