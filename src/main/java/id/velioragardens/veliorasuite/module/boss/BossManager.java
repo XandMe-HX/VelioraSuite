@@ -7,6 +7,7 @@ import id.velioragardens.veliorasuite.module.boss.model.BossRarity;
 import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
 import id.velioragardens.veliorasuite.module.boss.model.BossSpawnPoint;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -25,6 +26,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTransformEvent;
+import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -83,6 +85,7 @@ public final class BossManager implements Listener {
     private long lastHitEffectAt;
     private double activeVirtualHealth;
     private double activeVirtualMaxHealth;
+    private Chunk forcedBossChunk;
 
     public BossManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -258,6 +261,7 @@ public final class BossManager implements Listener {
             return;
         }
         if (activeBoss != null && !activeBoss.isDead()) activeBoss.remove();
+        cleanupTaggedEntities();
         if (message && activeDefinition != null) notifyPlayers(config.color(config.message("boss-despawn", "%prefix% &e%boss% menghilang.").replace("%boss%", config.color(activeDefinition.displayName()))));
         clearRuntime();
         scheduleNextSpawn();
@@ -308,7 +312,7 @@ public final class BossManager implements Listener {
                 return;
             }
             // Projectiles remain valid; only impossible direct melee hits are rejected.
-            if (event.getDamager() instanceof Player && isMeleeReachViolation(player)) {
+            if (config.bossAntiReachEnabled() && event.getDamager() instanceof Player && isMeleeReachViolation(player)) {
                 event.setCancelled(true);
                 recordInvalidReach(player);
                 return;
@@ -445,6 +449,7 @@ public final class BossManager implements Listener {
         if (nextSpawnAt <= 0L) scheduleNextSpawn();
         // FIX 2: If activeBoss exists but is dead or invalid, clearRuntime() to remove BossBar
         if (activeBoss != null && (activeBoss.isDead() || !activeBoss.isValid())) {
+            cleanupTaggedEntities();
             clearRuntime();
             scheduleNextSpawn();
             return;
@@ -474,6 +479,7 @@ public final class BossManager implements Listener {
         if (definition == null || location == null || location.getWorld() == null) return false;
         if (isActive() && !config.allowMultiple()) return false;
         location.getChunk().load(true);
+        holdBossChunk(location.getChunk());
         Entity entity = location.getWorld().spawnEntity(location, definition.entityType());
         if (!(entity instanceof LivingEntity living)) {
             entity.remove();
@@ -734,6 +740,7 @@ public final class BossManager implements Listener {
         lastHitEffectAt = 0L;
         activeVirtualHealth = 0.0D;
         activeVirtualMaxHealth = 0.0D;
+        releaseBossChunk();
     }
 
     public double activeBossHealthPercent() {
@@ -788,6 +795,40 @@ public final class BossManager implements Listener {
         }
     }
 
+    /**
+     * Expiration must keep running even when every player leaves the dungeon.
+     * Only the boss chunk is held, so this is cheap and minions remain capped.
+     */
+    private void holdBossChunk(Chunk chunk) {
+        if (chunk == null) return;
+        if (forcedBossChunk != null && !forcedBossChunk.equals(chunk)) forcedBossChunk.setForceLoaded(false);
+        forcedBossChunk = chunk;
+        forcedBossChunk.setForceLoaded(true);
+    }
+
+    private void releaseBossChunk() {
+        if (forcedBossChunk != null) forcedBossChunk.setForceLoaded(false);
+        forcedBossChunk = null;
+    }
+
+    /** Removes old copies as soon as an old/unloaded chunk becomes available. */
+    @EventHandler
+    public void onEntitiesLoad(EntitiesLoadEvent event) {
+        long now = System.currentTimeMillis();
+        for (Entity entity : event.getEntities()) {
+            if (entity.getScoreboardTags().contains("velioraboss_boss")) {
+                Long expires = entity.getPersistentDataContainer().get(bossExpiresAtKey, PersistentDataType.LONG);
+                boolean duplicate = activeBoss != null && !activeBoss.getUniqueId().equals(entity.getUniqueId());
+                if (expires == null || expires <= now || duplicate) entity.remove();
+                continue;
+            }
+            if (entity.getScoreboardTags().contains("velioraboss_minion")) {
+                String owner = entity.getPersistentDataContainer().get(minionOwnerKey, PersistentDataType.STRING);
+                if (activeDefinition == null || owner == null || !activeDefinition.id().equals(owner)) entity.remove();
+            }
+        }
+    }
+
     /** Recovers one valid boss after reload/restart and removes only expired or duplicate copies. */
     private void recoverActiveBoss() {
         long now = System.currentTimeMillis();
@@ -821,6 +862,7 @@ public final class BossManager implements Listener {
         activeDefinition = recoveredDefinition;
         lastKnownLocation = recovered.getLocation();
         arenaCenter = recovered.getLocation().clone();
+        holdBossChunk(recovered.getChunk());
         Double storedMax = recovered.getPersistentDataContainer().get(bossVirtualMaxHealthKey, PersistentDataType.DOUBLE);
         Double storedHealth = recovered.getPersistentDataContainer().get(bossVirtualHealthKey, PersistentDataType.DOUBLE);
         activeVirtualMaxHealth = storedMax == null ? calculateSpawnHealth(recoveredDefinition.health(), recovered.getLocation()) : Math.max(1.0D, storedMax);

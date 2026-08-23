@@ -7,6 +7,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +28,20 @@ public final class AnnouncementConfigManager {
         plugin.saveResourceIfNotExists("modules/announcement.yml");
         File file = new File(plugin.getDataFolder(), "modules/announcement.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
+        loadBundledDefaults();
+    }
+
+    private void loadBundledDefaults() {
+        try (InputStream stream = plugin.getResource("modules/announcement.yml")) {
+            if (stream == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+            config.setDefaults(defaults);
+            config.options().copyDefaults(true);
+        } catch (Exception exception) {
+            plugin.getLogger().warning("VelioraAnnouncement: default announcement gagal dimuat: "
+                    + exception.getMessage());
+        }
     }
 
     public boolean isEnabled() {

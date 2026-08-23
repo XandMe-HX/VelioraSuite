@@ -7,6 +7,8 @@ import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
 import id.velioragardens.veliorasuite.module.quest.model.QuestState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 
 import java.util.HashMap;
 import java.util.List;
@@ -218,6 +220,17 @@ public final class QuestManager {
         int milestoneMultiplier = levelUp ? configManager.getMilestoneRewardMultiplier(reachedLevel) : 0;
         boolean manaBonus = levelUp && configManager.isManaBonusLevel(reachedLevel) && skillsHook.isAvailable();
         if (manaBonus) skillsHook.addMaxMana(player, configManager.getManaLevelBonus(), true);
+        if (levelUp && category == QuestCategory.MONSTER_HUNTER
+                && reachedLevel % configManager.getHunterHealthLevelInterval() == 0) {
+            AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
+            if (maxHealth != null) {
+                double updated = Math.min(configManager.getHunterHealthCap(),
+                        maxHealth.getBaseValue() + configManager.getHunterHealthBonus());
+                maxHealth.setBaseValue(updated);
+                player.sendMessage(configManager.color(configManager.getPrefix()
+                        + "&cMonster Hunter meningkatkan Max Health menjadi &f" + (int) Math.round(updated) + "&c."));
+            }
+        }
         if (milestoneMultiplier > 0) rewardManager.giveItems(player, configManager.getMilestoneItemRewards(category), milestoneMultiplier);
         progress.setCurrentProgress(0);
         progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));

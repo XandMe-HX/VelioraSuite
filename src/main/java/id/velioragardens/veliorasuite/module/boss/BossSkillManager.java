@@ -103,7 +103,7 @@ public final class BossSkillManager {
     }
 
     public double outgoingDamageMultiplier() {
-        return rageMode ? config.rageDamageMultiplier() : 1.0D;
+        return config.outgoingDamageMultiplier() * (rageMode ? config.rageDamageMultiplier() : 1.0D);
     }
 
     private void groundSlam(LivingEntity boss) {

@@ -111,23 +111,31 @@ public final class FishingRodManager implements Listener {
     public void showAura(Player player, FishHook hook) {
         int tier = getTier(player);
         if (tier < 3 || hook == null || !hook.isValid()) return;
-        Particle spiral = tier >= 16 ? Particle.END_ROD : tier >= 11 ? Particle.FLAME : tier >= 6 ? Particle.ENCHANT : Particle.BUBBLE_POP;
-        for (int i = 0; i < Math.min(18, 5 + tier); i++) {
-            double angle = i * (Math.PI / 4.0D);
-            double radius = 0.12D + (i * 0.025D);
-            hook.getWorld().spawnParticle(spiral, hook.getLocation().add(Math.cos(angle) * radius, i * 0.035D,
-                    Math.sin(angle) * radius), 1, 0, 0, 0, 0);
-        }
-        if (tier == 3) {
-            hook.getWorld().spawnParticle(Particle.BUBBLE_POP, hook.getLocation(), 4, 0.16D, 0.16D, 0.16D, 0.02D);
-            player.getWorld().spawnParticle(Particle.ENCHANT, player.getLocation().add(0.0D, 1.0D, 0.0D), 2, 0.25D, 0.35D, 0.25D, 0.01D);
-        } else if (tier == 4) {
-            hook.getWorld().spawnParticle(Particle.SPLASH, hook.getLocation(), 6, 0.28D, 0.12D, 0.28D, 0.04D);
-            player.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, player.getLocation().add(0.0D, 1.0D, 0.0D), 2, 0.22D, 0.35D, 0.22D, 0.005D);
+        Particle particle = tier >= 17 ? Particle.END_ROD : tier >= 11 ? Particle.SOUL_FIRE_FLAME
+                : tier >= 6 ? Particle.ENCHANT : Particle.BUBBLE_POP;
+        double phase = (System.currentTimeMillis() % 4000L) / 4000.0D * Math.PI * 2.0D;
+        // 3-5 ring, 6-10 double spiral, 11-16 wings, 17+ crown/horns.
+        if (tier <= 5) {
+            for (int i = 0; i < 10; i++) point(player, particle, phase + i * Math.PI / 5.0D, 0.75D, 1.05D);
+        } else if (tier <= 10) {
+            for (int i = 0; i < 7; i++) {
+                double angle = phase + i * 0.7D;
+                point(player, particle, angle, 0.55D, 0.45D + i * 0.14D);
+                point(player, particle, angle + Math.PI, 0.55D, 0.45D + i * 0.14D);
+            }
+        } else if (tier <= 16) {
+            for (int i = 0; i < 7; i++) {
+                double x = 0.28D + i * 0.13D;
+                double y = 1.45D + Math.sin(i * 0.65D) * 0.35D;
+                player.getWorld().spawnParticle(particle, player.getLocation().add(x, y, 0), 1, 0, 0, 0, 0);
+                player.getWorld().spawnParticle(particle, player.getLocation().add(-x, y, 0), 1, 0, 0, 0, 0);
+            }
         } else {
-            hook.getWorld().spawnParticle(Particle.END_ROD, hook.getLocation(), 7, 0.18D, 0.18D, 0.18D, 0.01D);
-            player.getWorld().spawnParticle(Particle.ENCHANT, player.getLocation().add(0.0D, 1.0D, 0.0D), 4, 0.28D, 0.42D, 0.28D, 0.01D);
+            for (int i = 0; i < 12; i++) point(player, particle, phase + i * Math.PI / 6.0D, 0.62D, 2.05D);
+            player.getWorld().spawnParticle(particle, player.getLocation().add(0.38D, 2.35D, 0), 2, 0.03D, 0.18D, 0.03D, 0);
+            player.getWorld().spawnParticle(particle, player.getLocation().add(-0.38D, 2.35D, 0), 2, 0.03D, 0.18D, 0.03D, 0);
         }
+        hook.getWorld().spawnParticle(particle, hook.getLocation(), Math.min(8, 2 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -181,12 +189,12 @@ public final class FishingRodManager implements Listener {
             return;
         }
         if (!bypass && rod.tier() > 1 && owned < rod.tier() - 1) {
-            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eKamu harus membuka tier sebelumnya terlebih dahulu."));
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cRod belum terbuka. &7Misi: buka Rod Tier &f" + (rod.tier() - 1) + " &7terlebih dahulu."));
             return;
         }
         int catches = manager.getDataManager().getOrCreate(player).getTotalCatches();
         if (!bypass && catches < rod.requiredCatches()) {
-            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&eButuh &f" + rod.requiredCatches() + " tangkapan &euntuk rod ini."));
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&cRod belum terbuka. &7Misi: tangkap &f" + rod.requiredCatches() + " ikan &8(kamu: &f" + catches + "&8)."));
             return;
         }
         if (player.getInventory().firstEmpty() < 0) {
@@ -236,8 +244,14 @@ public final class FishingRodManager implements Listener {
         );
         meta.lore(lore);
         applyRodEnchantments(meta, rod.tier());
+        meta.setUnbreakable(true);
         item.setItemMeta(meta);
         return item;
+    }
+
+    private void point(Player player, Particle particle, double angle, double radius, double y) {
+        player.getWorld().spawnParticle(particle, player.getLocation().add(Math.cos(angle) * radius, y,
+                Math.sin(angle) * radius), 1, 0, 0, 0, 0);
     }
 
     private ItemStack createRod(Player owner, FishingRodDefinition rod) {

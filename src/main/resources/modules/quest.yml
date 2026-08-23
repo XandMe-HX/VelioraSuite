@@ -37,8 +37,12 @@ settings:
     money-increase-per-level: 75
     max-money: 10000
     # Saat naik ke setiap kelipatan level 5: +1 Max Mana dan bonus item kategori.
-    mana-level-interval: 5
+    mana-level-interval: 1
     mana-level-bonus: 1
+    milestone-level-interval: 5
+    hunter-health-level-interval: 2
+    hunter-health-bonus: 1.0
+    hunter-health-cap: 40.0
     # Bonus item meningkat di level 10/20, namun maksimal 3x agar tidak inflasi.
     milestone-max-multiplier: 3
   starter:

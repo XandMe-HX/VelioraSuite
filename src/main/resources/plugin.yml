@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.4.0
+version: 1.5.0
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
@@ -156,6 +156,10 @@ commands:
     description: Teleport ke warp guild.
     usage: /guild
     permission: veliorasuite.warp.use
+  fishing:
+    description: Teleport ke area fishing.
+    usage: /fishing
+    permission: veliorasuite.warp.use
   register:
     description: Register Veliora account.
     usage: /register <key> <key confirm>
@@ -201,6 +205,30 @@ commands:
     usage: /vgteam
     aliases: [teamgui]
     permission: veliorasuite.adventure.use
+  vgnpc:
+    description: Membuat dan mengelola NPC ringan Veliora.
+    usage: /vgnpc <create|delete|move|lines|skin|action|list|reload>
+    permission: veliorasuite.npc.admin
+  sethome:
+    description: Simpan home Veliora.
+    usage: /sethome [nama]
+    permission: veliorasuite.home.use
+  home:
+    description: Buka dan teleport ke home.
+    usage: /home [nama]
+    permission: veliorasuite.home.use
+  homes:
+    description: Buka daftar home.
+    usage: /homes
+    permission: veliorasuite.home.use
+  delhome:
+    description: Hapus home Veliora.
+    usage: /delhome [nama]
+    permission: veliorasuite.home.use
+  homemanager:
+    description: Kelola home seluruh pemain.
+    usage: /homemanager
+    permission: veliorasuite.home.admin
 
 permissions:
   veliorasuite.fishing.trade:
@@ -299,4 +327,12 @@ permissions:
   veliorasuite.adventure.use:
     default: true
   veliorasuite.adventure.admin:
+    default: op
+  veliorasuite.npc.admin:
+    default: op
+  veliorasuite.home.use:
+    default: true
+  veliorasuite.home.admin:
+    default: op
+  veliorasuite.home.unlimited:
     default: op

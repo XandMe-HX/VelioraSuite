@@ -100,9 +100,17 @@ public final class KitsManager {
         player.sendMessage(configManager.color("&8&m--------------------------------"));
     }
 
-    public void claimKit(Player player, String kitId) { claimKit(player, kitId, false); }
+    public void claimKit(Player player, String kitId) { claimKit(player, kitId, false, false); }
 
     public void claimKit(Player player, String kitId, boolean firstJoin) {
+        claimKit(player, kitId, firstJoin, false);
+    }
+
+    public void claimKitFromGui(Player player, String kitId) {
+        claimKit(player, kitId, false, true);
+    }
+
+    private void claimKit(Player player, String kitId, boolean firstJoin, boolean guiConfirmed) {
         Kit kit = getUsableKit(player, kitId);
         if (kit == null) return;
 
@@ -114,7 +122,7 @@ public final class KitsManager {
         }
 
         boolean freeClaim = isFreeClaimAvailable(player, kit);
-        if (!firstJoin && requiresPerClaimPayment(player, kit, freeClaim) && !confirmPaidClaim(player, kit)) return;
+        if (!firstJoin && !guiConfirmed && requiresPerClaimPayment(player, kit, freeClaim) && !confirmPaidClaim(player, kit)) return;
 
         if (configManager.isBlockClaimWhenInventoryFull()) {
             int missingSlots = rewardManager.getMissingSlots(player, kit);

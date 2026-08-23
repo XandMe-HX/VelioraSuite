@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Optional;
@@ -55,6 +56,8 @@ public final class ManaActionBarTask {
         PlayerManaData data = manaManager.getData(player);
         String text = configManager.getActionBarFormat()
                 .replace("%health%", String.valueOf(Math.max(0, (int) Math.ceil(player.getHealth()))))
+                .replace("%health_max%", String.valueOf(Math.max(1, (int) Math.ceil(player.getAttribute(Attribute.MAX_HEALTH) == null
+                        ? 20.0D : player.getAttribute(Attribute.MAX_HEALTH).getValue()))))
                 .replace("%player_ping%", String.valueOf(player.getPing()))
                 .replace("%veliorasuite_mana%", String.valueOf(data.getMana()))
                 .replace("%veliorasuite_mana_max%", String.valueOf(data.getMaxMana()))

@@ -1,6 +1,7 @@
 settings:
   config-version: 3
   enabled: true
+  gui-only: true
   prefix: '&7[&eVELIORA &aTRADER&7] &r'
   spawn:
     enabled: true
@@ -65,6 +66,19 @@ gui:
   size: 27
   trade-slots: [10, 11, 13, 15, 16]
   close-slot: 26
+
+sell-page:
+  items:
+    CARROT: 0.70
+    EGG: 0.20
+    LEATHER: 2.00
+    MELON: 0.14
+    MELON_SLICE: 0.03
+    POTATO: 0.70
+    PUMPKIN: 0.14
+    TORCHFLOWER_SEEDS: 2.00
+    WHEAT: 1.30
+    WHEAT_SEEDS: 0.04
 
 repair-block:
   enabled: true

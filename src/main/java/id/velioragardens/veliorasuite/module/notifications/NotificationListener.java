@@ -2,7 +2,6 @@ package id.velioragardens.veliorasuite.module.notifications;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import org.bukkit.ChatColor;
-import org.bukkit.GameRule;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -11,6 +10,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.io.File;
 import java.util.HashMap;
@@ -37,8 +37,18 @@ public final class NotificationListener implements Listener {
         Player player = event.getPlayer();
         String world = player.getWorld().getName();
         if (!config.getStringList("world-warning.worlds").stream().anyMatch(name -> name.equalsIgnoreCase(world))) return;
-        Boolean keepInventory = player.getWorld().getGameRuleValue(GameRule.KEEP_INVENTORY);
-        if (Boolean.TRUE.equals(keepInventory)) return;
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> warnWorld(player), 5L);
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> warnWorld(event.getPlayer()), 35L);
+    }
+
+    private void warnWorld(Player player) {
+        if (!player.isOnline() || !config.getBoolean("world-warning.enabled", true)) return;
+        String world = player.getWorld().getName();
+        if (!config.getStringList("world-warning.worlds").stream().anyMatch(name -> name.equalsIgnoreCase(world))) return;
         player.sendTitle(color(config.getString("world-warning.title", "&cHATI-HATI")),
                 color(config.getString("world-warning.subtitle", "&fKeepInventory &ctidak aktif &fdi dunia ini.")),
                 ticks("world-warning.fade-in", 10), ticks("world-warning.stay", 80), ticks("world-warning.fade-out", 20));

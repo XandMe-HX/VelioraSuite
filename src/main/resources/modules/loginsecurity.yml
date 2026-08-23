@@ -35,7 +35,7 @@ settings:
 
   max-login-attempts: 5
   lock-seconds: 60
-  auth-timeout-seconds: 120
+  auth-timeout-seconds: 600
 
   block-movement-before-login: true
   allowed-move-distance-before-login: 0.2

@@ -34,6 +34,7 @@ public final class WarpModule implements VelioraModule {
         register("dungeon", executor);
         register("pvp", executor);
         register("guild", executor);
+        register("fishing", executor);
         listener = new WarpListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
@@ -49,6 +50,7 @@ public final class WarpModule implements VelioraModule {
         disableCommand("dungeon");
         disableCommand("pvp");
         disableCommand("guild");
+        disableCommand("fishing");
     }
 
     public WarpManager getManager() { return manager; }

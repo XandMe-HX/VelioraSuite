@@ -30,6 +30,7 @@ public final class LoginSecurityConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/loginsecurity.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
         migratePrefix(file);
+        migrateLoginWindow(file);
     }
 
     private void migratePrefix(File file) {
@@ -41,6 +42,13 @@ public final class LoginSecurityConfigManager {
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraLoginSecurity: gagal memperbarui prefix lama: " + exception.getMessage());
         }
+    }
+
+    private void migrateLoginWindow(File file) {
+        if (config.getInt("settings.auth-timeout-seconds", 120) > 120) return;
+        config.set("settings.auth-timeout-seconds", 600);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraLoginSecurity: gagal menyimpan timeout 10 menit."); }
     }
 
     public boolean isEnabled() { return getBoolean("settings.enabled", true); }
@@ -56,7 +64,7 @@ public final class LoginSecurityConfigManager {
 
     public int getMaxLoginAttempts() { return Math.max(1, getInt("settings.max-login-attempts", 5)); }
     public int getLockSeconds() { return Math.max(1, getInt("settings.lock-seconds", 60)); }
-    public int getAuthTimeoutSeconds() { return Math.max(0, getInt("settings.auth-timeout-seconds", 120)); }
+    public int getAuthTimeoutSeconds() { return Math.max(0, getInt("settings.auth-timeout-seconds", 600)); }
     public boolean isBlockMovementBeforeLogin() { return getBoolean("settings.block-movement-before-login", true); }
     public double getAllowedMoveDistanceBeforeLogin() { return Math.max(0D, getDouble("settings.allowed-move-distance-before-login", 0.2D)); }
     public boolean isBlockChatBeforeLogin() { return getBoolean("settings.block-chat-before-login", true); }

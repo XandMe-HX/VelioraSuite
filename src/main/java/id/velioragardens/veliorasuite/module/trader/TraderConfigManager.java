@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class TraderConfigManager {
 
@@ -98,6 +100,7 @@ public final class TraderConfigManager {
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
+    public boolean isGuiOnly() { return bool("settings.gui-only", true); }
     public String getPrefix() { return str("settings.prefix", "&8[&6VelioraTrader&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
     public int getIntervalHours() { return Math.max(1, integer("settings.spawn.interval-hours", 3)); }
@@ -175,6 +178,15 @@ public final class TraderConfigManager {
     public List<TraderLocation> getLocations() { return locations; }
     public List<TraderCampBlock> getCampBlocks() { return campBlocks; }
     public List<TraderTradeItem> getTradePool() { return tradePool; }
+    public Map<Material, Double> getSellPrices() {
+        Map<Material, Double> result = new LinkedHashMap<>();
+        ConfigurationSection section = config == null ? null : config.getConfigurationSection("sell-page.items");
+        if (section != null) for (String key : section.getKeys(false)) {
+            Material material = Material.matchMaterial(key);
+            if (material != null) result.put(material, Math.max(0D, section.getDouble(key)));
+        }
+        return result;
+    }
 
     public String message(String path, String fallback) { return str("messages." + path, fallback).replace("%prefix%", getPrefix()); }
     public String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }

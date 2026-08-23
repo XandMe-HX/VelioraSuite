@@ -46,9 +46,13 @@ public final class TraderManager {
         configManager.load();
         dataManager.load();
         cleanupPersistedActiveState();
+        if (configManager.isGuiOnly()) {
+            activeItems.clear();
+            activeItems.addAll(configManager.getTradePool());
+        }
     }
 
-    public void enable() { spawnManager.start(); }
+    public void enable() { if (!configManager.isGuiOnly()) spawnManager.start(); }
 
     public void disable() {
         spawnManager.stop();
@@ -58,7 +62,11 @@ public final class TraderManager {
 
     public void reload() {
         configManager.load();
-        spawnManager.reload();
+        if (configManager.isGuiOnly()) {
+            spawnManager.stop();
+            activeItems.clear();
+            activeItems.addAll(configManager.getTradePool());
+        } else spawnManager.reload();
     }
 
     public boolean isActive() { return activeLocation != null; }
@@ -121,7 +129,7 @@ public final class TraderManager {
     }
 
     public void openGui(Player player) {
-        if (!isActive()) {
+        if (!configManager.isGuiOnly() && !isActive()) {
             send(player, "trader-next", "%prefix% &eTrader belum muncul. Spawn berikutnya dalam &f%time%&e.", Map.of("%time%", timeLeft(spawnManager.getNextSpawnAt())));
             return;
         }
@@ -129,7 +137,7 @@ public final class TraderManager {
     }
 
     public void buy(Player player, String itemId) {
-        if (!isActive()) return;
+        if (!configManager.isGuiOnly() && !isActive()) return;
         TraderTradeItem item = activeItems.stream().filter(trade -> trade.getId().equalsIgnoreCase(itemId)).findFirst().orElse(null);
         if (item == null) return;
         if (purchaseManager.isSoldOut(player, item)) {

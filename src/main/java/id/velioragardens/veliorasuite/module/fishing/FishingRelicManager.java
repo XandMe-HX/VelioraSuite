@@ -4,6 +4,7 @@ import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Material;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
@@ -11,6 +12,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.PrepareAnvilEvent;
+import org.bukkit.inventory.AnvilInventory;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -50,8 +54,53 @@ public final class FishingRelicManager implements Listener {
         ItemStack relic = create(type);
         manager.giveItemSafely(player, relic);
         player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
-                + "&dKamu menemukan " + display(type) + "&d! Seret relic ke Fishing Rod."));
+                + "&dKamu menemukan " + display(type) + "&d! Gabungkan dengan Fishing Rod di anvil."));
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_CLUSTER_BREAK, 0.9F, 1.35F);
+    }
+
+    public void openGuide(Player player) {
+        Inventory inventory = Bukkit.createInventory(null, 27, manager.getConfigManager().color("&8Fishing Relic Guide"));
+        inventory.setItem(10, create("ENCHANT"));
+        inventory.setItem(12, create("TWISTED"));
+        inventory.setItem(14, create("EXALTED"));
+        inventory.setItem(16, guideItem());
+        inventory.setItem(22, new ItemStack(Material.BARRIER));
+        player.openInventory(inventory);
+    }
+
+    @EventHandler
+    public void onGuideClick(InventoryClickEvent event) {
+        if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8Fishing Relic Guide"))) return;
+        event.setCancelled(true);
+        if (event.getRawSlot() == 22 && event.getWhoClicked() instanceof Player player) player.closeInventory();
+    }
+
+    @EventHandler
+    public void onPrepareAnvil(PrepareAnvilEvent event) {
+        ItemStack rod = event.getInventory().getFirstItem();
+        ItemStack relic = event.getInventory().getSecondItem();
+        String type = relicType(relic);
+        if (type == null || !isFishingRod(rod)) return;
+        ItemStack result = rod.clone();
+        if (!apply(result, type)) return;
+        event.setResult(result);
+        event.getView().setRepairCost(1);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onTakeAnvil(InventoryClickEvent event) {
+        if (!(event.getInventory() instanceof AnvilInventory anvil) || event.getRawSlot() != 2) return;
+        String type = relicType(anvil.getSecondItem());
+        if (type == null || !isFishingRod(anvil.getFirstItem()) || event.getCurrentItem() == null) return;
+        ItemStack result = event.getCurrentItem().clone();
+        event.setCancelled(true);
+        anvil.setFirstItem(null);
+        consumeSecond(anvil);
+        event.getWhoClicked().getInventory().addItem(result);
+        if (event.getWhoClicked() instanceof Player player) {
+            player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 1.2F);
+            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aRelic berhasil diterapkan melalui anvil."));
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -97,9 +146,45 @@ public final class FishingRelicManager implements Listener {
         meta.displayName(Component.text(display(type), TextColor.color(type.equals("EXALTED") ? 0xFF70D8 : 0x7EE8FF)));
         meta.lore(List.of(
                 Component.text("Relic langka dari hasil memancing.", TextColor.color(0xB8C4D2)),
-                Component.text("Seret ke Veliora Fishing Rod.", TextColor.color(0x70E0C0)),
+                Component.text("Pasang: Rod di slot kiri, Relic di slot kanan anvil.", TextColor.color(0x70E0C0)),
                 Component.text("Satu relic hanya dapat dipakai sekali.", TextColor.color(0x8391A5))));
         meta.getPersistentDataContainer().set(relicKey, PersistentDataType.STRING, type);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private boolean isFishingRod(ItemStack item) {
+        return item != null && item.getType() == Material.FISHING_ROD && item.hasItemMeta()
+                && item.getItemMeta().getPersistentDataContainer().has(rodTierKey, PersistentDataType.INTEGER);
+    }
+
+    private boolean apply(ItemStack rod, String type) {
+        if (!isFishingRod(rod)) return false;
+        ItemMeta meta = rod.getItemMeta();
+        if (meta.getPersistentDataContainer().has(enchantKey, PersistentDataType.STRING)) return false;
+        String enchant = randomEnchant(type);
+        int bonus = type.equals("EXALTED") ? 3 : type.equals("TWISTED") ? 2 : 1;
+        meta.getPersistentDataContainer().set(enchantKey, PersistentDataType.STRING, enchant);
+        meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, Math.min(10, meta.getEnchantLevel(Enchantment.LUCK_OF_THE_SEA) + bonus), true);
+        meta.addEnchant(Enchantment.LURE, Math.min(10, meta.getEnchantLevel(Enchantment.LURE) + bonus), true);
+        List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
+        lore.add(Component.text("Relic Enchant: " + enchant, TextColor.color(0xD87CFF)));
+        meta.lore(lore);
+        rod.setItemMeta(meta);
+        return true;
+    }
+
+    private void consumeSecond(AnvilInventory anvil) {
+        ItemStack second = anvil.getSecondItem();
+        if (second == null || second.getAmount() <= 1) anvil.setSecondItem(null);
+        else { second.setAmount(second.getAmount() - 1); anvil.setSecondItem(second); }
+    }
+
+    private ItemStack guideItem() {
+        ItemStack item = new ItemStack(Material.ANVIL);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(manager.getConfigManager().color("&bCara Memasang"));
+        meta.setLore(List.of("&71. Taruh Veliora Fishing Rod di kiri.", "&72. Taruh satu Relic di kanan.", "&73. Ambil hasil enchant di anvil.").stream().map(manager.getConfigManager()::color).toList());
         item.setItemMeta(meta);
         return item;
     }
