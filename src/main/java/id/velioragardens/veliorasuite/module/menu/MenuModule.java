@@ -164,7 +164,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         int slot = event.getRawSlot();
         switch (holder.page) {
             case MAIN -> clickMain(player, slot);
-            case WARPS -> clickWarps(player, slot);
+            case WARPS -> clickWarps(player, holder, slot);
             case RANKS -> clickRank(player, slot);
             case PLAYTIME, BALANCE, KILLS, DEATHS -> clickTop(player, slot);
             case TEAM -> clickTeam(player, slot);
@@ -251,14 +251,30 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
 
     private void openWarps(Player player) {
         Holder holder = new Holder(Page.WARPS);
-        Inventory gui = inventory(holder, 27, title("warps", "&6&l[ &e&lVELIORA &a&lWARP &6&l]"));
-        fill(gui);
-        addWarp(gui, 9, Material.GRASS_BLOCK, "lobby", "&a&lLOBBY");
-        addWarp(gui, 11, Material.SPAWNER, "dungeon", "&c&lDUNGEON");
-        addWarp(gui, 13, Material.DIAMOND_SWORD, "pvp", "&e&lPVP");
-        addWarp(gui, 15, Material.WHITE_BANNER, "guild", "&b&lGUILD");
-        addWarp(gui, 17, Material.FISHING_ROD, "fishing", "&3&lFISHING");
-        gui.setItem(22, back());
+        WarpModule module = module("warp", WarpModule.class);
+        List<String> names = module == null || module.getManager() == null
+                ? List.of() : new ArrayList<>(module.getManager().warpNames());
+        int size = Math.min(54, Math.max(27, ((names.size() + 8) / 9 + 2) * 9));
+        Inventory gui = inventory(holder, size, title("warps", "&1Veliora &bWarp"));
+        frame(gui);
+        int slot = 10;
+        for (String name : names) {
+            while (slot % 9 == 0 || slot % 9 == 8) slot++;
+            if (slot >= size - 9) break;
+            Material icon = switch (name) {
+                case "lobby" -> Material.GRASS_BLOCK;
+                case "dungeon" -> Material.SPAWNER;
+                case "pvp" -> Material.DIAMOND_SWORD;
+                case "guild" -> Material.WHITE_BANNER;
+                case "fishing" -> Material.FISHING_ROD;
+                default -> Material.ENDER_PEARL;
+            };
+            gui.setItem(slot, item(icon, "&b&l" + name.toUpperCase(Locale.ROOT),
+                    "&7Warp tersimpan dan siap digunakan.", "&eKlik untuk teleport."));
+            holder.actions.put(slot, name);
+            slot++;
+        }
+        gui.setItem(size - 5, back());
         player.openInventory(gui);
     }
 
@@ -269,16 +285,9 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
                 ready ? "&eKlik untuk teleport." : "&8Admin perlu mengatur lokasinya."));
     }
 
-    private void clickWarps(Player player, int slot) {
-        if (slot == 22) { openMain(player); return; }
-        String warp = switch (slot) {
-            case 9 -> "lobby";
-            case 11 -> "dungeon";
-            case 13 -> "pvp";
-            case 15 -> "guild";
-            case 17 -> "fishing";
-            default -> null;
-        };
+    private void clickWarps(Player player, Holder holder, int slot) {
+        if (slot == holder.inventory.getSize() - 5) { openMain(player); return; }
+        String warp = holder.actions.get(slot);
         if (warp == null) return;
         WarpModule module = module("warp", WarpModule.class);
         if (module == null || module.getManager() == null || !module.getManager().hasDirectAlias(warp)) {
@@ -592,6 +601,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
     }
     private static final class Holder implements InventoryHolder {
         private final Page page;
+        private final Map<Integer, String> actions = new HashMap<>();
         private Inventory inventory;
         private Holder(Page page) { this.page = page; }
         @Override public Inventory getInventory() { return inventory; }

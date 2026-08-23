@@ -4,6 +4,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,8 @@ public final class TraderCommand implements CommandExecutor, TabCompleter {
             manager.sendNoPermission(sender);
             return true;
         }
-        manager.sendStatus(sender);
+        if (sender instanceof Player player) manager.openGui(player);
+        else manager.sendStatus(sender);
         return true;
     }
 

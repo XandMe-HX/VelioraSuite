@@ -28,9 +28,12 @@ public final class KitsListener implements Listener {
 
         if (event.getView().getTopInventory().getHolder() instanceof KitPreviewManager.PreviewHolder previewHolder) {
             event.setCancelled(true);
-            if (event.getRawSlot() >= 0 && event.getRawSlot() < event.getView().getTopInventory().getSize()
-                    && previewHolder.isBackSlot(event.getRawSlot())) {
+            if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getView().getTopInventory().getSize()) return;
+            if (previewHolder.isBackSlot(event.getRawSlot())) {
                 kitsManager.openGui(player);
+            } else if (previewHolder.isClaimSlot(event.getRawSlot())) {
+                player.closeInventory();
+                kitsManager.claimKitFromGui(player, previewHolder.kitId());
             }
             return;
         }
@@ -65,7 +68,7 @@ public final class KitsListener implements Listener {
 
         if (click.isShiftClick()) {
             kitsManager.previewKit(player, kitId);
-            player.sendMessage(org.bukkit.ChatColor.AQUA + "Preview dibuka. Pembelian tidak dilakukan dari klik GUI; gunakan /kits claim " + kitId + " setelah yakin.");
+            player.sendMessage(org.bukkit.ChatColor.AQUA + "Periksa isinya, lalu tekan tombol hijau AMBIL KIT.");
             return;
         }
 
@@ -75,12 +78,8 @@ public final class KitsListener implements Listener {
         }
 
         if (click.isLeftClick()) {
-            if (kitsManager.isPaidKit(kitId)) {
-                kitsManager.previewKit(player, kitId);
-                player.sendMessage(org.bukkit.ChatColor.YELLOW + "Cek isi kit terlebih dahulu. Jika sudah yakin, gunakan /kits claim " + kitId + ".");
-                return;
-            }
-            kitsManager.claimKit(player, kitId);
+            kitsManager.previewKit(player, kitId);
+            player.sendMessage(org.bukkit.ChatColor.YELLOW + "Tekan tombol hijau AMBIL KIT jika sudah yakin.");
         }
     }
 

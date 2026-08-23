@@ -6,6 +6,7 @@ import id.velioragardens.veliorasuite.module.loginsecurity.model.AuthState;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
@@ -74,6 +75,7 @@ public final class LoginSecurityManager {
         send(player, data == null ? "need-register" : "need-login", data == null
                 ? "%prefix% &eSilakan daftar dengan &f/register <password> <password confirm>&e."
                 : "%prefix% &eSilakan login dengan &f/login <password>&e.", Map.of());
+        startTitleReminder(player, data == null);
 
         int timeout = configManager.getAuthTimeoutSeconds();
         if (timeout > 0) {
@@ -83,6 +85,18 @@ public final class LoginSecurityManager {
                 }
             }, timeout * 20L);
         }
+    }
+
+    private void startTitleReminder(Player player, boolean register) {
+        new BukkitRunnable() {
+            @Override public void run() {
+                if (!player.isOnline() || isAuthenticated(player)) { cancel(); return; }
+                String title = register ? "&eDAFTARKAN AKUN" : "&aLOGIN AKUN";
+                String subtitle = register ? "&f/register <password> <ulangi password>"
+                        : "&f/login <password> &8| &7Bantuan: TikTok Veliora Gardens Official";
+                player.sendTitle(configManager.color(title), configManager.color(subtitle), 5, 50, 5);
+            }
+        }.runTaskTimer(plugin, 1L, 40L);
     }
 
     public void handleQuit(Player player) {

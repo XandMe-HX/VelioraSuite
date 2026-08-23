@@ -31,7 +31,7 @@ settings:
   actionbar:
     enabled: true
     interval-ticks: 20
-    format: '&c❤ %health% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%'
+    format: '&c❤ %health%/%health_max% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%'
     disabled-worlds: []
 
   placeholderapi:

@@ -40,6 +40,7 @@ public final class BossConfigManager {
         config = YamlConfiguration.loadConfiguration(file);
         migrateBalanceV3(file);
         migrateStabilityV4(file);
+        migrateRuntimeV5(file);
         migrateBossBarV3(file);
         migrateArenaV4(file);
         migrateNotificationDefaults(file);
@@ -94,6 +95,22 @@ public final class BossConfigManager {
             plugin.getLogger().info("VelioraBoss: stabilitas v4 diterapkan (despawn 30 menit dan HP -20%).");
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraBoss: gagal menerapkan stabilitas v4: " + exception.getMessage());
+        }
+    }
+
+    /** Keeps existing custom bosses/rewards while applying the runtime safety fix. */
+    private void migrateRuntimeV5(File file) {
+        if (config.getInt("settings.balance-version", 0) >= 5) return;
+        config.set("settings.boss-size.min", 3.0D);
+        config.set("settings.boss-size.max", 6.0D);
+        config.set("settings.combat.outgoing-damage-multiplier", 0.85D);
+        config.set("settings.combat.anti-reach-enabled", false);
+        config.set("settings.balance-version", 5);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: runtime v5 diterapkan (cleanup pasti, ukuran 3-6, damage -15%, hit normal).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menyimpan runtime v5: " + exception.getMessage());
         }
     }
 
@@ -199,6 +216,8 @@ public final class BossConfigManager {
     public int maceSmashCharges() { return Math.max(1, integer("settings.combat.mace-smash-charges", 3)); }
     public int maceSmashCooldownSeconds() { return Math.max(60, integer("settings.combat.mace-smash-cooldown-seconds", 300)); }
     public double bossMeleeReach() { return Math.max(3.0D, number("settings.combat.melee-reach-limit", 6.5D)); }
+    public boolean bossAntiReachEnabled() { return bool("settings.combat.anti-reach-enabled", false); }
+    public double outgoingDamageMultiplier() { return clamp(number("settings.combat.outgoing-damage-multiplier", 0.85D), 0.05D, 1.0D); }
     public int invalidReachLimit() { return Math.max(3, integer("settings.combat.invalid-reach-limit", 8)); }
     public int invalidReachWindowSeconds() { return Math.max(5, integer("settings.combat.invalid-reach-window-seconds", 30)); }
     public int invalidReachDamageLockSeconds() { return Math.max(10, integer("settings.combat.invalid-reach-damage-lock-seconds", 120)); }

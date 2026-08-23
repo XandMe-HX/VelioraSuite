@@ -84,7 +84,9 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onAttack(EntityDamageByEntityEvent event) {
-        if (!enabled() || !(event.getDamager() instanceof Player player) || !(event.getEntity() instanceof LivingEntity target)) return;
+        // CombatGuard is a PvP guard. Counting mobs made ordinary sweeping-edge
+        // attacks in farms look like KillAura (several targets in one swing).
+        if (!enabled() || !(event.getDamager() instanceof Player player) || !(event.getEntity() instanceof Player target)) return;
         if (exempt(player, target)) return;
 
         long now = System.currentTimeMillis();
@@ -98,7 +100,7 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
         while (!hitTimes.isEmpty() && now - hitTimes.peekFirst() > 1000L) hitTimes.removeFirst();
 
         Map<UUID, Long> targets = recentTargets.computeIfAbsent(player.getUniqueId(), ignored -> new HashMap<>());
-        targets.entrySet().removeIf(entry -> now - entry.getValue() > 350L);
+        targets.entrySet().removeIf(entry -> now - entry.getValue() > 650L);
         targets.put(target.getUniqueId(), now);
 
         boolean bedrock = isBedrock(player);
@@ -115,7 +117,7 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
                 bedrock ? "settings.combat-guard.bedrock-minimum-facing-dot" : "settings.combat-guard.minimum-facing-dot",
                 bedrock ? -0.25D : 0.05D);
         boolean impossibleFacing = reach > 1.5D && facing < minimumFacing;
-        boolean multiAura = targets.size() >= config.config().getInt("settings.combat-guard.multi-target-count", 3);
+        boolean multiTarget = targets.size() >= config.config().getInt("settings.combat-guard.multi-target-count", 4);
         boolean autoClick = hitTimes.size() > config.config().getInt("settings.combat-guard.maximum-cps", 22);
         boolean stableTps = Bukkit.getTPS()[0] >= config.config().getDouble("settings.combat-guard.minimum-tps-for-geometry", 18.0D);
 
@@ -136,9 +138,12 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
             eventScore += bedrock ? 6 : 12;
             signals.add(String.format(Locale.US, "facing %.2f", facing));
         }
-        if (multiAura) {
-            eventScore += 32;
-            strongSignals++;
+        // Multi-target alone is only supporting evidence. It becomes strong only
+        // together with impossible geometry, preventing Java sweeping false alerts.
+        boolean multiAura = multiTarget && (hardReach || noSight || impossibleFacing);
+        if (multiTarget) {
+            eventScore += multiAura ? 18 : 3;
+            if (multiAura) strongSignals++;
             signals.add("multi-target " + targets.size());
         }
         if (autoClick) {

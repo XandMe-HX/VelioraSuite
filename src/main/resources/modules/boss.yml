@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  balance-version: 4
+  balance-version: 5
   # Memaksa tampilan BossBar lama ikut diperbarui sekali pada server yang sudah berjalan.
   bossbar-version: 3
   arena-version: 4
@@ -33,7 +33,7 @@ settings:
     console: false
   boss-size:
     random-enabled: true
-    min: 3.2
+    min: 3.0
     max: 6.0
   combat:
     # Semua HP definisi boss dikurangi 20% tanpa merusak data boss lama.
@@ -43,6 +43,10 @@ settings:
     knockback-resistance: 0.85
     # Collision dimatikan supaya hitbox boss besar tidak terus mendorong player.
     collision-enabled: false
+    # Semua serangan boss/skill dikurangi 15%.
+    outgoing-damage-multiplier: 0.85
+    # Hitbox entity berskala berbeda-beda; izinkan hit vanilla agar bow/sword/mace tidak ditolak.
+    anti-reach-enabled: false
     # Hard cap tetap berlaku walaupun config boss salah atau scaling diaktifkan.
     maximum-health: 10000
     # HP virtual dibuat ringkas agar raid tetap cepat dan seru.

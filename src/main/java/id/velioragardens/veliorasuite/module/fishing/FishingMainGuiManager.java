@@ -33,7 +33,7 @@ public final class FishingMainGuiManager implements Listener {
         inventory.setItem(20, item(Material.SUNFLOWER, "&6Fishing Coins", List.of("&7Saldo: &f" + manager.formattedCoins(player) + " Koin", "&7Terpisah aman dari Vault.")));
         inventory.setItem(22, item(Material.AMETHYST_SHARD, "&dRelic & Rod Enchant", List.of("&7Relic dapat ditemukan saat memancing.", "&7Sistem altar enchant tersedia bertahap.")));
         inventory.setItem(24, item(Material.POTION, "&bFishing Potions", List.of("&7Luck, Mutation, dan Lure Speed.", "&7Boost tidak menyentuh ekonomi utama.")));
-        inventory.setItem(31, item(Material.PLAYER_HEAD, "&fFishing Stats", List.of("&7Gunakan &f/fish top &7untuk data ranking.")));
+        inventory.setItem(31, item(Material.ANVIL, "&dRelic Altar", List.of("&7Gabungkan Fishing Rod + Relic", "&7menggunakan anvil vanilla.")));
         inventory.setItem(35, item(Material.BARRIER, "&cClose", List.of("&7Tutup menu.")));
         player.openInventory(inventory);
     }
@@ -53,7 +53,8 @@ public final class FishingMainGuiManager implements Listener {
             case 12 -> openNextTick(player, () -> manager.openRodShop(player));
             case 14 -> openNextTick(player, () -> manager.openQuestRodShop(player));
             case 15 -> openNextTick(player, () -> manager.openCollectionGui(player));
-            case 16, 31 -> openNextTick(player, () -> manager.sendTop(player));
+            case 16 -> openNextTick(player, () -> manager.sendTop(player));
+            case 22, 31 -> openNextTick(player, () -> manager.getRelicManager().openGuide(player));
             case 24 -> openNextTick(player, () -> manager.openPotionShop(player));
             case 35 -> player.closeInventory();
             default -> { }

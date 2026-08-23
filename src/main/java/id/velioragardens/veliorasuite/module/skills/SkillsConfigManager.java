@@ -44,7 +44,7 @@ public final class SkillsConfigManager {
 
     public boolean isActionBarEnabled() { return bool("settings.actionbar.enabled", true); }
     public int getActionBarIntervalTicks() { return Math.max(1, integer("settings.actionbar.interval-ticks", 20)); }
-    public String getActionBarFormat() { return str("settings.actionbar.format", "&c❤ %health% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%"); }
+    public String getActionBarFormat() { return str("settings.actionbar.format", "&c❤ %health%/%health_max% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%"); }
     public List<String> getDisabledWorlds() { return config == null ? List.of() : config.getStringList("settings.actionbar.disabled-worlds"); }
     public boolean isPlaceholderApiEnabled() { return bool("settings.placeholderapi.enabled", true); }
     public boolean isRegisterPlaceholders() { return bool("settings.placeholderapi.register-placeholders", true); }
@@ -87,7 +87,7 @@ public final class SkillsConfigManager {
         config.set("settings.abilities.fisher.cost", 5);
         config.set("settings.actionbar.enabled", true);
         config.set("settings.actionbar.interval-ticks", 20);
-        config.set("settings.actionbar.format", "&c❤ %health% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%");
+        config.set("settings.actionbar.format", "&c❤ %health%/%health_max% &8| &e⛃ &f%vault_eco_balance_formatted% &8| &a%player_ping%ms &8| &b☯ &f%veliorasuite_mana%/%veliorasuite_mana_max%");
         if (!config.isList("settings.actionbar.disabled-worlds")) {
             config.set("settings.actionbar.disabled-worlds", List.of());
         }

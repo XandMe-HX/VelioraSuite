@@ -36,6 +36,7 @@ public final class QuestConfigManager {
         this.config = YamlConfiguration.loadConfiguration(file);
         migrateAutomaticProgressionV2(file);
         migrateRewardsV3(file);
+        migrateSkillGrowthV4(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -64,6 +65,10 @@ public final class QuestConfigManager {
     public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }
     public int getManaLevelInterval() { return Math.max(1, integer("settings.rewards.mana-level-interval", 5)); }
     public int getManaLevelBonus() { return Math.max(0, integer("settings.rewards.mana-level-bonus", 1)); }
+    public int getMilestoneLevelInterval() { return Math.max(1, integer("settings.rewards.milestone-level-interval", 5)); }
+    public int getHunterHealthLevelInterval() { return Math.max(1, integer("settings.rewards.hunter-health-level-interval", 2)); }
+    public double getHunterHealthBonus() { return Math.max(0.0D, config.getDouble("settings.rewards.hunter-health-bonus", 1.0D)); }
+    public double getHunterHealthCap() { return Math.max(20.0D, config.getDouble("settings.rewards.hunter-health-cap", 40.0D)); }
     public int getMilestoneMaxMultiplier() { return Math.max(1, integer("settings.rewards.milestone-max-multiplier", 3)); }
     public boolean isStarterEnabled() { return bool("settings.starter.enabled", true); }
     public boolean isStarterReminderEnabled() { return bool("settings.starter.reminder-enabled", true); }
@@ -99,7 +104,7 @@ public final class QuestConfigManager {
     }
 
     public int getMilestoneRewardMultiplier(int level) {
-        if (!isManaBonusLevel(level)) return 0;
+        if (level <= 0 || level % getMilestoneLevelInterval() != 0) return 0;
         return Math.min(getMilestoneMaxMultiplier(), 1 + (level / 10));
     }
 
@@ -213,6 +218,22 @@ public final class QuestConfigManager {
             plugin.getLogger().info("VelioraQuest: reward v3 diterapkan (Mana +5, money 500-10000).");
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraQuest: gagal menyimpan migrasi reward v3: " + exception.getMessage());
+        }
+    }
+
+    private void migrateSkillGrowthV4(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 4) return;
+        config.set("settings.rewards.mana-level-interval", 1);
+        config.set("settings.rewards.milestone-level-interval", 5);
+        config.set("settings.rewards.hunter-health-level-interval", 2);
+        config.set("settings.rewards.hunter-health-bonus", 1.0D);
+        config.set("settings.rewards.hunter-health-cap", 40.0D);
+        config.set("settings.progression.config-version", 4);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraQuest: pertumbuhan v4 diterapkan (Mana tiap level, HP Hunter tiap 2 level).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal menyimpan pertumbuhan v4: " + exception.getMessage());
         }
     }
 
