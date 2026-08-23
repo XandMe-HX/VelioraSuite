@@ -90,18 +90,10 @@ public final class ChatModule implements VelioraModule {
     }
 
     private void registerPlaceholderExpansion() {
-        if (!chatManager.getConfigManager().isUsePlaceholderApi() || Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
-            return;
-        }
-
-        try {
-            placeholderExpansion = new id.velioragardens.veliorasuite.module.chat.placeholder.VelioraPlaceholderExpansion(plugin, chatManager.getPlaceholderManager());
-            placeholderExpansion.getClass().getMethod("register").invoke(placeholderExpansion);
-            plugin.getLogger().info("VelioraChat PlaceholderAPI expansion registered: veliorasuite.");
-        } catch (ReflectiveOperationException | LinkageError exception) {
-            placeholderExpansion = null;
-            plugin.getLogger().warning("VelioraChat: gagal register PlaceholderAPI expansion. PlaceholderAPI akan dilewati.");
-        }
+        // VelioraSuite owns the single persistent %veliorasuite_*% expansion.
+        // Registering a second expansion with the same identifier here made
+        // PlaceholderAPI/TAB resolve the identifier inconsistently after reloads.
+        placeholderExpansion = null;
     }
 
     private void unregisterPlaceholderExpansion() {
