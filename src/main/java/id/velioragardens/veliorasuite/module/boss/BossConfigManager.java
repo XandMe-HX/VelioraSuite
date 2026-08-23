@@ -41,6 +41,7 @@ public final class BossConfigManager {
         migrateBalanceV3(file);
         migrateStabilityV4(file);
         migrateRuntimeV5(file);
+        migrateTeamRewardsV6(file);
         migrateBossBarV3(file);
         migrateArenaV4(file);
         migrateNotificationDefaults(file);
@@ -111,6 +112,26 @@ public final class BossConfigManager {
             plugin.getLogger().info("VelioraBoss: runtime v5 diterapkan (cleanup pasti, ukuran 3-6, damage -15%, hit normal).");
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraBoss: gagal menyimpan runtime v5: " + exception.getMessage());
+        }
+    }
+
+    /** Makes team boss rewards fair and useful on existing installations. */
+    private void migrateTeamRewardsV6(File file) {
+        if (config.getInt("settings.reward-version", 0) >= 6) return;
+        config.set("rewards.min-damage-to-reward", 1.0D);
+        config.set("rewards.min-damage-contribution-percent", 1.0D);
+        config.set("rewards.team-bonus.enabled", true);
+        config.set("rewards.team-bonus.minimum-eligible-members", 2);
+        config.set("rewards.team-bonus.per-member.min", 18_000);
+        config.set("rewards.team-bonus.per-member.max", 22_000);
+        config.set("rewards.money-total-cap.enabled", true);
+        config.set("rewards.money-total-cap.max-per-player", 22_000);
+        config.set("settings.reward-version", 6);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraBoss: reward team v6 diterapkan (bagian setara sekitar 20K per kontributor).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraBoss: gagal menyimpan migrasi reward team v6.");
         }
     }
 
@@ -296,6 +317,8 @@ public final class BossConfigManager {
     public int teamBonusMinimumMembers() { return Math.max(2, integer("rewards.team-bonus.minimum-eligible-members", 2)); }
     public long teamBonusPoolMin() { return clampMoney(integer("rewards.team-bonus.pool.min", 1_500)); }
     public long teamBonusPoolMax() { return Math.max(teamBonusPoolMin(), clampMoney(integer("rewards.team-bonus.pool.max", 3_000))); }
+    public long teamRewardPerMemberMin() { return clampMoney(integer("rewards.team-bonus.per-member.min", 18_000)); }
+    public long teamRewardPerMemberMax() { return Math.max(teamRewardPerMemberMin(), clampMoney(integer("rewards.team-bonus.per-member.max", 22_000))); }
     public boolean preventBlockDamage() { return bool("protection.prevent-block-damage", true); }
     public boolean allowBossDamageInProtectedRegion() { return bool("protection.allow-boss-damage-in-protected-region", true); }
     public Map<String, BossDefinition> bosses() { return bosses; }

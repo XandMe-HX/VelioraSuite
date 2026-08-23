@@ -25,6 +25,7 @@ import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -101,22 +102,22 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
         if (!player.hasPermission("veliorasuite.npc.admin")) { msg(player, "&cKamu tidak punya izin."); return true; }
         if (args.length == 0) { help(player); return true; }
         String sub = args[0].toLowerCase(Locale.ROOT);
-        if (sub.equals("create") && args.length >= 4) {
+        if (sub.equals("create") && args.length >= 3) {
             String id = safe(args[1]);
             if (id.isBlank() || npcs.containsKey(id)) { msg(player, "&cID tidak valid atau sudah dipakai."); return true; }
             String kind = args[2].toUpperCase(Locale.ROOT);
             if (!List.of("PLAYER", "HEWAN", "MOBS").contains(kind)) { msg(player, "&cJenis: PLAYER, HEWAN, atau MOBS."); return true; }
-            String name = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+            String name = args.length >= 4 ? String.join(" ", Arrays.copyOfRange(args, 3, args.length)) : args[1];
             Location l = player.getLocation();
             Npc npc = new Npc(id, kind, name, l.getWorld().getUID(), l.getWorld().getName(), l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch(), new ArrayList<>(List.of(name)), kind.equals("PLAYER") ? name : "", "");
             npcs.put(id, npc); save(); spawn(npc); msg(player, "&aNPC &f" + id + " &aberhasil dibuat."); return true;
         }
-        if (sub.equals("delete") && args.length >= 2) {
+        if ((sub.equals("delete") || sub.equals("remove") || sub.equals("del")) && args.length >= 2) {
             Npc removed = npcs.remove(safe(args[1]));
             if (removed == null) { msg(player, "&cNPC tidak ditemukan."); return true; }
             remove(removed.id); save(); msg(player, "&aNPC dihapus."); return true;
         }
-        if (sub.equals("move") && args.length >= 2) {
+        if ((sub.equals("move") || sub.equals("movehere") || sub.equals("tp")) && args.length >= 2) {
             Npc old = npcs.get(safe(args[1])); if (old == null) { msg(player, "&cNPC tidak ditemukan."); return true; }
             Location l = player.getLocation(); Npc moved = old.at(l); npcs.put(old.id, moved); remove(old.id); spawn(moved); save(); msg(player, "&aNPC dipindahkan."); return true;
         }
@@ -124,12 +125,12 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
             Npc old = npcs.get(safe(args[1])); if (old == null || !old.kind.equals("PLAYER")) { msg(player, "&cNPC PLAYER tidak ditemukan."); return true; }
             Npc changed = old.withSkin(args[2]); npcs.put(old.id, changed); remove(old.id); spawn(changed); save(); msg(player, "&aSkin kepala mengikuti profil &f" + args[2] + "&a."); return true;
         }
-        if (sub.equals("action") && args.length >= 3) {
+        if ((sub.equals("action") || sub.equals("command") || sub.equals("cmd")) && args.length >= 3) {
             Npc old = npcs.get(safe(args[1])); if (old == null) { msg(player, "&cNPC tidak ditemukan."); return true; }
             String action = String.join(" ", Arrays.copyOfRange(args, 2, args.length)); if (action.startsWith("/")) action = action.substring(1);
-            npcs.put(old.id, old.withAction(action)); save(); msg(player, "&aAksi klik diatur ke &f/" + action); return true;
+            npcs.put(old.id, old.withAction(action)); save(); msg(player, "&aAksi klik diatur ke &f" + action); return true;
         }
-        if (sub.equals("lines") && args.length >= 3) {
+        if ((sub.equals("lines") || sub.equals("line")) && args.length >= 3) {
             Npc old = npcs.get(safe(args[1])); if (old == null) { msg(player, "&cNPC tidak ditemukan."); return true; }
             String operation = args[2].toLowerCase(Locale.ROOT); List<String> lines = new ArrayList<>(old.lines);
             if (operation.equals("add") && args.length >= 4) lines.add(String.join(" ", Arrays.copyOfRange(args, 3, args.length)).replace('-', ' '));
@@ -151,9 +152,14 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
 
     @EventHandler public void onInteract(PlayerInteractAtEntityEvent event) {
         String id = event.getRightClicked().getPersistentDataContainer().get(npcKey, PersistentDataType.STRING);
-        if (id == null) return; event.setCancelled(true);
-        Npc npc = npcs.get(id); if (npc != null && !npc.action.isBlank()) event.getPlayer().performCommand(npc.action);
+        if (id == null) return; event.setCancelled(true);runAction(event.getPlayer(),id);
     }
+
+    @EventHandler public void onHit(EntityDamageByEntityEvent event) {
+        String id=event.getEntity().getPersistentDataContainer().get(npcKey,PersistentDataType.STRING);if(id==null)return;event.setCancelled(true);if(event.getDamager() instanceof Player player)runAction(player,id);
+    }
+
+    private void runAction(Player player,String id){Npc npc=npcs.get(id);if(npc==null||npc.action.isBlank())return;String action=npc.action.replace("%player%",player.getName());if(action.toLowerCase(Locale.ROOT).startsWith("console:")){Bukkit.dispatchCommand(Bukkit.getConsoleSender(),action.substring(8).trim());return;}if(action.toLowerCase(Locale.ROOT).startsWith("player:"))action=action.substring(7).trim();if(action.startsWith("/"))action=action.substring(1);player.performCommand(action);}
 
     private void spawn(Npc npc) {
         World world = Bukkit.getWorld(npc.world); if (world == null) world = Bukkit.getWorld(npc.worldName); if (world == null) return;
@@ -183,11 +189,11 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
         YamlConfiguration out = new YamlConfiguration(); for (Npc n : npcs.values()) { String p = "npcs." + n.id + "."; out.set(p+"kind",n.kind); out.set(p+"name",n.name); out.set(p+"world",n.world.toString()); out.set(p+"world-name",n.worldName); out.set(p+"x",n.x); out.set(p+"y",n.y); out.set(p+"z",n.z); out.set(p+"yaw",n.yaw); out.set(p+"pitch",n.pitch); out.set(p+"lines",n.lines); out.set(p+"skin",n.skin); out.set(p+"action",n.action); }
         try { File parent=file.getParentFile(); if(parent!=null) parent.mkdirs(); out.save(file); data=out; } catch (IOException e) { plugin.getLogger().warning("VGNPC gagal menyimpan: "+e.getMessage()); }
     }
-    private void help(Player p) { for (String s : List.of("&bVGNPC", "&f/vgnpc create <id> <PLAYER|HEWAN|MOBS> <nama>", "&f/vgnpc lines <id> <add|set|remove|clear> ...", "&f/vgnpc skin <id> <nama>", "&f/vgnpc action <id> <command>", "&f/vgnpc move|delete|list|reload")) msg(p,s); }
+    private void help(Player p) { for (String s : List.of("&bVGNPC", "&f/vgnpc create <id> <PLAYER|HEWAN|MOBS> [nama]", "&f/vgnpc lines <id> add <teks>", "&f/vgnpc lines <id> set <nomor> <teks>", "&f/vgnpc lines <id> remove <nomor>", "&f/vgnpc lines <id> clear", "&f/vgnpc skin <id> <nama>", "&f/vgnpc action <id> <command>", "&7Gunakan console:<command> untuk aksi console dan %player% untuk nama pemain.", "&f/vgnpc move <id>", "&f/vgnpc delete <id>", "&f/vgnpc list", "&f/vgnpc reload")) msg(p,s); }
     private void msg(CommandSender s,String m){s.sendMessage(color("&8[&bVGNPC&8] &r"+m));}
     private String color(String s){return ChatColor.translateAlternateColorCodes('&',s==null?"":s);}
     private String safe(String s){return s==null?"":s.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]","");}
-    @Override public List<String> onTabComplete(CommandSender s,Command c,String a,String[] args){ if(args.length==1)return List.of("create","delete","move","lines","skin","action","list","reload"); if(args.length==2&&!args[0].equalsIgnoreCase("create"))return new ArrayList<>(npcs.keySet()); if(args.length==3&&args[0].equalsIgnoreCase("create"))return List.of("PLAYER","HEWAN","MOBS"); if(args.length==3&&args[0].equalsIgnoreCase("lines"))return List.of("add","set","remove","clear"); return List.of(); }
+    @Override public List<String> onTabComplete(CommandSender s,Command c,String a,String[] args){ if(args.length==1)return List.of("create","delete","move","lines","skin","action","list","reload"); if(args.length==2&&!args[0].equalsIgnoreCase("create"))return new ArrayList<>(npcs.keySet()); if(args.length==3&&args[0].equalsIgnoreCase("create"))return List.of("PLAYER","HEWAN","MOBS"); if(args.length==3&&(args[0].equalsIgnoreCase("lines")||args[0].equalsIgnoreCase("line")))return List.of("add","set","remove","clear"); return List.of(); }
 
     private record Npc(String id,String kind,String name,UUID world,String worldName,double x,double y,double z,float yaw,float pitch,List<String> lines,String skin,String action){
         private Npc { lines=List.copyOf(lines); }

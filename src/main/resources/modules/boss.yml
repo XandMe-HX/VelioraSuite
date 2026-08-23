@@ -404,15 +404,18 @@ rewards:
       min: 100
       max: 100
   team-bonus:
-    enabled: false
-    # Uang bonus team dimatikan; hadiah utama adalah item untuk setiap peserta.
+    enabled: true
+    # Semua anggota team yang ikut memberi damage memperoleh bagian sama.
     minimum-eligible-members: 2
+    per-member:
+      min: 18000
+      max: 22000
     pool:
       min: 0
       max: 0
   money-total-cap:
     enabled: true
-    max-per-player: 2000
+    max-per-player: 22000
   materials:
     common:
       diamond: 0
