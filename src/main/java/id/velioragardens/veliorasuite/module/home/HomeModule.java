@@ -30,6 +30,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -55,11 +56,12 @@ public final class HomeModule implements VelioraModule, Listener, CommandExecuto
     private final Map<UUID, LinkedHashMap<String, Home>> homes = new HashMap<>();
     private final Set<UUID> deleteMode = new LinkedHashSet<>();
     private File file;
+    private boolean essentialsImported;
     private boolean enabled;
 
     public HomeModule(VelioraSuite plugin){this.plugin=plugin;}
     @Override public String getName(){return "home";}
-    @Override public void load(){file=new File(plugin.getDataFolder(),"data/homes.yml"); loadData();}
+    @Override public void load(){file=new File(plugin.getDataFolder(),"data/homes.yml"); loadData();importEssentialsHomes();}
     @Override public void enable(){enabled=true; for(String c:List.of("sethome","home","homes","delhome","homemanager"))register(c); Bukkit.getPluginManager().registerEvents(this,plugin); if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI")!=null)new HomeExpansion().register();}
     @Override public void disable(){enabled=false; HandlerList.unregisterAll(this); save(); for(String c:List.of("sethome","home","homes","delhome","homemanager")){PluginCommand pc=plugin.getCommand(c);if(pc!=null){DisabledCommand d=new DisabledCommand(plugin,"VelioraHome");pc.setExecutor(d);pc.setTabCompleter(d);}}}
     @Override public void reload(){save();loadData();}
@@ -89,8 +91,18 @@ public final class HomeModule implements VelioraModule, Listener, CommandExecuto
     private Inventory gui(Holder h,int size,String title){Inventory i=Bukkit.createInventory(h,size,color(title));h.inv=i;return i;}private void fill(Inventory i){ItemStack pane=item(Material.BLUE_STAINED_GLASS_PANE," ",List.of());for(int s=0;s<i.getSize();s++)i.setItem(s,pane);}private void frame(Inventory i){ItemStack pane=item(Material.BLUE_STAINED_GLASS_PANE," ",List.of());for(int s=0;s<i.getSize();s++){int r=s/9,c=s%9;if(r==0||r==i.getSize()/9-1||c==0||c==8)i.setItem(s,pane);}}
     private void put(Inventory i,Holder h,int slot,Material m,String name,String action,String...lore){i.setItem(slot,item(m,name,List.of(lore)));h.actions.put(slot,action);}private ItemStack item(Material m,String name,List<String> lore){ItemStack s=new ItemStack(m);ItemMeta meta=s.getItemMeta();meta.setDisplayName(color(name));meta.setLore(color(lore));s.setItemMeta(meta);return s;}
     private void register(String name){PluginCommand c=plugin.getCommand(name);if(c!=null){c.setExecutor(this);c.setTabCompleter(this);}}
-    private void loadData(){homes.clear();YamlConfiguration y=YamlConfiguration.loadConfiguration(file);ConfigurationSection root=y.getConfigurationSection("players");if(root==null)return;for(String uid:root.getKeys(false)){try{UUID id=UUID.fromString(uid);LinkedHashMap<String,Home> map=new LinkedHashMap<>();ConfigurationSection hs=root.getConfigurationSection(uid+".homes");if(hs!=null)for(String n:hs.getKeys(false)){String p="players."+uid+".homes."+n+".";map.put(n,new Home(n,UUID.fromString(y.getString(p+"world")),y.getString(p+"world-name","world"),y.getDouble(p+"x"),y.getDouble(p+"y"),y.getDouble(p+"z"),(float)y.getDouble(p+"yaw"),(float)y.getDouble(p+"pitch")));}homes.put(id,map);}catch(Exception e){plugin.getLogger().warning("Home rusak dilewati: "+uid);}}}
-    private void save(){YamlConfiguration y=new YamlConfiguration();for(var entry:homes.entrySet())for(Home h:entry.getValue().values()){String p="players."+entry.getKey()+".homes."+h.name+".";y.set(p+"world",h.world.toString());y.set(p+"world-name",h.worldName);y.set(p+"x",h.x);y.set(p+"y",h.y);y.set(p+"z",h.z);y.set(p+"yaw",h.yaw);y.set(p+"pitch",h.pitch);}try{File par=file.getParentFile();if(par!=null)par.mkdirs();y.save(file);}catch(IOException e){plugin.getLogger().warning("Gagal menyimpan homes: "+e.getMessage());}}
+    private void loadData(){homes.clear();YamlConfiguration y=YamlConfiguration.loadConfiguration(file);essentialsImported=y.getBoolean("meta.essentials-imported",false);ConfigurationSection root=y.getConfigurationSection("players");if(root==null)return;for(String uid:root.getKeys(false)){try{UUID id=UUID.fromString(uid);LinkedHashMap<String,Home> map=new LinkedHashMap<>();ConfigurationSection hs=root.getConfigurationSection(uid+".homes");if(hs!=null)for(String n:hs.getKeys(false)){String p="players."+uid+".homes."+n+".";map.put(n,new Home(n,UUID.fromString(y.getString(p+"world")),y.getString(p+"world-name","world"),y.getDouble(p+"x"),y.getDouble(p+"y"),y.getDouble(p+"z"),(float)y.getDouble(p+"yaw"),(float)y.getDouble(p+"pitch")));}homes.put(id,map);}catch(Exception e){plugin.getLogger().warning("Home rusak dilewati: "+uid);}}}
+    private void importEssentialsHomes(){
+        if(essentialsImported)return;
+        org.bukkit.plugin.Plugin essentials=Bukkit.getPluginManager().getPlugin("Essentials");
+        if(!(essentials instanceof JavaPlugin essentialsPlugin))return;
+        File folder=new File(essentialsPlugin.getDataFolder(),"userdata");File[] files=folder.listFiles((dir,name)->name.toLowerCase(Locale.ROOT).endsWith(".yml"));if(files==null)return;
+        int imported=0;
+        for(File source:files){String filename=source.getName();try{UUID owner=UUID.fromString(filename.substring(0,filename.length()-4));YamlConfiguration y=YamlConfiguration.loadConfiguration(source);ConfigurationSection section=y.getConfigurationSection("homes");if(section==null)continue;LinkedHashMap<String,Home> target=homes.computeIfAbsent(owner,x->new LinkedHashMap<>());for(String rawName:section.getKeys(false)){String name=safe(rawName);if(name.isBlank()||target.containsKey(name))continue;String p="homes."+rawName+".";String rawWorld=y.getString(p+"world",y.getString(p+"world-name","world"));World world=world(rawWorld);String worldName=world==null?rawWorld:world.getName();UUID worldId=world==null?null:world.getUID();if(worldId==null){try{worldId=UUID.fromString(rawWorld);}catch(Exception ignored){World fallback=Bukkit.getWorld(worldName);if(fallback!=null)worldId=fallback.getUID();}}if(worldId==null)continue;target.put(name,new Home(name,worldId,worldName,y.getDouble(p+"x"),y.getDouble(p+"y"),y.getDouble(p+"z"),(float)y.getDouble(p+"yaw"),(float)y.getDouble(p+"pitch")));imported++;}}catch(Exception exception){plugin.getLogger().warning("Home Essentials gagal diimpor dari "+filename+": "+exception.getMessage());}}
+        essentialsImported=true;save();plugin.getLogger().info("VelioraHome: "+imported+" home lama EssentialsX berhasil diimpor tanpa menimpa data Veliora.");
+    }
+    private World world(String value){if(value==null||value.isBlank())return null;try{World byId=Bukkit.getWorld(UUID.fromString(value));if(byId!=null)return byId;}catch(Exception ignored){}return Bukkit.getWorld(value);}
+    private void save(){YamlConfiguration y=new YamlConfiguration();y.set("meta.essentials-imported",essentialsImported);for(var entry:homes.entrySet())for(Home h:entry.getValue().values()){String p="players."+entry.getKey()+".homes."+h.name+".";y.set(p+"world",h.world.toString());y.set(p+"world-name",h.worldName);y.set(p+"x",h.x);y.set(p+"y",h.y);y.set(p+"z",h.z);y.set(p+"yaw",h.yaw);y.set(p+"pitch",h.pitch);}try{File par=file.getParentFile();if(par!=null)par.mkdirs();y.save(file);}catch(IOException e){plugin.getLogger().warning("Gagal menyimpan homes: "+e.getMessage());}}
     private String safe(String s){return s==null?"":s.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]","");}private String color(String s){return ChatColor.translateAlternateColorCodes('&',s==null?"":s);}private List<String> color(List<String> s){return s.stream().map(this::color).toList();}private void msg(Player p,String s){p.sendMessage(color("&8[&bVelioraHome&8] &r"+s));}
     @Override public List<String> onTabComplete(CommandSender s,Command c,String a,String[] args){if(!(s instanceof Player p)||args.length!=1)return List.of();return new ArrayList<>(homes.getOrDefault(p.getUniqueId(),new LinkedHashMap<>()).keySet());}
     private record Home(String name,UUID world,String worldName,double x,double y,double z,float yaw,float pitch){}

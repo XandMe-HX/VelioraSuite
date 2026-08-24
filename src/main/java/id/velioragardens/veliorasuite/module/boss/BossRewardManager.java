@@ -53,10 +53,11 @@ public final class BossRewardManager {
             BossDamageTracker.Entry entry = top.get(rankIndex);
             Player player = Bukkit.getPlayer(entry.uuid());
             double damagePercent = (entry.damage() / totalDamage) * 100.0D;
-            if (!eligible(player, deathLocation, entry.damage(), definition.id())
-                    || damagePercent < config.minDamageContributionPercent()) continue;
-
             Team team = findTeam(entry.uuid());
+            if (!eligible(player, deathLocation, entry.damage(), definition.id())) continue;
+            // A team contributor is not discarded merely because stronger members
+            // reduced their percentage below the solo contribution threshold.
+            if (team == null && damagePercent < config.minDamageContributionPercent()) continue;
             String teamName = team == null ? "" : team.getName();
             long personal = calculatePersonalReward(definition, rankIndex, damagePercent);
             plans.put(entry.uuid(), new RewardPlan(player, entry, rankIndex, damagePercent, personal, teamName));
@@ -66,7 +67,8 @@ public final class BossRewardManager {
         Map<UUID, Long> teamBonuses = calculateTeamBonuses(eligibleByTeam);
         Map<UUID, Long> plannedRewards = new HashMap<>();
         for (Map.Entry<UUID, RewardPlan> entry : plans.entrySet()) {
-            long reward = entry.getValue().personalReward() + teamBonuses.getOrDefault(entry.getKey(), 0L);
+            long teamReward = teamBonuses.getOrDefault(entry.getKey(), 0L);
+            long reward = teamReward > 0L ? teamReward : entry.getValue().personalReward();
             if (reward > 0L) reward = Math.max(500L, reward);
             if (config.moneyTotalCapEnabled()) reward = Math.min(reward, config.moneyTotalCapMax());
             plannedRewards.put(entry.getKey(), reward);
@@ -124,8 +126,9 @@ public final class BossRewardManager {
         if (!config.teamBonusEnabled()) return result;
         for (List<UUID> members : eligibleByTeam.values()) {
             if (members.size() < config.teamBonusMinimumMembers()) continue;
-            long pool = randomMoney(config.teamBonusPoolMin(), config.teamBonusPoolMax());
-            long share = Math.max(1L, pool / members.size());
+            // One equal roll per team, then the same amount is paid to every
+            // eligible contributor. This avoids damage rank deciding team pay.
+            long share = randomMoney(config.teamRewardPerMemberMin(), config.teamRewardPerMemberMax());
             for (UUID uuid : members) result.put(uuid, share);
         }
         return result;
