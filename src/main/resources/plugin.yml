@@ -207,7 +207,8 @@ commands:
     permission: veliorasuite.adventure.use
   vgnpc:
     description: Membuat dan mengelola NPC ringan Veliora.
-    usage: /vgnpc <create|delete|move|lines|skin|action|list|reload>
+    usage: /vgnpc <create|delete|list|move|teleport|type|lines|skin|height|action>
+    aliases: [znpcs]
     permission: veliorasuite.npc.admin
   sethome:
     description: Simpan home Veliora.
