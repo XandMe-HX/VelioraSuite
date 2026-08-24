@@ -201,7 +201,7 @@ public final class TraderManager {
 
         List<TraderTradeItem> selected = new ArrayList<>();
         selectCategory(pool, selected, List.of("builder_supply", "mining_supply", "explorer_supply", "experience_supply", "ender_supply", "diamond_pack_x64"), 2);
-        selectCategory(pool, selected, List.of("enchanted_shulker", "guardian_shield", "ocean_crown", "windwalker_boots", "silk_touch_relic", "aether_pickaxe"), 2);
+        selectCategory(pool, selected, List.of("guardian_shield", "ocean_crown", "windwalker_boots", "silk_touch_relic", "aether_pickaxe"), 2);
         selectCategory(pool, selected, List.of("excalibur", "angel_of_death_bow", "trisula_poseidon", "kapak_leviathan", "ancient_mace", "ryujin_no_tsuri", "skybound_wings"), 1);
 
         Collections.shuffle(pool);

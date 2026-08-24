@@ -123,6 +123,8 @@ public final class TraderSpawnManager {
                 nowMillis,
                 zoneId(),
                 configManager.getIntervalHours(),
+                configManager.getIntervalDays(),
+                configManager.getSpawnDayOfWeek(),
                 configManager.getAnchorHour(),
                 configManager.getActiveMinutes(),
                 includeActiveWindow
