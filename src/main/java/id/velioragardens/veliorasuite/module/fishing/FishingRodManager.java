@@ -18,6 +18,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.Location;
+import org.bukkit.util.Vector;
 import id.velioragardens.veliorasuite.module.fishing.model.FishingRodDefinition;
 
 import java.util.List;
@@ -74,12 +76,7 @@ public final class FishingRodManager implements Listener {
         }
         // Tier 9-12: sayap partikel tipis di belakang badan.
         if (tier <= 12) {
-            for (int i = 0; i < 4; i++) {
-                double x = 0.22D + i * 0.13D;
-                double y = 1.1D + Math.sin(phase + i * 0.7D) * 0.16D + i * 0.05D;
-                player.getWorld().spawnParticle(particle, player.getLocation().add(x, y, 0.18D), 1, 0, 0, 0, 0);
-                player.getWorld().spawnParticle(particle, player.getLocation().add(-x, y, 0.18D), 1, 0, 0, 0, 0);
-            }
+            wings(player, particle, phase, 5, 0.58D, 1.08D);
             return;
         }
         // Tier 13-16: halo/crown di atas kepala dengan dua kilau kecil.
@@ -90,12 +87,7 @@ public final class FishingRodManager implements Listener {
             return;
         }
         // Tier 17+: sayap malaikat + lingkaran mahkota; efek tertinggi.
-        for (int i = 0; i < 4; i++) {
-            double x = 0.24D + i * 0.15D;
-            double y = 1.08D + Math.sin(phase + i * 0.7D) * 0.18D + i * 0.08D;
-            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(x, y, 0.18D), 1, 0, 0, 0, 0);
-            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(-x, y, 0.18D), 1, 0, 0, 0, 0);
-        }
+        wings(player, Particle.END_ROD, phase, 7, 0.78D, 1.04D);
         for (int i = 0; i < 6; i++) point(player, Particle.ELECTRIC_SPARK, phase + i * Math.PI / 3.0D, 0.48D, 2.18D);
     }
 
@@ -165,12 +157,7 @@ public final class FishingRodManager implements Listener {
                 point(player, particle, angle + Math.PI, 0.55D, 0.45D + i * 0.14D);
             }
         } else if (tier <= 16) {
-            for (int i = 0; i < 7; i++) {
-                double x = 0.28D + i * 0.13D;
-                double y = 1.45D + Math.sin(i * 0.65D) * 0.35D;
-                player.getWorld().spawnParticle(particle, player.getLocation().add(x, y, 0), 1, 0, 0, 0, 0);
-                player.getWorld().spawnParticle(particle, player.getLocation().add(-x, y, 0), 1, 0, 0, 0, 0);
-            }
+            wings(player, particle, phase, 7, 0.82D, 1.12D);
         } else {
             for (int i = 0; i < 12; i++) point(player, particle, phase + i * Math.PI / 6.0D, 0.62D, 2.05D);
             player.getWorld().spawnParticle(particle, player.getLocation().add(0.38D, 2.35D, 0), 2, 0.03D, 0.18D, 0.03D, 0);
@@ -295,6 +282,33 @@ public final class FishingRodManager implements Listener {
                 Math.sin(angle) * radius), 1, 0, 0, 0, 0);
     }
 
+    /** Places a mirrored wing in coordinates relative to the player's yaw. */
+    private void wings(Player player, Particle particle, double phase, int feathers, double width, double baseY) {
+        for (int i = 0; i < feathers; i++) {
+            double progress = feathers <= 1 ? 0.0D : (double) i / (feathers - 1);
+            double side = 0.20D + progress * width;
+            double y = baseY + Math.sin(progress * Math.PI) * 0.48D
+                    + Math.sin(phase + i * 0.55D) * 0.055D;
+            double behind = -0.18D - progress * 0.22D;
+            spawnLocal(player, particle, side, y, behind);
+            spawnLocal(player, particle, -side, y, behind);
+            if (i > 1) {
+                spawnLocal(player, particle, side * 0.88D, y - 0.16D, behind - 0.04D);
+                spawnLocal(player, particle, -side * 0.88D, y - 0.16D, behind - 0.04D);
+            }
+        }
+    }
+
+    private void spawnLocal(Player player, Particle particle, double rightOffset, double y, double forwardOffset) {
+        Vector forward = player.getEyeLocation().getDirection().clone().setY(0);
+        if (forward.lengthSquared() < 0.0001D) forward.setZ(1);
+        forward.normalize();
+        Vector right = new Vector(-forward.getZ(), 0, forward.getX());
+        Location point = player.getLocation().clone().add(0, y, 0)
+                .add(right.multiply(rightOffset)).add(forward.multiply(forwardOffset));
+        player.getWorld().spawnParticle(particle, point, 1, 0, 0, 0, 0);
+    }
+
     private ItemStack createRod(Player owner, FishingRodDefinition rod) {
         ItemStack item = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = item.getItemMeta();
@@ -310,6 +324,7 @@ public final class FishingRodManager implements Listener {
         meta.getPersistentDataContainer().set(tierKey, PersistentDataType.INTEGER, rod.tier());
         meta.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owner.getUniqueId().toString());
         applyRodEnchantments(meta, rod.tier());
+        meta.setUnbreakable(true);
         item.setItemMeta(meta);
         return item;
     }

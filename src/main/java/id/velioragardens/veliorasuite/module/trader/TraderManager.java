@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 
 public final class TraderManager {
 
@@ -47,8 +51,7 @@ public final class TraderManager {
         dataManager.load();
         cleanupPersistedActiveState();
         if (configManager.isGuiOnly()) {
-            activeItems.clear();
-            activeItems.addAll(configManager.getTradePool());
+            refreshWeeklyOffers(false);
         }
     }
 
@@ -56,7 +59,11 @@ public final class TraderManager {
 
     public void disable() {
         spawnManager.stop();
-        cleanupActiveTrader(true);
+        if (configManager.isGuiOnly()) {
+            cleanupLegacyNpcState();
+        } else {
+            cleanupActiveTrader(true);
+        }
         dataManager.flushAll();
     }
 
@@ -64,8 +71,7 @@ public final class TraderManager {
         configManager.load();
         if (configManager.isGuiOnly()) {
             spawnManager.stop();
-            activeItems.clear();
-            activeItems.addAll(configManager.getTradePool());
+            refreshWeeklyOffers(false);
         } else spawnManager.reload();
     }
 
@@ -113,6 +119,11 @@ public final class TraderManager {
     }
 
     public boolean riset(CommandSender sender) {
+        if (configManager.isGuiOnly()) {
+            refreshWeeklyOffers(true);
+            send(sender, "riset-success", "%prefix% &aPenawaran acak Trader berhasil diperbarui.", Map.of());
+            return true;
+        }
         cleanupActiveTrader(true);
         Location location = spawnManager.findSpawnLocation();
         boolean spawned = spawn(location);
@@ -129,6 +140,7 @@ public final class TraderManager {
     }
 
     public void openGui(Player player) {
+        if (configManager.isGuiOnly()) refreshWeeklyOffers(false);
         if (!configManager.isGuiOnly() && !isActive()) {
             send(player, "trader-next", "%prefix% &eTrader belum muncul. Spawn berikutnya dalam &f%time%&e.", Map.of("%time%", timeLeft(spawnManager.getNextSpawnAt())));
             return;
@@ -167,7 +179,8 @@ public final class TraderManager {
     }
 
     public void sendStatus(CommandSender sender) {
-        if (isActive()) send(sender, "trader-active", "%prefix% &aTrader sedang aktif di &f%world% %x% %y% %z%&a. Hilang dalam &f%time%&a.", placeholders(activeLocation, timeLeft(despawnAt)));
+        if (configManager.isGuiOnly()) send(sender, "trader-gui-active", "%prefix% &aTrader GUI aktif. Penawaran dipilih acak dan berganti satu kali setiap minggu.", Map.of());
+        else if (isActive()) send(sender, "trader-active", "%prefix% &aTrader sedang aktif di &f%world% %x% %y% %z%&a. Hilang dalam &f%time%&a.", placeholders(activeLocation, timeLeft(despawnAt)));
         else send(sender, "trader-next", "%prefix% &eTrader belum muncul. Spawn berikutnya dalam &f%time%&e.", Map.of("%time%", timeLeft(spawnManager.getNextSpawnAt())));
     }
 
@@ -195,6 +208,15 @@ public final class TraderManager {
         dataManager.clearActive();
     }
 
+    private void cleanupLegacyNpcState() {
+        Location cleanupLocation = activeLocation != null ? activeLocation : dataManager.getActiveLocation();
+        npcManager.removeNear(cleanupLocation);
+        campManager.restore();
+        activeLocation = null;
+        despawnAt = 0L;
+        dataManager.clearActive();
+    }
+
     private List<TraderTradeItem> selectRandomItems() {
         List<TraderTradeItem> pool = new ArrayList<>(configManager.getTradePool());
         if (pool.isEmpty()) return List.of();
@@ -210,6 +232,36 @@ public final class TraderManager {
             if (!selected.contains(item)) selected.add(item);
         }
         return List.copyOf(selected);
+    }
+
+    private synchronized void refreshWeeklyOffers(boolean force) {
+        String period = weeklyPeriod();
+        List<String> saved = dataManager.getOfferIds();
+        if (!force && period.equals(dataManager.getOfferPeriod()) && !saved.isEmpty()) {
+            List<TraderTradeItem> restored = new ArrayList<>();
+            for (String id : saved) configManager.getTradePool().stream()
+                    .filter(item -> item.getId().equalsIgnoreCase(id)).findFirst().ifPresent(restored::add);
+            if (!restored.isEmpty()) {
+                activeItems.clear();
+                activeItems.addAll(restored);
+                return;
+            }
+        }
+        List<TraderTradeItem> selected = selectRandomItems();
+        activeItems.clear();
+        activeItems.addAll(selected);
+        dataManager.saveOffers(period, selected.stream().map(TraderTradeItem::getId).toList());
+        purchaseManager.resetForNewTrader();
+    }
+
+    private String weeklyPeriod() {
+        ZoneId zone;
+        try { zone = ZoneId.of(configManager.getTimezone()); }
+        catch (RuntimeException ignored) { zone = ZoneId.of("Asia/Jakarta"); }
+        DayOfWeek startDay = configManager.getSpawnDayOfWeek();
+        if (startDay == null) startDay = DayOfWeek.SUNDAY;
+        LocalDate start = LocalDate.now(zone).with(TemporalAdjusters.previousOrSame(startDay));
+        return start.toString();
     }
 
     private void selectCategory(List<TraderTradeItem> pool, List<TraderTradeItem> selected, List<String> ids, int amount) {

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.bukkit.scheduler.BukkitTask;
 
 public final class WarpManager {
     private static final Pattern SAFE_NAME = Pattern.compile("[a-z0-9_-]{2,24}");
@@ -34,6 +35,7 @@ public final class WarpManager {
     private final Map<String, WarpPoint> warps = new LinkedHashMap<>();
     private final Map<String, String> aliases = new LinkedHashMap<>();
     private final Map<UUID, Long> cooldowns = new LinkedHashMap<>();
+    private final Map<UUID, BukkitTask> pendingTeleports = new LinkedHashMap<>();
     private YamlConfiguration config;
 
     public WarpManager(VelioraSuite plugin) {
@@ -158,19 +160,66 @@ public final class WarpManager {
         }
 
         Location target = new Location(world, point.x(), point.y(), point.z(), point.yaw(), point.pitch());
-        if (!player.teleport(target)) {
-            player.sendMessage(color(message("failed", "%prefix% &cTeleport gagal. Coba lagi.")));
-            return false;
-        }
-        cooldowns.put(player.getUniqueId(), now + cooldown * 1000L);
-        if (config.getBoolean("settings.sound.enabled", true)) {
-            try {
-                player.playSound(player.getLocation(), Sound.valueOf(config.getString("settings.sound.name", "ENTITY_ENDERMAN_TELEPORT")), 0.8F, 1.1F);
-            } catch (IllegalArgumentException ignored) { }
-        }
-        player.sendMessage(color(message("teleported", "%prefix% &aTeleport ke &f%warp%&a.")
-                .replace("%warp%", point.name())));
+        beginCountdown(player, point, target, cooldown, now);
         return true;
+    }
+
+    private void beginCountdown(Player player, WarpPoint point, Location target, int cooldown, long now) {
+        BukkitTask previous = pendingTeleports.remove(player.getUniqueId());
+        if (previous != null) previous.cancel();
+        Location origin = player.getLocation().clone();
+        final int[] remaining = {Math.max(1, config.getInt("settings.countdown-seconds", 5))};
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline()) { cancelPending(player.getUniqueId()); return; }
+            if (player.getWorld() != origin.getWorld() || player.getLocation().distanceSquared(origin) > 0.16D) {
+                player.clearTitle();
+                player.sendMessage(color(message("moved", "%prefix% &cTeleport dibatalkan karena kamu bergerak.")));
+                cancelPending(player.getUniqueId());
+                return;
+            }
+            if (remaining[0] > 0) {
+                player.sendTitle(color("&bTeleport dalam &f" + remaining[0]), color("&7Jangan bergerak"), 0, 24, 0);
+                remaining[0]--;
+                return;
+            }
+            cancelPending(player.getUniqueId());
+            target.getChunk().load(true);
+            if (!player.teleport(target)) {
+                player.sendMessage(color(message("failed", "%prefix% &cTeleport gagal. Coba lagi.")));
+                return;
+            }
+            cooldowns.put(player.getUniqueId(), now + cooldown * 1000L);
+            if (config.getBoolean("settings.sound.enabled", true)) {
+                try { player.playSound(player.getLocation(), Sound.valueOf(config.getString("settings.sound.name", "ENTITY_ENDERMAN_TELEPORT")), 0.8F, 1.1F); }
+                catch (IllegalArgumentException ignored) { }
+            }
+            player.sendMessage(color(message("teleported", "%prefix% &aTeleport ke &f%warp%&a.").replace("%warp%", point.name())));
+        }, 0L, 20L);
+        pendingTeleports.put(player.getUniqueId(), task);
+    }
+
+    private void cancelPending(UUID playerId) {
+        BukkitTask task = pendingTeleports.remove(playerId);
+        if (task != null) task.cancel();
+    }
+
+    public Location safetyTarget(Location from) {
+        WarpPoint best = null;
+        double bestDistance = Double.MAX_VALUE;
+        if (from != null && from.getWorld() != null) {
+            for (WarpPoint point : warps.values()) {
+                World world = Bukkit.getWorld(point.world());
+                if (world == null || !world.equals(from.getWorld())) continue;
+                double dx = point.x() - from.getX(), dz = point.z() - from.getZ();
+                double distance = dx * dx + dz * dz;
+                if (distance < bestDistance) { best = point; bestDistance = distance; }
+            }
+        }
+        if (best == null) best = warps.get(resolveName("lobby"));
+        if (best == null) return from == null || from.getWorld() == null ? null : from.getWorld().getSpawnLocation();
+        World world = Bukkit.getWorld(best.world());
+        if (world == null) world = Bukkit.getWorld(best.worldName());
+        return world == null ? null : new Location(world, best.x(), best.y(), best.z(), best.yaw(), best.pitch());
     }
 
     public synchronized void save() {
@@ -215,6 +264,7 @@ public final class WarpManager {
     public boolean validName(String raw) { String name = normalize(raw); return SAFE_NAME.matcher(name).matches() && !RESERVED.contains(name); }
     public boolean hasAdmin(Player player) { return player.hasPermission(config.getString("permissions.admin", "veliorasuite.warp.admin")) || player.isOp(); }
     public boolean hasReload(Player player) { return player.hasPermission(config.getString("permissions.reload", "veliorasuite.warp.reload")) || hasAdmin(player); }
+    public int afkTimeoutSeconds() { return Math.max(0, config.getInt("settings.afk.auto-seconds", 300)); }
     public String color(String value) { return ChatColor.translateAlternateColorCodes('&', value == null ? "" : value); }
     public String message(String path, String fallback) {
         String prefix = config.getString("settings.prefix", "&8[&bVelioraWarp&8] ");

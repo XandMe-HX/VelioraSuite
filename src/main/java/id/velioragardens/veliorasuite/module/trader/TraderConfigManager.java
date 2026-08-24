@@ -100,8 +100,14 @@ public final class TraderConfigManager {
             config.set("trade-pool.enchanted_shulker", null);
             changed = true;
         }
+        if (version < 5) {
+            // Trader sekarang dibuka lewat command; lima penawaran acak disimpan dan berganti mingguan.
+            config.set("settings.gui-only", true);
+            config.set("settings.spawn.enabled", false);
+            changed = true;
+        }
         if (!changed) return;
-        config.set("settings.config-version", 4);
+        config.set("settings.config-version", 5);
         try {
             config.save(file);
         } catch (IOException exception) {

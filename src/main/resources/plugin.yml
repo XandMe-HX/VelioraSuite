@@ -114,8 +114,8 @@ commands:
     aliases: [vgtrade]
     permission: veliorasuite.fishing.trade
   trader:
-    description: Show VelioraTrader status.
-    usage: /trader [spawn|riset|reload]
+    description: Membuka GUI VelioraTrader.
+    usage: /trader [riset|reload]
     aliases:
       - vtrader
       - vtrade
@@ -159,6 +159,10 @@ commands:
   fishing:
     description: Teleport ke area fishing.
     usage: /fishing
+    permission: veliorasuite.warp.use
+  afk:
+    description: Mengaktifkan atau menonaktifkan status AFK.
+    usage: /afk
     permission: veliorasuite.warp.use
   register:
     description: Register Veliora account.

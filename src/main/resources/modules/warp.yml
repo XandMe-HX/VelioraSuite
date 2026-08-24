@@ -2,6 +2,9 @@ settings:
   enabled: true
   prefix: '&7[&eVELIORA &aWARP&7] &r'
   cooldown-seconds: 3
+  countdown-seconds: 5
+  afk:
+    auto-seconds: 300
   sound:
     enabled: true
     name: ENTITY_ENDERMAN_TELEPORT
@@ -17,6 +20,11 @@ messages:
   world-missing: '%prefix% &cWorld tujuan belum dimuat.'
   cooldown: '%prefix% &eTunggu &f%seconds%s &esebelum warp lagi.'
   failed: '%prefix% &cTeleport gagal. Coba lagi.'
+  moved: '%prefix% &cTeleport dibatalkan karena kamu bergerak.'
+  rescued: '%prefix% &eKamu dipindahkan ke lokasi aman karena area tujuan belum aman.'
+  rtp-refund: '%prefix% &aBiaya RTP dikembalikan karena lokasi gagal dimuat.'
+  afk-on: '%prefix% &eKamu sekarang AFK.'
+  afk-off: '%prefix% &aKamu tidak lagi AFK.'
   teleported: '%prefix% &aTeleport ke &f%warp%&a.'
   set: '%prefix% &aWarp &f%warp% &aberhasil diset.'
   deleted: '%prefix% &aWarp berhasil dihapus.'

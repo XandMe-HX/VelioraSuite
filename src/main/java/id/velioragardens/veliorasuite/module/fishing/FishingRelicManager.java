@@ -13,7 +13,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
-import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -30,12 +29,14 @@ public final class FishingRelicManager implements Listener {
     private final NamespacedKey relicKey;
     private final NamespacedKey rodTierKey;
     private final NamespacedKey enchantKey;
+    private final NamespacedKey relicRollKey;
 
     public FishingRelicManager(FishingManager manager) {
         this.manager = manager;
         relicKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_relic");
         rodTierKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_rod_tier");
         enchantKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_relic_enchant");
+        relicRollKey = new NamespacedKey(manager.getConfigManager().getPlugin(), "fishing_relic_roll");
     }
 
     public void rollDrop(Player player, CaughtFish fish) {
@@ -82,61 +83,22 @@ public final class FishingRelicManager implements Listener {
         String type = relicType(relic);
         if (type == null || !isFishingRod(rod)) return;
         ItemStack result = rod.clone();
-        if (!apply(result, type)) return;
+        if (!apply(result, type, selectedEnchant(type, relic))) return;
         event.setResult(result);
         event.getView().setRepairCost(1);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onTakeAnvil(InventoryClickEvent event) {
-        if (!(event.getInventory() instanceof AnvilInventory anvil) || event.getRawSlot() != 2) return;
-        String type = relicType(anvil.getSecondItem());
-        if (type == null || !isFishingRod(anvil.getFirstItem()) || event.getCurrentItem() == null) return;
-        ItemStack result = event.getCurrentItem().clone();
-        event.setCancelled(true);
-        anvil.setFirstItem(null);
-        consumeSecond(anvil);
-        event.getWhoClicked().getInventory().addItem(result);
+        if (event.getInventory().getType() != org.bukkit.event.inventory.InventoryType.ANVIL || event.getRawSlot() != 2) return;
+        if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()
+                || !event.getCurrentItem().getItemMeta().getPersistentDataContainer().has(enchantKey, PersistentDataType.STRING)) return;
         if (event.getWhoClicked() instanceof Player player) {
-            player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 1.2F);
-            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aRelic berhasil diterapkan melalui anvil."));
+            Bukkit.getScheduler().runTask(manager.getConfigManager().getPlugin(), () -> {
+                player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 1.2F);
+                player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aRelic berhasil diterapkan melalui anvil."));
+            });
         }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onApply(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        ItemStack relic = event.getCursor();
-        ItemStack rod = event.getCurrentItem();
-        String type = relicType(relic);
-        if (type == null || rod == null || rod.getType() != Material.FISHING_ROD || !rod.hasItemMeta()) return;
-
-        ItemMeta meta = rod.getItemMeta();
-        if (!meta.getPersistentDataContainer().has(rodTierKey, PersistentDataType.INTEGER)) return;
-        event.setCancelled(true);
-        if (meta.getPersistentDataContainer().has(enchantKey, PersistentDataType.STRING)) {
-            player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
-                    + "&eRod ini sudah memiliki Relic Enchant."));
-            return;
-        }
-
-        String enchant = randomEnchant(type);
-        int bonus = type.equals("EXALTED") ? 3 : type.equals("TWISTED") ? 2 : 1;
-        meta.getPersistentDataContainer().set(enchantKey, PersistentDataType.STRING, enchant);
-        meta.addEnchant(Enchantment.LUCK_OF_THE_SEA,
-                Math.min(10, meta.getEnchantLevel(Enchantment.LUCK_OF_THE_SEA) + bonus), true);
-        meta.addEnchant(Enchantment.LURE, Math.min(10, meta.getEnchantLevel(Enchantment.LURE) + bonus), true);
-        List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
-        lore.add(Component.text("Relic Enchant: " + enchant, TextColor.color(0xD87CFF)));
-        meta.lore(lore);
-        rod.setItemMeta(meta);
-
-        ItemStack remainder = relic.clone();
-        remainder.setAmount(relic.getAmount() - 1);
-        event.setCursor(remainder.getAmount() <= 0 ? null : remainder);
-        player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 1.2F);
-        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
-                + "&aRelic berhasil diterapkan: &d" + enchant));
     }
 
     private ItemStack create(String type) {
@@ -149,6 +111,7 @@ public final class FishingRelicManager implements Listener {
                 Component.text("Pasang: Rod di slot kiri, Relic di slot kanan anvil.", TextColor.color(0x70E0C0)),
                 Component.text("Satu relic hanya dapat dipakai sekali.", TextColor.color(0x8391A5))));
         meta.getPersistentDataContainer().set(relicKey, PersistentDataType.STRING, type);
+        meta.getPersistentDataContainer().set(relicRollKey, PersistentDataType.STRING, java.util.UUID.randomUUID().toString());
         item.setItemMeta(meta);
         return item;
     }
@@ -158,11 +121,10 @@ public final class FishingRelicManager implements Listener {
                 && item.getItemMeta().getPersistentDataContainer().has(rodTierKey, PersistentDataType.INTEGER);
     }
 
-    private boolean apply(ItemStack rod, String type) {
+    private boolean apply(ItemStack rod, String type, String enchant) {
         if (!isFishingRod(rod)) return false;
         ItemMeta meta = rod.getItemMeta();
         if (meta.getPersistentDataContainer().has(enchantKey, PersistentDataType.STRING)) return false;
-        String enchant = randomEnchant(type);
         int bonus = type.equals("EXALTED") ? 3 : type.equals("TWISTED") ? 2 : 1;
         meta.getPersistentDataContainer().set(enchantKey, PersistentDataType.STRING, enchant);
         meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, Math.min(10, meta.getEnchantLevel(Enchantment.LUCK_OF_THE_SEA) + bonus), true);
@@ -174,11 +136,6 @@ public final class FishingRelicManager implements Listener {
         return true;
     }
 
-    private void consumeSecond(AnvilInventory anvil) {
-        ItemStack second = anvil.getSecondItem();
-        if (second == null || second.getAmount() <= 1) anvil.setSecondItem(null);
-        else { second.setAmount(second.getAmount() - 1); anvil.setSecondItem(second); }
-    }
 
     private ItemStack guideItem() {
         ItemStack item = new ItemStack(Material.ANVIL);
@@ -194,12 +151,15 @@ public final class FishingRelicManager implements Listener {
         return item.getItemMeta().getPersistentDataContainer().get(relicKey, PersistentDataType.STRING);
     }
 
-    private String randomEnchant(String type) {
+    private String selectedEnchant(String type, ItemStack relic) {
         String[] normal = {"Tidal Fortune I", "Deep Lure I", "Weight Hunter I"};
         String[] twisted = {"Abyssal Fortune II", "Storm Lure II", "Mutation Seeker II"};
         String[] exalted = {"Leviathan Blessing III", "Ocean Sovereign III", "Mythic Hunter III"};
         String[] pool = type.equals("EXALTED") ? exalted : type.equals("TWISTED") ? twisted : normal;
-        return pool[ThreadLocalRandom.current().nextInt(pool.length)];
+        String roll = relic != null && relic.hasItemMeta()
+                ? relic.getItemMeta().getPersistentDataContainer().get(relicRollKey, PersistentDataType.STRING) : null;
+        int hash = roll == null ? (type + ":legacy").hashCode() : roll.hashCode();
+        return pool[Math.floorMod(hash, pool.length)];
     }
 
     private String display(String type) {
