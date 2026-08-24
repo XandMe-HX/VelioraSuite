@@ -1,11 +1,11 @@
 settings:
-  config-version: 4
+  config-version: 5
   enabled: true
-  # false = trader muncul sesuai jadwal dan GUI hanya menampilkan penawaran aktif.
-  gui-only: false
+  # Trader dibuka lewat /trader; lima penawaran acak berganti satu kali tiap minggu.
+  gui-only: true
   prefix: '&7[&eVELIORA &aTRADER&7] &r'
   spawn:
-    enabled: true
+    enabled: false
     # Trader muncul satu kali tiap minggu, pada hari dan jam berikut.
     interval-days: 7
     day-of-week: SUNDAY

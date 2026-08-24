@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
 
 public final class TraderDataManager {
 
@@ -90,6 +91,17 @@ public final class TraderDataManager {
 
     public void clearCampBackup() {
         traderData.set("camp-backup", null);
+        flushTrader();
+    }
+
+    public String getOfferPeriod() { return traderData.getString("offers.period", ""); }
+
+    public List<String> getOfferIds() { return traderData.getStringList("offers.items"); }
+
+    public void saveOffers(String period, List<String> itemIds) {
+        traderData.set("offers.period", period);
+        traderData.set("offers.items", itemIds);
+        traderData.set("offers.updated-at", System.currentTimeMillis());
         flushTrader();
     }
 

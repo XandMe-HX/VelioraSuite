@@ -10,6 +10,8 @@ public final class WarpModule implements VelioraModule {
     private final VelioraSuite plugin;
     private WarpManager manager;
     private WarpListener listener;
+    private TeleportSafetyListener safetyListener;
+    private AfkManager afkManager;
     private boolean enabled;
 
     public WarpModule(VelioraSuite plugin) {
@@ -37,13 +39,31 @@ public final class WarpModule implements VelioraModule {
         register("fishing", executor);
         listener = new WarpListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+        safetyListener = new TeleportSafetyListener(plugin, manager);
+        plugin.getServer().getPluginManager().registerEvents(safetyListener, plugin);
+        safetyListener.start();
+        afkManager = new AfkManager(plugin, manager);
+        PluginCommand afkCommand = plugin.getCommand("afk");
+        if (afkCommand != null) afkCommand.setExecutor(afkManager);
+        plugin.getServer().getPluginManager().registerEvents(afkManager, plugin);
+        afkManager.start();
     }
 
     @Override
     public void disable() {
         enabled = false;
         if (listener != null) HandlerList.unregisterAll(listener);
+        if (safetyListener != null) {
+            HandlerList.unregisterAll(safetyListener);
+            safetyListener.stop();
+        }
+        if (afkManager != null) {
+            HandlerList.unregisterAll(afkManager);
+            afkManager.stop();
+        }
         listener = null;
+        safetyListener = null;
+        afkManager = null;
         if (manager != null) manager.save();
         disableCommand("vgwarp");
         disableCommand("lobby");
@@ -51,6 +71,7 @@ public final class WarpModule implements VelioraModule {
         disableCommand("pvp");
         disableCommand("guild");
         disableCommand("fishing");
+        disableCommand("afk");
     }
 
     public WarpManager getManager() { return manager; }
