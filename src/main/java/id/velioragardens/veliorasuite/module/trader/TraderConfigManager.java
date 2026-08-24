@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.time.DayOfWeek;
 
 public final class TraderConfigManager {
 
@@ -90,8 +91,17 @@ public final class TraderConfigManager {
             config.set("camp", null);
             changed = true;
         }
+        if (version < 4) {
+            // GUI-only menampilkan seluruh pool dan menonaktifkan jadwal trader.
+            config.set("settings.gui-only", false);
+            config.set("settings.spawn.interval-days", 7);
+            config.set("settings.spawn.day-of-week", "SUNDAY");
+            config.set("settings.spawn.interval-hours", 168);
+            config.set("trade-pool.enchanted_shulker", null);
+            changed = true;
+        }
         if (!changed) return;
-        config.set("settings.config-version", 3);
+        config.set("settings.config-version", 4);
         try {
             config.save(file);
         } catch (IOException exception) {
@@ -104,6 +114,14 @@ public final class TraderConfigManager {
     public String getPrefix() { return str("settings.prefix", "&8[&6VelioraTrader&8] "); }
     public boolean isSpawnEnabled() { return bool("settings.spawn.enabled", true); }
     public int getIntervalHours() { return Math.max(1, integer("settings.spawn.interval-hours", 3)); }
+    public int getIntervalDays() { return Math.max(0, integer("settings.spawn.interval-days", 0)); }
+    public DayOfWeek getSpawnDayOfWeek() {
+        try {
+            return DayOfWeek.valueOf(str("settings.spawn.day-of-week", "").trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
     public int getAnchorHour() { return Math.floorMod(integer("settings.spawn.anchor-hour", 1), 24); }
     public String getTimezone() { return str("settings.spawn.timezone", "Asia/Jakarta"); }
     public int getActiveMinutes() { return Math.max(1, integer("settings.spawn.active-minutes", 30)); }

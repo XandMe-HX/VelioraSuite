@@ -1,11 +1,15 @@
 settings:
-  config-version: 3
+  config-version: 4
   enabled: true
-  gui-only: true
+  # false = trader muncul sesuai jadwal dan GUI hanya menampilkan penawaran aktif.
+  gui-only: false
   prefix: '&7[&eVELIORA &aTRADER&7] &r'
   spawn:
     enabled: true
-    interval-hours: 3
+    # Trader muncul satu kali tiap minggu, pada hari dan jam berikut.
+    interval-days: 7
+    day-of-week: SUNDAY
+    interval-hours: 168
     anchor-hour: 1
     timezone: Asia/Jakarta
     active-minutes: 30
@@ -344,23 +348,6 @@ trade-pool:
     payment:
       type: MONEY
       money: 325000
-      fish:
-        enabled: false
-        requirements: []
-  enchanted_shulker:
-    material: PURPLE_SHULKER_BOX
-    name: '&5Enchanted Shulker'
-    amount: 1
-    stock: 1
-    custom-damage: 0
-    fishing-luck-bonus: 0
-    unrepairable: false
-    lore:
-      - '&7Penyimpanan langka dari Veliora Trader.'
-    enchantments: []
-    payment:
-      type: MONEY
-      money: 275000
       fish:
         enabled: false
         requirements: []
