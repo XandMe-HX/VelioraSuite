@@ -41,33 +41,44 @@ public final class SecurityConfigManager {
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraSecurity: gagal menggabungkan default baru: " + exception.getMessage());
         }
-        migrateCombatGuardV2(file);
+        migrateCombatGuardV3(file);
+        migrateXrayEnforcementV2(file);
         migrateBedrockPrefixV3(file);
     }
 
-    private void migrateCombatGuardV2(File file) {
-        if (config.getInt("settings.combat-guard.config-version", 0) >= 2) return;
-        config.set("settings.combat-guard.config-version", 2);
-        config.set("settings.combat-guard.java-max-reach", 3.45D);
-        config.set("settings.combat-guard.java-hard-reach-extra", 0.35D);
-        config.set("settings.combat-guard.bedrock-max-reach", 4.10D);
-        config.set("settings.combat-guard.bedrock-hard-reach-extra", 0.45D);
-        config.set("settings.combat-guard.minimum-facing-dot", 0.05D);
+    private void migrateCombatGuardV3(File file) {
+        if (config.getInt("settings.combat-guard.config-version", 0) >= 3) return;
+        config.set("settings.combat-guard.config-version", 3);
+        config.set("settings.combat-guard.java-max-reach", 3.65D);
+        config.set("settings.combat-guard.java-hard-reach-extra", 0.55D);
+        config.set("settings.combat-guard.bedrock-max-reach", 4.50D);
+        config.set("settings.combat-guard.bedrock-hard-reach-extra", 0.70D);
+        config.set("settings.combat-guard.minimum-facing-dot", -0.10D);
         config.set("settings.combat-guard.bedrock-minimum-facing-dot", -0.25D);
         config.set("settings.combat-guard.bedrock-strong-signals-required", 2);
         config.set("settings.combat-guard.minimum-tps-for-geometry", 18.0D);
-        config.set("settings.combat-guard.maximum-cps", 22);
-        config.set("settings.combat-guard.minimum-event-score", 8);
-        config.set("settings.combat-guard.score-decay-per-second", 4.0D);
-        config.set("settings.combat-guard.stage-1-score", 70);
-        config.set("settings.combat-guard.stage-2-score", 140);
-        config.set("settings.combat-guard.stage-3-score", 230);
+        config.set("settings.combat-guard.multi-target-count", 4);
+        config.set("settings.combat-guard.maximum-cps", 25);
+        config.set("settings.combat-guard.minimum-event-score", 12);
+        config.set("settings.combat-guard.score-decay-per-second", 7.0D);
+        config.set("settings.combat-guard.stage-1-score", 110);
+        config.set("settings.combat-guard.stage-2-score", 220);
+        config.set("settings.combat-guard.stage-3-score", 310);
         try {
             config.save(file);
-            plugin.getLogger().info("CombatGuard v2: toleransi Bedrock dan multi-signal detection diterapkan.");
+            plugin.getLogger().info("CombatGuard v3: toleransi Java/Bedrock dan sweeping PvP diterapkan.");
         } catch (IOException exception) {
             plugin.getLogger().warning("CombatGuard: gagal menyimpan migrasi v2: " + exception.getMessage());
         }
+    }
+
+    private void migrateXrayEnforcementV2(File file) {
+        if (config.getInt("settings.xray-enforcement.config-version", 0) >= 2) return;
+        config.set("settings.xray-enforcement.config-version", 2);
+        config.set("settings.xray-enforcement.strike-cooldown-minutes", 2);
+        config.set("settings.xray-enforcement.first-ban-days", 5);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraOreWatch: gagal menyimpan migrasi v2: " + exception.getMessage()); }
     }
 
     private void migrateBedrockPrefixV3(File file) {

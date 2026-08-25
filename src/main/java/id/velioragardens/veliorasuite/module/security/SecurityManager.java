@@ -430,15 +430,6 @@ public final class SecurityManager {
         long cooldown = configManager.getXrayStrikeCooldownMinutes() * 60_000L;
         if (now - xrayLastAction.getOrDefault(uuid, 0L) < cooldown) return;
 
-        // Geyser/Bedrock mining packets and reach timing differ from Java. Keep the
-        // full evidence, but require staff review instead of automatic punishment.
-        if (isBedrock(player)) {
-            xrayLastAction.put(uuid, now);
-            saveXrayEvidence(player, report, "BEDROCK_REVIEW_ONLY");
-            notifyXrayOwners(player.getName(), "&bBedrock review-only &7- bukti tersimpan, tidak ada auto-ban.", report);
-            return;
-        }
-
         int warning = Math.min(4, xrayWarnings.getOrDefault(uuid, 0) + 1);
         xrayWarnings.put(uuid, warning);
         xrayLastAction.put(uuid, now);
@@ -449,7 +440,7 @@ public final class SecurityManager {
             player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS,
                     configManager.getXrayBlindnessSeconds() * 20, 0, false, false, true));
             player.playSound(player.getLocation(), Sound.ENTITY_WARDEN_ROAR, 0.9F, 0.65F);
-            player.sendTitle(color("&4&lX-RAY TERDETEKSI"), color("&cPeringatan 1/3 &7- aktivitasmu sedang dicatat"), 10, 80, 20);
+            player.sendTitle(color("&4X-RAY TERDETEKSI"), color("&cPeringatan 1/3 &7- aktivitasmu sedang dicatat"), 10, 80, 20);
             player.sendMessage(color("&8[&cVelioraOreWatch&8] &cBerhenti menggunakan Xray. &7Pelanggaran kedua: item mencurigakan dikarantina dan kamu dikeluarkan."));
             notifyXrayOwners(player.getName(), "&eTahap 1/3 &7- blindness, suara, title, dan bukti disimpan.", report);
             saveXrayEvidence(player, report, "WARNING_1");
@@ -466,12 +457,12 @@ public final class SecurityManager {
             saveXrayState();
             player.kickPlayer(color("&cPeringatan Xray 2/3\n&7Item mencurigakan diamankan untuk pemeriksaan owner."
                     + (quarantineId.isBlank() ? "" : "\n&7ID karantina: &f" + quarantineId)
-                    + "\n&7Pelanggaran berikutnya: ban 3 hari."));
+                    + "\n&7Pelanggaran berikutnya: ban 5 hari."));
             return;
         }
 
         int days = warning == 3 ? configManager.getXrayFirstBanDays() : configManager.getXrayRepeatBanDays();
-        String stage = warning == 3 ? "BAN_3_DAYS" : "REPEAT_BAN_15_DAYS";
+        String stage = warning == 3 ? "BAN_5_DAYS" : "REPEAT_BAN_15_DAYS";
         saveXrayEvidence(player, report, stage + " quarantine=" + quarantineId);
         notifyXrayOwners(player.getName(), (warning == 3 ? "&cTahap 3/3" : "&4Pelanggaran berulang")
                 + " &7- auto-ban &f" + days + " hari&7."
@@ -631,7 +622,7 @@ public final class SecurityManager {
 
     private void armHoneypot(Player player, OreReport report) {
         if (!configManager.config().getBoolean("settings.xray-enforcement.honeypot.enabled", true)
-                || isBedrock(player) || player.getLocation().getBlockY() > 16
+                || player.getLocation().getBlockY() > 32
                 || activeHoneypots.containsKey(player.getUniqueId())) return;
         int lifetimeSeconds = Math.max(5, configManager.config().getInt("settings.xray-enforcement.honeypot.lifetime-seconds", 20));
         Location origin = player.getLocation();
@@ -645,7 +636,9 @@ public final class SecurityManager {
             Honeypot honeypot = new Honeypot(candidate.getLocation(), candidate.getBlockData(),
                     System.currentTimeMillis() + lifetimeSeconds * 1000L, report.score());
             activeHoneypots.put(player.getUniqueId(), honeypot);
-            player.sendBlockChange(candidate.getLocation(), Material.DIAMOND_ORE.createBlockData());
+            Material displayOre = candidate.getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER
+                    ? Material.ANCIENT_DEBRIS : Material.DIAMOND_ORE;
+            player.sendBlockChange(candidate.getLocation(), displayOre.createBlockData());
             Bukkit.getScheduler().runTaskLater(plugin, () -> clearHoneypot(player), lifetimeSeconds * 20L);
             return;
         }
@@ -670,7 +663,8 @@ public final class SecurityManager {
     }
 
     private boolean isHoneypotStone(Block block) {
-        return block.getType() == Material.STONE || block.getType() == Material.DEEPSLATE;
+        return block.getType() == Material.STONE || block.getType() == Material.DEEPSLATE
+                || block.getType() == Material.NETHERRACK;
     }
 
     private boolean sameBlock(Location first, Location second) {

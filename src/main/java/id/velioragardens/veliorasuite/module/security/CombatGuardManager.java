@@ -159,7 +159,7 @@ public final class CombatGuardManager implements Listener, CommandExecutor, TabC
         if (bedrock && strongSignals < requiredStrongSignals) eventScore = Math.min(eventScore, 8);
         if (eventScore < config.config().getInt("settings.combat-guard.minimum-event-score", 8)) return;
 
-        state.score = Math.min(300.0D, state.score + eventScore);
+        state.score = Math.min(400.0D, state.score + eventScore);
         String evidence = evidence(player, target, reach, facing, targets.size(), hitTimes.size(), signals);
         state.addEvidence(evidence, config.config().getInt("settings.combat-guard.max-evidence-per-player", 20));
 

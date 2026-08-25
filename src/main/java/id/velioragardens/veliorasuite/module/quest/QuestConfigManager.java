@@ -63,6 +63,7 @@ public final class QuestConfigManager {
     public int getBaseMoney() { return Math.max(0, integer("settings.rewards.base-money", 1000)); }
     public int getMoneyIncreasePerLevel() { return Math.max(0, integer("settings.rewards.money-increase-per-level", integer("settings.rewards.money-increase-per-tier", 150))); }
     public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }
+    public int getFarmMinimumGrowthSeconds() { return Math.max(0, integer("settings.anti-exploit.farm-minimum-growth-seconds", 300)); }
     public int getManaLevelInterval() { return Math.max(1, integer("settings.rewards.mana-level-interval", 5)); }
     public int getManaLevelBonus() { return Math.max(0, integer("settings.rewards.mana-level-bonus", 1)); }
     public int getMilestoneLevelInterval() { return Math.max(1, integer("settings.rewards.milestone-level-interval", 5)); }
