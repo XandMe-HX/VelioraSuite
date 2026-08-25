@@ -27,6 +27,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.bukkit.scheduler.BukkitTask;
 
 /** Lightweight persistent NPCs without packet spam or an external NPC dependency. */
 public final class VgNpcModule implements VelioraModule, Listener, CommandExecutor, TabCompleter {
@@ -51,6 +53,7 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
     private YamlConfiguration data;
     private NamespacedKey npcKey;
     private boolean enabled;
+    private BukkitTask lookTask;
 
     public VgNpcModule(VelioraSuite plugin) { this.plugin = plugin; }
     @Override public String getName() { return "npc"; }
@@ -84,10 +87,12 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
         if (command != null) { command.setExecutor(this); command.setTabCompleter(this); }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         Bukkit.getScheduler().runTask(plugin, this::respawnAll);
+        lookTask = Bukkit.getScheduler().runTaskTimer(plugin, this::lookAtNearbyPlayers, 20L, 10L);
     }
 
     @Override public void disable() {
         enabled = false;
+        if (lookTask != null) lookTask.cancel();
         HandlerList.unregisterAll(this);
         removeEntities();
         save();
@@ -185,7 +190,8 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
         help(player); return true;
     }
 
-    @EventHandler public void onInteract(PlayerInteractAtEntityEvent event) {
+    /** This base event catches normal right-clicks from both Java and Bedrock. */
+    @EventHandler public void onInteract(PlayerInteractEntityEvent event) {
         String id = event.getRightClicked().getPersistentDataContainer().get(npcKey, PersistentDataType.STRING);
         if (id == null) return; event.setCancelled(true);runAction(event.getPlayer(),id);
     }
@@ -218,6 +224,16 @@ public final class VgNpcModule implements VelioraModule, Listener, CommandExecut
     }
     private void tag(Entity entity, String id) { entity.getPersistentDataContainer().set(npcKey, PersistentDataType.STRING, id); }
     private void respawnAll() { removeEntities(); npcs.values().forEach(this::spawn); }
+    private void lookAtNearbyPlayers() {
+        if (!enabled) return;
+        for (World world : Bukkit.getWorlds()) for (Entity entity : world.getEntities()) {
+            String id = entity.getPersistentDataContainer().get(npcKey, PersistentDataType.STRING);
+            if (id == null || entity instanceof TextDisplay) continue;
+            Player closest = null; double distance = 36D;
+            for (Player player : world.getPlayers()) { double now = player.getLocation().distanceSquared(entity.getLocation()); if (now < distance) { distance = now; closest = player; } }
+            if (closest != null) { Location from = entity.getLocation(); Location to = closest.getEyeLocation(); double dx = to.getX() - from.getX(), dz = to.getZ() - from.getZ(); float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)); entity.setRotation(yaw, 0F); }
+        }
+    }
     private void removeEntities() { for (World world : Bukkit.getWorlds()) for (Entity entity : world.getEntities()) if (entity.getPersistentDataContainer().has(npcKey, PersistentDataType.STRING)) entity.remove(); }
     private void remove(String id) { for (World world : Bukkit.getWorlds()) for (Entity entity : world.getEntities()) if (id.equals(entity.getPersistentDataContainer().get(npcKey, PersistentDataType.STRING))) entity.remove(); }
     private void save() {
