@@ -22,13 +22,17 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 3
+    config-version: 5
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Level berhenti di 100, tetapi reward dan siklus quest tetap berjalan.
-    completions-per-level: 1
+    completions-per-level: 3
     max-level: 100
     auto-start-on-progress: true
     auto-restart-after-claim: true
+    level-up-title:
+      enabled: true
+      title: '&aLEVEL UP!'
+      subtitle: '&f%quest% &7menjadi level &a%level%'
   anti-exploit:
     # Blok yang baru ditanam tidak dihitung langsung. Ini menutup loop tanam-
     # panen instan tanpa mengganggu kebun yang memang sudah tumbuh.
@@ -42,12 +46,12 @@ settings:
     money-increase-per-level: 75
     max-money: 10000
     # Saat naik ke setiap kelipatan level 5: +1 Max Mana dan bonus item kategori.
-    mana-level-interval: 1
+    mana-level-interval: 3
     mana-level-bonus: 1
     milestone-level-interval: 5
-    hunter-health-level-interval: 2
+    hunter-health-level-interval: 5
     hunter-health-bonus: 1.0
-    hunter-health-cap: 40.0
+    hunter-health-cap: 30.0
     # Bonus item meningkat di level 10/20, namun maksimal 3x agar tidak inflasi.
     milestone-max-multiplier: 3
   starter:
@@ -124,6 +128,30 @@ categories:
     target-increase-per-level: 12
     base-item-rewards: [{material: COD, amount: 2}, {material: STRING, amount: 2}]
     milestone-item-rewards: [{material: COOKED_SALMON, amount: 4}, {material: TORCH, amount: 8}]
+  agility:
+    enabled: true
+    display-name: '&aAgility'
+    icon: RABBIT_FOOT
+    base-target: 24
+    target-increase-per-level: 10
+    base-item-rewards: [{material: SUGAR, amount: 2}]
+    milestone-item-rewards: [{material: RABBIT_FOOT, amount: 1}]
+  alchemy:
+    enabled: true
+    display-name: '&dAlchemy'
+    icon: BREWING_STAND
+    base-target: 12
+    target-increase-per-level: 6
+    base-item-rewards: [{material: GLOWSTONE_DUST, amount: 2}]
+    milestone-item-rewards: [{material: BLAZE_POWDER, amount: 4}]
+  archery:
+    enabled: true
+    display-name: '&6Archery'
+    icon: BOW
+    base-target: 36
+    target-increase-per-level: 18
+    base-item-rewards: [{material: ARROW, amount: 8}]
+    milestone-item-rewards: [{material: SPECTRAL_ARROW, amount: 4}]
 
 permissions:
   use: 'veliorasuite.quest.use'

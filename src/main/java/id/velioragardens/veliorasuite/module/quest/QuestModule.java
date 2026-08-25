@@ -10,6 +10,7 @@ import id.velioragardens.veliorasuite.module.quest.listener.QuestCookingListener
 import id.velioragardens.veliorasuite.module.quest.listener.QuestFarmListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestFishingListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestKillListener;
+import id.velioragardens.veliorasuite.module.quest.listener.QuestProgressionListener;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
@@ -94,6 +95,7 @@ public final class QuestModule implements VelioraModule {
         listeners.add(new QuestFarmListener(manager));
         listeners.add(new QuestCookingListener(manager));
         listeners.add(new QuestKillListener(manager));
+        listeners.add(new QuestProgressionListener(manager));
         listeners.add(new QuestFishingListener(manager));
         listeners.add(new QuestCommandTrackListener(manager));
         listeners.add(new QuestBossBarListener(manager));

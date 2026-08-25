@@ -231,6 +231,12 @@ public final class QuestManager {
                         + "&cMonster Hunter meningkatkan Max Health menjadi &f" + (int) Math.round(updated) + "&c."));
             }
         }
+        if (levelUp && configManager.isLevelTitleEnabled()) {
+            String subtitle = configManager.getLevelSubtitle()
+                    .replace("%quest%", configManager.getCategoryDisplayName(category))
+                    .replace("%level%", String.valueOf(reachedLevel));
+            player.sendTitle(configManager.color(configManager.getLevelTitle()), configManager.color(subtitle), 10, 50, 15);
+        }
         if (milestoneMultiplier > 0) rewardManager.giveItems(player, configManager.getMilestoneItemRewards(category), milestoneMultiplier);
         progress.setCurrentProgress(0);
         progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));

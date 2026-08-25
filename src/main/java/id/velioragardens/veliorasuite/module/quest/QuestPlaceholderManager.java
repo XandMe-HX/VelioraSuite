@@ -25,6 +25,7 @@ public final class QuestPlaceholderManager {
             PlayerCategoryProgress progress = category == null ? null : data.getCategoryProgress(category);
             return progress == null ? "0" : String.valueOf(progress.getLevel());
         }
+        if (lower.equals("quest_total_level")) return String.valueOf(data.getCategories().values().stream().mapToInt(PlayerCategoryProgress::getLevel).sum());
         return "";
     }
 
