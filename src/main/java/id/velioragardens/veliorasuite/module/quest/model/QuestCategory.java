@@ -9,7 +9,10 @@ public enum QuestCategory {
     CHEF("chef"),
     MONSTER_HUNTER("monster_hunter"),
     ANIMAL_HUNTER("animal_hunter"),
-    FISHING("fishing");
+    FISHING("fishing"),
+    AGILITY("agility"),
+    ALCHEMY("alchemy"),
+    ARCHERY("archery");
 
     private final String key;
 

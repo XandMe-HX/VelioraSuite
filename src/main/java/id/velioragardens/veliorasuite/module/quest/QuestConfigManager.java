@@ -37,6 +37,7 @@ public final class QuestConfigManager {
         migrateAutomaticProgressionV2(file);
         migrateRewardsV3(file);
         migrateSkillGrowthV4(file);
+        migrateAuraStyleProgressionV5(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -53,7 +54,7 @@ public final class QuestConfigManager {
     public BarStyle getBossBarStyle() { return bossBarStyle(str("settings.bossbar.style", "SEGMENTED_10")); }
     public boolean isBossBarHideWhenComplete() { return bool("settings.bossbar.hide-when-complete", true); }
     public int getBossBarAutoHideSeconds() { return Math.max(0, integer("settings.bossbar.auto-hide-seconds", 8)); }
-    public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 1)); }
+    public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 3)); }
     public int getMaxLevel() { return Math.max(1, integer("settings.progression.max-level", 100)); }
     public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", true); }
     public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", true); }
@@ -64,12 +65,15 @@ public final class QuestConfigManager {
     public int getMoneyIncreasePerLevel() { return Math.max(0, integer("settings.rewards.money-increase-per-level", integer("settings.rewards.money-increase-per-tier", 150))); }
     public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }
     public int getFarmMinimumGrowthSeconds() { return Math.max(0, integer("settings.anti-exploit.farm-minimum-growth-seconds", 300)); }
-    public int getManaLevelInterval() { return Math.max(1, integer("settings.rewards.mana-level-interval", 5)); }
+    public int getManaLevelInterval() { return Math.max(1, integer("settings.rewards.mana-level-interval", 3)); }
     public int getManaLevelBonus() { return Math.max(0, integer("settings.rewards.mana-level-bonus", 1)); }
     public int getMilestoneLevelInterval() { return Math.max(1, integer("settings.rewards.milestone-level-interval", 5)); }
-    public int getHunterHealthLevelInterval() { return Math.max(1, integer("settings.rewards.hunter-health-level-interval", 2)); }
+    public int getHunterHealthLevelInterval() { return Math.max(1, integer("settings.rewards.hunter-health-level-interval", 5)); }
     public double getHunterHealthBonus() { return Math.max(0.0D, config.getDouble("settings.rewards.hunter-health-bonus", 1.0D)); }
-    public double getHunterHealthCap() { return Math.max(20.0D, config.getDouble("settings.rewards.hunter-health-cap", 40.0D)); }
+    public double getHunterHealthCap() { return Math.max(20.0D, config.getDouble("settings.rewards.hunter-health-cap", 30.0D)); }
+    public boolean isLevelTitleEnabled() { return bool("settings.progression.level-up-title.enabled", true); }
+    public String getLevelTitle() { return str("settings.progression.level-up-title.title", "&aLEVEL UP!"); }
+    public String getLevelSubtitle() { return str("settings.progression.level-up-title.subtitle", "&f%quest% &7menjadi level &a%level%"); }
     public int getMilestoneMaxMultiplier() { return Math.max(1, integer("settings.rewards.milestone-max-multiplier", 3)); }
     public boolean isStarterEnabled() { return bool("settings.starter.enabled", true); }
     public boolean isStarterReminderEnabled() { return bool("settings.starter.reminder-enabled", true); }
@@ -238,6 +242,37 @@ public final class QuestConfigManager {
         }
     }
 
+    /** Makes progression slower without resetting existing player quest data. */
+    private void migrateAuraStyleProgressionV5(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 5) return;
+        config.set("settings.progression.config-version", 5);
+        config.set("settings.progression.completions-per-level", 3);
+        config.set("settings.progression.level-up-title.enabled", true);
+        config.set("settings.progression.level-up-title.title", "&aLEVEL UP!");
+        config.set("settings.progression.level-up-title.subtitle", "&f%quest% &7menjadi level &a%level%");
+        config.set("settings.rewards.mana-level-interval", 3);
+        config.set("settings.rewards.hunter-health-level-interval", 5);
+        config.set("settings.rewards.hunter-health-cap", 30.0D);
+        setNewCategory("agility", "&aAgility", "RABBIT_FOOT", 24, 10, "SUGAR", 2, "RABBIT_FOOT", 1);
+        setNewCategory("alchemy", "&dAlchemy", "BREWING_STAND", 12, 6, "GLOWSTONE_DUST", 2, "BLAZE_POWDER", 4);
+        setNewCategory("archery", "&6Archery", "BOW", 36, 18, "ARROW", 8, "SPECTRAL_ARROW", 4);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan progression v5: " + exception.getMessage()); }
+    }
+
+    private void setNewCategory(String key, String name, String icon, int target, int increase,
+                                String baseMaterial, int baseAmount, String milestoneMaterial, int milestoneAmount) {
+        String path = "categories." + key;
+        if (config.isConfigurationSection(path)) return;
+        config.set(path + ".enabled", true);
+        config.set(path + ".display-name", name);
+        config.set(path + ".icon", icon);
+        config.set(path + ".base-target", target);
+        config.set(path + ".target-increase-per-level", increase);
+        config.set(path + ".base-item-rewards", List.of(Map.of("material", baseMaterial, "amount", baseAmount)));
+        config.set(path + ".milestone-item-rewards", List.of(Map.of("material", milestoneMaterial, "amount", milestoneAmount)));
+    }
+
     /** Migrates the old placeholder category so existing server configs show the real tree-cutting quest. */
     private void migrateLegacyWoodcuttingDisplay(File file) {
         if (config == null || !"&dWeekly / Special".equals(config.getString("categories.woodcutting.display-name"))) return;
@@ -269,6 +304,9 @@ public final class QuestConfigManager {
             case MONSTER_HUNTER -> "&cMonster Hunter";
             case ANIMAL_HUNTER -> "&fAnimal Hunter";
             case FISHING -> "&bFishing";
+            case AGILITY -> "&aAgility";
+            case ALCHEMY -> "&dAlchemy";
+            case ARCHERY -> "&6Archery";
         };
     }
 
@@ -281,6 +319,9 @@ public final class QuestConfigManager {
             case MONSTER_HUNTER -> Material.IRON_SWORD;
             case ANIMAL_HUNTER -> Material.COOKED_CHICKEN;
             case FISHING -> Material.FISHING_ROD;
+            case AGILITY -> Material.RABBIT_FOOT;
+            case ALCHEMY -> Material.BREWING_STAND;
+            case ARCHERY -> Material.BOW;
         };
     }
 
@@ -292,6 +333,9 @@ public final class QuestConfigManager {
             case CHEF -> 32;
             case MONSTER_HUNTER, ANIMAL_HUNTER -> 25;
             case FISHING -> 20;
+            case AGILITY -> 24;
+            case ALCHEMY -> 12;
+            case ARCHERY -> 36;
         };
     }
 
@@ -303,6 +347,9 @@ public final class QuestConfigManager {
             case CHEF -> 18;
             case MONSTER_HUNTER, ANIMAL_HUNTER -> 12;
             case FISHING -> 10;
+            case AGILITY -> 10;
+            case ALCHEMY -> 6;
+            case ARCHERY -> 18;
         };
     }
 
