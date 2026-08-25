@@ -212,8 +212,12 @@ commands:
   vgnpc:
     description: Membuat dan mengelola NPC ringan Veliora.
     usage: /vgnpc <create|delete|list|move|teleport|type|lines|skin|height|action>
-    aliases: [znpcs]
     permission: veliorasuite.npc.admin
+  vgclaim:
+    description: Mengelola Guard Claim untuk area server.
+    usage: /vgclaim <pos1|pos2|claim|flag|info|list|delete>
+    aliases: [velioraguard, serverclaim]
+    permission: veliorasuite.guard.admin
   sethome:
     description: Simpan home Veliora.
     usage: /sethome [nama]
@@ -334,6 +338,10 @@ permissions:
   veliorasuite.adventure.admin:
     default: op
   veliorasuite.npc.admin:
+    default: op
+  veliorasuite.guard.admin:
+    default: op
+  veliorasuite.guard.bypass:
     default: op
   veliorasuite.home.use:
     default: true

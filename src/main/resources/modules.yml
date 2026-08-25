@@ -21,3 +21,4 @@ modules:
   notifications: true
   npc: true
   home: true
+  guardclaim: true
