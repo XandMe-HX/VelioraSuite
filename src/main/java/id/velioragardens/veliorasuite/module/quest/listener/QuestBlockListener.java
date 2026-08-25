@@ -28,7 +28,7 @@ public final class QuestBlockListener implements Listener {
                 event.getBlockPlaced().getX(), event.getBlockPlaced().getY(), event.getBlockPlaced().getZ()));
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         BlockKey key = BlockKey.of(event.getBlock().getWorld().getUID(),
                 event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ());

@@ -29,6 +29,11 @@ settings:
     max-level: 100
     auto-start-on-progress: true
     auto-restart-after-claim: true
+  anti-exploit:
+    # Blok yang baru ditanam tidak dihitung langsung. Ini menutup loop tanam-
+    # panen instan tanpa mengganggu kebun yang memang sudah tumbuh.
+    farm-minimum-growth-seconds: 300
+    ignore-cancelled-protection-events: true
   rewards:
     # Nilai uang dikurangi 20% agar tetap cocok untuk economy hard.
     give-mana-on-complete: true
