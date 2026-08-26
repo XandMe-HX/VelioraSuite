@@ -245,8 +245,8 @@ public final class QuestConfigManager {
 
     public int getLevelMoneyInterval() { return Math.max(1, integer("settings.rewards.level-money.interval", 10)); }
     public int getLevelMoneyBase() { return Math.max(0, integer("settings.rewards.level-money.base", 100)); }
-    public int getLevelMoneyIncrease() { return Math.max(0, integer("settings.rewards.level-money.increase-per-milestone", 100)); }
-    public int getLevelMoneyMax() { return Math.max(getLevelMoneyBase(), integer("settings.rewards.level-money.max", 5000)); }
+    public int getLevelMoneyIncrease() { return Math.max(0, integer("settings.rewards.level-money.increase-per-milestone", 50)); }
+    public int getLevelMoneyMax() { return Math.max(getLevelMoneyBase(), integer("settings.rewards.level-money.max", 2000)); }
     public int getLevelMoneyReward(int level) {
         if (level <= 0 || level % getLevelMoneyInterval() != 0) return 0;
         int milestone = level / getLevelMoneyInterval();
@@ -350,8 +350,8 @@ public final class QuestConfigManager {
         config.set("settings.progression.max-level", 500);
         config.set("settings.rewards.level-money.interval", 10);
         config.set("settings.rewards.level-money.base", 100);
-        config.set("settings.rewards.level-money.increase-per-milestone", 100);
-        config.set("settings.rewards.level-money.max", 5000);
+        config.set("settings.rewards.level-money.increase-per-milestone", 50);
+        config.set("settings.rewards.level-money.max", 2000);
         config.set("settings.progression.config-version", 8);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan skill command v8: " + exception.getMessage()); }

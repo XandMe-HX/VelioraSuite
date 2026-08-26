@@ -71,8 +71,8 @@ settings:
     level-money:
       interval: 10
       base: 100
-      increase-per-milestone: 100
-      max: 5000
+      increase-per-milestone: 50
+      max: 2000
   starter:
     enabled: true
     reminder-enabled: true
