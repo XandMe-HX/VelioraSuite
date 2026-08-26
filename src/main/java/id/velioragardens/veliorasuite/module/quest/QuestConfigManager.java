@@ -43,6 +43,7 @@ public final class QuestConfigManager {
         migrateProtectionV6(file);
         migrateExperienceLevelRewardsV7(file);
         migrateSkillCommandsV8(file);
+        migrateRequirementsV9(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -243,6 +244,29 @@ public final class QuestConfigManager {
         return !sender.isPermissionSet(permission) || sender.hasPermission(permission);
     }
 
+    public boolean areRequirementsEnabled() { return bool("settings.requirements.enabled", true); }
+    public String getRequirementMessage() { return str("settings.requirements.denied-message", "%prefix% &cButuh skill &f%skill% &clevel &f%level% &cuntuk memakai &f%item%&c."); }
+
+    /** Global Aura-style requirements use the simple YAML form
+     * MATERIAL skill:level [another_skill:level]. */
+    public List<SkillRequirement> getRequirements(Material material, boolean armor) {
+        if (!areRequirementsEnabled() || material == null) return List.of();
+        List<SkillRequirement> result = new ArrayList<>();
+        String path = "settings.requirements." + (armor ? "armor" : "item") + ".global";
+        for (String line : config.getStringList(path)) {
+            String[] pieces = line.trim().split("\\s+");
+            if (pieces.length < 2 || !pieces[0].equalsIgnoreCase(material.name())) continue;
+            for (int index = 1; index < pieces.length; index++) {
+                String[] pair = pieces[index].split(":", 2);
+                QuestCategory category = QuestCategory.fromKey(pair[0]);
+                if (category == null || pair.length != 2) continue;
+                try { result.add(new SkillRequirement(category, Math.max(1, Integer.parseInt(pair[1])))); }
+                catch (NumberFormatException ignored) { }
+            }
+        }
+        return result;
+    }
+
     public int getLevelMoneyInterval() { return Math.max(1, integer("settings.rewards.level-money.interval", 10)); }
     public int getLevelMoneyBase() { return Math.max(0, integer("settings.rewards.level-money.base", 100)); }
     public int getLevelMoneyIncrease() { return Math.max(0, integer("settings.rewards.level-money.increase-per-milestone", 50)); }
@@ -357,6 +381,24 @@ public final class QuestConfigManager {
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan skill command v8: " + exception.getMessage()); }
     }
 
+    private void migrateRequirementsV9(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 9) return;
+        config.set("settings.requirements.enabled", true);
+        config.set("settings.requirements.denied-message", "%prefix% &cButuh skill &f%skill% &clevel &f%level% &cuntuk memakai &f%item%&c.");
+        config.set("settings.requirements.item.global", List.of(
+                "DIAMOND_PICKAXE mining:15", "NETHERITE_PICKAXE mining:35",
+                "DIAMOND_SWORD monster_hunter:15", "NETHERITE_SWORD monster_hunter:35",
+                "BOW archery:10", "TRIDENT fishing:20"));
+        config.set("settings.requirements.armor.global", List.of(
+                "DIAMOND_HELMET monster_hunter:15", "DIAMOND_CHESTPLATE monster_hunter:15",
+                "DIAMOND_LEGGINGS monster_hunter:15", "DIAMOND_BOOTS agility:12",
+                "NETHERITE_HELMET monster_hunter:35", "NETHERITE_CHESTPLATE monster_hunter:35",
+                "NETHERITE_LEGGINGS monster_hunter:35", "NETHERITE_BOOTS agility:30"));
+        config.set("settings.progression.config-version", 9);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan requirement v9: " + exception.getMessage()); }
+    }
+
     private void setNewCategory(String key, String name, String icon, int target, int increase,
                                 String baseMaterial, int baseAmount, String milestoneMaterial, int milestoneAmount) {
         String path = "categories." + key;
@@ -468,4 +510,6 @@ public final class QuestConfigManager {
     private double decimal(String path, double fallback) {
         return config == null ? fallback : config.getDouble(path, fallback);
     }
+
+    public record SkillRequirement(QuestCategory category, int level) { }
 }
