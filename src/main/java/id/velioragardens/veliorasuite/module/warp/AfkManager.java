@@ -8,7 +8,6 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
@@ -20,7 +19,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -74,11 +72,11 @@ public final class AfkManager implements Listener, CommandExecutor {
     @EventHandler public void onInteract(PlayerInteractEvent event) { activate(event.getPlayer()); }
     @EventHandler public void onChat(AsyncPlayerChatEvent event) { Bukkit.getScheduler().runTask(plugin, () -> activate(event.getPlayer())); }
     @EventHandler public void onCommand(PlayerCommandPreprocessEvent event) {
-        if (event.getMessage().equalsIgnoreCase("/afk") && essentialsOwnsAfkCommand()) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                Boolean state = essentialsAfk(event.getPlayer());
-                if (state != null) setAfk(event.getPlayer(), state);
-            }, 2L);
+        if (event.getMessage().trim().equalsIgnoreCase("/afk")) {
+            // Essentials may also own /afk. Handle this command exactly once so
+            // the two plugins cannot toggle it on and immediately back off.
+            event.setCancelled(true);
+            Bukkit.getScheduler().runTask(plugin, () -> setAfk(event.getPlayer(), !afk.contains(event.getPlayer().getUniqueId())));
         } else if (!event.getMessage().equalsIgnoreCase("/afk")) activate(event.getPlayer());
     }
     @EventHandler public void onMove(PlayerMoveEvent event) {
@@ -118,28 +116,6 @@ public final class AfkManager implements Listener, CommandExecutor {
     }
 
     private Location markerLocation(Player player) { return player.getLocation().clone().add(0, 2.65D, 0); }
-
-    private boolean essentialsOwnsAfkCommand() {
-        PluginCommand command = Bukkit.getPluginCommand("afk");
-        return command != null && command.getPlugin().getName().equalsIgnoreCase("Essentials");
-    }
-
-    private Boolean essentialsAfk(Player player) {
-        Plugin essentials = Bukkit.getPluginManager().getPlugin("Essentials");
-        if (essentials == null || !essentials.isEnabled()) return null;
-        try {
-            Object user;
-            try {
-                user = essentials.getClass().getMethod("getUser", UUID.class).invoke(essentials, player.getUniqueId());
-            } catch (NoSuchMethodException ignored) {
-                user = essentials.getClass().getMethod("getUser", Player.class).invoke(essentials, player);
-            }
-            if (user == null) return null;
-            return (Boolean) user.getClass().getMethod("isAfk").invoke(user);
-        } catch (ReflectiveOperationException | LinkageError ignored) {
-            return null;
-        }
-    }
 
     private void clear(Player player) {
         afk.remove(player.getUniqueId()); lastActivity.remove(player.getUniqueId());

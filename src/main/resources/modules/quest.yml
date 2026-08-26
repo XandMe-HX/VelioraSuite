@@ -22,7 +22,7 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 9
+    config-version: 10
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Jalan panjang seperti AuraSkills. XP requirement bertambah tiap level.
     completions-per-level: 3
@@ -50,29 +50,18 @@ settings:
     blocked-worlds: [lobby, war_world]
     # Menahan spam event tanpa mengganggu aktivitas normal pemain.
     source-cooldown-millis: 125
-  # Syarat level item/armor seperti AuraSkills. Hapus sebuah baris untuk
-  # membebaskan item itu; custom enchant pada item tidak akan hilang.
+    # OP dapat memperoleh XP saat Creative untuk menguji konfigurasi. Pemain
+    # biasa Creative tetap tidak memperoleh XP agar tidak mudah dieksploitasi.
+    allow-creative: false
+    allow-creative-op: true
+  # Opsional untuk item custom masa depan. Vanilla gear sengaja bebas dipakai.
   requirements:
-    enabled: true
+    enabled: false
     denied-message: '%prefix% &cButuh skill &f%skill% &clevel &f%level% &cuntuk memakai &f%item%&c.'
     item:
-      global:
-      - 'DIAMOND_PICKAXE mining:15'
-      - 'NETHERITE_PICKAXE mining:35'
-      - 'DIAMOND_SWORD monster_hunter:15'
-      - 'NETHERITE_SWORD monster_hunter:35'
-      - 'BOW archery:10'
-      - 'TRIDENT fishing:20'
+      global: []
     armor:
-      global:
-      - 'DIAMOND_HELMET monster_hunter:15'
-      - 'DIAMOND_CHESTPLATE monster_hunter:15'
-      - 'DIAMOND_LEGGINGS monster_hunter:15'
-      - 'DIAMOND_BOOTS agility:12'
-      - 'NETHERITE_HELMET monster_hunter:35'
-      - 'NETHERITE_CHESTPLATE monster_hunter:35'
-      - 'NETHERITE_LEGGINGS monster_hunter:35'
-      - 'NETHERITE_BOOTS agility:30'
+      global: []
   rewards:
     # Nilai uang dikurangi 20% agar tetap cocok untuk economy hard.
     give-mana-on-complete: true

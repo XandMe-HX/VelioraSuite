@@ -39,6 +39,7 @@ public final class WarpModule implements VelioraModule {
         register("fishing", executor);
         listener = new WarpListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+        plugin.getServer().getPluginManager().registerEvents(manager, plugin);
         safetyListener = new TeleportSafetyListener(plugin, manager);
         plugin.getServer().getPluginManager().registerEvents(safetyListener, plugin);
         safetyListener.start();
@@ -53,6 +54,7 @@ public final class WarpModule implements VelioraModule {
     public void disable() {
         enabled = false;
         if (listener != null) HandlerList.unregisterAll(listener);
+        if (manager != null) HandlerList.unregisterAll(manager);
         if (safetyListener != null) {
             HandlerList.unregisterAll(safetyListener);
             safetyListener.stop();

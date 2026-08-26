@@ -2,7 +2,8 @@ settings:
   enabled: true
   prefix: '&7[&eVELIORA &aWARP&7] &r'
   cooldown-seconds: 3
-  countdown-seconds: 5
+  countdown-seconds: 3
+  arrival-freeze-seconds: 3
   afk:
     auto-seconds: 300
   sound:
