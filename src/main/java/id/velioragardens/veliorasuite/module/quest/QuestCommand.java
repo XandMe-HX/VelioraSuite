@@ -6,6 +6,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -136,6 +137,30 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
                 manager.sendStatus(sender);
                 return true;
             }
+            case "xp" -> {
+                if (!manager.getConfigManager().hasAdmin(sender)) { manager.sendNoPermission(sender); return true; }
+                if (args.length < 5) { manager.sendHelp(sender); return true; }
+                Player target = Bukkit.getPlayerExact(args[2]);
+                QuestCategory category = QuestCategory.fromKey(args[3]);
+                long amount;
+                try { amount = Long.parseLong(args[4]); } catch (NumberFormatException exception) { manager.sendHelp(sender); return true; }
+                if (target == null || category == null || amount < 0 || !List.of("add", "set", "remove").contains(args[1].toLowerCase(Locale.ROOT))) { manager.sendHelp(sender); return true; }
+                boolean changed = manager.adminSkillXp(target, category, args[1], amount);
+                sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + (changed ? "&aSkill XP berhasil diperbarui." : "&cSkill XP tidak dapat diperbarui.")));
+                return true;
+            }
+            case "skilladmin" -> {
+                if (!manager.getConfigManager().hasAdmin(sender)) { manager.sendNoPermission(sender); return true; }
+                if (args.length < 4) { manager.sendHelp(sender); return true; }
+                Player target = Bukkit.getPlayerExact(args[2]);
+                QuestCategory category = QuestCategory.fromKey(args[3]);
+                int amount = args.length >= 5 ? parsePositive(args[4]) : 0;
+                String action = args[1].toLowerCase(Locale.ROOT);
+                if (target == null || category == null || !List.of("setlevel", "addlevel", "reset").contains(action) || (action.equals("reset") ? args.length != 4 : amount < 1)) { manager.sendHelp(sender); return true; }
+                boolean changed = manager.adminSkillLevel(target, category, action, amount);
+                sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + (changed ? "&aLevel skill berhasil diperbarui." : "&cLevel skill tidak dapat diperbarui.")));
+                return true;
+            }
             default -> { manager.sendHelp(sender); return true; }
         }
     }
@@ -149,13 +174,17 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
             }
             List<String> options = new ArrayList<>(Arrays.asList("gui", "progress", "stats", "skill", "top", "rank", "start", "claim", "cancel", "help"));
             if (manager.getConfigManager().hasReload(sender)) options.add("reload");
-            if (manager.getConfigManager().hasAdmin(sender)) options.add("status");
+            if (manager.getConfigManager().hasAdmin(sender)) { options.add("status"); options.add("xp"); options.add("skilladmin"); }
             return filter(options, args[0]);
         }
         if (args.length == 2 && List.of("start", "claim", "cancel", "skill").contains(args[0].toLowerCase(Locale.ROOT))) {
             return filter(categoriesWithTotal(), args[1]);
         }
         if (args.length == 2 && List.of("top", "rank").contains(args[0].toLowerCase(Locale.ROOT))) return filter(categoriesWithTotal(), args[1]);
+        if (args.length == 2 && args[0].equalsIgnoreCase("xp")) return filter(List.of("add", "set", "remove"), args[1]);
+        if (args.length == 2 && args[0].equalsIgnoreCase("skilladmin")) return filter(List.of("setlevel", "addlevel", "reset"), args[1]);
+        if (args.length == 3 && List.of("xp", "skilladmin").contains(args[0].toLowerCase(Locale.ROOT))) return filter(Bukkit.getOnlinePlayers().stream().map(Player::getName).toList(), args[2]);
+        if (args.length == 4 && List.of("xp", "skilladmin").contains(args[0].toLowerCase(Locale.ROOT))) return filter(categoriesWithTotal(), args[3]);
         return new ArrayList<>();
     }
 
@@ -179,5 +208,10 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
         categories.add("total");
         for (QuestCategory category : QuestCategory.values()) categories.add(category.key());
         return categories;
+    }
+
+    private int parsePositive(String input) {
+        try { return Integer.parseInt(input); }
+        catch (NumberFormatException exception) { return -1; }
     }
 }

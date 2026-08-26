@@ -58,6 +58,28 @@ public final class QuestManager {
 
     public QuestConfigManager getConfigManager() { return configManager; }
     public QuestDataManager getDataManager() { return dataManager; }
+
+    public boolean adminSkillXp(Player target, QuestCategory category, String operation, long amount) {
+        if (target == null || category == null || amount < 0) return false;
+        return switch (operation.toLowerCase(java.util.Locale.ROOT)) {
+            case "add" -> progressManager.addRawSkillExperience(target, category, amount);
+            case "set" -> progressManager.setSkillExperience(target, category, amount);
+            case "remove" -> progressManager.removeSkillExperience(target, category, amount);
+            default -> false;
+        };
+    }
+
+    public boolean adminSkillLevel(Player target, QuestCategory category, String operation, int amount) {
+        if (target == null || category == null || amount < 0) return false;
+        PlayerCategoryProgress progress = dataManager.getOrCreate(target).getCategoryProgress(category);
+        if (progress == null) return false;
+        return switch (operation.toLowerCase(java.util.Locale.ROOT)) {
+            case "setlevel" -> progressManager.setSkillLevel(target, category, amount);
+            case "addlevel" -> progressManager.setSkillLevel(target, category, progress.getLevel() + amount);
+            case "reset" -> progressManager.setSkillLevel(target, category, 1);
+            default -> false;
+        };
+    }
     public QuestProgressManager getProgressManager() { return progressManager; }
     public QuestStarterManager getStarterManager() { return starterManager; }
     public QuestGuiManager getGuiManager() { return guiManager; }

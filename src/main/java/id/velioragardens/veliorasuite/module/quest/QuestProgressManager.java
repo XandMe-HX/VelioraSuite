@@ -24,12 +24,17 @@ public final class QuestProgressManager {
      */
     public boolean addSkillExperience(Player player, QuestCategory category, int amount) {
         if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category) || !configManager.canUseSkill(player, category)) return false;
+        int xp = (int) Math.max(1L, Math.round(configManager.sourceXp(category, amount) * configManager.permissionMultiplier(player, category)));
+        return addRawSkillExperience(player, category, xp);
+    }
+
+    /** Adds direct internal Skill XP for administration and never touches vanilla XP. */
+    public boolean addRawSkillExperience(Player player, QuestCategory category, long xp) {
+        if (player == null || category == null || xp <= 0) return false;
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
         if (progress == null) return false;
-
-        int xp = (int) Math.max(1L, Math.round(configManager.sourceXp(category, amount) * configManager.permissionMultiplier(player, category)));
-        long totalXp = progress.getExperience() + xp;
+        long totalXp = Math.min(Long.MAX_VALUE / 2L, progress.getExperience() + xp);
         boolean levelUp = false;
         while (progress.getLevel() < configManager.getMaxLevel()) {
             long need = configManager.xpRequired(category, progress.getLevel());
@@ -41,6 +46,34 @@ public final class QuestProgressManager {
         progress.setExperience(totalXp);
         dataManager.save(data);
         return levelUp;
+    }
+
+    public boolean setSkillExperience(Player player, QuestCategory category, long xp) {
+        if (player == null || category == null) return false;
+        PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        if (progress == null) return false;
+        progress.setExperience(Math.max(0L, xp));
+        dataManager.save(dataManager.getOrCreate(player));
+        return true;
+    }
+
+    public boolean removeSkillExperience(Player player, QuestCategory category, long xp) {
+        if (player == null || category == null || xp <= 0) return false;
+        PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        if (progress == null) return false;
+        progress.setExperience(Math.max(0L, progress.getExperience() - xp));
+        dataManager.save(dataManager.getOrCreate(player));
+        return true;
+    }
+
+    public boolean setSkillLevel(Player player, QuestCategory category, int level) {
+        if (player == null || category == null) return false;
+        PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        if (progress == null) return false;
+        progress.setLevel(Math.min(configManager.getMaxLevel(), Math.max(1, level)));
+        progress.setExperience(0L);
+        dataManager.save(dataManager.getOrCreate(player));
+        return true;
     }
 
     /**

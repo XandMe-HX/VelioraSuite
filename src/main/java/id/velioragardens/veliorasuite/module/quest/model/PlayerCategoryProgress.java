@@ -2,7 +2,10 @@ package id.velioragardens.veliorasuite.module.quest.model;
 
 public final class PlayerCategoryProgress {
 
-    private static final int MAX_LEVEL = 100;
+    // The configured cap is enforced by QuestProgressManager. This larger
+    // storage cap keeps old player data compatible with the configured 500
+    // skill levels instead of silently truncating it at level 100.
+    private static final int MAX_LEVEL = 500;
 
     private final QuestCategory category;
     private int level;

@@ -22,7 +22,7 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 13
+    config-version: 14
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Jalan panjang seperti AuraSkills. XP requirement bertambah tiap level.
     completions-per-level: 3
@@ -32,9 +32,22 @@ settings:
     # atau khusus skill: veliorasuite.multiplier.mining.50 (50% tambahan XP).
     xp-requirements:
       default:
+        # Skill XP, bukan XP bar Minecraft. Rumus ini setara pola AuraSkills.
+        # Variabel yang bisa kamu ubah: level, base, multiplier, power.
+        # Hapus/komentari expression bila ingin memakai base/multiplier/power lama.
+        expression: 'multiplier * (level - 1) ^ power + base'
         base: 100
         multiplier: 25.0
         power: 2.0
+        # Alternatif tanpa rumus: daftar XP untuk level 1->2, 2->3, dst.
+        # values: [100, 125, 200, 325]
+      # Override per skill bersifat opsional, contoh:
+      # skills:
+      #   mining:
+      #     expression: 'multiplier * (level - 1) ^ power + base'
+      #     base: 110
+      #     multiplier: 28.0
+      #     power: 2.0
     auto-start-on-progress: false
     auto-restart-after-claim: true
     level-up-title:
