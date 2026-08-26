@@ -73,7 +73,9 @@ public final class QuestDataManager {
             int target = Math.max(1, data.getInt(path + ".current-target", configManager.calculateTarget(category, level)));
             int progress = Math.max(0, data.getInt(path + ".current-progress", 0));
             int reward = Math.max(0, data.getInt(path + ".current-reward-money", configManager.calculateRewardMoney(level)));
-            result.putCategoryProgress(new PlayerCategoryProgress(category, level, completed, state, target, progress, reward));
+            PlayerCategoryProgress categoryProgress = new PlayerCategoryProgress(category, level, completed, state, target, progress, reward);
+            categoryProgress.setExperience(Math.max(0L, data.getLong(path + ".experience", 0L)));
+            result.putCategoryProgress(categoryProgress);
         }
         if (player.getName() != null) result.setName(player.getName());
         cachedPlayers.put(uuid, result);
@@ -98,6 +100,7 @@ public final class QuestDataManager {
             data.set(path + ".current-target", progress.getCurrentTarget());
             data.set(path + ".current-progress", progress.getCurrentProgress());
             data.set(path + ".current-reward-money", progress.getCurrentRewardMoney());
+            data.set(path + ".experience", progress.getExperience());
         }
         dirty = true;
     }
