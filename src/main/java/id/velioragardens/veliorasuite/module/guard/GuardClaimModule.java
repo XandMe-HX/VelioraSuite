@@ -49,6 +49,7 @@ public final class GuardClaimModule implements VelioraModule, Listener, CommandE
  @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void expl(EntityExplodeEvent e){C c=at(e.getLocation());if(c!=null&&!c.flag(e.getEntity() instanceof Creeper?"creeper":"tnt"))e.blockList().clear();}
  @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void expl2(BlockExplodeEvent e){C c=at(e.getBlock().getLocation());if(c!=null&&!c.flag("tnt"))e.blockList().clear();}
  @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void fire(BlockIgniteEvent e){C c=at(e.getBlock().getLocation());if(c!=null&&!c.flag("fire"))e.setCancelled(true);}
+ @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void spread(BlockSpreadEvent e){C c=at(e.getBlock().getLocation());if(c!=null&&!c.flag("fire")&&e.getNewState().getType()==Material.FIRE)e.setCancelled(true);}
  @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void form(BlockFormEvent e){C c=at(e.getBlock().getLocation());if(c!=null&&!c.flag("ice-form")&&e.getNewState().getType()==Material.ICE)e.setCancelled(true);}
  @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void melt(BlockFadeEvent e){C c=at(e.getBlock().getLocation());if(c!=null&&!c.flag("ice-melt"))e.setCancelled(true);}
  @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void inv(EntityDamageEvent e){if(e.getEntity() instanceof Player p){C c=at(p.getLocation());if(c!=null&&c.flag("invincible"))e.setCancelled(true);}}
