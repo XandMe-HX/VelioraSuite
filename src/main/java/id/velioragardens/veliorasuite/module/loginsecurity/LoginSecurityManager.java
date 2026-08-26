@@ -91,9 +91,11 @@ public final class LoginSecurityManager {
         new BukkitRunnable() {
             @Override public void run() {
                 if (!player.isOnline() || isAuthenticated(player)) { cancel(); return; }
-                String title = register ? "&eDAFTARKAN AKUN" : "&aLOGIN AKUN";
-                String subtitle = register ? "&f/register <password> <ulangi password>"
-                        : "&f/login <password> &8| &7Video tutorial ada di TikTok &fvelioragardensofficial";
+                // Keep the title short: Bedrock clients enlarge long titles and
+                // the old text could run beyond the screen.
+                String title = register ? "&eDAFTAR" : "&aLOGIN";
+                String subtitle = register ? "&f/register <password> <ulang>"
+                        : "&f/login <password>";
                 player.sendTitle(configManager.color(title), configManager.color(subtitle), 5, 50, 5);
             }
         }.runTaskTimer(plugin, 1L, 40L);
