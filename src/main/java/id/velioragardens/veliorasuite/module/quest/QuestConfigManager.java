@@ -347,6 +347,12 @@ public final class QuestConfigManager {
         return Math.max(1, integer("categories." + category.key() + ".xp-per-action", 5)) * Math.max(1, units);
     }
 
+    /** Global multiplier follows the same additive permission model as Aura-style skills.
+     * Example: veliorasuite.multiplier.50 grants 1.5x Skill XP. */
+    public double globalPermissionMultiplier(org.bukkit.entity.Player player) {
+        return permissionMultiplier(player, null);
+    }
+
     public double permissionMultiplier(org.bukkit.entity.Player player, QuestCategory category) {
         double percent = 0.0D;
         for (org.bukkit.permissions.PermissionAttachmentInfo info : player.getEffectivePermissions()) {
@@ -355,7 +361,7 @@ public final class QuestConfigManager {
             String prefix = "veliorasuite.multiplier.";
             if (!node.startsWith(prefix)) continue;
             String value = node.substring(prefix.length());
-            if (value.startsWith(category.key() + ".")) value = value.substring(category.key().length() + 1);
+            if (category != null && value.startsWith(category.key() + ".")) value = value.substring(category.key().length() + 1);
             else if (value.contains(".")) continue;
             try { percent += Double.parseDouble(value); } catch (NumberFormatException ignored) { }
         }
