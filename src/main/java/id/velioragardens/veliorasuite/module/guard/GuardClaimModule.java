@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 
 /** Full-height protection for official server areas; separate from player claims. */
 public final class GuardClaimModule implements VelioraModule, Listener, CommandExecutor, TabCompleter {
- private static final List<String> F=List.of("break","place","pvp","chest","door","iron-door","trapdoor","lever","button","allow-fly","use-potions","spawn","passives","monster-damage","fire","creeper","tnt","ice-form","ice-melt","invincible","minecart","boat","teleport");
+ private static final List<String> F=List.of("break","place","drop-items","pvp","chest","door","iron-door","trapdoor","lever","button","allow-fly","use-potions","spawn","passives","monster-damage","fire","creeper","tnt","ice-form","ice-melt","invincible","minecart","boat","teleport");
  private final VelioraSuite plugin; private final Map<String,C> claims=new LinkedHashMap<>(); private final Map<UUID,Location> p1=new HashMap<>(),p2=new HashMap<>(); private final Map<UUID,String> inside=new HashMap<>(); private final NamespacedKey key; private File file; private boolean enabled;
  public GuardClaimModule(VelioraSuite p){plugin=p;key=new NamespacedKey(p,"guard_flag");}
  public String getName(){return "guardclaim";} public void load(){file=new File(plugin.getDataFolder(),"data/guard-claims.yml");loadData();}
