@@ -18,20 +18,15 @@ public final class QuestProgressManager {
         this.dataManager = dataManager;
     }
 
-    public boolean addProgress(Player player, QuestCategory category, int amount) {
+    /**
+     * Adds XP to a skill only. Daily quest state is deliberately not touched here:
+     * normal gameplay should feel like AuraSkills, not silently start a job.
+     */
+    public boolean addSkillExperience(Player player, QuestCategory category, int amount) {
         if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category) || !configManager.canUseSkill(player, category)) return false;
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
         if (progress == null) return false;
-        if (progress.getState() == QuestState.READY_TO_CLAIM) return true;
-
-        if (progress.getState() != QuestState.ACTIVE) {
-            if (!configManager.isAutoStartOnProgress()) return false;
-            progress.setState(QuestState.ACTIVE);
-            progress.setCurrentProgress(0);
-            progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
-            progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
-        }
 
         int xp = (int) Math.max(1L, Math.round(configManager.sourceXp(category, amount) * configManager.permissionMultiplier(player, category)));
         long totalXp = progress.getExperience() + xp;
@@ -44,6 +39,16 @@ public final class QuestProgressManager {
             levelUp = true;
         }
         progress.setExperience(totalXp);
+        dataManager.save(data);
+        return levelUp;
+    }
+
+    /** Adds only progress to a daily quest that was explicitly started. */
+    public boolean addQuestProgress(Player player, QuestCategory category, int amount) {
+        if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category) || !configManager.canUseSkill(player, category)) return false;
+        PlayerQuestData data = dataManager.getOrCreate(player);
+        PlayerCategoryProgress progress = data.getCategoryProgress(category);
+        if (progress == null || progress.getState() != QuestState.ACTIVE) return false;
         progress.setCurrentProgress(progress.getCurrentProgress() + amount);
         if (progress.getCurrentProgress() >= progress.getCurrentTarget()) {
             progress.setCurrentProgress(progress.getCurrentTarget());
@@ -52,7 +57,6 @@ public final class QuestProgressManager {
             return true;
         }
         dataManager.save(data);
-        if (levelUp) player.sendTitle(configManager.color("&aLEVEL UP!"), configManager.color("&f" + configManager.getCategoryDisplayName(category) + " &7Level &a" + progress.getLevel()), 10, 45, 15);
         return false;
     }
 

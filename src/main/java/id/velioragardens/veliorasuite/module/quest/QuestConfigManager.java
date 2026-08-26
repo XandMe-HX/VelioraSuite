@@ -45,6 +45,7 @@ public final class QuestConfigManager {
         migrateSkillCommandsV8(file);
         migrateRequirementsV9(file);
         migrateAccessibleDefaultsV10(file);
+        migrateSeparateSkillExperienceV11(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -417,6 +418,20 @@ public final class QuestConfigManager {
         config.set("settings.progression.config-version", 10);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menerapkan default aksesibel v10: " + exception.getMessage()); }
+    }
+
+    /**
+     * Daily quests are opt-in. Normal Minecraft activity always gives skill XP,
+     * but must never silently enroll a player in a quest.
+     */
+    private void migrateSeparateSkillExperienceV11(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 11) return;
+        config.set("settings.progression.auto-start-on-progress", false);
+        config.set("messages.quest-started", "%prefix% &aQuest &f%quest% &adimulai.");
+        config.set("messages.quest-not-active", "%prefix% &ePilih quest ini terlebih dahulu melalui &f/quests &eatau GUI.");
+        config.set("settings.progression.config-version", 11);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menerapkan pemisahan XP dan quest v11: " + exception.getMessage()); }
     }
 
     private void setNewCategory(String key, String name, String icon, int target, int increase,
