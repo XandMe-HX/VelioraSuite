@@ -117,6 +117,6 @@ public final class QuestModule implements VelioraModule {
     }
 
     private List<String> skillCommands() {
-        return List.of("quests", "skills", "stats", "skilltop", "skillrank", "mining", "farmer", "chef", "agility", "alchemy", "archery");
+        return List.of("quests", "skills", "stats", "skilltop", "skillrank", "mining", "farmer", "chef", "agility", "alchemy", "archery", "excavation", "fighting", "defense", "enchanting");
     }
 }

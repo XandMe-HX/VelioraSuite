@@ -22,7 +22,7 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 12
+    config-version: 13
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Jalan panjang seperti AuraSkills. XP requirement bertambah tiap level.
     completions-per-level: 3
@@ -200,6 +200,43 @@ categories:
     target-increase-per-level: 18
     base-item-rewards: [{material: ARROW, amount: 8}]
     milestone-item-rewards: [{material: SPECTRAL_ARROW, amount: 4}]
+  excavation:
+    enabled: true
+    display-name: '&6Excavation'
+    icon: IRON_SHOVEL
+    base-target: 80
+    xp-per-action: 5
+    target-increase-per-level: 40
+    materials: [DIRT, GRASS_BLOCK, COARSE_DIRT, ROOTED_DIRT, PODZOL, MYCELIUM, SAND, RED_SAND, GRAVEL, CLAY, SOUL_SAND, SOUL_SOIL, SNOW_BLOCK]
+    base-item-rewards: [{material: GRAVEL, amount: 8}]
+    milestone-item-rewards: [{material: CLAY_BALL, amount: 8}]
+  fighting:
+    enabled: true
+    display-name: '&cFighting'
+    icon: IRON_SWORD
+    base-target: 40
+    xp-per-action: 4
+    target-increase-per-level: 20
+    base-item-rewards: [{material: ROTTEN_FLESH, amount: 4}]
+    milestone-item-rewards: [{material: IRON_INGOT, amount: 2}]
+  defense:
+    enabled: true
+    display-name: '&9Defense'
+    icon: SHIELD
+    base-target: 32
+    xp-per-action: 4
+    target-increase-per-level: 16
+    base-item-rewards: [{material: IRON_NUGGET, amount: 6}]
+    milestone-item-rewards: [{material: SHIELD, amount: 1}]
+  enchanting:
+    enabled: true
+    display-name: '&dEnchanting'
+    icon: ENCHANTING_TABLE
+    base-target: 16
+    xp-per-action: 12
+    target-increase-per-level: 8
+    base-item-rewards: [{material: LAPIS_LAZULI, amount: 6}]
+    milestone-item-rewards: [{material: EXPERIENCE_BOTTLE, amount: 2}]
 
 permissions:
   use: 'veliorasuite.quest.use'
