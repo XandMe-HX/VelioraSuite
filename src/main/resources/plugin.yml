@@ -98,7 +98,7 @@ commands:
     permission: veliorasuite.skills.use
   quests:
     description: Open and manage VelioraQuest.
-    usage: /quests <gui|progress|stats|skill|top|rank|start|claim|cancel|reload|status>
+    usage: /quests <gui|progress|stats|skill|top|rank|start|claim|cancel|reload|status|xp|skilladmin>
     aliases: [q, vquest]
     permission: veliorasuite.quest.use
   skills:

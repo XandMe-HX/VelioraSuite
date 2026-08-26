@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
@@ -17,6 +18,7 @@ import org.bukkit.GameMode;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +50,7 @@ public final class QuestConfigManager {
         migrateSeparateSkillExperienceV11(file);
         migrateSkillXpIdentityV12(file);
         migrateAuraSourceSkillsV13(file);
+        migrateAuraSkillXpRequirementsV14(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -284,14 +287,60 @@ public final class QuestConfigManager {
         return Math.min(getLevelMoneyMax(), getLevelMoneyBase() + Math.max(0, milestone - 1) * getLevelMoneyIncrease());
     }
 
-    /** AuraSkills-like configurable curve. Uses a safe quadratic default and
-     * individual per-skill overrides without requiring an expression parser. */
+    /**
+     * Returns required XP for one Veliora skill level. This value is never the
+     * vanilla experience bar: it only advances the category's saved Skill XP.
+     *
+     * The format mirrors AuraSkills: a direct values list takes priority, then
+     * an expression with named variables, while the previous base/multiplier/
+     * power format remains valid for existing installations.
+     */
     public long xpRequired(QuestCategory category, int level) {
-        String root = "progression.xp-requirements.skills." + category.key() + ".";
-        int base = integer(root + "base", integer("progression.xp-requirements.default.base", 100));
-        double multiplier = decimal(root + "multiplier", decimal("progression.xp-requirements.default.multiplier", 25.0D));
-        double power = decimal(root + "power", decimal("progression.xp-requirements.default.power", 2.0D));
-        return Math.max(1L, Math.round(base + multiplier * Math.pow(Math.max(0, level - 1), power)));
+        if (category == null) return 1L;
+        int safeLevel = Math.max(1, level);
+        String defaultRoot = "settings.progression.xp-requirements.default.";
+        String skillRoot = "settings.progression.xp-requirements.skills." + category.key() + ".";
+
+        List<?> values = config == null ? List.of() : config.getList(skillRoot + "values");
+        if (values == null || values.isEmpty()) values = config == null ? List.of() : config.getList(defaultRoot + "values");
+        if (values != null && !values.isEmpty()) {
+            Object value = values.get(Math.min(safeLevel - 1, values.size() - 1));
+            if (value instanceof Number number) return Math.max(1L, Math.round(number.doubleValue()));
+            try { return Math.max(1L, Math.round(Double.parseDouble(String.valueOf(value)))); }
+            catch (NumberFormatException ignored) { }
+        }
+
+        String expression = str(skillRoot + "expression", str(defaultRoot + "expression", ""));
+        if (expression != null && !expression.isBlank()) {
+            try {
+                Map<String, Double> variables = new HashMap<>();
+                variables.putAll(expressionVariables(defaultRoot));
+                variables.putAll(expressionVariables(skillRoot));
+                variables.put("level", (double) safeLevel);
+                return Math.max(1L, Math.round(new NumericExpression(expression, variables).evaluate()));
+            } catch (IllegalArgumentException ignored) {
+                // A typo in config must not stop all skill progression. Fall
+                // back to the legacy curve until the expression is corrected.
+            }
+        }
+
+        double base = decimal(skillRoot + "base", decimal(defaultRoot + "base", 100.0D));
+        double multiplier = decimal(skillRoot + "multiplier", decimal(defaultRoot + "multiplier", 25.0D));
+        double power = decimal(skillRoot + "power", decimal(defaultRoot + "power", 2.0D));
+        return Math.max(1L, Math.round(base + multiplier * Math.pow(Math.max(0, safeLevel - 1), power)));
+    }
+
+    private Map<String, Double> expressionVariables(String root) {
+        Map<String, Double> variables = new HashMap<>();
+        if (config == null) return variables;
+        ConfigurationSection section = config.getConfigurationSection(root.substring(0, root.length() - 1));
+        if (section == null) return variables;
+        for (String key : section.getKeys(false)) {
+            if (key.equalsIgnoreCase("expression") || key.equalsIgnoreCase("values")) continue;
+            Object value = section.get(key);
+            if (value instanceof Number number) variables.put(key.toLowerCase(Locale.ROOT), number.doubleValue());
+        }
+        return variables;
     }
 
     public int sourceXp(QuestCategory category, int units) {
@@ -469,6 +518,19 @@ public final class QuestConfigManager {
         }
     }
 
+    /** Marks the AuraSkills-compatible XP requirement format as available.
+     * No player data and no existing curve values are changed. */
+    private void migrateAuraSkillXpRequirementsV14(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 14) return;
+        config.set("settings.progression.config-version", 14);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraQuest: kurva Skill XP Aura-style v14 aktif.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal menyimpan migrasi Skill XP v14: " + exception.getMessage());
+        }
+    }
+
     private void setNewCategory(String key, String name, String icon, int target, int increase,
                                 String baseMaterial, int baseAmount, String milestoneMaterial, int milestoneAmount) {
         String path = "categories." + key;
@@ -596,6 +658,89 @@ public final class QuestConfigManager {
 
     private double decimal(String path, double fallback) {
         return config == null ? fallback : config.getDouble(path, fallback);
+    }
+
+    /** Small dependency-free evaluator for admin-editable XP formulas. */
+    private static final class NumericExpression {
+        private final String input;
+        private final Map<String, Double> variables;
+        private int position;
+
+        private NumericExpression(String input, Map<String, Double> variables) {
+            this.input = input;
+            this.variables = variables;
+        }
+
+        private double evaluate() {
+            double result = expression();
+            skipWhitespace();
+            if (position != input.length() || !Double.isFinite(result)) throw new IllegalArgumentException("Invalid expression");
+            return result;
+        }
+
+        private double expression() {
+            double value = term();
+            while (true) {
+                if (consume('+')) value += term();
+                else if (consume('-')) value -= term();
+                else return value;
+            }
+        }
+
+        private double term() {
+            double value = power();
+            while (true) {
+                if (consume('*')) value *= power();
+                else if (consume('/')) {
+                    double divisor = power();
+                    if (divisor == 0.0D) throw new IllegalArgumentException("Division by zero");
+                    value /= divisor;
+                } else return value;
+            }
+        }
+
+        private double power() {
+            double value = unary();
+            return consume('^') ? Math.pow(value, power()) : value;
+        }
+
+        private double unary() {
+            if (consume('+')) return unary();
+            if (consume('-')) return -unary();
+            return primary();
+        }
+
+        private double primary() {
+            if (consume('(')) {
+                double value = expression();
+                if (!consume(')')) throw new IllegalArgumentException("Missing parenthesis");
+                return value;
+            }
+            skipWhitespace();
+            int start = position;
+            if (position < input.length() && (Character.isLetter(input.charAt(position)) || input.charAt(position) == '_')) {
+                position++;
+                while (position < input.length() && (Character.isLetterOrDigit(input.charAt(position)) || input.charAt(position) == '_')) position++;
+                Double value = variables.get(input.substring(start, position).toLowerCase(Locale.ROOT));
+                if (value == null) throw new IllegalArgumentException("Unknown variable");
+                return value;
+            }
+            while (position < input.length() && (Character.isDigit(input.charAt(position)) || input.charAt(position) == '.')) position++;
+            if (start == position) throw new IllegalArgumentException("Expected value");
+            try { return Double.parseDouble(input.substring(start, position)); }
+            catch (NumberFormatException exception) { throw new IllegalArgumentException("Invalid number", exception); }
+        }
+
+        private boolean consume(char expected) {
+            skipWhitespace();
+            if (position >= input.length() || input.charAt(position) != expected) return false;
+            position++;
+            return true;
+        }
+
+        private void skipWhitespace() {
+            while (position < input.length() && Character.isWhitespace(input.charAt(position))) position++;
+        }
     }
 
     public record SkillRequirement(QuestCategory category, int level) { }
