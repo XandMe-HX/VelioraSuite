@@ -11,6 +11,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.BrewEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 
@@ -22,6 +23,7 @@ import java.util.UUID;
 public final class QuestProgressionListener implements Listener {
     private final QuestManager manager;
     private final Map<UUID, Double> agilityDistance = new HashMap<>();
+    private final Map<Location, RecentBrewer> recentBrewers = new HashMap<>();
 
     public QuestProgressionListener(QuestManager manager) { this.manager = manager; }
 
@@ -41,7 +43,17 @@ public final class QuestProgressionListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBrew(BrewEvent event) {
-        if (event.getContents().getHolder() instanceof Player player) manager.addProgress(player, QuestCategory.ALCHEMY, 1);
+        RecentBrewer recent = recentBrewers.remove(event.getBlock().getLocation());
+        if (recent == null || System.currentTimeMillis() - recent.usedAt() > 120_000L) return;
+        Player player = org.bukkit.Bukkit.getPlayer(recent.playerId());
+        if (player != null && player.isOnline()) manager.addProgress(player, QuestCategory.ALCHEMY, 1);
+    }
+
+    /** Records who used a brewing stand so completed brews grant Alchemy XP to a real player. */
+    @EventHandler(ignoreCancelled = true)
+    public void onBrewingStandUse(PlayerInteractEvent event) {
+        if (event.getClickedBlock() == null || event.getClickedBlock().getType() != Material.BREWING_STAND) return;
+        recentBrewers.put(event.getClickedBlock().getLocation(), new RecentBrewer(event.getPlayer().getUniqueId(), System.currentTimeMillis()));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -55,4 +67,6 @@ public final class QuestProgressionListener implements Listener {
             manager.addProgress(player, QuestCategory.ARCHERY, 1);
         }
     }
+
+    private record RecentBrewer(UUID playerId, long usedAt) { }
 }

@@ -155,8 +155,9 @@ public final class QuestManager {
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
         int levelBefore = progress.getLevel();
-        boolean ready = progressManager.addProgress(player, category, amount);
+        progressManager.addSkillExperience(player, category, amount);
         if (progress.getLevel() > levelBefore) onSkillLevelUp(player, category, progress, levelBefore);
+        boolean ready = progressManager.addQuestProgress(player, category, amount);
         if (ready) {
             completeQuest(player, category, data, progress, true);
             return;

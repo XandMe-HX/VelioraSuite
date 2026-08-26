@@ -4,8 +4,8 @@ integrations:
 settings:
   enabled: true
   prefix: '&7[&eVELIORA &aQUEST&7] &r'
-  # Mode otomatis seperti skill progression: aktivitas langsung memulai quest terkait.
-  # Mana tetap milik VelioraSkills, tetapi tidak dipotong untuk memulai quest.
+  # Skill XP selalu naik dari aktivitas normal. Quest harian berbeda: pemain
+  # memilihnya dari GUI atau /quests start, baru aktivitas menghitung target quest.
   require-skills-mana: false
   debug-mana: false
   gui:
@@ -22,7 +22,7 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 10
+    config-version: 11
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Jalan panjang seperti AuraSkills. XP requirement bertambah tiap level.
     completions-per-level: 3
@@ -34,7 +34,7 @@ settings:
         base: 100
         multiplier: 25.0
         power: 2.0
-    auto-start-on-progress: true
+    auto-start-on-progress: false
     auto-restart-after-claim: true
     level-up-title:
       enabled: true
@@ -205,7 +205,7 @@ messages:
   no-permission: '%prefix% &cKamu tidak punya izin.'
   player-only: '%prefix% &cCommand ini hanya bisa digunakan oleh player.'
   reload-success: '%prefix% &aVelioraQuest berhasil direload.'
-  quest-started: '%prefix% &aQuest &f%quest% &adimulai. Quest ini mengikuti aktivitasmu secara otomatis.'
+  quest-started: '%prefix% &aQuest &f%quest% &adimulai. Aktivitas kategori ini sekarang menghitung target quest.'
   quest-progress: '%prefix% &eProgress &f%quest%&e: &f%progress%&7/&f%target%&e.'
   quest-ready-claim: '%prefix% &aQuest &f%quest% &aselesai. Claim reward dengan &f/quests claim %category%&a.'
   quest-auto-completed: '%prefix% &aQuest &f%quest% &aselesai. Reward &f%money% &amasuk. Level sekarang: &f%level%&a. Quest berikutnya langsung berjalan.'
@@ -214,7 +214,7 @@ messages:
   quest-auto-restarted: '%prefix% &7Quest &f%quest% &7lanjut otomatis. Target baru: &f%target%&7.'
   quest-auto-paused: '%prefix% &eQuest otomatis dijeda. Hubungi staff bila pesan ini muncul.'
   quest-max-level: '%prefix% &6Quest &f%quest% &6sudah mencapai level maksimal &f100&6.'
-  quest-not-active: '%prefix% &cQuest ini akan aktif otomatis saat kamu melakukan aktivitas kategorinya.'
+  quest-not-active: '%prefix% &eQuest ini belum aktif. Gunakan &f/quests start <kategori>&e atau pilih dari GUI.'
   quest-already-active: '%prefix% &cQuest ini sedang aktif.'
   quest-not-ready: '%prefix% &cQuest ini belum selesai.'
   quest-disabled: '%prefix% &cQuest ini sedang dinonaktifkan.'
