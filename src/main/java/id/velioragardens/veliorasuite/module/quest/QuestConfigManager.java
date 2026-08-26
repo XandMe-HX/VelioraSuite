@@ -226,6 +226,35 @@ public final class QuestConfigManager {
         }
     }
 
+    /** AuraSkills-like configurable curve. Uses a safe quadratic default and
+     * individual per-skill overrides without requiring an expression parser. */
+    public long xpRequired(QuestCategory category, int level) {
+        String root = "progression.xp-requirements.skills." + category.key() + ".";
+        int base = integer(root + "base", integer("progression.xp-requirements.default.base", 100));
+        double multiplier = decimal(root + "multiplier", decimal("progression.xp-requirements.default.multiplier", 25.0D));
+        double power = decimal(root + "power", decimal("progression.xp-requirements.default.power", 2.0D));
+        return Math.max(1L, Math.round(base + multiplier * Math.pow(Math.max(0, level - 1), power)));
+    }
+
+    public int sourceXp(QuestCategory category, int units) {
+        return Math.max(1, integer("categories." + category.key() + ".xp-per-action", 5)) * Math.max(1, units);
+    }
+
+    public double permissionMultiplier(org.bukkit.entity.Player player, QuestCategory category) {
+        double percent = 0.0D;
+        for (org.bukkit.permissions.PermissionAttachmentInfo info : player.getEffectivePermissions()) {
+            if (!info.getValue()) continue;
+            String node = info.getPermission().toLowerCase(java.util.Locale.ROOT);
+            String prefix = "veliorasuite.multiplier.";
+            if (!node.startsWith(prefix)) continue;
+            String value = node.substring(prefix.length());
+            if (value.startsWith(category.key() + ".")) value = value.substring(category.key().length() + 1);
+            else if (value.contains(".")) continue;
+            try { percent += Double.parseDouble(value); } catch (NumberFormatException ignored) { }
+        }
+        return Math.max(0.0D, 1.0D + percent / 100.0D);
+    }
+
     private void migrateSkillGrowthV4(File file) {
         if (config.getInt("settings.progression.config-version", 0) >= 4) return;
         config.set("settings.rewards.mana-level-interval", 1);
@@ -366,5 +395,9 @@ public final class QuestConfigManager {
         if (category == QuestCategory.MONSTER_HUNTER) return List.of("ZOMBIE", "SKELETON", "SPIDER", "CREEPER", "ENDERMAN", "WITCH", "DROWNED", "HUSK", "STRAY", "SLIME", "PHANTOM", "PILLAGER", "VINDICATOR", "EVOKER", "RAVAGER", "BREEZE", "BOGGED");
         if (category == QuestCategory.ANIMAL_HUNTER) return List.of("COW", "SHEEP", "CHICKEN", "PIG", "RABBIT", "COD", "SALMON", "PUFFERFISH", "TROPICAL_FISH");
         return List.of();
+    }
+
+    private double decimal(String path, double fallback) {
+        return config == null ? fallback : config.getDouble(path, fallback);
     }
 }

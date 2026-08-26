@@ -11,6 +11,9 @@ public final class PlayerCategoryProgress {
     private int currentTarget;
     private int currentProgress;
     private int currentRewardMoney;
+    // XP is separate from daily/automatic quest progress. Keeping it here makes
+    // old quest data compatible while allowing AuraSkills-style advancement.
+    private long experience;
 
     public PlayerCategoryProgress(QuestCategory category, int level, int completedCount, QuestState state, int currentTarget, int currentProgress, int currentRewardMoney) {
         this.category = category;
@@ -35,4 +38,6 @@ public final class PlayerCategoryProgress {
     public void setCurrentProgress(int currentProgress) { this.currentProgress = Math.max(0, currentProgress); }
     public int getCurrentRewardMoney() { return currentRewardMoney; }
     public void setCurrentRewardMoney(int currentRewardMoney) { this.currentRewardMoney = Math.max(0, currentRewardMoney); }
+    public long getExperience() { return experience; }
+    public void setExperience(long experience) { this.experience = Math.max(0L, experience); }
 }

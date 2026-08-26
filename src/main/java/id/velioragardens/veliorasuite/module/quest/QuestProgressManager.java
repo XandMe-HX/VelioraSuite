@@ -33,6 +33,17 @@ public final class QuestProgressManager {
             progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
         }
 
+        int xp = (int) Math.max(1L, Math.round(configManager.sourceXp(category, amount) * configManager.permissionMultiplier(player, category)));
+        long totalXp = progress.getExperience() + xp;
+        boolean levelUp = false;
+        while (progress.getLevel() < configManager.getMaxLevel()) {
+            long need = configManager.xpRequired(category, progress.getLevel());
+            if (totalXp < need) break;
+            totalXp -= need;
+            progress.setLevel(progress.getLevel() + 1);
+            levelUp = true;
+        }
+        progress.setExperience(totalXp);
         progress.setCurrentProgress(progress.getCurrentProgress() + amount);
         if (progress.getCurrentProgress() >= progress.getCurrentTarget()) {
             progress.setCurrentProgress(progress.getCurrentTarget());
@@ -41,6 +52,7 @@ public final class QuestProgressManager {
             return true;
         }
         dataManager.save(data);
+        if (levelUp) player.sendTitle(configManager.color("&aLEVEL UP!"), configManager.color("&f" + configManager.getCategoryDisplayName(category) + " &7Level &a" + progress.getLevel()), 10, 45, 15);
         return false;
     }
 

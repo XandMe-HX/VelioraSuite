@@ -27,6 +27,13 @@ settings:
     # Level berhenti di 100, tetapi reward dan siklus quest tetap berjalan.
     completions-per-level: 3
     max-level: 100
+    # XP nyata per aktivitas. Permission multiplier: veliorasuite.multiplier.50
+    # atau khusus skill: veliorasuite.multiplier.mining.50 (50% tambahan XP).
+    xp-requirements:
+      default:
+        base: 100
+        multiplier: 25.0
+        power: 2.0
     auto-start-on-progress: true
     auto-restart-after-claim: true
     level-up-title:
@@ -68,6 +75,7 @@ categories:
     display-name: '&6Tebang Kayu'
     icon: IRON_AXE
     base-target: 96
+    xp-per-action: 5
     target-increase-per-level: 56
     materials: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG, MANGROVE_LOG, CHERRY_LOG, STRIPPED_OAK_LOG, STRIPPED_SPRUCE_LOG, STRIPPED_BIRCH_LOG, STRIPPED_JUNGLE_LOG, STRIPPED_ACACIA_LOG, STRIPPED_DARK_OAK_LOG, STRIPPED_MANGROVE_LOG, STRIPPED_CHERRY_LOG]
     base-item-rewards: [{material: OAK_SAPLING, amount: 2}, {material: BREAD, amount: 1}]
@@ -77,6 +85,7 @@ categories:
     display-name: '&7Mining'
     icon: IRON_PICKAXE
     base-target: 128
+    xp-per-action: 5
     target-increase-per-level: 80
     materials: [STONE, COBBLESTONE, DEEPSLATE, COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE, IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE, DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE, ANCIENT_DEBRIS]
     base-item-rewards: [{material: COBBLESTONE, amount: 16}, {material: TORCH, amount: 4}]
@@ -86,6 +95,7 @@ categories:
     display-name: '&eFarming'
     icon: WHEAT
     base-target: 96
+    xp-per-action: 6
     target-increase-per-level: 58
     harvest-materials: [WHEAT, CARROTS, POTATOES, BEETROOTS, COCOA, NETHER_WART]
     plant-materials: [WHEAT_SEEDS, CARROT, POTATO, BEETROOT_SEEDS, SUGAR_CANE, MELON_SEEDS, PUMPKIN_SEEDS, COCOA_BEANS, NETHER_WART]
@@ -98,6 +108,7 @@ categories:
     display-name: '&6Koki'
     icon: COOKED_BEEF
     base-target: 32
+    xp-per-action: 4
     target-increase-per-level: 20
     cooked-items: [COOKED_BEEF, COOKED_CHICKEN, COOKED_MUTTON, COOKED_PORKCHOP, COOKED_COD, COOKED_SALMON, BAKED_POTATO, DRIED_KELP]
     base-item-rewards: [{material: BAKED_POTATO, amount: 2}, {material: COAL, amount: 2}]
@@ -107,6 +118,7 @@ categories:
     display-name: '&cMonster Hunter'
     icon: IRON_SWORD
     base-target: 28
+    xp-per-action: 8
     target-increase-per-level: 14
     entities: [ZOMBIE, SKELETON, SPIDER, CREEPER, ENDERMAN, WITCH, DROWNED, HUSK, STRAY, SLIME, PHANTOM, PILLAGER, VINDICATOR, EVOKER, RAVAGER, BREEZE, BOGGED]
     base-item-rewards: [{material: BONE, amount: 4}, {material: COOKED_BEEF, amount: 1}]
@@ -116,6 +128,7 @@ categories:
     display-name: '&fBerburu Hewan'
     icon: COOKED_CHICKEN
     base-target: 28
+    xp-per-action: 5
     target-increase-per-level: 13
     entities: [COW, SHEEP, CHICKEN, PIG, RABBIT, COD, SALMON, PUFFERFISH, TROPICAL_FISH]
     base-item-rewards: [{material: LEATHER, amount: 2}, {material: COOKED_CHICKEN, amount: 1}]
@@ -125,6 +138,7 @@ categories:
     display-name: '&bFishing'
     icon: FISHING_ROD
     base-target: 20
+    xp-per-action: 10
     target-increase-per-level: 12
     base-item-rewards: [{material: COD, amount: 2}, {material: STRING, amount: 2}]
     milestone-item-rewards: [{material: COOKED_SALMON, amount: 4}, {material: TORCH, amount: 8}]
@@ -133,6 +147,7 @@ categories:
     display-name: '&aAgility'
     icon: RABBIT_FOOT
     base-target: 24
+    xp-per-action: 3
     target-increase-per-level: 10
     base-item-rewards: [{material: SUGAR, amount: 2}]
     milestone-item-rewards: [{material: RABBIT_FOOT, amount: 1}]
@@ -141,6 +156,7 @@ categories:
     display-name: '&dAlchemy'
     icon: BREWING_STAND
     base-target: 12
+    xp-per-action: 8
     target-increase-per-level: 6
     base-item-rewards: [{material: GLOWSTONE_DUST, amount: 2}]
     milestone-item-rewards: [{material: BLAZE_POWDER, amount: 4}]
@@ -149,6 +165,7 @@ categories:
     display-name: '&6Archery'
     icon: BOW
     base-target: 36
+    xp-per-action: 6
     target-increase-per-level: 18
     base-item-rewards: [{material: ARROW, amount: 8}]
     milestone-item-rewards: [{material: SPECTRAL_ARROW, amount: 4}]
