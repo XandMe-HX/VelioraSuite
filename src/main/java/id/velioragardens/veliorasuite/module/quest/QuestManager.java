@@ -152,9 +152,11 @@ public final class QuestManager {
         long previous = playerCooldowns.getOrDefault(category, 0L);
         if (cooldown > 0 && now - previous < cooldown) return;
         playerCooldowns.put(category, now);
-        boolean ready = progressManager.addProgress(player, category, amount);
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
+        int levelBefore = progress.getLevel();
+        boolean ready = progressManager.addProgress(player, category, amount);
+        if (progress.getLevel() > levelBefore) onSkillLevelUp(player, category, progress, levelBefore);
         if (ready) {
             completeQuest(player, category, data, progress, true);
             return;
@@ -162,6 +164,25 @@ public final class QuestManager {
         if (progress.getState() == QuestState.ACTIVE) {
             bossBarManager.showOrUpdate(player, category, progress);
         }
+    }
+
+    /** Applies small, configurable RPG rewards when XP advances a skill.
+     * Quest completion still gives money/items, but it no longer inflates level. */
+    private void onSkillLevelUp(Player player, QuestCategory category, PlayerCategoryProgress progress, int previousLevel) {
+        for (int level = previousLevel + 1; level <= progress.getLevel(); level++) {
+            if (configManager.isManaBonusLevel(level) && skillsHook.isAvailable()) {
+                skillsHook.addMaxMana(player, configManager.getManaLevelBonus(), true);
+            }
+            if (category == QuestCategory.MONSTER_HUNTER && level % configManager.getHunterHealthLevelInterval() == 0) {
+                AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
+                if (maxHealth != null) maxHealth.setBaseValue(Math.min(configManager.getHunterHealthCap(), maxHealth.getBaseValue() + configManager.getHunterHealthBonus()));
+            }
+            int multiplier = configManager.getMilestoneRewardMultiplier(level);
+            if (multiplier > 0) rewardManager.giveItems(player, configManager.getMilestoneItemRewards(category), multiplier);
+        }
+        String subtitle = configManager.getLevelSubtitle().replace("%quest%", configManager.getCategoryDisplayName(category)).replace("%level%", String.valueOf(progress.getLevel()));
+        if (configManager.isLevelTitleEnabled()) player.sendTitle(configManager.color(configManager.getLevelTitle()), configManager.color(subtitle), 10, 50, 15);
+        dataManager.save(dataManager.getOrCreate(player));
     }
 
     public void sendProgress(Player player) {
@@ -222,31 +243,11 @@ public final class QuestManager {
 
         int newCompleted = progress.getCompletedCount() + 1;
         progress.setCompletedCount(newCompleted);
-        boolean levelUp = newCompleted % configManager.getCompletionsPerLevel() == 0
-                && progress.getLevel() < configManager.getMaxLevel();
-        if (levelUp) progress.setLevel(progress.getLevel() + 1);
+        // Level belongs to XP sources now. Completion is a reward loop only.
+        boolean levelUp = false;
         int reachedLevel = progress.getLevel();
         int milestoneMultiplier = levelUp ? configManager.getMilestoneRewardMultiplier(reachedLevel) : 0;
-        boolean manaBonus = levelUp && configManager.isManaBonusLevel(reachedLevel) && skillsHook.isAvailable();
-        if (manaBonus) skillsHook.addMaxMana(player, configManager.getManaLevelBonus(), true);
-        if (levelUp && category == QuestCategory.MONSTER_HUNTER
-                && reachedLevel % configManager.getHunterHealthLevelInterval() == 0) {
-            AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
-            if (maxHealth != null) {
-                double updated = Math.min(configManager.getHunterHealthCap(),
-                        maxHealth.getBaseValue() + configManager.getHunterHealthBonus());
-                maxHealth.setBaseValue(updated);
-                player.sendMessage(configManager.color(configManager.getPrefix()
-                        + "&cMonster Hunter meningkatkan Max Health menjadi &f" + (int) Math.round(updated) + "&c."));
-            }
-        }
-        if (levelUp && configManager.isLevelTitleEnabled()) {
-            String subtitle = configManager.getLevelSubtitle()
-                    .replace("%quest%", configManager.getCategoryDisplayName(category))
-                    .replace("%level%", String.valueOf(reachedLevel));
-            player.sendTitle(configManager.color(configManager.getLevelTitle()), configManager.color(subtitle), 10, 50, 15);
-        }
-        if (milestoneMultiplier > 0) rewardManager.giveItems(player, configManager.getMilestoneItemRewards(category), milestoneMultiplier);
+        boolean manaBonus = false;
         progress.setCurrentProgress(0);
         progress.setCurrentTarget(configManager.calculateTarget(category, progress.getLevel()));
         progress.setCurrentRewardMoney(configManager.calculateRewardMoney(progress.getLevel()));
