@@ -22,11 +22,11 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 5
+    config-version: 8
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
-    # Level berhenti di 100, tetapi reward dan siklus quest tetap berjalan.
+    # Jalan panjang seperti AuraSkills. XP requirement bertambah tiap level.
     completions-per-level: 3
-    max-level: 100
+    max-level: 500
     # XP nyata per aktivitas. Permission multiplier: veliorasuite.multiplier.50
     # atau khusus skill: veliorasuite.multiplier.mining.50 (50% tambahan XP).
     xp-requirements:
@@ -67,6 +67,12 @@ settings:
     hunter-health-cap: 30.0
     # Bonus item meningkat di level 10/20, namun maksimal 3x agar tidak inflasi.
     milestone-max-multiplier: 3
+    # Uang hanya pada milestone level, bukan setiap level, agar tidak inflasi.
+    level-money:
+      interval: 10
+      base: 100
+      increase-per-milestone: 100
+      max: 5000
   starter:
     enabled: true
     reminder-enabled: true
