@@ -114,11 +114,16 @@ public final class BossRewardManager {
     }
 
     private long calculatePersonalReward(BossDefinition definition, int rankIndex, double damagePercent) {
-        // Guaranteed fallback: old boss.yml files may not contain reward values,
-        // which previously made a 100% contributor receive 0 money.
-        long contributionReward = 400L + Math.round(Math.max(0.0D, Math.min(100.0D, damagePercent)) * 10.0D);
-        long rankBonus = rankIndex == 0 ? 600L : rankIndex == 1 ? 300L : rankIndex == 2 ? 100L : 0L;
-        return Math.min(2_000L, contributionReward + rankBonus);
+        // Reward must follow boss.yml. The older fixed fallback was the reason
+        // valid contributors could receive a tiny amount despite admin settings.
+        if (!config.bossMoneyEnabled(definition)) return 0L;
+        long base = randomMoney(config.bossMoneyMin(definition), config.bossMoneyMax(definition));
+        long contributionBonus = Math.round(Math.max(0.0D, Math.min(100.0D, damagePercent)) * 20.0D);
+        long rankBonus = 0L;
+        if (config.topDamageBonusEnabled() && rankIndex < 3) {
+            rankBonus = randomMoney(config.topBonusMin(rankIndex), config.topBonusMax(rankIndex));
+        }
+        return Math.max(500L, base + contributionBonus + rankBonus);
     }
 
     private Map<UUID, Long> calculateTeamBonuses(Map<String, List<UUID>> eligibleByTeam) {

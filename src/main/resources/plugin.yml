@@ -209,10 +209,6 @@ commands:
     usage: /vgteam
     aliases: [teamgui]
     permission: veliorasuite.adventure.use
-  vgnpc:
-    description: Membuat dan mengelola NPC ringan Veliora.
-    usage: /vgnpc <create|delete|list|move|teleport|type|lines|skin|height|action>
-    permission: veliorasuite.npc.admin
   vgclaim:
     description: Mengelola Guard Claim untuk area server.
     usage: /vgclaim <pos1|pos2|claim|flag|info|list|delete>
@@ -336,8 +332,6 @@ permissions:
   veliorasuite.adventure.use:
     default: true
   veliorasuite.adventure.admin:
-    default: op
-  veliorasuite.npc.admin:
     default: op
   veliorasuite.guard.admin:
     default: op

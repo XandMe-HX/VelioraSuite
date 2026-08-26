@@ -390,19 +390,20 @@ rewards:
   reward-cooldown-seconds: 0
   default-money:
     enabled: true
-    min: 400
-    max: 2000
+    # Reward personal untuk semua peserta yang benar-benar ikut melawan.
+    min: 2500
+    max: 5000
   top-damage-bonus:
     enabled: true
     first:
-      min: 600
-      max: 600
+      min: 3000
+      max: 5000
     second:
-      min: 300
-      max: 300
+      min: 1500
+      max: 2500
     third:
-      min: 100
-      max: 100
+      min: 750
+      max: 1250
   team-bonus:
     enabled: true
     # Semua anggota team yang ikut memberi damage memperoleh bagian sama.
