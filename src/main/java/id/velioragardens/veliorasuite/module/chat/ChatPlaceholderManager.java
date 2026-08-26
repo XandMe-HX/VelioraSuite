@@ -115,7 +115,7 @@ public final class ChatPlaceholderManager {
     private String getQuestPlaceholder(OfflinePlayer player, String identifier) {
         QuestModule questModule = getQuestModule();
         if (questModule == null || questModule.getQuestManager() == null) return "";
-        return new QuestPlaceholderManager(questModule.getQuestManager().getDataManager()).getPlaceholder(player, identifier);
+        return new QuestPlaceholderManager(questModule.getQuestManager().getDataManager(), questModule.getQuestManager().getConfigManager()).getPlaceholder(player, identifier);
     }
 
     private TeamModule getTeamModule() {

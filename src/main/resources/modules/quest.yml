@@ -22,12 +22,13 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 11
+    config-version: 12
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Jalan panjang seperti AuraSkills. XP requirement bertambah tiap level.
     completions-per-level: 3
     max-level: 500
-    # XP nyata per aktivitas. Permission multiplier: veliorasuite.multiplier.50
+    # Skill XP per aktivitas, tersimpan khusus di data Veliora dan tidak
+    # pernah menambah/mengurangi XP vanilla pemain. Permission multiplier: veliorasuite.multiplier.50
     # atau khusus skill: veliorasuite.multiplier.mining.50 (50% tambahan XP).
     xp-requirements:
       default:
@@ -40,6 +41,12 @@ settings:
       enabled: true
       title: '&aLEVEL UP!'
       subtitle: '&f%quest% &7menjadi level &a%level%'
+    # PlaceholderAPI Skill XP:
+    # %veliorasuite_skill_level_mining%
+    # %veliorasuite_skill_xp_mining%
+    # %veliorasuite_skill_xp_required_mining%
+    # %veliorasuite_skill_xp_progress_mining%  (contoh 45/125)
+    # %veliorasuite_skill_total_level%
   anti-exploit:
     # Blok yang baru ditanam tidak dihitung langsung. Ini menutup loop tanam-
     # panen instan tanpa mengganggu kebun yang memang sudah tumbuh.

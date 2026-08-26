@@ -43,6 +43,22 @@ public final class QuestProgressManager {
         return levelUp;
     }
 
+    /**
+     * Skill XP is an internal Veliora value, deliberately separate from the
+     * vanilla experience bar and from the daily-quest counter.
+     */
+    public long getSkillExperience(Player player, QuestCategory category) {
+        if (player == null || category == null) return 0L;
+        PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        return progress == null ? 0L : progress.getExperience();
+    }
+
+    public long getSkillExperienceRequired(Player player, QuestCategory category) {
+        if (player == null || category == null) return 0L;
+        PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        return progress == null ? 0L : configManager.xpRequired(category, progress.getLevel());
+    }
+
     /** Adds only progress to a daily quest that was explicitly started. */
     public boolean addQuestProgress(Player player, QuestCategory category, int amount) {
         if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category) || !configManager.canUseSkill(player, category)) return false;

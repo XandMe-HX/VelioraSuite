@@ -46,6 +46,7 @@ public final class QuestConfigManager {
         migrateRequirementsV9(file);
         migrateAccessibleDefaultsV10(file);
         migrateSeparateSkillExperienceV11(file);
+        migrateSkillXpIdentityV12(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -432,6 +433,18 @@ public final class QuestConfigManager {
         config.set("settings.progression.config-version", 11);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menerapkan pemisahan XP dan quest v11: " + exception.getMessage()); }
+    }
+
+    private void migrateSkillXpIdentityV12(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 12) return;
+        // Only records the new data identity. Existing level and XP values stay intact.
+        config.set("settings.progression.config-version", 12);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraQuest: Skill XP v12 aktif (terpisah dari XP vanilla dan quest harian).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal menyimpan migrasi Skill XP v12: " + exception.getMessage());
+        }
     }
 
     private void setNewCategory(String key, String name, String icon, int target, int increase,
