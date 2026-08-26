@@ -98,9 +98,13 @@ public final class QuestGuiManager implements Listener {
             int nextLevel = progress.getLevel() + 1;
             int milestoneMultiplier = manager.getConfigManager().getMilestoneRewardMultiplier(nextLevel);
             lore.add("&8&m------------------------");
-            lore.add("&7Level quest: &f" + progress.getLevel());
-            lore.add("&7Target: &f" + progress.getCurrentProgress() + "/" + progress.getCurrentTarget());
-            lore.add("&7Biaya mulai: &b" + manager.getSkillsHook().getQuestManaCost(progress.getLevel()) + " Mana");
+            lore.add("&7Level skill: &f" + progress.getLevel() + "&7/&f" + manager.getConfigManager().getMaxLevel());
+            lore.add("&7Skill XP: &f" + progress.getExperience() + "&7/&f" + manager.getConfigManager().xpRequired(category, progress.getLevel()));
+            lore.add("&7XP per aksi: &f" + manager.getConfigManager().sourceXp(category, 1));
+            lore.add("&7Quest harian: &f" + progress.getCurrentProgress() + "&7/&f" + progress.getCurrentTarget());
+            if (manager.getConfigManager().isRequireSkillsMana()) {
+                lore.add("&7Biaya mulai: &b" + manager.getSkillsHook().getQuestManaCost(progress.getLevel()) + " Mana");
+            }
             lore.add(" ");
             lore.add("&aHadiah setiap selesai:");
             lore.add("&7• Uang: &a" + progress.getCurrentRewardMoney());

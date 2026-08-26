@@ -110,6 +110,11 @@ commands:
     description: Melihat semua level skill Veliora.
     usage: /stats
     permission: veliorasuite.quest.use
+  sources:
+    description: Melihat sumber Skill XP Veliora.
+    usage: /sources [skill]
+    aliases: [skillsources, source]
+    permission: veliorasuite.quest.use
   skilltop:
     description: Melihat ranking skill Veliora.
     usage: /skilltop [skill|total]

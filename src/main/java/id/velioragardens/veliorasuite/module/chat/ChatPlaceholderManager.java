@@ -67,7 +67,10 @@ public final class ChatPlaceholderManager {
         try {
             UUID uuid = player == null ? null : player.getUniqueId();
             String lower = identifier.toLowerCase();
-            if (lower.startsWith("quest_")) return getQuestPlaceholder(player, lower);
+            // Quest progression exposes both the historical quest_* names and the
+            // Aura-style skill_* names. Keep them together so TAB/PlaceholderAPI
+            // never leaves a raw %veliorasuite_skill_...% token on screen.
+            if (lower.startsWith("quest_") || lower.startsWith("skill_")) return getQuestPlaceholder(player, lower);
             return switch (lower) {
                 case "team_name" -> getTeamName(uuid);
                 case "team_tag" -> getTeamTag(uuid);

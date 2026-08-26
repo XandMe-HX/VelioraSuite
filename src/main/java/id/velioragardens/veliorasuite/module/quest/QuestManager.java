@@ -222,6 +222,7 @@ public final class QuestManager {
         player.sendMessage(configManager.color("&8&m------------------------"));
         player.sendMessage(configManager.color("&a" + configManager.getCategoryDisplayName(category) + " &fLevel &a" + progress.getLevel() + "&7/&a" + configManager.getMaxLevel()));
         player.sendMessage(configManager.color("&7Skill XP: &f" + progress.getExperience() + "&7/&f" + required));
+        player.sendMessage(configManager.color("&7XP per aksi: &f" + configManager.sourceXp(category, 1) + " &8| &7Multiplier: &fx" + formatMultiplier(configManager.permissionMultiplier(player, category))));
         player.sendMessage(configManager.color("&7Quest: &f" + progress.getCurrentProgress() + "&7/&f" + progress.getCurrentTarget()));
         int interval = configManager.getLevelMoneyInterval();
         int nextMilestone = ((progress.getLevel() / interval) + 1) * interval;
@@ -238,6 +239,75 @@ public final class QuestManager {
             player.sendMessage(configManager.color("&7- " + configManager.getCategoryDisplayName(category) + "&7: &f" + progress.getLevel()));
         }
         player.sendMessage(configManager.color("&8&m------------------------"));
+    }
+
+    /** Shows the real gameplay source of every skill; this is XP skill, never vanilla XP. */
+    public void sendSources(Player player, QuestCategory requested) {
+        player.sendMessage(configManager.color("&8&m------------------------"));
+        player.sendMessage(configManager.color("&aSumber Skill XP &7- &fXP ini terpisah dari XP Minecraft."));
+        if (requested != null) {
+            sendSourceLine(player, requested);
+        } else {
+            for (QuestCategory category : QuestCategory.values()) sendSourceLine(player, category);
+        }
+        player.sendMessage(configManager.color("&8&m------------------------"));
+    }
+
+    public void sendMultiplier(Player player) {
+        double global = configManager.globalPermissionMultiplier(player);
+        player.sendMessage(configManager.color("&8&m------------------------"));
+        player.sendMessage(configManager.color("&aSkill XP Multiplier &7| &fGlobal: &ax" + formatMultiplier(global)));
+        for (QuestCategory category : QuestCategory.values()) {
+            double total = configManager.permissionMultiplier(player, category);
+            if (Math.abs(total - global) > 0.001D) {
+                player.sendMessage(configManager.color("&7- " + configManager.getCategoryDisplayName(category) + "&7: &ax" + formatMultiplier(total)));
+            }
+        }
+        player.sendMessage(configManager.color("&7Permission contoh: &fveliorasuite.multiplier.50 &7atau &fveliorasuite.multiplier.mining.50"));
+        player.sendMessage(configManager.color("&8&m------------------------"));
+    }
+
+    /** Public API used later by VelioraEnchant without needing to duplicate player data. */
+    public boolean meetsSkillRequirement(Player player, QuestCategory category, int minimumLevel) {
+        if (player == null || category == null) return false;
+        return dataManager.getOrCreate(player).getCategoryProgress(category).getLevel() >= Math.max(1, minimumLevel);
+    }
+
+    public int getSkillLevel(Player player, QuestCategory category) {
+        if (player == null || category == null) return 0;
+        return dataManager.getOrCreate(player).getCategoryProgress(category).getLevel();
+    }
+
+    public double getSkillXpMultiplier(Player player, QuestCategory category) {
+        return player == null || category == null ? 1.0D : configManager.permissionMultiplier(player, category);
+    }
+
+    private void sendSourceLine(Player player, QuestCategory category) {
+        player.sendMessage(configManager.color("&7- " + configManager.getCategoryDisplayName(category)
+                + "&7: &f" + sourceDescription(category) + " &8(+" + configManager.sourceXp(category, 1) + " XP)"));
+    }
+
+    private String sourceDescription(QuestCategory category) {
+        return switch (category) {
+            case WOODCUTTING -> "tebang kayu alami";
+            case MINING -> "tambang batu dan ore alami";
+            case FARMER -> "panen tanaman matang";
+            case CHEF -> "masak makanan";
+            case MONSTER_HUNTER -> "kalahkan monster alami";
+            case ANIMAL_HUNTER -> "kalahkan hewan alami";
+            case FISHING -> "tangkap ikan";
+            case AGILITY -> "bergerak menjelajah";
+            case ALCHEMY -> "brew atau minum potion";
+            case ARCHERY -> "serang mob dengan panah";
+            case EXCAVATION -> "gali tanah, pasir, dan gravel";
+            case FIGHTING -> "serang mob dengan melee";
+            case DEFENSE -> "terima serangan mob";
+            case ENCHANTING -> "enchant item di enchanting table";
+        };
+    }
+
+    private String formatMultiplier(double value) {
+        return String.format(java.util.Locale.US, "%.2f", value).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 
     public void sendTop(CommandSender sender, QuestCategory category) {
@@ -276,6 +346,8 @@ public final class QuestManager {
                 "&f/quests &7- Buka GUI quest.",
                 "&f/quests progress &7- Cek progress quest.",
                 "&f/quests skill <category> &7- Detail sebuah skill.",
+                "&f/sources [skill] &7- Lihat aktivitas pemberi Skill XP.",
+                "&f/quests multiplier &7- Lihat bonus XP aktif.",
                 "&f/quests start <category> &7- Mulai quest.",
                 "&f/quests claim <category> &7- Claim reward.",
                 "&f/stats &7- Lihat semua level skill.",

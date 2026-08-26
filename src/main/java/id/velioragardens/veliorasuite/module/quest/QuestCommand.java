@@ -36,6 +36,15 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
             else if (player != null) manager.sendNoPermission(sender);
             return true;
         }
+        if (commandName.equals("sources")) {
+            Player player = player(sender);
+            if (player != null && manager.getConfigManager().hasUse(sender)) {
+                QuestCategory category = args.length == 0 ? null : QuestCategory.fromKey(args[0]);
+                if (args.length > 0 && category == null) manager.sendHelp(sender);
+                else manager.sendSources(player, category);
+            } else if (player != null) manager.sendNoPermission(sender);
+            return true;
+        }
         if (commandName.equals("skilltop")) {
             QuestCategory category = args.length == 0 ? null : QuestCategory.fromKey(args[0]);
             if (args.length > 0 && category == null && !args[0].equalsIgnoreCase("total")) { manager.sendHelp(sender); return true; }
@@ -78,6 +87,20 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
                 if (player == null) return true;
                 if (!manager.getConfigManager().hasUse(sender)) { manager.sendNoPermission(sender); return true; }
                 manager.sendStats(player);
+                return true;
+            }
+            case "sources" -> {
+                Player player = player(sender);
+                if (player == null) return true;
+                QuestCategory category = args.length < 2 ? null : QuestCategory.fromKey(args[1]);
+                if (args.length >= 2 && category == null) { manager.sendHelp(sender); return true; }
+                manager.sendSources(player, category);
+                return true;
+            }
+            case "multiplier" -> {
+                Player player = player(sender);
+                if (player == null) return true;
+                manager.sendMultiplier(player);
                 return true;
             }
             case "skill" -> {
@@ -172,7 +195,7 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
                 if (command.getName().equalsIgnoreCase("skilltop") || command.getName().equalsIgnoreCase("skillrank")) return filter(categoriesWithTotal(), args[0]);
                 return new ArrayList<>();
             }
-            List<String> options = new ArrayList<>(Arrays.asList("gui", "progress", "stats", "skill", "top", "rank", "start", "claim", "cancel", "help"));
+            List<String> options = new ArrayList<>(Arrays.asList("gui", "progress", "stats", "skill", "sources", "multiplier", "top", "rank", "start", "claim", "cancel", "help"));
             if (manager.getConfigManager().hasReload(sender)) options.add("reload");
             if (manager.getConfigManager().hasAdmin(sender)) { options.add("status"); options.add("xp"); options.add("skilladmin"); }
             return filter(options, args[0]);
@@ -180,6 +203,7 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2 && List.of("start", "claim", "cancel", "skill").contains(args[0].toLowerCase(Locale.ROOT))) {
             return filter(categoriesWithTotal(), args[1]);
         }
+        if (args.length == 2 && args[0].equalsIgnoreCase("sources")) return filter(categoriesWithTotal(), args[1]);
         if (args.length == 2 && List.of("top", "rank").contains(args[0].toLowerCase(Locale.ROOT))) return filter(categoriesWithTotal(), args[1]);
         if (args.length == 2 && args[0].equalsIgnoreCase("xp")) return filter(List.of("add", "set", "remove"), args[1]);
         if (args.length == 2 && args[0].equalsIgnoreCase("skilladmin")) return filter(List.of("setlevel", "addlevel", "reset"), args[1]);
