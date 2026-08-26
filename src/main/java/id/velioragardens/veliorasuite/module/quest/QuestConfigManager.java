@@ -44,6 +44,7 @@ public final class QuestConfigManager {
         migrateExperienceLevelRewardsV7(file);
         migrateSkillCommandsV8(file);
         migrateRequirementsV9(file);
+        migrateAccessibleDefaultsV10(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -73,7 +74,10 @@ public final class QuestConfigManager {
     public int getFarmMinimumGrowthSeconds() { return Math.max(0, integer("settings.anti-exploit.farm-minimum-growth-seconds", 300)); }
     public int getSourceCooldownMillis() { return Math.max(0, integer("settings.anti-exploit.source-cooldown-millis", 125)); }
     public boolean canEarnProgress(Player player) {
-        if (player == null || player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return false;
+        if (player == null || player.getGameMode() == GameMode.SPECTATOR) return false;
+        if (player.getGameMode() == GameMode.CREATIVE
+                && !bool("settings.anti-exploit.allow-creative", false)
+                && !(player.isOp() && bool("settings.anti-exploit.allow-creative-op", true))) return false;
         return !config.getStringList("settings.anti-exploit.blocked-worlds").contains(player.getWorld().getName());
     }
     public int getManaLevelInterval() { return Math.max(1, integer("settings.rewards.mana-level-interval", 3)); }
@@ -244,8 +248,8 @@ public final class QuestConfigManager {
         return !sender.isPermissionSet(permission) || sender.hasPermission(permission);
     }
 
-    public boolean areRequirementsEnabled() { return bool("settings.requirements.enabled", true); }
-    public String getRequirementMessage() { return str("settings.requirements.denied-message", "%prefix% &cButuh skill &f%skill% &clevel &f%level% &cuntuk memakai &f%item%&c."); }
+    public boolean areRequirementsEnabled() { return bool("settings.requirements.enabled", false); }
+    public String getRequirementMessage() { return str("settings.requirements.denied-message", "%prefix% &cButuh skill &f%skill% &clevel &f%level% &cuntuk memakai &f%item%&c.").replace("%prefix%", getPrefix()); }
 
     /** Global Aura-style requirements use the simple YAML form
      * MATERIAL skill:level [another_skill:level]. */
@@ -397,6 +401,22 @@ public final class QuestConfigManager {
         config.set("settings.progression.config-version", 9);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan requirement v9: " + exception.getMessage()); }
+    }
+
+    /**
+     * Requirement support remains available for future custom equipment, but
+     * vanilla equipment must never become inaccessible after an update.
+     */
+    private void migrateAccessibleDefaultsV10(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 10) return;
+        config.set("settings.anti-exploit.allow-creative", false);
+        config.set("settings.anti-exploit.allow-creative-op", true);
+        config.set("settings.requirements.enabled", false);
+        config.set("settings.requirements.item.global", List.of());
+        config.set("settings.requirements.armor.global", List.of());
+        config.set("settings.progression.config-version", 10);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menerapkan default aksesibel v10: " + exception.getMessage()); }
     }
 
     private void setNewCategory(String key, String name, String icon, int target, int increase,

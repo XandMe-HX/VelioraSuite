@@ -10,6 +10,12 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +31,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.bukkit.scheduler.BukkitTask;
 
-public final class WarpManager {
+public final class WarpManager implements Listener {
     private static final Pattern SAFE_NAME = Pattern.compile("[a-z0-9_-]{2,24}");
     private static final Set<String> RESERVED = Set.of("vgwarp", "vwarp", "veliorasuite", "vs", "vgwar");
 
@@ -36,6 +42,7 @@ public final class WarpManager {
     private final Map<String, String> aliases = new LinkedHashMap<>();
     private final Map<UUID, Long> cooldowns = new LinkedHashMap<>();
     private final Map<UUID, BukkitTask> pendingTeleports = new LinkedHashMap<>();
+    private final Map<UUID, Long> arrivalFreezeUntil = new LinkedHashMap<>();
     private YamlConfiguration config;
 
     public WarpManager(VelioraSuite plugin) {
@@ -188,6 +195,7 @@ public final class WarpManager {
                 player.sendMessage(color(message("failed", "%prefix% &cTeleport gagal. Coba lagi.")));
                 return;
             }
+            applyArrivalFreeze(player);
             cooldowns.put(player.getUniqueId(), now + cooldown * 1000L);
             if (config.getBoolean("settings.sound.enabled", true)) {
                 try { player.playSound(player.getLocation(), Sound.valueOf(config.getString("settings.sound.name", "ENTITY_ENDERMAN_TELEPORT")), 0.8F, 1.1F); }
@@ -201,6 +209,37 @@ public final class WarpManager {
     private void cancelPending(UUID playerId) {
         BukkitTask task = pendingTeleports.remove(playerId);
         if (task != null) task.cancel();
+    }
+
+    private void applyArrivalFreeze(Player player) {
+        int seconds = Math.max(0, config.getInt("settings.arrival-freeze-seconds", 3));
+        if (seconds <= 0) return;
+        long until = System.currentTimeMillis() + seconds * 1000L;
+        arrivalFreezeUntil.put(player.getUniqueId(), until);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, seconds * 20, 0, false, false, false));
+        player.sendTitle(color("&bTiba di tujuan"), color("&7Bersiap..."), 0, seconds * 20, 0);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Long frozenUntil = arrivalFreezeUntil.get(player.getUniqueId());
+            if (frozenUntil != null && frozenUntil <= System.currentTimeMillis()) {
+                arrivalFreezeUntil.remove(player.getUniqueId());
+                player.clearTitle();
+            }
+        }, seconds * 20L + 1L);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFrozenMove(PlayerMoveEvent event) {
+        Long until = arrivalFreezeUntil.get(event.getPlayer().getUniqueId());
+        if (until == null) return;
+        if (until <= System.currentTimeMillis()) { arrivalFreezeUntil.remove(event.getPlayer().getUniqueId()); return; }
+        if (event.getTo() != null && (event.getFrom().getX() != event.getTo().getX()
+                || event.getFrom().getY() != event.getTo().getY() || event.getFrom().getZ() != event.getTo().getZ())) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFrozenInteract(PlayerInteractEvent event) {
+        Long until = arrivalFreezeUntil.get(event.getPlayer().getUniqueId());
+        if (until != null && until > System.currentTimeMillis()) event.setCancelled(true);
     }
 
     public Location safetyTarget(Location from) {
