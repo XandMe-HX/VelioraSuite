@@ -41,6 +41,7 @@ public final class QuestConfigManager {
         migrateSkillGrowthV4(file);
         migrateAuraStyleProgressionV5(file);
         migrateProtectionV6(file);
+        migrateExperienceLevelRewardsV7(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -307,6 +308,22 @@ public final class QuestConfigManager {
         config.set("settings.progression.config-version", 6);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan proteksi progression v6: " + exception.getMessage()); }
+    }
+
+    /**
+     * Moves growth rewards to the actual XP skill level. Older configs kept
+     * Aura-style values from v5, which made the intended one-mana-per-level
+     * and Hunter health-per-two-levels rule unavailable after an update.
+     */
+    private void migrateExperienceLevelRewardsV7(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 7) return;
+        config.set("settings.rewards.mana-level-interval", 1);
+        config.set("settings.rewards.hunter-health-level-interval", 2);
+        config.set("settings.rewards.hunter-health-bonus", 1.0D);
+        config.set("settings.rewards.hunter-health-cap", 30.0D);
+        config.set("settings.progression.config-version", 7);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan hadiah XP level v7: " + exception.getMessage()); }
     }
 
     private void setNewCategory(String key, String name, String icon, int target, int increase,
