@@ -25,6 +25,7 @@ public final class SkillsConfigManager {
         this.config = YamlConfiguration.loadConfiguration(file);
         migrateManaV2(file);
         migrateManaV3(file);
+        migrateManaV4(file);
     }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
@@ -57,6 +58,13 @@ public final class SkillsConfigManager {
     public int getAbilityCost(String name) { return Math.max(0, integer("settings.abilities." + name + ".cost", 20)); }
     public int getAbilityCooldown(String name) { return Math.max(1, integer("settings.abilities." + name + ".cooldown-seconds", 60)); }
     public int getAbilityDuration(String name) { return Math.max(1, integer("settings.abilities." + name + ".duration-seconds", 30)); }
+    public String getAbilitySkill(String name) { return str("settings.abilities." + name + ".skill", ""); }
+    public int getAbilityUnlockLevel(String name) { return Math.max(1, integer("settings.abilities." + name + ".unlock-level", 6)); }
+    public int getAbilityLevelInterval(String name) { return Math.max(1, integer("settings.abilities." + name + ".level-up-interval", 6)); }
+    public int getAbilityMaxLevel(String name) { return Math.max(0, integer("settings.abilities." + name + ".max-level", 0)); }
+    public int getAbilityCostPerLevel(String name) { return integer("settings.abilities." + name + ".cost-per-level", 0); }
+    public int getAbilityCooldownPerLevel(String name) { return integer("settings.abilities." + name + ".cooldown-per-level", 0); }
+    public int getAbilityDurationPerLevel(String name) { return integer("settings.abilities." + name + ".duration-per-level", 0); }
     public List<String> getAbilityBlockedWorlds() { return config == null ? List.of() : config.getStringList("settings.abilities.blocked-worlds"); }
 
     private void migrateManaV2(File file) {
@@ -93,6 +101,34 @@ public final class SkillsConfigManager {
         }
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraSkills: gagal migrasi Mana v3: " + exception.getMessage()); }
+    }
+
+    private void migrateManaV4(File file) {
+        if (config.getInt("settings.mana.config-version", 0) >= 4) return;
+        config.set("settings.mana.config-version", 4);
+        String[][] values = {
+                {"miner", "mining", "6", "6", "0", "-1", "-5", "3"},
+                {"guardian", "monster_hunter", "6", "6", "0", "0", "-3", "1"},
+                {"dash", "agility", "6", "6", "0", "0", "-2", "0"},
+                {"fisher", "fishing", "6", "6", "0", "0", "-5", "5"},
+                {"chef", "chef", "6", "6", "0", "0", "-5", "2"}
+        };
+        for (String[] value : values) {
+            String base = "settings.abilities." + value[0] + ".";
+            config.set(base + "enabled", true);
+            config.set(base + "skill", value[1]);
+            config.set(base + "unlock-level", Integer.parseInt(value[2]));
+            config.set(base + "level-up-interval", Integer.parseInt(value[3]));
+            config.set(base + "max-level", Integer.parseInt(value[4]));
+            config.set(base + "cost-per-level", Integer.parseInt(value[5]));
+            config.set(base + "cooldown-per-level", Integer.parseInt(value[6]));
+            config.set(base + "duration-per-level", Integer.parseInt(value[7]));
+        }
+        config.set("settings.abilities.chef.cost", 6);
+        config.set("settings.abilities.chef.cooldown-seconds", 90);
+        config.set("settings.abilities.chef.duration-seconds", 8);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraSkills: gagal migrasi Mana v4: " + exception.getMessage()); }
     }
 
     public String getUsePermission() { return str("permissions.use", "veliorasuite.skills.use"); }

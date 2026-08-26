@@ -3,7 +3,7 @@ settings:
   prefix: '&7[&eVELIORA &aSKILLS&7] &r'
 
   mana:
-    config-version: 3
+    config-version: 4
     default-mana: 20
     default-max-mana: 20
     # Batas keras agar bonus quest tidak membuat Mana tanpa akhir.
@@ -23,10 +23,11 @@ settings:
 
   abilities:
     blocked-worlds: [war_world]
-    miner: {enabled: true, cost: 5, cooldown-seconds: 120, duration-seconds: 30}
-    guardian: {enabled: true, cost: 8, cooldown-seconds: 90, duration-seconds: 10}
-    dash: {enabled: true, cost: 4, cooldown-seconds: 30, duration-seconds: 1}
-    fisher: {enabled: true, cost: 5, cooldown-seconds: 120, duration-seconds: 60}
+    miner: {enabled: true, skill: mining, unlock-level: 6, level-up-interval: 6, max-level: 0, cost: 5, cost-per-level: -1, cooldown-seconds: 120, cooldown-per-level: -5, duration-seconds: 30, duration-per-level: 3}
+    guardian: {enabled: true, skill: monster_hunter, unlock-level: 6, level-up-interval: 6, max-level: 0, cost: 8, cost-per-level: 0, cooldown-seconds: 90, cooldown-per-level: -3, duration-seconds: 10, duration-per-level: 1}
+    dash: {enabled: true, skill: agility, unlock-level: 6, level-up-interval: 6, max-level: 0, cost: 4, cost-per-level: 0, cooldown-seconds: 30, cooldown-per-level: -2, duration-seconds: 1, duration-per-level: 0}
+    fisher: {enabled: true, skill: fishing, unlock-level: 6, level-up-interval: 6, max-level: 0, cost: 5, cost-per-level: 0, cooldown-seconds: 120, cooldown-per-level: -5, duration-seconds: 60, duration-per-level: 5}
+    chef: {enabled: true, skill: chef, unlock-level: 6, level-up-interval: 6, max-level: 0, cost: 6, cost-per-level: 0, cooldown-seconds: 90, cooldown-per-level: -5, duration-seconds: 8, duration-per-level: 2}
 
   actionbar:
     enabled: true
@@ -68,7 +69,7 @@ messages:
     - '&8&m--------------------------------'
     - '&b&lVelioraSkills'
     - '&f/vskills mana &7- Cek mana kamu.'
-    - '&f/vskills ability <miner|guardian|dash|fisher> &7- Gunakan kemampuan Mana.'
+    - '&f/vskills ability <miner|guardian|dash|fisher|chef> &7- Gunakan kemampuan Mana.'
     - '&f/vskills mana <player> &7- Cek mana player.'
     - '&f/vskills status &7- Cek status module.'
     - '&f/vskills reload &7- Reload config.'

@@ -66,7 +66,7 @@ public final class SkillsCommand implements CommandExecutor, TabCompleter {
             return filter(options, args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("ability")) {
-            return filter(Arrays.asList("miner", "guardian", "dash", "fisher"), args[1]);
+            return filter(Arrays.asList("miner", "guardian", "dash", "fisher", "chef"), args[1]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("mana")) {
             List<String> options = new ArrayList<>();
