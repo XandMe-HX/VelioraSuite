@@ -11,6 +11,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.GameMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +40,7 @@ public final class QuestConfigManager {
         migrateRewardsV3(file);
         migrateSkillGrowthV4(file);
         migrateAuraStyleProgressionV5(file);
+        migrateProtectionV6(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -65,6 +68,11 @@ public final class QuestConfigManager {
     public int getMoneyIncreasePerLevel() { return Math.max(0, integer("settings.rewards.money-increase-per-level", integer("settings.rewards.money-increase-per-tier", 150))); }
     public int getMaxMoneyReward() { return Math.max(getBaseMoney(), integer("settings.rewards.max-money", 20000)); }
     public int getFarmMinimumGrowthSeconds() { return Math.max(0, integer("settings.anti-exploit.farm-minimum-growth-seconds", 300)); }
+    public int getSourceCooldownMillis() { return Math.max(0, integer("settings.anti-exploit.source-cooldown-millis", 125)); }
+    public boolean canEarnProgress(Player player) {
+        if (player == null || player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return false;
+        return !config.getStringList("settings.anti-exploit.blocked-worlds").contains(player.getWorld().getName());
+    }
     public int getManaLevelInterval() { return Math.max(1, integer("settings.rewards.mana-level-interval", 3)); }
     public int getManaLevelBonus() { return Math.max(0, integer("settings.rewards.mana-level-bonus", 1)); }
     public int getMilestoneLevelInterval() { return Math.max(1, integer("settings.rewards.milestone-level-interval", 5)); }
@@ -287,6 +295,18 @@ public final class QuestConfigManager {
         setNewCategory("archery", "&6Archery", "BOW", 36, 18, "ARROW", 8, "SPECTRAL_ARROW", 4);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan progression v5: " + exception.getMessage()); }
+    }
+
+    /** Explicit safety net for protected/lobby worlds. Cancelled Bukkit events
+     * are already ignored by listeners; this also handles plugins that use a
+     * separate protection layer instead of cancelling the event. */
+    private void migrateProtectionV6(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 6) return;
+        config.set("settings.anti-exploit.blocked-worlds", List.of("lobby", "war_world"));
+        config.set("settings.anti-exploit.source-cooldown-millis", 125);
+        config.set("settings.progression.config-version", 6);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan proteksi progression v6: " + exception.getMessage()); }
     }
 
     private void setNewCategory(String key, String name, String icon, int target, int increase,

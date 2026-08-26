@@ -13,6 +13,7 @@ import org.bukkit.attribute.AttributeInstance;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class QuestManager {
 
@@ -25,6 +26,7 @@ public final class QuestManager {
     private final QuestStarterManager starterManager;
     private final QuestBossBarManager bossBarManager;
     private QuestGuiManager guiManager;
+    private final Map<UUID, Map<QuestCategory, Long>> lastProgress = new HashMap<>();
 
     public QuestManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -143,6 +145,13 @@ public final class QuestManager {
     }
 
     public void addProgress(Player player, QuestCategory category, int amount) {
+        if (!configManager.canEarnProgress(player)) return;
+        long now = System.currentTimeMillis();
+        long cooldown = configManager.getSourceCooldownMillis();
+        Map<QuestCategory, Long> playerCooldowns = lastProgress.computeIfAbsent(player.getUniqueId(), ignored -> new HashMap<>());
+        long previous = playerCooldowns.getOrDefault(category, 0L);
+        if (cooldown > 0 && now - previous < cooldown) return;
+        playerCooldowns.put(category, now);
         boolean ready = progressManager.addProgress(player, category, amount);
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
