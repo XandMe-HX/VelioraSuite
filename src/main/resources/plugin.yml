@@ -146,6 +146,22 @@ commands:
     description: Melihat profil skill Archery.
     usage: /archery
     permission: veliorasuite.quest.use
+  excavation:
+    description: Melihat profil skill Excavation.
+    usage: /excavation
+    permission: veliorasuite.quest.use
+  fighting:
+    description: Melihat profil skill Fighting.
+    usage: /fighting
+    permission: veliorasuite.quest.use
+  defense:
+    description: Melihat profil skill Defense.
+    usage: /defense
+    permission: veliorasuite.quest.use
+  enchanting:
+    description: Melihat profil skill Enchanting.
+    usage: /enchanting
+    permission: veliorasuite.quest.use
   fish:
     description: Open and manage VelioraFishing.
     usage: /fish <help|bag|sell|collection|top|give|take|reload>

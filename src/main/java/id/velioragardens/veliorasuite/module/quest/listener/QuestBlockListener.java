@@ -40,6 +40,9 @@ public final class QuestBlockListener implements Listener {
         if (manager.getConfigManager().getMaterials(QuestCategory.MINING, "materials").contains(type)) {
             manager.addProgress(event.getPlayer(), QuestCategory.MINING, 1);
         }
+        if (manager.getConfigManager().getMaterials(QuestCategory.EXCAVATION, "materials").contains(type)) {
+            manager.addProgress(event.getPlayer(), QuestCategory.EXCAVATION, 1);
+        }
     }
     private record BlockKey(UUID world, int x, int y, int z) {
         private static BlockKey of(UUID world, int x, int y, int z) {

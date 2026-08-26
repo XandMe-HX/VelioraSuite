@@ -4,6 +4,7 @@ import id.velioragardens.veliorasuite.module.quest.QuestManager;
 import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
 import org.bukkit.Location;
 import org.bukkit.entity.Arrow;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
@@ -11,6 +12,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.BrewEvent;
+import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -66,6 +68,32 @@ public final class QuestProgressionListener implements Listener {
         if (event.getDamager() instanceof Arrow arrow && arrow.getShooter() instanceof Player player) {
             manager.addProgress(player, QuestCategory.ARCHERY, 1);
         }
+    }
+
+    /** Melee combat is separate from kill-based Monster Hunter, like Aura-style skills. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onMeleeHit(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player player)
+                || !(event.getEntity() instanceof LivingEntity)
+                || event.getEntity() instanceof Player
+                || event.getFinalDamage() <= 0.0D) return;
+        manager.addProgress(player, QuestCategory.FIGHTING, 1);
+    }
+
+    /** Defense only counts real hostile combat damage, never fall or environmental damage. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDefend(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof Player player)
+                || !(event.getDamager() instanceof LivingEntity)
+                || event.getDamager() instanceof Player
+                || event.getFinalDamage() <= 0.0D) return;
+        manager.addProgress(player, QuestCategory.DEFENSE, 1);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEnchant(EnchantItemEvent event) {
+        if (event.getEnchantsToAdd().isEmpty()) return;
+        manager.addProgress(event.getEnchanter(), QuestCategory.ENCHANTING, event.getEnchantsToAdd().size());
     }
 
     private record RecentBrewer(UUID playerId, long usedAt) { }

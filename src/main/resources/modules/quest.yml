@@ -22,12 +22,13 @@ settings:
     # Set 0 kalau mau bossbar tampil permanen selama quest aktif.
     auto-hide-seconds: 8
   progression:
-    config-version: 11
+    config-version: 13
     # Setiap kategori berkembang sendiri saat aktivitasnya dilakukan.
     # Jalan panjang seperti AuraSkills. XP requirement bertambah tiap level.
     completions-per-level: 3
     max-level: 500
-    # XP nyata per aktivitas. Permission multiplier: veliorasuite.multiplier.50
+    # Skill XP per aktivitas, tersimpan khusus di data Veliora dan tidak
+    # pernah menambah/mengurangi XP vanilla pemain. Permission multiplier: veliorasuite.multiplier.50
     # atau khusus skill: veliorasuite.multiplier.mining.50 (50% tambahan XP).
     xp-requirements:
       default:
@@ -40,6 +41,12 @@ settings:
       enabled: true
       title: '&aLEVEL UP!'
       subtitle: '&f%quest% &7menjadi level &a%level%'
+    # PlaceholderAPI Skill XP:
+    # %veliorasuite_skill_level_mining%
+    # %veliorasuite_skill_xp_mining%
+    # %veliorasuite_skill_xp_required_mining%
+    # %veliorasuite_skill_xp_progress_mining%  (contoh 45/125)
+    # %veliorasuite_skill_total_level%
   anti-exploit:
     # Blok yang baru ditanam tidak dihitung langsung. Ini menutup loop tanam-
     # panen instan tanpa mengganggu kebun yang memang sudah tumbuh.
@@ -193,6 +200,43 @@ categories:
     target-increase-per-level: 18
     base-item-rewards: [{material: ARROW, amount: 8}]
     milestone-item-rewards: [{material: SPECTRAL_ARROW, amount: 4}]
+  excavation:
+    enabled: true
+    display-name: '&6Excavation'
+    icon: IRON_SHOVEL
+    base-target: 80
+    xp-per-action: 5
+    target-increase-per-level: 40
+    materials: [DIRT, GRASS_BLOCK, COARSE_DIRT, ROOTED_DIRT, PODZOL, MYCELIUM, SAND, RED_SAND, GRAVEL, CLAY, SOUL_SAND, SOUL_SOIL, SNOW_BLOCK]
+    base-item-rewards: [{material: GRAVEL, amount: 8}]
+    milestone-item-rewards: [{material: CLAY_BALL, amount: 8}]
+  fighting:
+    enabled: true
+    display-name: '&cFighting'
+    icon: IRON_SWORD
+    base-target: 40
+    xp-per-action: 4
+    target-increase-per-level: 20
+    base-item-rewards: [{material: ROTTEN_FLESH, amount: 4}]
+    milestone-item-rewards: [{material: IRON_INGOT, amount: 2}]
+  defense:
+    enabled: true
+    display-name: '&9Defense'
+    icon: SHIELD
+    base-target: 32
+    xp-per-action: 4
+    target-increase-per-level: 16
+    base-item-rewards: [{material: IRON_NUGGET, amount: 6}]
+    milestone-item-rewards: [{material: SHIELD, amount: 1}]
+  enchanting:
+    enabled: true
+    display-name: '&dEnchanting'
+    icon: ENCHANTING_TABLE
+    base-target: 16
+    xp-per-action: 12
+    target-increase-per-level: 8
+    base-item-rewards: [{material: LAPIS_LAZULI, amount: 6}]
+    milestone-item-rewards: [{material: EXPERIENCE_BOTTLE, amount: 2}]
 
 permissions:
   use: 'veliorasuite.quest.use'

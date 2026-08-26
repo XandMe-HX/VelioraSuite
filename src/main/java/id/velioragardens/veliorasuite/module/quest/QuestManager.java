@@ -199,7 +199,7 @@ public final class QuestManager {
         long required = configManager.xpRequired(category, progress.getLevel());
         player.sendMessage(configManager.color("&8&m------------------------"));
         player.sendMessage(configManager.color("&a" + configManager.getCategoryDisplayName(category) + " &fLevel &a" + progress.getLevel() + "&7/&a" + configManager.getMaxLevel()));
-        player.sendMessage(configManager.color("&7XP: &f" + progress.getExperience() + "&7/&f" + required));
+        player.sendMessage(configManager.color("&7Skill XP: &f" + progress.getExperience() + "&7/&f" + required));
         player.sendMessage(configManager.color("&7Quest: &f" + progress.getCurrentProgress() + "&7/&f" + progress.getCurrentTarget()));
         int interval = configManager.getLevelMoneyInterval();
         int nextMilestone = ((progress.getLevel() / interval) + 1) * interval;

@@ -12,7 +12,11 @@ public enum QuestCategory {
     FISHING("fishing"),
     AGILITY("agility"),
     ALCHEMY("alchemy"),
-    ARCHERY("archery");
+    ARCHERY("archery"),
+    EXCAVATION("excavation"),
+    FIGHTING("fighting"),
+    DEFENSE("defense"),
+    ENCHANTING("enchanting");
 
     private final String key;
 

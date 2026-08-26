@@ -25,16 +25,20 @@ public final class QuestGuiManager implements Listener {
 
     private static final Map<Integer, QuestCategory> SLOTS = new HashMap<>();
     static {
-        SLOTS.put(20, QuestCategory.MONSTER_HUNTER);
-        SLOTS.put(22, QuestCategory.ANIMAL_HUNTER);
-        SLOTS.put(24, QuestCategory.FISHING);
-        SLOTS.put(29, QuestCategory.MINING);
-        SLOTS.put(31, QuestCategory.FARMER);
-        SLOTS.put(33, QuestCategory.CHEF);
-        SLOTS.put(38, QuestCategory.WOODCUTTING);
+        SLOTS.put(10, QuestCategory.FIGHTING);
+        SLOTS.put(12, QuestCategory.DEFENSE);
+        SLOTS.put(14, QuestCategory.ARCHERY);
+        SLOTS.put(16, QuestCategory.MONSTER_HUNTER);
+        SLOTS.put(20, QuestCategory.MINING);
+        SLOTS.put(22, QuestCategory.EXCAVATION);
+        SLOTS.put(24, QuestCategory.WOODCUTTING);
+        SLOTS.put(29, QuestCategory.FARMER);
+        SLOTS.put(31, QuestCategory.CHEF);
+        SLOTS.put(33, QuestCategory.FISHING);
+        SLOTS.put(35, QuestCategory.ALCHEMY);
+        SLOTS.put(38, QuestCategory.ENCHANTING);
         SLOTS.put(40, QuestCategory.AGILITY);
-        SLOTS.put(42, QuestCategory.ALCHEMY);
-        SLOTS.put(44, QuestCategory.ARCHERY);
+        SLOTS.put(42, QuestCategory.ANIMAL_HUNTER);
     }
 
     private final QuestManager manager;

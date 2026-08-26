@@ -46,6 +46,8 @@ public final class QuestConfigManager {
         migrateRequirementsV9(file);
         migrateAccessibleDefaultsV10(file);
         migrateSeparateSkillExperienceV11(file);
+        migrateSkillXpIdentityV12(file);
+        migrateAuraSourceSkillsV13(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -434,6 +436,39 @@ public final class QuestConfigManager {
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menerapkan pemisahan XP dan quest v11: " + exception.getMessage()); }
     }
 
+    private void migrateSkillXpIdentityV12(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 12) return;
+        // Only records the new data identity. Existing level and XP values stay intact.
+        config.set("settings.progression.config-version", 12);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraQuest: Skill XP v12 aktif (terpisah dari XP vanilla dan quest harian).");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal menyimpan migrasi Skill XP v12: " + exception.getMessage());
+        }
+    }
+
+    /** Adds missing Aura-style source skills without touching any existing player data. */
+    private void migrateAuraSourceSkillsV13(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 13) return;
+        setNewCategory("excavation", "&6Excavation", "IRON_SHOVEL", 80, 40, "GRAVEL", 8, "CLAY_BALL", 8);
+        setNewCategory("fighting", "&cFighting", "IRON_SWORD", 40, 20, "ROTTEN_FLESH", 4, "IRON_INGOT", 2);
+        setNewCategory("defense", "&9Defense", "SHIELD", 32, 16, "IRON_NUGGET", 6, "SHIELD", 1);
+        setNewCategory("enchanting", "&dEnchanting", "ENCHANTING_TABLE", 16, 8, "LAPIS_LAZULI", 6, "EXPERIENCE_BOTTLE", 2);
+        config.set("categories.excavation.materials", List.of("DIRT", "GRASS_BLOCK", "COARSE_DIRT", "ROOTED_DIRT", "PODZOL", "MYCELIUM", "SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL", "SNOW_BLOCK"));
+        config.set("categories.fighting.xp-per-action", 4);
+        config.set("categories.defense.xp-per-action", 4);
+        config.set("categories.enchanting.xp-per-action", 12);
+        config.set("categories.excavation.xp-per-action", 5);
+        config.set("settings.progression.config-version", 13);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraQuest: sumber Skill XP Aura-style v13 aktif.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraQuest: gagal menambah sumber skill v13: " + exception.getMessage());
+        }
+    }
+
     private void setNewCategory(String key, String name, String icon, int target, int increase,
                                 String baseMaterial, int baseAmount, String milestoneMaterial, int milestoneAmount) {
         String path = "categories." + key;
@@ -481,6 +516,10 @@ public final class QuestConfigManager {
             case AGILITY -> "&aAgility";
             case ALCHEMY -> "&dAlchemy";
             case ARCHERY -> "&6Archery";
+            case EXCAVATION -> "&6Excavation";
+            case FIGHTING -> "&cFighting";
+            case DEFENSE -> "&9Defense";
+            case ENCHANTING -> "&dEnchanting";
         };
     }
 
@@ -496,6 +535,10 @@ public final class QuestConfigManager {
             case AGILITY -> Material.RABBIT_FOOT;
             case ALCHEMY -> Material.BREWING_STAND;
             case ARCHERY -> Material.BOW;
+            case EXCAVATION -> Material.IRON_SHOVEL;
+            case FIGHTING -> Material.IRON_SWORD;
+            case DEFENSE -> Material.SHIELD;
+            case ENCHANTING -> Material.ENCHANTING_TABLE;
         };
     }
 
@@ -510,6 +553,10 @@ public final class QuestConfigManager {
             case AGILITY -> 24;
             case ALCHEMY -> 12;
             case ARCHERY -> 36;
+            case EXCAVATION -> 80;
+            case FIGHTING -> 40;
+            case DEFENSE -> 32;
+            case ENCHANTING -> 16;
         };
     }
 
@@ -524,12 +571,17 @@ public final class QuestConfigManager {
             case AGILITY -> 10;
             case ALCHEMY -> 6;
             case ARCHERY -> 18;
+            case EXCAVATION -> 40;
+            case FIGHTING -> 20;
+            case DEFENSE -> 16;
+            case ENCHANTING -> 8;
         };
     }
 
     private List<String> fallbackMaterials(QuestCategory category, String node) {
         if (category == QuestCategory.WOODCUTTING) return List.of("OAK_LOG", "SPRUCE_LOG", "BIRCH_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG", "MANGROVE_LOG", "CHERRY_LOG", "STRIPPED_OAK_LOG", "STRIPPED_SPRUCE_LOG", "STRIPPED_BIRCH_LOG", "STRIPPED_JUNGLE_LOG", "STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG", "STRIPPED_MANGROVE_LOG", "STRIPPED_CHERRY_LOG");
         if (category == QuestCategory.MINING) return List.of("STONE", "COBBLESTONE", "DEEPSLATE", "COAL_ORE", "DEEPSLATE_COAL_ORE", "COPPER_ORE", "DEEPSLATE_COPPER_ORE", "IRON_ORE", "DEEPSLATE_IRON_ORE", "GOLD_ORE", "DEEPSLATE_GOLD_ORE", "REDSTONE_ORE", "DEEPSLATE_REDSTONE_ORE", "LAPIS_ORE", "DEEPSLATE_LAPIS_ORE", "DIAMOND_ORE", "DEEPSLATE_DIAMOND_ORE", "EMERALD_ORE", "DEEPSLATE_EMERALD_ORE", "ANCIENT_DEBRIS");
+        if (category == QuestCategory.EXCAVATION) return List.of("DIRT", "GRASS_BLOCK", "COARSE_DIRT", "ROOTED_DIRT", "PODZOL", "MYCELIUM", "SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL", "SNOW_BLOCK");
         if (category == QuestCategory.FARMER && node.equals("plant-materials")) return List.of("WHEAT_SEEDS", "CARROT", "POTATO", "BEETROOT_SEEDS", "SUGAR_CANE", "MELON_SEEDS", "PUMPKIN_SEEDS", "COCOA_BEANS", "NETHER_WART");
         if (category == QuestCategory.FARMER) return List.of("WHEAT", "CARROTS", "POTATOES", "BEETROOTS", "SUGAR_CANE", "MELON", "PUMPKIN", "COCOA", "NETHER_WART");
         if (category == QuestCategory.CHEF) return List.of("COOKED_BEEF", "COOKED_CHICKEN", "COOKED_MUTTON", "COOKED_PORKCHOP", "COOKED_COD", "COOKED_SALMON", "BAKED_POTATO", "DRIED_KELP");
