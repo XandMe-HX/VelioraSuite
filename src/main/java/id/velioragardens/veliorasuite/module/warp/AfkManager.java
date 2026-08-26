@@ -33,6 +33,8 @@ public final class AfkManager implements Listener, CommandExecutor {
     private final Map<UUID, Long> lastActivity = new HashMap<>();
     private final Map<UUID, TextDisplay> markers = new HashMap<>();
     private final Set<UUID> afk = new HashSet<>();
+    private final Set<UUID> manualAfk = new HashSet<>();
+    private final Map<UUID, Long> lastReward = new HashMap<>();
     private int taskId = -1;
 
     public AfkManager(VelioraSuite plugin, WarpManager warps) {
@@ -48,6 +50,11 @@ public final class AfkManager implements Listener, CommandExecutor {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!afk.contains(player.getUniqueId()) && timeout > 0
                         && now - lastActivity.getOrDefault(player.getUniqueId(), now) >= timeout) setAfk(player, true);
+                if (manualAfk.contains(player.getUniqueId()) && inAfkArea(player)
+                        && warps.afkRewardsEnabled() && now - lastReward.getOrDefault(player.getUniqueId(), now) >= 60_000L) {
+                    reward(player);
+                    lastReward.put(player.getUniqueId(), now);
+                }
                 TextDisplay marker = markers.get(player.getUniqueId());
                 if (marker != null && marker.isValid()) marker.teleport(markerLocation(player));
             }
@@ -57,14 +64,16 @@ public final class AfkManager implements Listener, CommandExecutor {
     public void stop() {
         if (taskId >= 0) Bukkit.getScheduler().cancelTask(taskId);
         markers.values().forEach(marker -> { if (marker != null && marker.isValid()) marker.remove(); });
-        markers.clear(); afk.clear(); lastActivity.clear();
+        markers.clear(); afk.clear(); manualAfk.clear(); lastActivity.clear(); lastReward.clear();
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Command ini hanya untuk pemain."); return true; }
-        setAfk(player, !afk.contains(player.getUniqueId()));
+        boolean enable = !afk.contains(player.getUniqueId());
+        if (enable) manualAfk.add(player.getUniqueId()); else manualAfk.remove(player.getUniqueId());
+        setAfk(player, enable);
         return true;
     }
 
@@ -72,12 +81,7 @@ public final class AfkManager implements Listener, CommandExecutor {
     @EventHandler public void onInteract(PlayerInteractEvent event) { activate(event.getPlayer()); }
     @EventHandler public void onChat(AsyncPlayerChatEvent event) { Bukkit.getScheduler().runTask(plugin, () -> activate(event.getPlayer())); }
     @EventHandler public void onCommand(PlayerCommandPreprocessEvent event) {
-        if (event.getMessage().trim().equalsIgnoreCase("/afk")) {
-            // Essentials may also own /afk. Handle this command exactly once so
-            // the two plugins cannot toggle it on and immediately back off.
-            event.setCancelled(true);
-            Bukkit.getScheduler().runTask(plugin, () -> setAfk(event.getPlayer(), !afk.contains(event.getPlayer().getUniqueId())));
-        } else if (!event.getMessage().equalsIgnoreCase("/afk")) activate(event.getPlayer());
+        if (!event.getMessage().trim().equalsIgnoreCase("/afk")) activate(event.getPlayer());
     }
     @EventHandler public void onMove(PlayerMoveEvent event) {
         if (event.getTo() == null || (event.getFrom().getX() == event.getTo().getX()
@@ -88,7 +92,8 @@ public final class AfkManager implements Listener, CommandExecutor {
 
     private void activate(Player player) {
         touch(player);
-        if (afk.contains(player.getUniqueId())) setAfk(player, false);
+        // Manual AFK is allowed to chat and walk around its designated AFK area.
+        if (afk.contains(player.getUniqueId()) && !(manualAfk.contains(player.getUniqueId()) && inAfkArea(player))) setAfk(player, false);
     }
 
     private void touch(Player player) { lastActivity.put(player.getUniqueId(), System.currentTimeMillis()); }
@@ -115,10 +120,32 @@ public final class AfkManager implements Listener, CommandExecutor {
         }
     }
 
-    private Location markerLocation(Player player) { return player.getLocation().clone().add(0, 2.65D, 0); }
+    private boolean inAfkArea(Player player) {
+        double radius = warps.afkZoneRadius();
+        WarpManager.WarpPoint point = warps.get(warps.afkZoneWarp());
+        if (point == null || player.getWorld() == null || !player.getWorld().getUID().equals(point.world())) return false;
+        double dx = player.getLocation().getX() - point.x();
+        double dz = player.getLocation().getZ() - point.z();
+        return dx * dx + dz * dz <= radius * radius;
+    }
+
+    private Location markerLocation(Player player) { return player.getLocation().clone().add(0, 3.35D, 0); }
+
+    private void reward(Player player) {
+        double amount = warps.afkRewardPerMinute();
+        if (amount <= 0D) return;
+        try {
+            Class<?> economyType = Class.forName("net.milkbowl.vault.economy.Economy");
+            Object registration = Bukkit.getServicesManager().getRegistration((Class) economyType);
+            if (registration == null) return;
+            Object economy = registration.getClass().getMethod("getProvider").invoke(registration);
+            economyType.getMethod("depositPlayer", org.bukkit.OfflinePlayer.class, double.class).invoke(economy, player, amount);
+            player.sendActionBar(Component.text("AFK +$" + String.format(java.util.Locale.US, "%.0f", amount), NamedTextColor.GREEN));
+        } catch (ReflectiveOperationException | LinkageError ignored) { }
+    }
 
     private void clear(Player player) {
-        afk.remove(player.getUniqueId()); lastActivity.remove(player.getUniqueId());
+        afk.remove(player.getUniqueId()); manualAfk.remove(player.getUniqueId()); lastActivity.remove(player.getUniqueId()); lastReward.remove(player.getUniqueId());
         TextDisplay marker = markers.remove(player.getUniqueId());
         if (marker != null && marker.isValid()) marker.remove();
     }

@@ -24,7 +24,7 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String commandName = command.getName().toLowerCase(Locale.ROOT);
-        if (commandName.equals("skills")) {
+        if (commandName.equals("skills") && (args.length == 0 || args[0].equalsIgnoreCase("gui"))) {
             Player player = player(sender);
             if (player != null && manager.getConfigManager().hasUse(sender)) manager.openGui(player);
             else if (player != null) manager.sendNoPermission(sender);
@@ -184,6 +184,15 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + (changed ? "&aLevel skill berhasil diperbarui." : "&cLevel skill tidak dapat diperbarui.")));
                 return true;
             }
+            case "reset", "riset" -> {
+                if (!manager.getConfigManager().hasAdmin(sender)) { manager.sendNoPermission(sender); return true; }
+                if (args.length < 2 || args.length > 3) { manager.sendHelp(sender); return true; }
+                QuestCategory category = args.length == 3 && !args[2].equals("*") && !args[2].equalsIgnoreCase("all") ? QuestCategory.fromKey(args[2]) : null;
+                if (args.length == 3 && category == null && !args[2].equals("*") && !args[2].equalsIgnoreCase("all")) { manager.sendHelp(sender); return true; }
+                int changed = manager.resetSkills(args[1], category);
+                sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aReset skill selesai: &f" + changed + " &akategori data diperbarui."));
+                return true;
+            }
             default -> { manager.sendHelp(sender); return true; }
         }
     }
@@ -197,7 +206,7 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
             }
             List<String> options = new ArrayList<>(Arrays.asList("gui", "progress", "stats", "skill", "sources", "multiplier", "top", "rank", "start", "claim", "cancel", "help"));
             if (manager.getConfigManager().hasReload(sender)) options.add("reload");
-            if (manager.getConfigManager().hasAdmin(sender)) { options.add("status"); options.add("xp"); options.add("skilladmin"); }
+            if (manager.getConfigManager().hasAdmin(sender)) { options.add("status"); options.add("xp"); options.add("skilladmin"); options.add("reset"); options.add("riset"); }
             return filter(options, args[0]);
         }
         if (args.length == 2 && List.of("start", "claim", "cancel", "skill").contains(args[0].toLowerCase(Locale.ROOT))) {
@@ -209,6 +218,12 @@ public final class QuestCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2 && args[0].equalsIgnoreCase("skilladmin")) return filter(List.of("setlevel", "addlevel", "reset"), args[1]);
         if (args.length == 3 && List.of("xp", "skilladmin").contains(args[0].toLowerCase(Locale.ROOT))) return filter(Bukkit.getOnlinePlayers().stream().map(Player::getName).toList(), args[2]);
         if (args.length == 4 && List.of("xp", "skilladmin").contains(args[0].toLowerCase(Locale.ROOT))) return filter(categoriesWithTotal(), args[3]);
+        if (args.length == 2 && List.of("reset", "riset").contains(args[0].toLowerCase(Locale.ROOT))) {
+            List<String> options = new ArrayList<>(Bukkit.getOnlinePlayers().stream().map(Player::getName).toList());
+            options.add("*"); options.add("**");
+            return filter(options, args[1]);
+        }
+        if (args.length == 3 && List.of("reset", "riset").contains(args[0].toLowerCase(Locale.ROOT))) return filter(categoriesWithTotal(), args[2]);
         return new ArrayList<>();
     }
 

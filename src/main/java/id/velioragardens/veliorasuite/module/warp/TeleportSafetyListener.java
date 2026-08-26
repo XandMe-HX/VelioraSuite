@@ -120,11 +120,12 @@ public final class TeleportSafetyListener implements Listener {
     }
 
     private void protectArrival(Player player) {
-        frozenUntil.put(player.getUniqueId(), System.currentTimeMillis() + 3_000L);
+        long arrivalId = System.currentTimeMillis() + 3_000L;
+        frozenUntil.put(player.getUniqueId(), arrivalId);
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0, false, false, false));
         final int[] seconds = {3};
         Bukkit.getScheduler().runTaskTimer(plugin, task -> {
-            if (!player.isOnline() || !frozenUntil.containsKey(player.getUniqueId()) || seconds[0] <= 0) {
+            if (!player.isOnline() || !Long.valueOf(arrivalId).equals(frozenUntil.get(player.getUniqueId())) || seconds[0] <= 0) {
                 task.cancel();
                 return;
             }
