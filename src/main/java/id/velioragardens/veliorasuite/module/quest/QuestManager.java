@@ -7,6 +7,7 @@ import id.velioragardens.veliorasuite.module.quest.model.QuestCategory;
 import id.velioragardens.veliorasuite.module.quest.model.QuestState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 
@@ -79,6 +80,39 @@ public final class QuestManager {
             case "reset" -> progressManager.setSkillLevel(target, category, 1);
             default -> false;
         };
+    }
+
+    /** Resets only saved Veliora Skill XP/levels; vanilla XP and inventories are untouched. */
+    public int resetSkills(String selector, QuestCategory category) {
+        List<PlayerQuestData> targets = new java.util.ArrayList<>();
+        if ("*".equals(selector)) {
+            for (Player player : plugin.getServer().getOnlinePlayers()) targets.add(dataManager.getOrCreate(player));
+        } else if ("**".equals(selector)) {
+            targets.addAll(dataManager.getAllKnownPlayers());
+        } else {
+            OfflinePlayer player = plugin.getServer().getOfflinePlayer(selector);
+            if (!player.hasPlayedBefore() && !player.isOnline()) return 0;
+            targets.add(dataManager.getOrCreate(player));
+        }
+        int changed = 0;
+        for (PlayerQuestData data : targets) {
+            for (QuestCategory current : QuestCategory.values()) {
+                if (category != null && current != category) continue;
+                PlayerCategoryProgress progress = data.getCategoryProgress(current);
+                if (progress == null) continue;
+                progress.setLevel(1);
+                progress.setExperience(0L);
+                progress.setCompletedCount(0);
+                progress.setState(QuestState.NOT_STARTED);
+                progress.setCurrentProgress(0);
+                progress.setCurrentTarget(configManager.calculateTarget(current, 1));
+                progress.setCurrentRewardMoney(configManager.calculateRewardMoney(1));
+                changed++;
+            }
+            dataManager.save(data);
+        }
+        dataManager.flush();
+        return changed;
     }
     public QuestProgressManager getProgressManager() { return progressManager; }
     public QuestStarterManager getStarterManager() { return starterManager; }

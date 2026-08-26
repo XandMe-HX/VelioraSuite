@@ -12,10 +12,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +38,6 @@ public final class WarpManager implements Listener {
     private final Map<String, String> aliases = new LinkedHashMap<>();
     private final Map<UUID, Long> cooldowns = new LinkedHashMap<>();
     private final Map<UUID, BukkitTask> pendingTeleports = new LinkedHashMap<>();
-    private final Map<UUID, Long> arrivalFreezeUntil = new LinkedHashMap<>();
     private YamlConfiguration config;
 
     public WarpManager(VelioraSuite plugin) {
@@ -174,18 +169,13 @@ public final class WarpManager implements Listener {
     private void beginCountdown(Player player, WarpPoint point, Location target, int cooldown, long now) {
         BukkitTask previous = pendingTeleports.remove(player.getUniqueId());
         if (previous != null) previous.cancel();
-        Location origin = player.getLocation().clone();
-        final int[] remaining = {Math.max(1, config.getInt("settings.countdown-seconds", 5))};
+        // Players may keep walking while the destination is prepared.  Freezing starts
+        // only after the teleport succeeds, handled centrally by TeleportSafetyListener.
+        final int[] remaining = {Math.max(1, config.getInt("settings.countdown-seconds", 3))};
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!player.isOnline()) { cancelPending(player.getUniqueId()); return; }
-            if (player.getWorld() != origin.getWorld() || player.getLocation().distanceSquared(origin) > 0.16D) {
-                player.clearTitle();
-                player.sendMessage(color(message("moved", "%prefix% &cTeleport dibatalkan karena kamu bergerak.")));
-                cancelPending(player.getUniqueId());
-                return;
-            }
             if (remaining[0] > 0) {
-                player.sendTitle(color("&bTeleport dalam &f" + remaining[0]), color("&7Jangan bergerak"), 0, 24, 0);
+                player.sendTitle(color("&bTeleport dalam &f" + remaining[0]), color("&7Menyiapkan lokasi aman..."), 0, 24, 0);
                 remaining[0]--;
                 return;
             }
@@ -195,7 +185,6 @@ public final class WarpManager implements Listener {
                 player.sendMessage(color(message("failed", "%prefix% &cTeleport gagal. Coba lagi.")));
                 return;
             }
-            applyArrivalFreeze(player);
             cooldowns.put(player.getUniqueId(), now + cooldown * 1000L);
             if (config.getBoolean("settings.sound.enabled", true)) {
                 try { player.playSound(player.getLocation(), Sound.valueOf(config.getString("settings.sound.name", "ENTITY_ENDERMAN_TELEPORT")), 0.8F, 1.1F); }
@@ -209,37 +198,6 @@ public final class WarpManager implements Listener {
     private void cancelPending(UUID playerId) {
         BukkitTask task = pendingTeleports.remove(playerId);
         if (task != null) task.cancel();
-    }
-
-    private void applyArrivalFreeze(Player player) {
-        int seconds = Math.max(0, config.getInt("settings.arrival-freeze-seconds", 3));
-        if (seconds <= 0) return;
-        long until = System.currentTimeMillis() + seconds * 1000L;
-        arrivalFreezeUntil.put(player.getUniqueId(), until);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, seconds * 20, 0, false, false, false));
-        player.sendTitle(color("&bTiba di tujuan"), color("&7Bersiap..."), 0, seconds * 20, 0);
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Long frozenUntil = arrivalFreezeUntil.get(player.getUniqueId());
-            if (frozenUntil != null && frozenUntil <= System.currentTimeMillis()) {
-                arrivalFreezeUntil.remove(player.getUniqueId());
-                player.clearTitle();
-            }
-        }, seconds * 20L + 1L);
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onFrozenMove(PlayerMoveEvent event) {
-        Long until = arrivalFreezeUntil.get(event.getPlayer().getUniqueId());
-        if (until == null) return;
-        if (until <= System.currentTimeMillis()) { arrivalFreezeUntil.remove(event.getPlayer().getUniqueId()); return; }
-        if (event.getTo() != null && (event.getFrom().getX() != event.getTo().getX()
-                || event.getFrom().getY() != event.getTo().getY() || event.getFrom().getZ() != event.getTo().getZ())) event.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onFrozenInteract(PlayerInteractEvent event) {
-        Long until = arrivalFreezeUntil.get(event.getPlayer().getUniqueId());
-        if (until != null && until > System.currentTimeMillis()) event.setCancelled(true);
     }
 
     public Location safetyTarget(Location from) {
@@ -304,6 +262,10 @@ public final class WarpManager implements Listener {
     public boolean hasAdmin(Player player) { return player.hasPermission(config.getString("permissions.admin", "veliorasuite.warp.admin")) || player.isOp(); }
     public boolean hasReload(Player player) { return player.hasPermission(config.getString("permissions.reload", "veliorasuite.warp.reload")) || hasAdmin(player); }
     public int afkTimeoutSeconds() { return Math.max(0, config.getInt("settings.afk.auto-seconds", 300)); }
+    public String afkZoneWarp() { return normalize(config.getString("settings.afk.zone-warp", "afk")); }
+    public double afkZoneRadius() { return Math.max(1D, config.getDouble("settings.afk.zone-radius", 16D)); }
+    public boolean afkRewardsEnabled() { return config.getBoolean("settings.afk.reward.enabled", true); }
+    public double afkRewardPerMinute() { return Math.max(0D, config.getDouble("settings.afk.reward.per-minute", 150D)); }
     public String color(String value) { return ChatColor.translateAlternateColorCodes('&', value == null ? "" : value); }
     public String message(String path, String fallback) {
         String prefix = config.getString("settings.prefix", "&8[&bVelioraWarp&8] ");

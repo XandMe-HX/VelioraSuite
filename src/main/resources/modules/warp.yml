@@ -6,6 +6,12 @@ settings:
   arrival-freeze-seconds: 3
   afk:
     auto-seconds: 300
+    # Buat warp bernama "afk" dengan /vgwarp set afk, lalu atur radius zonanya di sini.
+    zone-warp: afk
+    zone-radius: 16
+    reward:
+      enabled: true
+      per-minute: 150
   sound:
     enabled: true
     name: ENTITY_ENDERMAN_TELEPORT
