@@ -42,6 +42,7 @@ public final class QuestConfigManager {
         migrateAuraStyleProgressionV5(file);
         migrateProtectionV6(file);
         migrateExperienceLevelRewardsV7(file);
+        migrateSkillCommandsV8(file);
         migrateLegacyWoodcuttingDisplay(file);
     }
 
@@ -59,7 +60,7 @@ public final class QuestConfigManager {
     public boolean isBossBarHideWhenComplete() { return bool("settings.bossbar.hide-when-complete", true); }
     public int getBossBarAutoHideSeconds() { return Math.max(0, integer("settings.bossbar.auto-hide-seconds", 8)); }
     public int getCompletionsPerLevel() { return Math.max(1, integer("settings.progression.completions-per-level", 3)); }
-    public int getMaxLevel() { return Math.max(1, integer("settings.progression.max-level", 100)); }
+    public int getMaxLevel() { return Math.max(1, integer("settings.progression.max-level", 500)); }
     public boolean isAutoStartOnProgress() { return bool("settings.progression.auto-start-on-progress", true); }
     public boolean isAutoRestartAfterClaim() { return bool("settings.progression.auto-restart-after-claim", true); }
     public boolean isGiveManaOnComplete() { return bool("settings.rewards.give-mana-on-complete", false); }
@@ -235,6 +236,23 @@ public final class QuestConfigManager {
         }
     }
 
+    public boolean canUseSkill(CommandSender sender, QuestCategory category) {
+        if (sender == null || category == null) return false;
+        if (hasAdmin(sender)) return true;
+        String permission = "veliorasuite.skill." + category.key();
+        return !sender.isPermissionSet(permission) || sender.hasPermission(permission);
+    }
+
+    public int getLevelMoneyInterval() { return Math.max(1, integer("settings.rewards.level-money.interval", 10)); }
+    public int getLevelMoneyBase() { return Math.max(0, integer("settings.rewards.level-money.base", 100)); }
+    public int getLevelMoneyIncrease() { return Math.max(0, integer("settings.rewards.level-money.increase-per-milestone", 50)); }
+    public int getLevelMoneyMax() { return Math.max(getLevelMoneyBase(), integer("settings.rewards.level-money.max", 2000)); }
+    public int getLevelMoneyReward(int level) {
+        if (level <= 0 || level % getLevelMoneyInterval() != 0) return 0;
+        int milestone = level / getLevelMoneyInterval();
+        return Math.min(getLevelMoneyMax(), getLevelMoneyBase() + Math.max(0, milestone - 1) * getLevelMoneyIncrease());
+    }
+
     /** AuraSkills-like configurable curve. Uses a safe quadratic default and
      * individual per-skill overrides without requiring an expression parser. */
     public long xpRequired(QuestCategory category, int level) {
@@ -324,6 +342,19 @@ public final class QuestConfigManager {
         config.set("settings.progression.config-version", 7);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan hadiah XP level v7: " + exception.getMessage()); }
+    }
+
+    /** Expands the skill path to level 500 and adds deliberately small milestone money. */
+    private void migrateSkillCommandsV8(File file) {
+        if (config.getInt("settings.progression.config-version", 0) >= 8) return;
+        config.set("settings.progression.max-level", 500);
+        config.set("settings.rewards.level-money.interval", 10);
+        config.set("settings.rewards.level-money.base", 100);
+        config.set("settings.rewards.level-money.increase-per-milestone", 50);
+        config.set("settings.rewards.level-money.max", 2000);
+        config.set("settings.progression.config-version", 8);
+        try { config.save(file); }
+        catch (IOException exception) { plugin.getLogger().warning("VelioraQuest: gagal menyimpan skill command v8: " + exception.getMessage()); }
     }
 
     private void setNewCategory(String key, String name, String icon, int target, int increase,

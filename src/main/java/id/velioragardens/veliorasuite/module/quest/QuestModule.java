@@ -78,14 +78,16 @@ public final class QuestModule implements VelioraModule {
     }
 
     private void registerCommand() {
-        PluginCommand command = plugin.getCommand("quests");
-        if (command == null) {
-            plugin.getLogger().warning("Command /quests tidak ditemukan di plugin.yml.");
-            return;
-        }
         QuestCommand questCommand = new QuestCommand(manager);
-        command.setExecutor(questCommand);
-        command.setTabCompleter(questCommand);
+        for (String name : skillCommands()) {
+            PluginCommand command = plugin.getCommand(name);
+            if (command == null) {
+                plugin.getLogger().warning("Command /" + name + " tidak ditemukan di plugin.yml.");
+                continue;
+            }
+            command.setExecutor(questCommand);
+            command.setTabCompleter(questCommand);
+        }
     }
 
     private void registerListeners() {
@@ -103,10 +105,16 @@ public final class QuestModule implements VelioraModule {
     }
 
     private void registerDisabledCommand() {
-        PluginCommand command = plugin.getCommand("quests");
-        if (command == null) return;
         DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraQuest");
-        command.setExecutor(disabledCommand);
-        command.setTabCompleter(disabledCommand);
+        for (String name : skillCommands()) {
+            PluginCommand command = plugin.getCommand(name);
+            if (command == null) continue;
+            command.setExecutor(disabledCommand);
+            command.setTabCompleter(disabledCommand);
+        }
+    }
+
+    private List<String> skillCommands() {
+        return List.of("quests", "skills", "stats", "skilltop", "skillrank", "mining", "farmer", "chef", "agility", "alchemy", "archery");
     }
 }

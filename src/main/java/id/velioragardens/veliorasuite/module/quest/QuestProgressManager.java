@@ -19,7 +19,7 @@ public final class QuestProgressManager {
     }
 
     public boolean addProgress(Player player, QuestCategory category, int amount) {
-        if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category)) return false;
+        if (player == null || category == null || amount <= 0 || !configManager.isCategoryEnabled(category) || !configManager.canUseSkill(player, category)) return false;
         PlayerQuestData data = dataManager.getOrCreate(player);
         PlayerCategoryProgress progress = data.getCategoryProgress(category);
         if (progress == null) return false;

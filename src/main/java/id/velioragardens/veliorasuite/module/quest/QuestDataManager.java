@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -108,6 +110,18 @@ public final class QuestDataManager {
     public int countPlayers() {
         ConfigurationSection players = data.getConfigurationSection("players");
         return players == null ? 0 : players.getKeys(false).size();
+    }
+
+    /** Loads saved player entries only when a leaderboard is requested. */
+    public List<PlayerQuestData> getAllKnownPlayers() {
+        List<PlayerQuestData> result = new ArrayList<>();
+        ConfigurationSection players = data == null ? null : data.getConfigurationSection("players");
+        if (players == null) return result;
+        for (String rawUuid : players.getKeys(false)) {
+            try { result.add(getOrCreate(org.bukkit.Bukkit.getOfflinePlayer(UUID.fromString(rawUuid)))); }
+            catch (IllegalArgumentException ignored) { }
+        }
+        return result;
     }
 
     public void flush() {

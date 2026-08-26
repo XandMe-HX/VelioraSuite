@@ -179,6 +179,8 @@ public final class QuestManager {
             }
             int multiplier = configManager.getMilestoneRewardMultiplier(level);
             if (multiplier > 0) rewardManager.giveItems(player, configManager.getMilestoneItemRewards(category), multiplier);
+            int money = configManager.getLevelMoneyReward(level);
+            if (money > 0) rewardManager.depositMoney(player, money);
         }
         String subtitle = configManager.getLevelSubtitle().replace("%quest%", configManager.getCategoryDisplayName(category)).replace("%level%", String.valueOf(progress.getLevel()));
         if (configManager.isLevelTitleEnabled()) player.sendTitle(configManager.color(configManager.getLevelTitle()), configManager.color(subtitle), 10, 50, 15);
@@ -190,14 +192,72 @@ public final class QuestManager {
         for (String line : summary.split("\n")) player.sendMessage(configManager.color(configManager.getPrefix() + "&e" + line));
     }
 
+    public void sendSkillProfile(Player player, QuestCategory category) {
+        if (!validateCategory(player, category) || !configManager.canUseSkill(player, category)) { sendNoPermission(player); return; }
+        PlayerCategoryProgress progress = dataManager.getOrCreate(player).getCategoryProgress(category);
+        long required = configManager.xpRequired(category, progress.getLevel());
+        player.sendMessage(configManager.color("&8&m------------------------"));
+        player.sendMessage(configManager.color("&a" + configManager.getCategoryDisplayName(category) + " &fLevel &a" + progress.getLevel() + "&7/&a" + configManager.getMaxLevel()));
+        player.sendMessage(configManager.color("&7XP: &f" + progress.getExperience() + "&7/&f" + required));
+        player.sendMessage(configManager.color("&7Quest: &f" + progress.getCurrentProgress() + "&7/&f" + progress.getCurrentTarget()));
+        int interval = configManager.getLevelMoneyInterval();
+        int nextMilestone = ((progress.getLevel() / interval) + 1) * interval;
+        player.sendMessage(configManager.color("&7Bonus uang level &f" + nextMilestone + "&7: &a" + configManager.getLevelMoneyReward(nextMilestone)));
+        player.sendMessage(configManager.color("&8&m------------------------"));
+    }
+
+    public void sendStats(Player player) {
+        PlayerQuestData data = dataManager.getOrCreate(player);
+        player.sendMessage(configManager.color("&8&m------------------------"));
+        player.sendMessage(configManager.color("&aVeliora Skills &7| &fTotal Level: &a" + totalLevel(data)));
+        for (QuestCategory category : QuestCategory.values()) {
+            PlayerCategoryProgress progress = data.getCategoryProgress(category);
+            player.sendMessage(configManager.color("&7- " + configManager.getCategoryDisplayName(category) + "&7: &f" + progress.getLevel()));
+        }
+        player.sendMessage(configManager.color("&8&m------------------------"));
+    }
+
+    public void sendTop(CommandSender sender, QuestCategory category) {
+        List<PlayerQuestData> players = dataManager.getAllKnownPlayers();
+        players.sort((left, right) -> Integer.compare(score(right, category), score(left, category)));
+        sender.sendMessage(configManager.color("&8&m------------------------"));
+        sender.sendMessage(configManager.color("&aSkill Top &7- &f" + (category == null ? "Total Level" : configManager.getCategoryDisplayName(category))));
+        int shown = 0;
+        for (PlayerQuestData data : players) {
+            if (++shown > 10) break;
+            sender.sendMessage(configManager.color("&e#" + shown + " &f" + data.getName() + " &7- &a" + score(data, category)));
+        }
+        if (shown == 0) sender.sendMessage(configManager.color("&7Belum ada data pemain."));
+        sender.sendMessage(configManager.color("&8&m------------------------"));
+    }
+
+    public void sendRank(Player player, QuestCategory category) {
+        List<PlayerQuestData> players = dataManager.getAllKnownPlayers();
+        players.sort((left, right) -> Integer.compare(score(right, category), score(left, category)));
+        int rank = 1;
+        for (PlayerQuestData data : players) {
+            if (data.getUuid().equals(player.getUniqueId())) break;
+            rank++;
+        }
+        PlayerQuestData self = dataManager.getOrCreate(player);
+        player.sendMessage(configManager.color("&aRank Skill kamu: &f#" + rank + " &7(" + (category == null ? "Total" : category.key()) + ": &a" + score(self, category) + "&7)"));
+    }
+
+    private int score(PlayerQuestData data, QuestCategory category) { return category == null ? totalLevel(data) : data.getCategoryProgress(category).getLevel(); }
+    private int totalLevel(PlayerQuestData data) { return data.getCategories().values().stream().mapToInt(PlayerCategoryProgress::getLevel).sum(); }
+
     public void sendHelp(CommandSender sender) {
         sendLines(sender, configManager.messageList("help", List.of(
                 "&8&m--------------------------------",
                 "&a&lVelioraQuest",
                 "&f/quests &7- Buka GUI quest.",
                 "&f/quests progress &7- Cek progress quest.",
+                "&f/quests skill <category> &7- Detail sebuah skill.",
                 "&f/quests start <category> &7- Mulai quest.",
                 "&f/quests claim <category> &7- Claim reward.",
+                "&f/stats &7- Lihat semua level skill.",
+                "&f/skilltop [skill] &7- Ranking skill.",
+                "&f/chef &7- Profil skill Koki.",
                 "&8&m--------------------------------"
         )), Map.of());
     }
