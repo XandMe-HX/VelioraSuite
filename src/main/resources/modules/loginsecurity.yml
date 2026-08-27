@@ -37,6 +37,19 @@ settings:
   lock-seconds: 60
   auth-timeout-seconds: 600
 
+  # VelioraPremiumLogin - Progres 1
+  # Aman untuk server offline-mode + Floodgate. Java dan Bedrock tetap harus
+  # register/login dengan password; UUID, nama, dan IP TIDAK pernah menjadi bukti login.
+  # Auto-login baru boleh diaktifkan setelah verifikasi sesi premium resmi tersedia.
+  premium-login:
+    enabled: true
+    auto-login: false
+    trusted-network-audit:
+      enabled: true
+      max-networks-per-account: 5
+      ipv4-prefix: 24
+      ipv6-prefix: 64
+
   block-movement-before-login: true
   allowed-move-distance-before-login: 0.2
   block-chat-before-login: true
