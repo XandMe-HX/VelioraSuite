@@ -75,7 +75,7 @@ public final class LoginSecurityListener implements Listener {
         Player player = event.getPlayer();
         if (manager.isAuthenticated(player) || !manager.getConfigManager().isBlockChatBeforeLogin()) return;
         event.setCancelled(true);
-        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getMessage("auth-required-chat", "%prefix% &cLogin/register dulu sebelum chat.")));
+        player.sendMessage(manager.getAuthInstruction(player, "%prefix% &cLogin/register dulu sebelum chat."));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -102,14 +102,14 @@ public final class LoginSecurityListener implements Listener {
         }
 
         event.setCancelled(true);
-        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getMessage("auth-required-command", "%prefix% &cLogin/register dulu sebelum memakai command.")));
+        player.sendMessage(manager.getAuthInstruction(player, "%prefix% &cLogin/register dulu sebelum memakai command."));
     }
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
         if (manager.isAuthenticated(event.getPlayer()) || !manager.getConfigManager().isBlockActionsBeforeLogin()) return;
         event.setCancelled(true);
-        event.getPlayer().sendMessage(manager.getConfigManager().color(manager.getConfigManager().getMessage("auth-required-action", "%prefix% &cLogin/register dulu sebelum melakukan aksi.")));
+        event.getPlayer().sendMessage(manager.getAuthInstruction(event.getPlayer(), "%prefix% &cLogin/register dulu sebelum melakukan aksi."));
     }
 
     @EventHandler
