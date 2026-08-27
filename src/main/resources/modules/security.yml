@@ -30,9 +30,39 @@ settings:
     require-human-confirmation-for-ip-ban: true
   join-protection:
     enabled: true
-    max-joins-per-ip: 5
+    # Legacy guard remains as a final fallback. Network Guard below is the
+    # privacy-first guard used for public/shared connections.
+    max-joins-per-ip: 30
     window-seconds: 30
     kick-message: '&cTerlalu banyak join dari koneksi yang sama. Coba lagi nanti.'
+  network-guard:
+    config-version: 1
+    enabled: true
+    # Address is normalized to a network prefix then hashed in memory only.
+    # The same IP/network alone never alerts, kicks or bans a player.
+    privacy:
+      store-raw-address: false
+      ipv4-prefix: 24
+      ipv6-prefix: 64
+    connection-burst:
+      window-seconds: 60
+      java-max-joins: 12
+      bedrock-max-joins: 20
+      kick-message: '&cTerlalu banyak koneksi dari jaringan ini. Tunggu sebentar lalu coba lagi.'
+    new-account-burst:
+      window-seconds: 600
+      java-max-unique-names: 8
+      bedrock-max-unique-names: 14
+      action: 'AUDIT_ONLY'
+    vpn:
+      # VPN cannot be identified accurately without a reputable external data
+      # source. Keep audit only until you intentionally connect one.
+      enabled: false
+      mode: 'AUDIT_ONLY'
+    economy:
+      # Never block normal payments merely because two players share a network.
+      # Enable only after reviewing evidence through /valt.
+      block-same-network-payments: false
   name-protection:
     config-version: 3
     enabled: true
@@ -44,7 +74,8 @@ settings:
   identity-protection:
     enabled: true
     same-ip-different-names:
-      enabled: true
+      # Shared public networks are handled by network-guard instead.
+      enabled: false
       window-seconds: 120
       max-unique-names-before-alert: 3
       max-unique-names-before-kick: 5

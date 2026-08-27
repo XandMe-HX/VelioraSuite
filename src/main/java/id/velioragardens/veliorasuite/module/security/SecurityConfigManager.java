@@ -44,6 +44,7 @@ public final class SecurityConfigManager {
         migrateCombatGuardV3(file);
         migrateXrayEnforcementV2(file);
         migrateBedrockPrefixV3(file);
+        migrateNetworkGuardV1(file);
     }
 
     private void migrateCombatGuardV3(File file) {
@@ -90,6 +91,20 @@ public final class SecurityConfigManager {
         catch (IOException exception) { plugin.getLogger().warning("VelioraSecurity: gagal menyimpan prefix Bedrock _: " + exception.getMessage()); }
     }
 
+    private void migrateNetworkGuardV1(File file) {
+        if (config.getInt("settings.network-guard.config-version", 0) >= 1) return;
+        config.set("settings.network-guard.config-version", 1);
+        config.set("settings.join-protection.max-joins-per-ip", 30);
+        config.set("settings.identity-protection.same-ip-different-names.enabled", false);
+        config.set("settings.network-guard.economy.block-same-network-payments", false);
+        try {
+            config.save(file);
+            plugin.getLogger().info("VelioraGuard Network: jaringan bersama kini hanya diaudit, bukan dihukum.");
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraGuard Network: gagal menyimpan migrasi: " + exception.getMessage());
+        }
+    }
+
     public FileConfiguration config() { return config; }
 
     public boolean isEnabled() { return bool("settings.enabled", true); }
@@ -103,6 +118,16 @@ public final class SecurityConfigManager {
     public int getMaxJoinsPerIp() { return Math.max(1, integer("settings.join-protection.max-joins-per-ip", 5)); }
     public int getJoinWindowSeconds() { return Math.max(1, integer("settings.join-protection.window-seconds", 30)); }
     public String getJoinKickMessage() { return str("settings.join-protection.kick-message", "&cTerlalu banyak join dari koneksi yang sama. Coba lagi nanti."); }
+
+    public boolean isNetworkGuardEnabled() { return bool("settings.network-guard.enabled", true); }
+    public int getNetworkGuardWindowSeconds() { return Math.max(10, integer("settings.network-guard.connection-burst.window-seconds", 60)); }
+    public int getNetworkGuardJavaJoinLimit() { return Math.max(2, integer("settings.network-guard.connection-burst.java-max-joins", 12)); }
+    public int getNetworkGuardBedrockJoinLimit() { return Math.max(2, integer("settings.network-guard.connection-burst.bedrock-max-joins", 20)); }
+    public int getNetworkGuardAccountWindowSeconds() { return Math.max(60, integer("settings.network-guard.new-account-burst.window-seconds", 600)); }
+    public int getNetworkGuardJavaNewAccountLimit() { return Math.max(2, integer("settings.network-guard.new-account-burst.java-max-unique-names", 8)); }
+    public int getNetworkGuardBedrockNewAccountLimit() { return Math.max(2, integer("settings.network-guard.new-account-burst.bedrock-max-unique-names", 14)); }
+    public String getNetworkGuardBurstKickMessage() { return str("settings.network-guard.connection-burst.kick-message", "&cTerlalu banyak koneksi dari jaringan ini. Tunggu sebentar lalu coba lagi."); }
+    public boolean isNetworkGuardEconomySameNetworkBlockEnabled() { return bool("settings.network-guard.economy.block-same-network-payments", false); }
 
     public boolean isNameProtectionEnabled() { return bool("settings.name-protection.enabled", true); }
     public String getNameRegex() { return str("settings.name-protection.name-regex", "^[a-zA-Z0-9_]{3,16}$"); }

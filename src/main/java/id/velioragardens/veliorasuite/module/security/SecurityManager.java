@@ -38,6 +38,7 @@ public final class SecurityManager {
     private final SecurityRiskManager riskManager;
     private final SecurityAlertManager alertManager;
     private final SecurityJoinProtectionManager joinProtectionManager;
+    private final VelioraGuardNetworkManager networkGuardManager;
     private final SecurityCommandProtectionManager commandProtectionManager;
     private final SecurityTabProtectionManager tabProtectionManager;
     private final SecurityAltGuard altGuard;
@@ -68,6 +69,7 @@ public final class SecurityManager {
         this.riskManager = new SecurityRiskManager(plugin, configManager);
         this.alertManager = new SecurityAlertManager(plugin, configManager);
         this.joinProtectionManager = new SecurityJoinProtectionManager(configManager, riskManager);
+        this.networkGuardManager = new VelioraGuardNetworkManager(configManager);
         this.commandProtectionManager = new SecurityCommandProtectionManager(configManager, riskManager);
         this.tabProtectionManager = new SecurityTabProtectionManager(configManager, commandProtectionManager);
         this.altGuard = new SecurityAltGuard(plugin, configManager);
@@ -95,6 +97,7 @@ public final class SecurityManager {
         loadXrayState();
         alertManager.clearCooldowns();
         joinProtectionManager.clear();
+        networkGuardManager.clear();
     }
 
     public SecurityConfigManager getConfigManager() { return configManager; }
@@ -111,7 +114,14 @@ public final class SecurityManager {
 
     public SecurityDecision checkJoin(Player player) {
         oreNames.put(player.getUniqueId(), player.getName());
-        SecurityDecision decision = joinProtectionManager.check(player);
+        SecurityDecision networkDecision = networkGuardManager.check(player);
+        SecurityDecision decision = networkDecision;
+        if (!networkDecision.blocked()) {
+            SecurityDecision legacyDecision = joinProtectionManager.check(player);
+            if (legacyDecision.blocked() || !networkDecision.alert()) {
+                decision = legacyDecision;
+            }
+        }
         alertIfNeeded(decision);
         return decision;
     }

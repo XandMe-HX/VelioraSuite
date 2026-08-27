@@ -61,7 +61,6 @@ public final class SecurityAltGuard {
                     account.name = acc.getString(key + ".name", "unknown");
                     account.ipHash = acc.getString(key + ".ip-hash", "unknown");
                     account.ipMasked = acc.getString(key + ".ip-masked", "unknown");
-                    account.ipRaw = acc.getString(key + ".ip-raw", "");
                     account.firstSeen = acc.getLong(key + ".first-seen", 0L);
                     account.lastSeen = acc.getLong(key + ".last-seen", 0L);
                     account.loginCount = acc.getInt(key + ".login-count", 0);
@@ -90,7 +89,6 @@ public final class SecurityAltGuard {
                 data.set(path + ".name", account.name);
                 data.set(path + ".ip-hash", account.ipHash);
                 data.set(path + ".ip-masked", account.ipMasked);
-                data.set(path + ".ip-raw", account.ipRaw);
                 data.set(path + ".first-seen", account.firstSeen);
                 data.set(path + ".last-seen", account.lastSeen);
                 data.set(path + ".login-count", account.loginCount);
@@ -113,7 +111,6 @@ public final class SecurityAltGuard {
         long now = System.currentTimeMillis();
         AltAccount account = accounts.computeIfAbsent(player.getUniqueId(), AltAccount::new);
         account.name = player.getName();
-        account.ipRaw = rawIp;
         account.ipHash = ipHash;
         account.ipMasked = maskIp(rawIp);
         if (account.firstSeen <= 0L) account.firstSeen = now;
@@ -124,7 +121,8 @@ public final class SecurityAltGuard {
         List<AltAccount> group = groupByHash(ipHash);
         int total = group.size();
         AltAccount main = mainAccount(group);
-        if (total >= WARN_LIMIT) alertGroup(ipHash, total, main, group, actionFor(total));
+        // Shared IP is normal on public Wi-Fi, schools and mobile carriers.
+        // Do not broadcast it on every join; staff can inspect it with /valt.
         // Satu IP saja bukan bukti cukup untuk AutoBan. Jaringan rumah, sekolah,
         // warnet, CGNAT, atau VPN dapat dipakai banyak pemain yang berbeda.
         // AltGuard hanya memberi alert dan membatasi transfer ekonomi untuk direview admin.
@@ -151,8 +149,9 @@ public final class SecurityAltGuard {
         AltAccount target = findByName(parts[1]);
         double amount = parseAmount(parts[2]);
         List<AltAccount> group = groupByHash(sender.ipHash);
-        boolean sameIpTarget = target != null && sender.ipHash.equals(target.ipHash) && !sender.uuid.equals(target.uuid);
-        boolean frozenGroup = group.size() >= ACCOUNT_BLOCK_LIMIT;
+        boolean sameIpTarget = config.isNetworkGuardEconomySameNetworkBlockEnabled()
+                && target != null && sender.ipHash.equals(target.ipHash) && !sender.uuid.equals(target.uuid);
+        boolean frozenGroup = config.isNetworkGuardEconomySameNetworkBlockEnabled() && group.size() >= ACCOUNT_BLOCK_LIMIT;
         if (sameIpTarget || frozenGroup) {
             sender.blockedPay++;
             sender.payOut += Math.max(0.0D, amount);
@@ -382,7 +381,6 @@ public final class SecurityAltGuard {
         private String name = "unknown";
         private String ipHash = "unknown";
         private String ipMasked = "unknown";
-        private String ipRaw = "";
         private long firstSeen;
         private long lastSeen;
         private int loginCount;
