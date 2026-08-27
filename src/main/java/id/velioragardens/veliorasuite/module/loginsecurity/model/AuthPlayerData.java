@@ -1,6 +1,8 @@
 package id.velioragardens.veliorasuite.module.loginsecurity.model;
 
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class AuthPlayerData {
 
@@ -13,8 +15,15 @@ public final class AuthPlayerData {
     private String lastIpHash;
     private int failedAttempts;
     private long lockedUntil;
+    // Audit data only. It is never used as proof that a player is authenticated.
+    private String clientType;
+    private List<String> trustedNetworkHashes;
 
     public AuthPlayerData(UUID uuid, String name, String passwordHash, String salt, String registeredAt, String lastLogin, String lastIpHash, int failedAttempts, long lockedUntil) {
+        this(uuid, name, passwordHash, salt, registeredAt, lastLogin, lastIpHash, failedAttempts, lockedUntil, "UNKNOWN", List.of());
+    }
+
+    public AuthPlayerData(UUID uuid, String name, String passwordHash, String salt, String registeredAt, String lastLogin, String lastIpHash, int failedAttempts, long lockedUntil, String clientType, List<String> trustedNetworkHashes) {
         this.uuid = uuid;
         this.name = name;
         this.passwordHash = passwordHash;
@@ -24,6 +33,8 @@ public final class AuthPlayerData {
         this.lastIpHash = lastIpHash;
         this.failedAttempts = failedAttempts;
         this.lockedUntil = lockedUntil;
+        this.clientType = clientType == null || clientType.isBlank() ? "UNKNOWN" : clientType;
+        this.trustedNetworkHashes = new ArrayList<>(trustedNetworkHashes == null ? List.of() : trustedNetworkHashes);
     }
 
     public UUID getUuid() { return uuid; }
@@ -52,4 +63,12 @@ public final class AuthPlayerData {
 
     public long getLockedUntil() { return lockedUntil; }
     public void setLockedUntil(long lockedUntil) { this.lockedUntil = lockedUntil; }
+
+    public String getClientType() { return clientType; }
+    public void setClientType(String clientType) { this.clientType = clientType == null || clientType.isBlank() ? "UNKNOWN" : clientType; }
+
+    public List<String> getTrustedNetworkHashes() { return new ArrayList<>(trustedNetworkHashes); }
+    public void setTrustedNetworkHashes(List<String> trustedNetworkHashes) {
+        this.trustedNetworkHashes = new ArrayList<>(trustedNetworkHashes == null ? List.of() : trustedNetworkHashes);
+    }
 }

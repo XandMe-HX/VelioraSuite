@@ -9,10 +9,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 
 public final class LoginSecurityManager {
 
@@ -121,6 +124,7 @@ public final class LoginSecurityManager {
         try {
             LoginSecurityPasswordManager.PasswordHash passwordHash = passwordManager.createHash(password);
             AuthPlayerData data = new AuthPlayerData(player.getUniqueId(), player.getName(), passwordHash.hash(), passwordHash.salt(), now(), now(), getIpHash(player), 0, 0L);
+            recordClientTrust(player, data);
             dataManager.savePlayer(data);
             sessionManager.setState(player, AuthState.AUTHENTICATED);
             finishAuthentication(player);
@@ -168,6 +172,7 @@ public final class LoginSecurityManager {
         protectionManager.resetAttempts(data);
         data.setLastLogin(now());
         data.setLastIpHash(getIpHash(player));
+        recordClientTrust(player, data);
         if (data.getUuid() == null) data.setUuid(player.getUniqueId());
         dataManager.updateName(data, player.getName());
         sessionManager.setState(player, AuthState.AUTHENTICATED);
@@ -326,6 +331,8 @@ public final class LoginSecurityManager {
                 "&7Max Attempts: &f%max_attempts%",
                 "&7Lock Seconds: &f%lock_seconds%",
                 "&7Hashing: &f%hashing%",
+                "&7Premium foundation: &f%premium_foundation%",
+                "&7Auto login: &f%premium_auto_login%",
                 "&8&m--------------------------------"
         )), Map.of(
                 "%enabled%", String.valueOf(configManager.isEnabled()),
@@ -335,6 +342,8 @@ public final class LoginSecurityManager {
                 "%max_attempts%", String.valueOf(configManager.getMaxLoginAttempts()),
                 "%lock_seconds%", String.valueOf(configManager.getLockSeconds()),
                 "%hashing%", configManager.getHashAlgorithm()
+                ,"%premium_foundation%", String.valueOf(configManager.isPremiumFoundationEnabled())
+                ,"%premium_auto_login%", String.valueOf(configManager.isPremiumAutoLoginEnabled())
         ));
     }
 
@@ -391,6 +400,47 @@ public final class LoginSecurityManager {
         InetSocketAddress address = player.getAddress();
         if (address == null || address.getAddress() == null) return "";
         return passwordManager.hashIp(address.getAddress().getHostAddress());
+    }
+
+    private void recordClientTrust(Player player, AuthPlayerData data) {
+        if (!configManager.isPremiumFoundationEnabled() || data == null) return;
+        data.setClientType(isFloodgatePlayer(player) ? "BEDROCK" : "JAVA");
+        if (!configManager.isTrustedNetworkAuditEnabled()) return;
+
+        String networkHash = getNetworkHash(player);
+        if (networkHash.isBlank()) return;
+        LinkedHashSet<String> networks = new LinkedHashSet<>(data.getTrustedNetworkHashes());
+        networks.remove(networkHash);
+        networks.add(networkHash);
+        int max = configManager.getMaxTrustedNetworks();
+        while (networks.size() > max) networks.remove(networks.iterator().next());
+        data.setTrustedNetworkHashes(new ArrayList<>(networks));
+    }
+
+    private String getNetworkHash(Player player) {
+        InetSocketAddress address = player.getAddress();
+        if (address == null || address.getAddress() == null) return "";
+        InetAddress inetAddress = address.getAddress();
+        byte[] bytes = inetAddress.getAddress().clone();
+        int prefix = bytes.length == 4 ? configManager.getTrustedIpv4Prefix() : configManager.getTrustedIpv6Prefix();
+        for (int bit = prefix; bit < bytes.length * 8; bit++) {
+            int index = bit / 8;
+            bytes[index] &= (byte) ~(1 << (7 - (bit % 8)));
+        }
+        StringBuilder masked = new StringBuilder();
+        for (byte value : bytes) masked.append(String.format("%02x", value));
+        return passwordManager.hashIp("network:" + masked);
+    }
+
+    private boolean isFloodgatePlayer(Player player) {
+        try {
+            Class<?> apiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            Object api = apiClass.getMethod("getInstance").invoke(null);
+            Object result = apiClass.getMethod("isFloodgatePlayer", java.util.UUID.class).invoke(api, player.getUniqueId());
+            return result instanceof Boolean value && value;
+        } catch (ReflectiveOperationException ignored) {
+            return player.getName().startsWith("_");
+        }
     }
 
     private String now() { return LocalDateTime.now().format(TIME_FORMATTER); }

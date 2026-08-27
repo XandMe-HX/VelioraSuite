@@ -79,6 +79,8 @@ public final class LoginSecurityDataManager {
         data.set(path + ".last-ip-hash", playerData.getLastIpHash());
         data.set(path + ".failed-attempts", playerData.getFailedAttempts());
         data.set(path + ".locked-until", playerData.getLockedUntil());
+        data.set(path + ".client-type", playerData.getClientType());
+        data.set(path + ".trusted-network-hashes", playerData.getTrustedNetworkHashes());
         save();
     }
 
@@ -121,7 +123,9 @@ public final class LoginSecurityDataManager {
                 data.getString(path + ".last-login", ""),
                 data.getString(path + ".last-ip-hash", ""),
                 data.getInt(path + ".failed-attempts", 0),
-                data.getLong(path + ".locked-until", 0L)
+                data.getLong(path + ".locked-until", 0L),
+                data.getString(path + ".client-type", "UNKNOWN"),
+                data.getStringList(path + ".trusted-network-hashes")
         );
     }
 

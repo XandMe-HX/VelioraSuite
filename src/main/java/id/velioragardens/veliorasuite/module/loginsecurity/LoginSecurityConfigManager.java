@@ -70,6 +70,17 @@ public final class LoginSecurityConfigManager {
     public boolean isBlockChatBeforeLogin() { return getBoolean("settings.block-chat-before-login", true); }
     public boolean isBlockActionsBeforeLogin() { return getBoolean("settings.block-actions-before-login", true); }
 
+    /**
+     * PremiumLogin phase 1 deliberately does not auto-authenticate by name, UUID,
+     * or IP. Those values can be spoofed or change between sessions.
+     */
+    public boolean isPremiumFoundationEnabled() { return getBoolean("settings.premium-login.enabled", true); }
+    public boolean isPremiumAutoLoginEnabled() { return getBoolean("settings.premium-login.auto-login", false); }
+    public boolean isTrustedNetworkAuditEnabled() { return getBoolean("settings.premium-login.trusted-network-audit.enabled", true); }
+    public int getMaxTrustedNetworks() { return Math.max(1, getInt("settings.premium-login.trusted-network-audit.max-networks-per-account", 5)); }
+    public int getTrustedIpv4Prefix() { return clamp(getInt("settings.premium-login.trusted-network-audit.ipv4-prefix", 24), 0, 32); }
+    public int getTrustedIpv6Prefix() { return clamp(getInt("settings.premium-login.trusted-network-audit.ipv6-prefix", 64), 0, 128); }
+
     public boolean isTeleportAfterAuthEnabled() { return getBoolean("settings.teleport-after-auth.enabled", false); }
     public Location getTeleportAfterAuthLocation() {
         String worldName = getString("settings.teleport-after-auth.world", "lobby");
@@ -227,4 +238,6 @@ public final class LoginSecurityConfigManager {
         if (config == null || !config.contains(path)) return fallback;
         return config.getDouble(path, fallback);
     }
+
+    private int clamp(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
 }
