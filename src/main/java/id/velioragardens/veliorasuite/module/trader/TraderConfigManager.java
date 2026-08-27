@@ -106,8 +106,12 @@ public final class TraderConfigManager {
             config.set("settings.spawn.enabled", false);
             changed = true;
         }
+        if (version < 6) {
+            // Bobot menentukan peluang item terpilih di kategori penawaran mingguan.
+            changed = true;
+        }
         if (!changed) return;
-        config.set("settings.config-version", 5);
+        config.set("settings.config-version", 6);
         try {
             config.save(file);
         } catch (IOException exception) {
@@ -284,6 +288,7 @@ public final class TraderConfigManager {
                     item.getStringList("lore"),
                     item.getStringList("enchantments"),
                     Math.max(1, item.getInt("stock", getDefaultStock())),
+                    Math.max(1, item.getInt("weight", defaultWeight(id))),
                     Math.max(0, item.getInt("custom-damage", 0)),
                     Math.max(0, item.getInt("fishing-luck-bonus", 0)),
                     item.getBoolean("unrepairable", true),
@@ -296,6 +301,14 @@ public final class TraderConfigManager {
 
     private long applyMoneyPriceMultiplier(long configured) {
         return Math.max(0L, Math.round(Math.max(0L, configured) * getMoneyPriceMultiplier()));
+    }
+
+    private int defaultWeight(String id) {
+        String normalized = id == null ? "" : id.toLowerCase(Locale.ROOT);
+        if (List.of("builder_supply", "mining_supply", "explorer_supply", "experience_supply", "ender_supply", "diamond_pack_x64").contains(normalized)) return 100;
+        if (List.of("guardian_shield", "ocean_crown", "windwalker_boots", "silk_touch_relic", "aether_pickaxe").contains(normalized)) return 40;
+        if (List.of("excalibur", "angel_of_death_bow", "trisula_poseidon", "kapak_leviathan", "ancient_mace", "ryujin_no_tsuri", "skybound_wings").contains(normalized)) return 10;
+        return 50;
     }
 
     private Object mapValue(java.util.Map<?, ?> map, String key, Object fallback) { Object value = map.get(key); return value == null ? fallback : value; }
