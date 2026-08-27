@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.warp;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.module.guard.GuardClaimModule;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -121,6 +122,7 @@ public final class AfkManager implements Listener, CommandExecutor {
     }
 
     private boolean inAfkArea(Player player) {
+        if (GuardClaimModule.isAfkClaim(player.getLocation())) return true;
         double radius = warps.afkZoneRadius();
         WarpManager.WarpPoint point = warps.get(warps.afkZoneWarp());
         if (point == null || player.getWorld() == null || !player.getWorld().getUID().equals(point.world())) return false;
@@ -129,7 +131,10 @@ public final class AfkManager implements Listener, CommandExecutor {
         return dx * dx + dz * dz <= radius * radius;
     }
 
-    private Location markerLocation(Player player) { return player.getLocation().clone().add(0, 3.35D, 0); }
+    private Location markerLocation(Player player) {
+        // Keep the AFK label above the current player pose instead of floating at a fixed old height.
+        return player.getLocation().clone().add(0, player.isSneaking() ? 2.15D : 2.75D, 0);
+    }
 
     private void reward(Player player) {
         double amount = warps.afkRewardPerMinute();
