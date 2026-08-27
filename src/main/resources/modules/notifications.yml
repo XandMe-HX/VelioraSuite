@@ -20,3 +20,17 @@ mentions:
   fade-in: 5
   stay: 50
   fade-out: 15
+
+pay-notifications:
+  enabled: true
+  # Perintah Essentials yang dipantau. Notifikasi hanya dikirim setelah saldo penerima benar-benar bertambah.
+  commands:
+    - pay
+    - epay
+    - essentials:pay
+  title: '&aGIFT MASUK'
+  subtitle: '&f%sender% &7mengirim &a$%amount%'
+  sound: ENTITY_EXPERIENCE_ORB_PICKUP
+  fade-in: 5
+  stay: 50
+  fade-out: 15

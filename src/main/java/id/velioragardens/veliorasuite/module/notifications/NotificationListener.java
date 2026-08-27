@@ -2,9 +2,12 @@ package id.velioragardens.veliorasuite.module.notifications;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import org.bukkit.ChatColor;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -13,6 +16,7 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -22,6 +26,7 @@ import java.util.UUID;
 public final class NotificationListener implements Listener {
     private final VelioraSuite plugin;
     private final Map<String, Long> mentionCooldowns = new HashMap<>();
+    private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("#,##0.##");
     private YamlConfiguration config;
 
     public NotificationListener(VelioraSuite plugin) { this.plugin = plugin; }
@@ -105,6 +110,51 @@ public final class NotificationListener implements Listener {
                 .replace("%player%", sender.getName());
         target.sendTitle(color(title), color(subtitle), ticks("mentions.fade-in", 5), ticks("mentions.stay", 50), ticks("mentions.fade-out", 15));
         play(target, config.getString("mentions.sound", "BLOCK_NOTE_BLOCK_BELL"), 0.9F, 1.25F);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onPayCommand(PlayerCommandPreprocessEvent event) {
+        if (!config.getBoolean("pay-notifications.enabled", true)) return;
+        String[] parts = event.getMessage().trim().split("\\s+");
+        if (parts.length < 3) return;
+        String command = parts[0].startsWith("/") ? parts[0].substring(1).toLowerCase(Locale.ROOT) : parts[0].toLowerCase(Locale.ROOT);
+        if (!config.getStringList("pay-notifications.commands").stream().anyMatch(value -> value.equalsIgnoreCase(command))) return;
+        Player recipient = Bukkit.getPlayerExact(parts[1]);
+        if (recipient == null || recipient.getUniqueId().equals(event.getPlayer().getUniqueId())) return;
+        double previousBalance = vaultBalance(recipient);
+        if (Double.isNaN(previousBalance)) return;
+        UUID senderId = event.getPlayer().getUniqueId();
+        UUID recipientId = recipient.getUniqueId();
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            Player sender = Bukkit.getPlayer(senderId);
+            Player target = Bukkit.getPlayer(recipientId);
+            if (sender == null || target == null || !target.isOnline()) return;
+            double received = vaultBalance(target) - previousBalance;
+            if (received <= 0.0001D) return;
+            notifyPayment(sender, target, received);
+        }, 2L);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private double vaultBalance(Player player) {
+        try {
+            Class<?> economyClass = Class.forName("net.milkbowl.vault.economy.Economy");
+            org.bukkit.plugin.RegisteredServiceProvider<?> registration = plugin.getServer().getServicesManager().getRegistration((Class) economyClass);
+            if (registration == null || registration.getProvider() == null) return Double.NaN;
+            Object balance = economyClass.getMethod("getBalance", OfflinePlayer.class).invoke(registration.getProvider(), player);
+            return balance instanceof Number number ? number.doubleValue() : Double.NaN;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return Double.NaN;
+        }
+    }
+
+    private void notifyPayment(Player sender, Player target, double amount) {
+        String title = config.getString("pay-notifications.title", "&aGIFT MASUK");
+        String subtitle = config.getString("pay-notifications.subtitle", "&f%sender% &7mengirim &a$%amount%")
+                .replace("%sender%", sender.getName())
+                .replace("%amount%", MONEY_FORMAT.format(amount));
+        target.sendTitle(color(title), color(subtitle), ticks("pay-notifications.fade-in", 5), ticks("pay-notifications.stay", 50), ticks("pay-notifications.fade-out", 15));
+        play(target, config.getString("pay-notifications.sound", "ENTITY_EXPERIENCE_ORB_PICKUP"), 0.9F, 1.15F);
     }
 
     private int ticks(String path, int fallback) { return Math.max(0, config.getInt(path, fallback)); }

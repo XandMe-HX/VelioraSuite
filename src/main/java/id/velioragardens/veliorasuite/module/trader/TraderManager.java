@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -226,10 +227,11 @@ public final class TraderManager {
         selectCategory(pool, selected, List.of("guardian_shield", "ocean_crown", "windwalker_boots", "silk_touch_relic", "aether_pickaxe"), 2);
         selectCategory(pool, selected, List.of("excalibur", "angel_of_death_bow", "trisula_poseidon", "kapak_leviathan", "ancient_mace", "ryujin_no_tsuri", "skybound_wings"), 1);
 
-        Collections.shuffle(pool);
-        for (TraderTradeItem item : pool) {
-            if (selected.size() >= Math.min(5, configManager.getRandomItemsPerSpawn())) break;
-            if (!selected.contains(item)) selected.add(item);
+        int target = Math.min(5, configManager.getRandomItemsPerSpawn());
+        while (selected.size() < target) {
+            TraderTradeItem item = weightedPick(pool, selected, List.of());
+            if (item == null) break;
+            selected.add(item);
         }
         return List.copyOf(selected);
     }
@@ -265,13 +267,30 @@ public final class TraderManager {
     }
 
     private void selectCategory(List<TraderTradeItem> pool, List<TraderTradeItem> selected, List<String> ids, int amount) {
-        List<TraderTradeItem> category = new ArrayList<>();
-        for (TraderTradeItem item : pool) if (ids.contains(item.getId())) category.add(item);
-        Collections.shuffle(category);
-        for (TraderTradeItem item : category) {
-            if (amount-- <= 0) break;
+        for (int index = 0; index < amount; index++) {
+            TraderTradeItem item = weightedPick(pool, selected, ids);
+            if (item == null) return;
             selected.add(item);
         }
+    }
+
+    private TraderTradeItem weightedPick(List<TraderTradeItem> pool, List<TraderTradeItem> selected, List<String> allowedIds) {
+        List<TraderTradeItem> candidates = new ArrayList<>();
+        long totalWeight = 0L;
+        for (TraderTradeItem item : pool) {
+            if (selected.contains(item)) continue;
+            if (!allowedIds.isEmpty() && !allowedIds.contains(item.getId())) continue;
+            candidates.add(item);
+            totalWeight += Math.max(1, item.getWeight());
+        }
+        if (candidates.isEmpty() || totalWeight <= 0L) return null;
+        long roll = ThreadLocalRandom.current().nextLong(totalWeight);
+        long current = 0L;
+        for (TraderTradeItem item : candidates) {
+            current += Math.max(1, item.getWeight());
+            if (roll < current) return item;
+        }
+        return candidates.get(candidates.size() - 1);
     }
 
     private void broadcast(String path, String fallback) {

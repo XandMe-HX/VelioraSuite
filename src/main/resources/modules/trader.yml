@@ -1,5 +1,5 @@
 settings:
-  config-version: 5
+  config-version: 6
   enabled: true
   # Trader dibuka lewat /trader; lima penawaran acak berganti satu kali tiap minggu.
   gui-only: true
@@ -29,6 +29,8 @@ settings:
         y: 72
         z: -220
   trade:
+    # Lima slot tetap tampil. Item dipilih menurut weight setiap item di trade-pool.
+    # Angka weight lebih besar = lebih sering muncul dalam kategori item tersebut.
     random-items-per-spawn: 5
     max-money-price: 500000
     # Semua harga MONEY efektif menjadi 80% dari angka payment.money.
@@ -103,6 +105,7 @@ trade-pool:
     name: '&6Excalibur'
     amount: 1
     stock: 1
+    weight: 10
     custom-damage: 20
     fishing-luck-bonus: 0
     unrepairable: true
@@ -128,6 +131,7 @@ trade-pool:
     name: '&5Angel of Death Bow'
     amount: 1
     stock: 1
+    weight: 10
     custom-damage: 10
     fishing-luck-bonus: 0
     unrepairable: true
@@ -150,6 +154,7 @@ trade-pool:
     name: '&bTrisula Poseidon'
     amount: 1
     stock: 1
+    weight: 10
     custom-damage: 10
     fishing-luck-bonus: 0
     unrepairable: true
@@ -172,6 +177,7 @@ trade-pool:
     name: '&bRyujin no Tsuri'
     amount: 1
     stock: 1
+    weight: 10
     custom-damage: 0
     fishing-luck-bonus: 30
     unrepairable: true
@@ -194,6 +200,7 @@ trade-pool:
     name: '&cKapak Leviathan'
     amount: 1
     stock: 1
+    weight: 10
     custom-damage: 10
     fishing-luck-bonus: 0
     unrepairable: true
@@ -215,6 +222,7 @@ trade-pool:
     name: '&bAether Pickaxe'
     amount: 1
     stock: 1
+    weight: 40
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: true
@@ -235,6 +243,7 @@ trade-pool:
     name: '&dSilk Touch Relic'
     amount: 1
     stock: 1
+    weight: 40
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: true
@@ -255,6 +264,7 @@ trade-pool:
     name: '&6Ancient Mace'
     amount: 1
     stock: 1
+    weight: 10
     custom-damage: 14
     fishing-luck-bonus: 0
     unrepairable: true
@@ -277,6 +287,7 @@ trade-pool:
     name: '&9Guardian Shield'
     amount: 1
     stock: 1
+    weight: 40
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: true
@@ -295,6 +306,7 @@ trade-pool:
     name: '&bWindwalker Boots'
     amount: 1
     stock: 1
+    weight: 40
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: true
@@ -316,6 +328,7 @@ trade-pool:
     name: '&dSkybound Wings'
     amount: 1
     stock: 1
+    weight: 10
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: true
@@ -334,6 +347,7 @@ trade-pool:
     name: '&3Ocean Crown'
     amount: 1
     stock: 1
+    weight: 40
     custom-damage: 0
     fishing-luck-bonus: 10
     unrepairable: true
@@ -356,6 +370,7 @@ trade-pool:
     name: '&6Golden Enchant'
     amount: 32
     stock: 1
+    weight: 50
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
@@ -376,6 +391,7 @@ trade-pool:
     name: '&eTotem Bundle'
     amount: 20
     stock: 1
+    weight: 50
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
@@ -396,6 +412,7 @@ trade-pool:
     name: '&bDiamond Pack'
     amount: 64
     stock: 1
+    weight: 100
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
@@ -416,6 +433,7 @@ trade-pool:
     name: '&eBuilder Supply x64'
     amount: 64
     stock: 5
+    weight: 100
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
@@ -434,6 +452,7 @@ trade-pool:
     name: '&6Mining Supply x64'
     amount: 64
     stock: 5
+    weight: 100
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
@@ -452,6 +471,7 @@ trade-pool:
     name: '&cExplorer Supply x32'
     amount: 32
     stock: 5
+    weight: 100
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
@@ -470,6 +490,7 @@ trade-pool:
     name: '&aExperience Supply x32'
     amount: 32
     stock: 3
+    weight: 100
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
@@ -488,6 +509,7 @@ trade-pool:
     name: '&5Ender Supply x16'
     amount: 16
     stock: 3
+    weight: 100
     custom-damage: 0
     fishing-luck-bonus: 0
     unrepairable: false
