@@ -38,6 +38,8 @@ public final class WarpManager implements Listener {
     private final Map<String, String> aliases = new LinkedHashMap<>();
     private final Map<UUID, Long> cooldowns = new LinkedHashMap<>();
     private final Map<UUID, BukkitTask> pendingTeleports = new LinkedHashMap<>();
+    /** Origin recorded only while the player is waiting for a warp countdown. */
+    private final Map<UUID, Location> pendingOrigins = new LinkedHashMap<>();
     private YamlConfiguration config;
 
     public WarpManager(VelioraSuite plugin) {
@@ -167,11 +169,11 @@ public final class WarpManager implements Listener {
     }
 
     private void beginCountdown(Player player, WarpPoint point, Location target, int cooldown, long now) {
-        BukkitTask previous = pendingTeleports.remove(player.getUniqueId());
-        if (previous != null) previous.cancel();
+        cancelPending(player.getUniqueId());
         // Players may keep walking while the destination is prepared.  Freezing starts
         // only after the teleport succeeds, handled centrally by TeleportSafetyListener.
         final int[] remaining = {Math.max(1, config.getInt("settings.countdown-seconds", 3))};
+        pendingOrigins.put(player.getUniqueId(), player.getLocation().clone());
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!player.isOnline()) { cancelPending(player.getUniqueId()); return; }
             if (remaining[0] > 0) {
@@ -198,6 +200,24 @@ public final class WarpManager implements Listener {
     private void cancelPending(UUID playerId) {
         BukkitTask task = pendingTeleports.remove(playerId);
         if (task != null) task.cancel();
+        pendingOrigins.remove(playerId);
+    }
+
+    /**
+     * Cancels only a warp that is still in its pre-teleport countdown. Looking
+     * around does not count as movement; changing position does.
+     */
+    public boolean cancelPendingIfMoved(Player player, Location to) {
+        if (player == null || to == null) return false;
+        UUID id = player.getUniqueId();
+        Location origin = pendingOrigins.get(id);
+        if (origin == null || origin.getWorld() == null || !origin.getWorld().equals(to.getWorld())) return false;
+        if (origin.getX() == to.getX() && origin.getY() == to.getY() && origin.getZ() == to.getZ()) return false;
+        cancelPending(id);
+        player.clearTitle();
+        player.sendTitle(color("&cTeleport dibatalkan"), color("&7Kamu bergerak sebelum teleport."), 0, 30, 10);
+        player.sendMessage(color(message("moved", "%prefix% &cTeleport dibatalkan karena kamu bergerak.")));
+        return true;
     }
 
     public Location safetyTarget(Location from) {
@@ -217,6 +237,10 @@ public final class WarpManager implements Listener {
         World world = Bukkit.getWorld(best.world());
         if (world == null) world = Bukkit.getWorld(best.worldName());
         return world == null ? null : new Location(world, best.x(), best.y(), best.z(), best.yaw(), best.pitch());
+    }
+
+    public int arrivalFreezeSeconds() {
+        return config == null ? 3 : Math.max(0, config.getInt("settings.arrival-freeze-seconds", 3));
     }
 
     public synchronized void save() {
