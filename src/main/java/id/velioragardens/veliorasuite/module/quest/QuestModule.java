@@ -4,14 +4,11 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
 import id.velioragardens.veliorasuite.command.DisabledCommand;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestBlockListener;
-import id.velioragardens.veliorasuite.module.quest.listener.QuestBossBarListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestCommandTrackListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestCookingListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestFarmListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestFishingListener;
 import id.velioragardens.veliorasuite.module.quest.listener.QuestKillListener;
-import id.velioragardens.veliorasuite.module.quest.listener.QuestProgressionListener;
-import id.velioragardens.veliorasuite.module.quest.listener.QuestRequirementListener;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
@@ -80,7 +77,7 @@ public final class QuestModule implements VelioraModule {
 
     private void registerCommand() {
         QuestCommand questCommand = new QuestCommand(manager);
-        for (String name : skillCommands()) {
+        for (String name : questCommands()) {
             PluginCommand command = plugin.getCommand(name);
             if (command == null) {
                 plugin.getLogger().warning("Command /" + name + " tidak ditemukan di plugin.yml.");
@@ -98,17 +95,14 @@ public final class QuestModule implements VelioraModule {
         listeners.add(new QuestFarmListener(manager));
         listeners.add(new QuestCookingListener(manager));
         listeners.add(new QuestKillListener(manager));
-        listeners.add(new QuestProgressionListener(manager));
-        listeners.add(new QuestRequirementListener(manager));
         listeners.add(new QuestFishingListener(manager));
         listeners.add(new QuestCommandTrackListener(manager));
-        listeners.add(new QuestBossBarListener(manager));
         for (Listener listener : listeners) plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 
     private void registerDisabledCommand() {
         DisabledCommand disabledCommand = new DisabledCommand(plugin, "VelioraQuest");
-        for (String name : skillCommands()) {
+        for (String name : questCommands()) {
             PluginCommand command = plugin.getCommand(name);
             if (command == null) continue;
             command.setExecutor(disabledCommand);
@@ -116,7 +110,7 @@ public final class QuestModule implements VelioraModule {
         }
     }
 
-    private List<String> skillCommands() {
-        return List.of("quests", "skills", "stats", "sources", "skilltop", "skillrank", "mining", "farmer", "chef", "agility", "alchemy", "archery", "excavation", "fighting", "defense", "enchanting");
+    private List<String> questCommands() {
+        return List.of("quests");
     }
 }

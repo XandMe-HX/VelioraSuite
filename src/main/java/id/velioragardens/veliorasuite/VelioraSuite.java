@@ -22,7 +22,6 @@ import id.velioragardens.veliorasuite.module.pets.PetsModule;
 import id.velioragardens.veliorasuite.module.quest.QuestModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
 import id.velioragardens.veliorasuite.module.security.SecurityModule;
-import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.trader.TraderModule;
 import id.velioragardens.veliorasuite.module.warp.WarpModule;
@@ -102,7 +101,6 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new WarpModule(this));
         moduleManager.register(new SecurityModule(this));
         moduleManager.register(new FishingModule(this));
-        moduleManager.register(new SkillsModule(this));
         moduleManager.register(new QuestModule(this));
         moduleManager.register(new TraderModule(this));
         moduleManager.register(new BossModule(this));

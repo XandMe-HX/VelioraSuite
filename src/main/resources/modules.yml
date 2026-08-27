@@ -9,8 +9,7 @@ modules:
   report: true
   announcement: true
   fishing: true
-  skills: true
-  quest: true
+  quest: false
   trader: true
   boss: true
   pets: true

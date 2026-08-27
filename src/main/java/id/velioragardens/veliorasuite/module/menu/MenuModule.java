@@ -5,7 +5,6 @@ import id.velioragardens.veliorasuite.api.VelioraModule;
 import id.velioragardens.veliorasuite.command.DisabledCommand;
 import id.velioragardens.veliorasuite.module.quest.QuestModule;
 import id.velioragardens.veliorasuite.module.quest.model.PlayerCategoryProgress;
-import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.warp.WarpModule;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -169,7 +168,6 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
             case PLAYTIME, BALANCE, KILLS, DEATHS -> clickTop(player, slot);
             case TEAM -> clickTeam(player, slot);
             case RTP -> { if (slot == 22) run(player, "rtp"); else if (slot == 49) openMain(player); }
-            case SKILLS -> clickSkills(player, slot);
         }
     }
 
@@ -191,7 +189,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         gui.setItem(23, item(Material.FISHING_ROD, "&b&lFISHING", "&7Tas, koleksi, rod, dan hasil pancing."));
         gui.setItem(25, item(Material.WRITABLE_BOOK, "&e&lQUEST", "&7Quest otomatis dan level aktivitas."));
         gui.setItem(28, item(Material.BONE, "&d&lPETS", "&7Pet milikmu, makan, mastery, dan storage."));
-        gui.setItem(30, item(Material.BEACON, "&b&lMANA & SKILLS", "&7Gunakan Mana untuk kemampuan aktif."));
+        gui.setItem(30, item(Material.ENCHANTED_BOOK, "&b&lAURASKILLS", "&7Lihat skill, statistik, dan kemampuanmu.", "&eKlik untuk membuka /skills"));
         gui.setItem(32, item(Material.ENDER_PEARL, "&a&lWARP", "&7Lobby, Dungeon, PvP, dan Guild."));
         gui.setItem(34, item(Material.COMPASS, "&6&lRTP", "&7Teleport acak dengan aman."));
         gui.setItem(37, item(Material.CHEST, "&e&lKITS", "&7Buka kit VelioraSuite."));
@@ -213,7 +211,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
             case 23 -> run(player, "fish");
             case 25 -> run(player, "quests");
             case 28 -> run(player, "pet");
-            case 30 -> openSkills(player);
+            case 30 -> run(player, "skills");
             case 32 -> openWarps(player);
             case 34 -> openRtp(player);
             case 37 -> run(player, "kits");
@@ -235,7 +233,6 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         lore.add("");
         lore.add("&7Rank: &f" + primaryGroup(player));
         lore.add("&7Level: &a" + level(player));
-        lore.add("&7Mana: &b" + mana(player));
         lore.add("&7Uang: &e$" + format(balance(player)));
         lore.add("&7Kill / Mati: &c" + player.getStatistic(Statistic.PLAYER_KILLS) + " &8/ &7" + player.getStatistic(Statistic.DEATHS));
         lore.add("&7Playtime: &f" + formatTime(player.getStatistic(Statistic.PLAY_ONE_MINUTE)));
@@ -307,23 +304,6 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         player.openInventory(gui);
     }
 
-    private void openSkills(Player player) {
-        Holder holder = new Holder(Page.SKILLS);
-        Inventory gui = inventory(holder, 27, title("skills", "&6&l[ &e&lVELIORA &a&lSKILLS &6&l]"));
-        fill(gui);
-        gui.setItem(10, item(Material.GOLDEN_PICKAXE, "&e&lMINER FOCUS", "&7Haste selama 30 detik.", "&bBiaya: " + abilityCost("miner") + " Mana"));
-        gui.setItem(12, item(Material.SHIELD, "&a&lGUARDIAN", "&7Regeneration selama 10 detik.", "&bBiaya: " + abilityCost("guardian") + " Mana"));
-        gui.setItem(14, item(Material.FEATHER, "&f&lDASH", "&7Meluncur ke arah pandangan.", "&bBiaya: " + abilityCost("dash") + " Mana"));
-        gui.setItem(16, item(Material.FISHING_ROD, "&b&lFISHER FOCUS", "&7Luck selama 60 detik.", "&bBiaya: " + abilityCost("fisher") + " Mana"));
-        gui.setItem(22, back());
-        player.openInventory(gui);
-    }
-
-    private void clickSkills(Player player, int slot) {
-        if (slot == 22) { openMain(player); return; }
-        String ability = switch (slot) { case 10 -> "miner"; case 12 -> "guardian"; case 14 -> "dash"; case 16 -> "fisher"; default -> null; };
-        if (ability != null) run(player, "vskills ability " + ability);
-    }
 
     private void openTeam(Player player) {
         Holder holder = new Holder(Page.TEAM);
@@ -490,18 +470,6 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         return count == 0 ? 1 : Math.max(1, Math.round((float) total / count));
     }
 
-    private String mana(Player player) {
-        SkillsModule module = module("skills", SkillsModule.class);
-        if (module == null || module.getApi() == null) return "-";
-        return module.getApi().getMana(player) + "/" + module.getApi().getMaxMana(player);
-    }
-
-    private int abilityCost(String ability) {
-        SkillsModule module = module("skills", SkillsModule.class);
-        if (module == null || module.getSkillsManager() == null) return 0;
-        return module.getSkillsManager().getConfigManager().getAbilityCost(ability);
-    }
-
     private boolean warpReady(String name) {
         WarpModule module = module("warp", WarpModule.class);
         return module != null && module.getManager() != null && module.getManager().hasDirectAlias(name);
@@ -585,7 +553,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         return plugin.getModuleManager().getModule(name).filter(type::isInstance).map(type::cast).orElse(null);
     }
 
-    private enum Page { MAIN, WARPS, RANKS, PLAYTIME, BALANCE, KILLS, DEATHS, TEAM, RTP, SKILLS }
+    private enum Page { MAIN, WARPS, RANKS, PLAYTIME, BALANCE, KILLS, DEATHS, TEAM, RTP }
     private enum Leaderboard {
         PLAYTIME("playtime", "&1Top &bPlaytime"),
         BALANCE("balance", "&1Top &bBalance"),
