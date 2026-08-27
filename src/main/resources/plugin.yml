@@ -231,13 +231,13 @@ commands:
     usage: /afk
     permission: veliorasuite.warp.use
   register:
-    description: Register Veliora account.
-    usage: /register <key> <key confirm>
-    aliases: [reg]
+    description: Daftarkan akun login.
+    usage: /register <password> <ulang_password>
+    aliases: [reg, r]
     permission: veliorasuite.loginsecurity.use
   login:
-    description: Login Veliora account.
-    usage: /login <key>
+    description: Login akun.
+    usage: /login <password>
     aliases: [l]
     permission: veliorasuite.loginsecurity.use
   changepass:
@@ -263,7 +263,7 @@ commands:
   loginsecurity:
     description: Manage VelioraLoginSecurity.
     usage: /loginsecurity <help|reload|status>
-    aliases: [vlogsec, vlogin]
+    aliases: [loginsecurityadmin]
     permission: veliorasuite.loginsecurity.admin
   vgpetualang:
     description: Membuka Guild Petualang dan misi harian team.
