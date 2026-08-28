@@ -38,6 +38,7 @@ public final class VelioraSuite extends JavaPlugin {
     private MessageManager messageManager;
     private HookManager hookManager;
     private ModuleManager moduleManager;
+    private VelioraPlaceholderExpansion placeholderExpansion;
 
     public static VelioraSuite getInstance() {
         return instance;
@@ -68,6 +69,7 @@ public final class VelioraSuite extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        unregisterPlaceholderExpansion();
         if (moduleManager != null) {
             moduleManager.disableAll();
         }
@@ -80,6 +82,7 @@ public final class VelioraSuite extends JavaPlugin {
         messageManager.reload();
         hookManager.loadHooks();
         moduleManager.reloadAll();
+        registerPlaceholderExpansion();
 
         getLogger().info("VelioraSuite clean core reloaded.");
     }
@@ -111,8 +114,20 @@ public final class VelioraSuite extends JavaPlugin {
             getLogger().info("PlaceholderAPI tidak ditemukan; placeholder VelioraSuite tidak didaftarkan.");
             return;
         }
-        new VelioraPlaceholderExpansion(this).register();
-        getLogger().info("PlaceholderAPI VelioraSuite terdaftar, termasuk Team, Playtime, Fishing Coins, dan Rank Petualang.");
+        unregisterPlaceholderExpansion();
+        placeholderExpansion = new VelioraPlaceholderExpansion(this);
+        if (placeholderExpansion.register()) {
+            getLogger().info("PlaceholderAPI VelioraSuite terdaftar: %veliorasuite_team_tag%, %veliorasuite_playtime%, dan placeholder petualang/fishing.");
+        } else {
+            getLogger().warning("PlaceholderAPI ditemukan, tetapi expansion VelioraSuite gagal didaftarkan.");
+            placeholderExpansion = null;
+        }
+    }
+
+    private void unregisterPlaceholderExpansion() {
+        if (placeholderExpansion == null) return;
+        placeholderExpansion.unregister();
+        placeholderExpansion = null;
     }
 
     private void registerCoreCommand() {
