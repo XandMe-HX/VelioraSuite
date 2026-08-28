@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite;
 import id.velioragardens.veliorasuite.command.VelioraCommand;
 import id.velioragardens.veliorasuite.core.ConfigManager;
 import id.velioragardens.veliorasuite.core.HookManager;
+import id.velioragardens.veliorasuite.core.LegacyHealthCleanupListener;
 import id.velioragardens.veliorasuite.core.MessageManager;
 import id.velioragardens.veliorasuite.core.ModuleManager;
 import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
@@ -57,6 +58,7 @@ public final class VelioraSuite extends JavaPlugin {
         this.hookManager = new HookManager(this);
         this.hookManager.loadHooks();
         getServer().getPluginManager().registerEvents(this.hookManager, this);
+        getServer().getPluginManager().registerEvents(new LegacyHealthCleanupListener(this), this);
 
         this.moduleManager = new ModuleManager(this);
         registerModules();
