@@ -93,6 +93,9 @@ public final class TeleportSafetyListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
+        // This is the only time movement may cancel teleport: before arrival.
+        // It must run before the post-arrival freeze check below.
+        if (warps.cancelPendingIfMoved(event.getPlayer(), event.getTo())) return;
         Long until = frozenUntil.get(event.getPlayer().getUniqueId());
         if (until == null || until <= System.currentTimeMillis() || event.getTo() == null) return;
         if (event.getFrom().getX() == event.getTo().getX() && event.getFrom().getY() == event.getTo().getY()
@@ -120,18 +123,12 @@ public final class TeleportSafetyListener implements Listener {
     }
 
     private void protectArrival(Player player) {
-        long arrivalId = System.currentTimeMillis() + 3_000L;
+        int freezeSeconds = Math.max(0, warps.arrivalFreezeSeconds());
+        if (freezeSeconds == 0) return;
+        long arrivalId = System.currentTimeMillis() + freezeSeconds * 1_000L;
         frozenUntil.put(player.getUniqueId(), arrivalId);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0, false, false, false));
-        final int[] seconds = {3};
-        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
-            if (!player.isOnline() || !Long.valueOf(arrivalId).equals(frozenUntil.get(player.getUniqueId())) || seconds[0] <= 0) {
-                task.cancel();
-                return;
-            }
-            player.sendTitle("§bLokasi dimuat", "§fAman dalam §e" + seconds[0] + " detik", 0, 24, 0);
-            seconds[0]--;
-        }, 0L, 20L);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, freezeSeconds * 20, 0, false, false, false));
+        player.sendTitle("§bTeleport berhasil", "§7Menyiapkan lokasi aman...", 0, freezeSeconds * 20, 0);
     }
 
     private void validateRtp(Player player, Location expected) {

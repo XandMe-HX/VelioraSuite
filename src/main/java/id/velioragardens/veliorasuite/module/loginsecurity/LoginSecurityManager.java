@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.net.InetSocketAddress;
 import java.net.InetAddress;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.UUID;
 
 public final class LoginSecurityManager {
 
@@ -27,6 +29,9 @@ public final class LoginSecurityManager {
     private final LoginSecuritySessionManager sessionManager;
     private final LoginSecurityPasswordManager passwordManager;
     private final LoginSecurityProtectionManager protectionManager;
+    // Satu pemain hanya boleh memiliki satu pengingat title aktif. Ini mencegah
+    // title lama muncul kembali setelah pemain berhasil login.
+    private final Map<UUID, BukkitTask> titleReminders = new java.util.HashMap<>();
 
     public LoginSecurityManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -48,6 +53,7 @@ public final class LoginSecurityManager {
     }
 
     public void shutdown() {
+        cancelAllTitleReminders();
         LoginSecurityBlindnessManager.clearAll();
         sessionManager.clearAll();
         dataManager.shutdown();
@@ -91,9 +97,14 @@ public final class LoginSecurityManager {
     }
 
     private void startTitleReminder(Player player, boolean register) {
-        new BukkitRunnable() {
+        cancelTitleReminder(player);
+        BukkitTask task = new BukkitRunnable() {
             @Override public void run() {
-                if (!player.isOnline() || isAuthenticated(player)) { cancel(); return; }
+                if (!player.isOnline() || isAuthenticated(player)) {
+                    cancel();
+                    titleReminders.remove(player.getUniqueId());
+                    return;
+                }
                 // Keep the title short: Bedrock clients enlarge long titles and
                 // the old text could run beyond the screen.
                 String title = register ? "&eDAFTAR" : "&aLOGIN";
@@ -102,9 +113,11 @@ public final class LoginSecurityManager {
                 player.sendTitle(configManager.color(title), configManager.color(subtitle), 5, 50, 5);
             }
         }.runTaskTimer(plugin, 1L, 40L);
+        titleReminders.put(player.getUniqueId(), task);
     }
 
     public void handleQuit(Player player) {
+        cancelTitleReminder(player);
         LoginSecurityBlindnessManager.remove(player);
         sessionManager.clear(player);
     }
@@ -382,9 +395,34 @@ public final class LoginSecurityManager {
     }
 
     private void finishAuthentication(Player player) {
+        cancelTitleReminder(player);
         LoginSecurityBlindnessManager.removeSafe(player);
         // Hentikan title login yang mungkin masih tersisa di layar client setelah autentikasi berhasil.
         player.clearTitle();
+    }
+
+    /** Returns the exact instruction that matches the player's current account state. */
+    public String getAuthInstruction(Player player, String fallback) {
+        boolean needsRegister = sessionManager.getState(player) == AuthState.WAITING_REGISTER
+                || getPlayerData(player) == null;
+        String messageKey = needsRegister ? "need-register" : "need-login";
+        String defaultText = needsRegister
+                ? "%prefix% &eBelum punya akun? Daftar dengan &f/register <password> <ulang_password>&e. &7Shortcut: &f/r"
+                : "%prefix% &eLogin dengan &f/login <password>&e. &7Shortcut: &f/l";
+        return configManager.color(configManager.getMessage(messageKey, fallback == null ? defaultText : fallback));
+    }
+
+    private void cancelTitleReminder(Player player) {
+        if (player == null) return;
+        BukkitTask task = titleReminders.remove(player.getUniqueId());
+        if (task != null) task.cancel();
+    }
+
+    private void cancelAllTitleReminders() {
+        for (BukkitTask task : titleReminders.values()) {
+            if (task != null) task.cancel();
+        }
+        titleReminders.clear();
     }
 
     private AuthPlayerData getPlayerData(Player player) {

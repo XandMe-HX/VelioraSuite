@@ -33,8 +33,6 @@ modules:
   report: true
   announcement: true
   fishing: true
-  skills: true
-  quest: true
   trader: true
   boss: true
   pets: true

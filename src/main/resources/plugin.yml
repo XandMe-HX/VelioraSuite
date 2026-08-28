@@ -91,82 +91,6 @@ commands:
     usage: /vguard <status|logs|case|confirm|deny|clear>
     aliases: [combatguard, killaura]
     permission: veliorasuite.security.alerts
-  vskills:
-    description: Manage VelioraSkills.
-    usage: /vskills <help|status|reload|mana>
-    aliases: [vski, vmana]
-    permission: veliorasuite.skills.use
-  quests:
-    description: Open and manage VelioraQuest.
-    usage: /quests <gui|progress|stats|skill|top|rank|start|claim|cancel|reload|status|xp|skilladmin>
-    aliases: [q, vquest]
-    permission: veliorasuite.quest.use
-  skills:
-    description: Membuka GUI skill Veliora.
-    usage: /skills
-    aliases: [skill]
-    permission: veliorasuite.quest.use
-  stats:
-    description: Melihat semua level skill Veliora.
-    usage: /stats
-    permission: veliorasuite.quest.use
-  sources:
-    description: Melihat sumber Skill XP Veliora.
-    usage: /sources [skill]
-    aliases: [skillsources, source]
-    permission: veliorasuite.quest.use
-  skilltop:
-    description: Melihat ranking skill Veliora.
-    usage: /skilltop [skill|total]
-    aliases: [vskilltop]
-    permission: veliorasuite.quest.use
-  skillrank:
-    description: Melihat ranking skill pribadi.
-    usage: /skillrank [skill|total]
-    aliases: [vskillrank]
-    permission: veliorasuite.quest.use
-  mining:
-    description: Melihat profil skill Mining.
-    usage: /mining
-    permission: veliorasuite.quest.use
-  farmer:
-    description: Melihat profil skill Farmer.
-    usage: /farmer
-    aliases: [farming]
-    permission: veliorasuite.quest.use
-  chef:
-    description: Melihat profil skill Koki.
-    usage: /chef
-    aliases: [cooking, koki]
-    permission: veliorasuite.quest.use
-  agility:
-    description: Melihat profil skill Agility.
-    usage: /agility
-    permission: veliorasuite.quest.use
-  alchemy:
-    description: Melihat profil skill Alchemy.
-    usage: /alchemy
-    permission: veliorasuite.quest.use
-  archery:
-    description: Melihat profil skill Archery.
-    usage: /archery
-    permission: veliorasuite.quest.use
-  excavation:
-    description: Melihat profil skill Excavation.
-    usage: /excavation
-    permission: veliorasuite.quest.use
-  fighting:
-    description: Melihat profil skill Fighting.
-    usage: /fighting
-    permission: veliorasuite.quest.use
-  defense:
-    description: Melihat profil skill Defense.
-    usage: /defense
-    permission: veliorasuite.quest.use
-  enchanting:
-    description: Melihat profil skill Enchanting.
-    usage: /enchanting
-    permission: veliorasuite.quest.use
   fish:
     description: Open and manage VelioraFishing.
     usage: /fish <help|bag|sell|collection|top|give|take|reload>
@@ -302,9 +226,6 @@ commands:
     permission: veliorasuite.home.admin
 
 permissions:
-  veliorasuite.quest.use:
-    description: Menggunakan VelioraQuest dan VelioraSkills.
-    default: true
   veliorasuite.fishing.trade:
     description: Menggunakan sistem trade aman antarpemain.
     default: true

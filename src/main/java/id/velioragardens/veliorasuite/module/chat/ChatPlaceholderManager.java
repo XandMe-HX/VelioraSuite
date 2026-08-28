@@ -2,9 +2,6 @@ package id.velioragardens.veliorasuite.module.chat;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
-import id.velioragardens.veliorasuite.module.quest.QuestModule;
-import id.velioragardens.veliorasuite.module.quest.QuestPlaceholderManager;
-import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -67,17 +64,11 @@ public final class ChatPlaceholderManager {
         try {
             UUID uuid = player == null ? null : player.getUniqueId();
             String lower = identifier.toLowerCase();
-            // Quest progression exposes both the historical quest_* names and the
-            // Aura-style skill_* names. Keep them together so TAB/PlaceholderAPI
-            // never leaves a raw %veliorasuite_skill_...% token on screen.
-            if (lower.startsWith("quest_") || lower.startsWith("skill_")) return getQuestPlaceholder(player, lower);
             return switch (lower) {
                 case "team_name" -> getTeamName(uuid);
                 case "team_tag" -> getTeamTag(uuid);
                 case "player_name" -> player == null ? "" : player.getName();
                 case "playtime" -> formatPlaytime(player);
-                case "level" -> getLevel(player);
-                case "mana", "mana_max", "mana_bar", "mana_percent" -> getSkillsPlaceholder(player, identifier);
                 default -> "";
             };
         } catch (RuntimeException | LinkageError exception) {
@@ -97,47 +88,10 @@ public final class ChatPlaceholderManager {
         return remainingMinutes + "m";
     }
 
-    private String getLevel(OfflinePlayer player) {
-        QuestModule questModule = getQuestModule();
-        if (player == null || questModule == null || questModule.getQuestManager() == null) return "1";
-        int total = 0;
-        int count = 0;
-        for (var progress : questModule.getQuestManager().getDataManager().getOrCreate(player).getCategories().values()) {
-            total += progress.getLevel();
-            count++;
-        }
-        return String.valueOf(count == 0 ? 1 : Math.max(1, Math.round((float) total / count)));
-    }
-
-    private String getSkillsPlaceholder(OfflinePlayer player, String identifier) {
-        SkillsModule skillsModule = getSkillsModule();
-        if (skillsModule == null || skillsModule.getPlaceholderManager() == null) return "";
-        return skillsModule.getPlaceholderManager().getPlaceholder(player, identifier);
-    }
-
-    private String getQuestPlaceholder(OfflinePlayer player, String identifier) {
-        QuestModule questModule = getQuestModule();
-        if (questModule == null || questModule.getQuestManager() == null) return "";
-        return new QuestPlaceholderManager(questModule.getQuestManager().getDataManager(), questModule.getQuestManager().getConfigManager()).getPlaceholder(player, identifier);
-    }
-
     private TeamModule getTeamModule() {
         Optional<VelioraModule> module = plugin.getModuleManager().getModule("team");
         if (module.isEmpty() || !(module.get() instanceof TeamModule teamModule)) return null;
         return teamModule;
     }
 
-    private QuestModule getQuestModule() {
-        Optional<VelioraModule> module = plugin.getModuleManager().getModule("quest");
-        if (module.isEmpty() || !(module.get() instanceof QuestModule questModule)) return null;
-        return questModule;
-    }
-
-    private SkillsModule getSkillsModule() {
-        Optional<VelioraModule> module = plugin.getModuleManager().getModule("skills");
-        if (module.isEmpty() || !(module.get() instanceof SkillsModule skillsModule)) {
-            return null;
-        }
-        return skillsModule;
-    }
 }

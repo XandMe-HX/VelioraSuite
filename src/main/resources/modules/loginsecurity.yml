@@ -114,9 +114,11 @@ messages:
   logout-success: '%prefix% &aLogout berhasil. Pakai &f/login <password> &auntuk masuk lagi.'
   changepass-success: '%prefix% &aPassword berhasil diganti.'
   unregister-success: '%prefix% &aAkun login berhasil dihapus.'
-  auth-required-command: '%prefix% &cKamu belum login. &7Gunakan &f/login <password>&7 atau &f/register <password> <ulang_password>&7.'
-  auth-required-chat: '%prefix% &cKamu belum login. &7Login atau register sebelum chat.'
-  auth-required-action: '%prefix% &cKamu belum login. &7Login atau register sebelum melakukan aksi.'
+  # Pesan di bawah ini otomatis dipilih berdasarkan status akun: akun baru akan
+  # diarahkan register, akun yang sudah ada hanya diarahkan login.
+  auth-required-command: '%prefix% &cKamu belum login. &7Gunakan &f/login <password>&7.'
+  auth-required-chat: '%prefix% &cKamu belum login. &7Gunakan &f/login <password>&7 sebelum chat.'
+  auth-required-action: '%prefix% &cKamu belum login. &7Gunakan &f/login <password>&7 terlebih dahulu.'
   auth-timeout-kick: '&cKamu terlalu lama tidak login/register.'
 
   owner-reset-success: '%prefix% &aPassword player &f%player% &aberhasil direset.'

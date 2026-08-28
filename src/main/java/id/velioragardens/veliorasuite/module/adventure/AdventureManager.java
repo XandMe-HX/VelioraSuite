@@ -1,7 +1,6 @@
 package id.velioragardens.veliorasuite.module.adventure;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
-import id.velioragardens.veliorasuite.module.skills.SkillsModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import org.bukkit.Bukkit;
@@ -198,9 +197,9 @@ public final class AdventureManager implements Listener {
             AdventureDataManager.PlayerData profile = data.player(entry.getKey(), name);
             profile.addExp(quest.playerExp()); profile.complete();
             if (member != null) {
-                deposit(member, quest.money()); giveMana(member, quest.mana());
-                send(member, "quest-reward", "&aMisi selesai! Hadiah: &f$%money% &7+ &b%exp% EXP &7+ &b%mana% Mana.",
-                        "%money%", String.valueOf(quest.money()), "%exp%", String.valueOf(quest.playerExp()), "%mana%", String.valueOf(quest.mana()));
+                deposit(member, quest.money());
+                send(member, "quest-reward", "&aMisi selesai! Hadiah: &f$%money% &7+ &b%exp% Guild EXP.",
+                        "%money%", String.valueOf(quest.money()), "%exp%", String.valueOf(quest.playerExp()));
                 member.playSound(member.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1F, 1F);
             }
         }
@@ -467,11 +466,6 @@ public final class AdventureManager implements Listener {
             Object economy = registration.getProvider(); Method deposit = economy.getClass().getMethod("depositPlayer", OfflinePlayer.class, double.class);
             deposit.invoke(economy, player, (double) amount);
         } catch (Exception exception) { plugin.getLogger().warning("VelioraPetualang: reward Vault gagal untuk " + player.getName()); }
-    }
-    private void giveMana(Player player, int amount) {
-        if (amount <= 0) return;
-        SkillsModule skills = plugin.getModuleManager().getModule("skills").filter(SkillsModule.class::isInstance).map(SkillsModule.class::cast).orElse(null);
-        if (skills != null && skills.getApi() != null) skills.getApi().giveMana(player, amount, "adventure-quest");
     }
     private double horizontalDistance(Location location, int x, int z) { double dx = location.getX() - x, dz = location.getZ() - z; return Math.sqrt(dx * dx + dz * dz); }
     private String blockKey(Location location) { return location.getWorld().getUID() + ":" + location.getBlockX() + ":" + location.getBlockY() + ":" + location.getBlockZ(); }
