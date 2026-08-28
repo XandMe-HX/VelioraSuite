@@ -8,7 +8,9 @@ settings:
   enabled: true
   prefix: '&7[&eVELIORA &aCHAT&7] &r'
 
-  formatter-enabled: false
+  # VelioraSuite menjadi formatter chat utama. Matikan EssentialsChat/LPC formatter
+  # apabila memakai ini, supaya satu pesan tidak terformat dua kali.
+  formatter-enabled: true
   essentials-mode: true
   use-placeholderapi: true
   team-tag-placeholder-enabled: true
@@ -49,7 +51,7 @@ settings:
 
   cooldown:
     enabled: true
-    seconds: 2
+    seconds: 5
 
   command-spam:
     enabled: true
@@ -355,7 +357,8 @@ permissions:
   bypass-filter: 'veliorasuite.chat.bypassfilter'
 
 formats:
-  public-chat: '&7%luckperms_prefix%&f%player%&7: &f%message%'
+  # AuraSkills: Power total | Vault: saldo | VelioraSuite: tag team.
+  public-chat: '&8[&bLv %auraskills_power%&8] &8[&a⛃ %vault_eco_balance_formatted%&8] &8[&d%veliorasuite_team_tag%&8] %luckperms_prefix%&f%player%&7: &f%message%'
   team-tag-empty: ''
   luckperms-prefix-empty: ''
 
