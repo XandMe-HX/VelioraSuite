@@ -34,6 +34,14 @@ public final class ChatConfigManager {
     public boolean isUsePlaceholderApi() { return getBoolean("settings.use-placeholderapi", true); }
     public boolean isTeamTagPlaceholderEnabled() { return getBoolean("settings.team-tag-placeholder-enabled", true); }
     public boolean isProtectionEnabled() { return getBoolean("settings.protection-enabled", true); }
+    public boolean isInteractiveChatEnabled() { return getBoolean("settings.interactive-chat.enabled", false); }
+    public String getInteractiveChatAction() { return getString("settings.interactive-chat.action", "SUGGEST_COMMAND").toUpperCase(Locale.ROOT); }
+    public List<String> getInteractiveChatCommands() {
+        return config == null ? List.of() : config.getStringList("settings.interactive-chat.allowed-commands");
+    }
+    public String getInteractiveChatHover() {
+        return getString("settings.interactive-chat.hover", "&bKlik untuk memasukkan &f%command%&b ke chat.");
+    }
 
     public boolean isCooldownEnabled() { return getBoolean("settings.cooldown.enabled", true); }
     public int getCooldownSeconds() { return Math.max(0, getInt("settings.cooldown.seconds", 2)); }

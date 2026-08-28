@@ -4,6 +4,10 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -11,8 +15,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class ChatManager {
+
+    private static final Pattern INTERACTIVE_COMMAND = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?)\\]");
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final VelioraSuite plugin;
     private final ChatConfigManager configManager;
@@ -148,6 +157,55 @@ public final class ChatManager {
             }
             Bukkit.getConsoleSender().sendMessage(formattedMessage);
         });
+    }
+
+    public boolean isInteractiveChatEnabled() {
+        return configManager.isInteractiveChatEnabled();
+    }
+
+    public void broadcastInteractive(Player player, String message) {
+        String formatted = formatManager.formatPublicChat(player, message);
+        Component component = interactiveComponent(formatted);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                onlinePlayer.sendMessage(component);
+            }
+            Bukkit.getConsoleSender().sendMessage(formatted);
+        });
+    }
+
+    private Component interactiveComponent(String formatted) {
+        Matcher matcher = INTERACTIVE_COMMAND.matcher(formatted);
+        Component result = Component.empty();
+        int position = 0;
+        while (matcher.find()) {
+            result = result.append(LEGACY.deserialize(formatted.substring(position, matcher.start())));
+            String command = matcher.group(1);
+            if (isAllowedInteractiveCommand(command)) {
+                String hover = configManager.color(configManager.getInteractiveChatHover().replace("%command%", command));
+                Component button = LEGACY.deserialize("&b" + matcher.group());
+                if (configManager.getInteractiveChatAction().equals("RUN_COMMAND")) {
+                    button = button.clickEvent(ClickEvent.runCommand(command));
+                } else {
+                    button = button.clickEvent(ClickEvent.suggestCommand(command));
+                }
+                result = result.append(button.hoverEvent(HoverEvent.showText(LEGACY.deserialize(hover))));
+            } else {
+                result = result.append(LEGACY.deserialize(matcher.group()));
+            }
+            position = matcher.end();
+        }
+        return result.append(LEGACY.deserialize(formatted.substring(position)));
+    }
+
+    private boolean isAllowedInteractiveCommand(String command) {
+        String root = command.substring(1).trim().split("\\s+", 2)[0].toLowerCase(Locale.ROOT);
+        for (String allowed : configManager.getInteractiveChatCommands()) {
+            String normalized = allowed == null ? "" : allowed.trim().toLowerCase(Locale.ROOT);
+            if (normalized.startsWith("/")) normalized = normalized.substring(1);
+            if (root.equals(normalized)) return true;
+        }
+        return false;
     }
 
     public void sendHelp(CommandSender sender) {

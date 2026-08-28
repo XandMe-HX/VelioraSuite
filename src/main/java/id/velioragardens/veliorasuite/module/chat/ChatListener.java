@@ -22,6 +22,12 @@ public final class ChatListener implements Listener {
             return;
         }
 
+        if (chatManager.isInteractiveChatEnabled()) {
+            event.setCancelled(true);
+            chatManager.broadcastInteractive(event.getPlayer(), result.message());
+            return;
+        }
+
         if (result.formatted()) {
             event.setCancelled(true);
             chatManager.broadcastFormatted(result.message());
