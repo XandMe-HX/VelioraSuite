@@ -24,7 +24,6 @@ public final class FishingManager {
     private final FishingRodDataManager rodDataManager;
     private final FishGenerator generator;
     private final FishItemFactory itemFactory;
-    private final FishingQuestHook questHook;
     private final FishingEffectManager effectManager;
     private FishingMainGuiManager mainGuiManager;
     private FishingSellGuiManager sellGuiManager;
@@ -45,7 +44,6 @@ public final class FishingManager {
         this.rodDataManager = new FishingRodDataManager(plugin);
         this.generator = new FishGenerator(configManager);
         this.itemFactory = new FishItemFactory(plugin, configManager);
-        this.questHook = new FishingQuestHook(plugin, configManager);
         this.effectManager = new FishingEffectManager(configManager, itemFactory);
     }
 
@@ -100,7 +98,6 @@ public final class FishingManager {
         CaughtFish fish = generatedFish.fish();
         dataManager.recordCatch(player, fish);
         collectionDataManager.unlock(player, fish);
-        questHook.addFishingProgress(player);
         AdventureModule adventure = plugin.getModuleManager().getModule("adventure")
                 .filter(AdventureModule.class::isInstance).map(AdventureModule.class::cast).orElse(null);
         if (adventure != null && adventure.getManager() != null) adventure.getManager().addFishingProgress(player, 1);

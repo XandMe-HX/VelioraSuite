@@ -34,7 +34,6 @@ settings:
       msg: 1
       r: 1
       pay: 3
-      quests: 2
       vguide: 2
       vrank: 2
       vproduct: 2
@@ -90,7 +89,7 @@ settings:
         triggers: ['panduan', 'cara main', 'command apa', 'fitur server', 'guide', 'vguide', 'mulai dari mana', 'awal main', 'command awal']
         lines:
           - '&fButuh panduan? Ketik &b/vguide &7untuk menu utama server.'
-          - '&7Cek juga &b/vrules&7, &b/vrank&7, &b/vproduct&7, &b/quests&7, dan &b/pet&7.'
+          - '&7Cek juga &b/vrules&7, &b/vrank&7, &b/vproduct&7, &b/skills&7, dan &b/pet&7.'
       features:
         triggers: ['semua fitur', 'fitur apa aja', 'fitur lengkap', 'daftar fitur', 'server ini ada apa', 'veliora fitur']
         lines:
@@ -194,11 +193,6 @@ settings:
         lines:
           - '&cMemanfaatkan bug, dupe, atau kesalahan harga dilarang keras.'
           - '&7Laporkan lewat &b/report bug <alasan>&7. Pelapor bug valid bisa dipertimbangkan mendapat reward.'
-      quest:
-        triggers: ['quest', 'misi', 'level quest', 'cara quest', 'quest jalan sendiri', 'pilih quest', 'mana quest', 'quest ga jalan']
-        lines:
-          - '&fQuest harus dipilih dulu lewat &b/quests&f atau &b/quests start <category>&f.'
-          - '&7Quest memakai Mana dan tidak jalan sendiri kalau belum dipilih.'
       boss:
         triggers: ['boss', 'dungeon', 'boss dimana', 'boss kapan', 'boss hilang', 'boss ga muncul', 'reward boss', 'ikut boss']
         lines:

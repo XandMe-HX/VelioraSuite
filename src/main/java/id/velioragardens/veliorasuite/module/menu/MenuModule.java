@@ -3,8 +3,6 @@ package id.velioragardens.veliorasuite.module.menu;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
 import id.velioragardens.veliorasuite.command.DisabledCommand;
-import id.velioragardens.veliorasuite.module.quest.QuestModule;
-import id.velioragardens.veliorasuite.module.quest.model.PlayerCategoryProgress;
 import id.velioragardens.veliorasuite.module.warp.WarpModule;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -187,7 +185,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         gui.setItem(19, item(Material.EMERALD, "&a&lSHOP", "&7Beli kebutuhan server.", "&eKlik untuk membuka /shop"));
         gui.setItem(21, item(Material.GOLD_INGOT, "&6&lSELL", "&7Jual barang melalui menu.", "&eKlik untuk /sellgui"));
         gui.setItem(23, item(Material.FISHING_ROD, "&b&lFISHING", "&7Tas, koleksi, rod, dan hasil pancing."));
-        gui.setItem(25, item(Material.WRITABLE_BOOK, "&e&lQUEST", "&7Quest otomatis dan level aktivitas."));
+        gui.setItem(25, item(Material.EXPERIENCE_BOTTLE, "&b&lAURASKILLS", "&7Lihat skill, statistik, dan kemampuanmu.", "&eKlik untuk membuka /skills"));
         gui.setItem(28, item(Material.BONE, "&d&lPETS", "&7Pet milikmu, makan, mastery, dan storage."));
         gui.setItem(30, item(Material.ENCHANTED_BOOK, "&b&lAURASKILLS", "&7Lihat skill, statistik, dan kemampuanmu.", "&eKlik untuk membuka /skills"));
         gui.setItem(32, item(Material.ENDER_PEARL, "&a&lWARP", "&7Lobby, Dungeon, PvP, dan Guild."));
@@ -209,7 +207,7 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
             case 19 -> run(player, "shop");
             case 21 -> run(player, "sellgui");
             case 23 -> run(player, "fish");
-            case 25 -> run(player, "quests");
+            case 25 -> run(player, "skills");
             case 28 -> run(player, "pet");
             case 30 -> run(player, "skills");
             case 32 -> openWarps(player);
@@ -232,7 +230,6 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
         lore.add("&8Profil Veliora Gardens");
         lore.add("");
         lore.add("&7Rank: &f" + primaryGroup(player));
-        lore.add("&7Level: &a" + level(player));
         lore.add("&7Uang: &e$" + format(balance(player)));
         lore.add("&7Kill / Mati: &c" + player.getStatistic(Statistic.PLAYER_KILLS) + " &8/ &7" + player.getStatistic(Statistic.DEATHS));
         lore.add("&7Playtime: &f" + formatTime(player.getStatistic(Statistic.PLAY_ONE_MINUTE)));
@@ -456,18 +453,6 @@ public final class MenuModule implements VelioraModule, Listener, CommandExecuto
             case KILLS -> (long) value + " kill";
             case DEATHS -> (long) value + " death";
         };
-    }
-
-    private int level(Player player) {
-        QuestModule module = module("quest", QuestModule.class);
-        if (module == null || module.getQuestManager() == null) return 1;
-        int total = 0;
-        int count = 0;
-        for (PlayerCategoryProgress progress : module.getQuestManager().getDataManager().getOrCreate(player).getCategories().values()) {
-            total += progress.getLevel();
-            count++;
-        }
-        return count == 0 ? 1 : Math.max(1, Math.round((float) total / count));
     }
 
     private boolean warpReady(String name) {

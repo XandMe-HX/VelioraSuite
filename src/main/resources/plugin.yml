@@ -91,11 +91,6 @@ commands:
     usage: /vguard <status|logs|case|confirm|deny|clear>
     aliases: [combatguard, killaura]
     permission: veliorasuite.security.alerts
-  quests:
-    description: Open and manage VelioraQuest.
-    usage: /quests <gui|progress|stats|skill|top|rank|start|claim|cancel|reload|status|xp|skilladmin>
-    aliases: [q, vquest]
-    permission: veliorasuite.quest.use
   fish:
     description: Open and manage VelioraFishing.
     usage: /fish <help|bag|sell|collection|top|give|take|reload>
@@ -231,9 +226,6 @@ commands:
     permission: veliorasuite.home.admin
 
 permissions:
-  veliorasuite.quest.use:
-    description: Menggunakan VelioraQuest.
-    default: true
   veliorasuite.fishing.trade:
     description: Menggunakan sistem trade aman antarpemain.
     default: true

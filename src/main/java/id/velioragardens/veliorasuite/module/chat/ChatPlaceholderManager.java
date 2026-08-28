@@ -2,8 +2,6 @@ package id.velioragardens.veliorasuite.module.chat;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.api.VelioraModule;
-import id.velioragardens.veliorasuite.module.quest.QuestModule;
-import id.velioragardens.veliorasuite.module.quest.QuestPlaceholderManager;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -66,7 +64,6 @@ public final class ChatPlaceholderManager {
         try {
             UUID uuid = player == null ? null : player.getUniqueId();
             String lower = identifier.toLowerCase();
-            if (lower.startsWith("quest_")) return getQuestPlaceholder(player, lower);
             return switch (lower) {
                 case "team_name" -> getTeamName(uuid);
                 case "team_tag" -> getTeamTag(uuid);
@@ -91,22 +88,10 @@ public final class ChatPlaceholderManager {
         return remainingMinutes + "m";
     }
 
-    private String getQuestPlaceholder(OfflinePlayer player, String identifier) {
-        QuestModule questModule = getQuestModule();
-        if (questModule == null || questModule.getQuestManager() == null) return "";
-        return new QuestPlaceholderManager(questModule.getQuestManager().getDataManager(), questModule.getQuestManager().getConfigManager()).getPlaceholder(player, identifier);
-    }
-
     private TeamModule getTeamModule() {
         Optional<VelioraModule> module = plugin.getModuleManager().getModule("team");
         if (module.isEmpty() || !(module.get() instanceof TeamModule teamModule)) return null;
         return teamModule;
-    }
-
-    private QuestModule getQuestModule() {
-        Optional<VelioraModule> module = plugin.getModuleManager().getModule("quest");
-        if (module.isEmpty() || !(module.get() instanceof QuestModule questModule)) return null;
-        return questModule;
     }
 
 }

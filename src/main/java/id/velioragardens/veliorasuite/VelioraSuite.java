@@ -19,7 +19,6 @@ import id.velioragardens.veliorasuite.module.notifications.NotificationModule;
 import id.velioragardens.veliorasuite.module.home.HomeModule;
 import id.velioragardens.veliorasuite.module.guard.GuardClaimModule;
 import id.velioragardens.veliorasuite.module.pets.PetsModule;
-import id.velioragardens.veliorasuite.module.quest.QuestModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
 import id.velioragardens.veliorasuite.module.security.SecurityModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
@@ -101,7 +100,6 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new WarpModule(this));
         moduleManager.register(new SecurityModule(this));
         moduleManager.register(new FishingModule(this));
-        moduleManager.register(new QuestModule(this));
         moduleManager.register(new TraderModule(this));
         moduleManager.register(new BossModule(this));
         moduleManager.register(new PetsModule(this));
@@ -114,7 +112,7 @@ public final class VelioraSuite extends JavaPlugin {
             return;
         }
         new VelioraPlaceholderExpansion(this).register();
-        getLogger().info("PlaceholderAPI VelioraSuite terdaftar, termasuk Level, Mana, Team, Playtime, dan Rank Petualang.");
+        getLogger().info("PlaceholderAPI VelioraSuite terdaftar, termasuk Team, Playtime, Fishing Coins, dan Rank Petualang.");
     }
 
     private void registerCoreCommand() {

@@ -171,8 +171,7 @@ public final class GuideModule implements VelioraModule {
                 }
                 case 4 -> {
                     send(sender, "&6&lQuest, Skill, Pet");
-                    send(sender, "&8- &b/quests status &7- cek module quest.");
-                    send(sender, "&8- &b/quests reload &7- reload quest.");
+                    send(sender, "&8- &b/skills &7- dikelola oleh plugin AuraSkills.");
                     send(sender, "&8- &b/skills &7- buka menu AuraSkills.");
                     send(sender, "&8- &b/pet reload &7- reload pet.");
                     send(sender, "&8- &b/pet give <player> <pet> &7- kasih pet.");

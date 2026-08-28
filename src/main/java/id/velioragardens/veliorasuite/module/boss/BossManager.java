@@ -60,7 +60,6 @@ public final class BossManager implements Listener {
     private final BossRewardManager rewardManager;
     private final BossSkillManager skillManager;
     private final BossTargetManager targetManager;
-    private final BossQuestHook questHook;
     private final Random random = new Random();
     private final Set<Integer> sentWarnings = new HashSet<>();
     private final Map<UUID, MaceSmashState> maceSmashes = new HashMap<>();
@@ -96,7 +95,6 @@ public final class BossManager implements Listener {
         this.rewardManager = new BossRewardManager(plugin, config);
         this.targetManager = new BossTargetManager(plugin, config);
         this.skillManager = new BossSkillManager(plugin, config, this);
-        this.questHook = new BossQuestHook(plugin);
         this.bossIdKey = new NamespacedKey(plugin, "velioraboss_id");
         this.bossNameKey = new NamespacedKey(plugin, "velioraboss_name");
         this.bossRarityKey = new NamespacedKey(plugin, "velioraboss_rarity");
@@ -406,7 +404,6 @@ public final class BossManager implements Listener {
             if (entry.damage() >= config.minDamageToReward()) {
                 Player player = Bukkit.getPlayer(entry.uuid());
                 if (player != null) {
-                    questHook.addMonsterHunterProgress(player);
                     data.addParticipation(player);
                     AdventureModule adventure = plugin.getModuleManager().getModule("adventure")
                             .filter(AdventureModule.class::isInstance).map(AdventureModule.class::cast).orElse(null);
