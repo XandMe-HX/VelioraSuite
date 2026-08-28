@@ -25,8 +25,6 @@ public final class ConfigManager {
             "report",
             "announcement",
             "fishing",
-            "skills",
-            "quest",
             "boss",
             "security",
             "chat",
@@ -90,8 +88,8 @@ public final class ConfigManager {
                 {"adminmonitor", "MONITOR"}, {"announcement", "NEWS"}, {"boss", "BOSS"},
                 {"chat", "CHAT"}, {"fishing", "FISHING"}, {"kits", "KITS"},
                 {"loginsecurity", "LOGIN"}, {"menu", "MENU"}, {"pets", "PETS"},
-                {"quest", "QUEST"}, {"report", "REPORT"}, {"security", "SECURITY"},
-                {"skills", "SKILLS"}, {"team", "TEAM"}, {"trader", "TRADER"}, {"warp", "WARP"}
+                {"report", "REPORT"}, {"security", "SECURITY"}, {"team", "TEAM"},
+                {"trader", "TRADER"}, {"warp", "WARP"}
         };
         for (String[] module : modules) {
             File file = new File(plugin.getDataFolder(), "modules/" + module[0] + ".yml");
