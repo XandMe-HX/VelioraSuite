@@ -93,17 +93,10 @@ public final class TeleportSafetyListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
-        // This is the only time movement may cancel teleport: before arrival.
-        // It must run before the post-arrival freeze check below.
-        if (warps.cancelPendingIfMoved(event.getPlayer(), event.getTo())) return;
-        Long until = frozenUntil.get(event.getPlayer().getUniqueId());
-        if (until == null || until <= System.currentTimeMillis() || event.getTo() == null) return;
-        if (event.getFrom().getX() == event.getTo().getX() && event.getFrom().getY() == event.getTo().getY()
-                && event.getFrom().getZ() == event.getTo().getZ()) return;
-        Location locked = event.getFrom().clone();
-        locked.setYaw(event.getTo().getYaw());
-        locked.setPitch(event.getTo().getPitch());
-        event.setTo(locked);
+        // Movement only cancels a pending countdown. Once the player arrives,
+        // blindness may remain briefly but their movement must never be locked
+        // or trigger another teleport attempt.
+        warps.cancelPendingIfMoved(event.getPlayer(), event.getTo());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

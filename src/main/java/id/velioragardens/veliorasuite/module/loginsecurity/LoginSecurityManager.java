@@ -70,6 +70,42 @@ public final class LoginSecurityManager {
         return sessionManager.isAuthenticated(player);
     }
 
+    /**
+     * Called only by a companion that has already verified an official Mojang
+     * session. It never trusts a name, UUID, or IP address on its own.
+     */
+    public boolean forcePremiumLogin(Player player) {
+        if (player == null || !player.isOnline()) return false;
+        sessionManager.setState(player, AuthState.AUTHENTICATED);
+        finishAuthentication(player);
+        return true;
+    }
+
+    /**
+     * Creates a password record for a Mojang-verified first-time player, then
+     * authenticates the current session. Existing Veliora accounts are never
+     * overwritten; they are simply authenticated after premium verification.
+     */
+    public boolean forcePremiumRegister(Player player, String generatedPassword) {
+        if (player == null || !player.isOnline() || generatedPassword == null || generatedPassword.isBlank()) return false;
+        try {
+            if (getPlayerData(player) == null) {
+                LoginSecurityPasswordManager.PasswordHash passwordHash = passwordManager.createHash(generatedPassword);
+                AuthPlayerData data = new AuthPlayerData(player.getUniqueId(), player.getName(), passwordHash.hash(), passwordHash.salt(), now(), now(), getIpHash(player), 0, 0L);
+                recordClientTrust(player, data);
+                dataManager.savePlayer(data);
+            }
+            return forcePremiumLogin(player);
+        } catch (Exception exception) {
+            plugin.getLogger().warning("VelioraLoginSecurity: gagal membuat akun premium untuk " + player.getName() + ".");
+            return false;
+        }
+    }
+
+    public boolean isRegistered(String playerName) {
+        return playerName != null && !playerName.isBlank() && dataManager.getByName(playerName) != null;
+    }
+
     public void handleJoin(Player player) {
         if (!configManager.isEnabled() || !configManager.isRequireLogin()) {
             sessionManager.setState(player, AuthState.AUTHENTICATED);
