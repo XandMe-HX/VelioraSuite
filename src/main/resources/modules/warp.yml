@@ -3,6 +3,7 @@ settings:
   prefix: '&7[&eVELIORA &aWARP&7] &r'
   cooldown-seconds: 3
   countdown-seconds: 3
+  # Sesudah tiba pemain BOLEH langsung berjalan. Nilai ini hanya durasi blindness.
   arrival-freeze-seconds: 3
   afk:
     auto-seconds: 300

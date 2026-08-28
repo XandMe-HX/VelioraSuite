@@ -66,6 +66,15 @@ public final class LoginSecurityModule implements VelioraModule {
         return enabled;
     }
 
+    /**
+     * Exposes the login service to approved companion plugins, such as
+     * VelioraPremiumLogin. The companion still must perform Mojang session
+     * verification itself before calling the premium methods on this manager.
+     */
+    public LoginSecurityManager getManager() {
+        return manager;
+    }
+
     private void registerCommands() {
         LoginSecurityCommand loginSecurityCommand = new LoginSecurityCommand(manager);
         for (String commandName : commandNames()) {
