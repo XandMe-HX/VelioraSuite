@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.chat;
 
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -13,12 +14,18 @@ public final class ChatListener implements Listener {
         this.chatManager = chatManager;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onAsyncPlayerChat(AsyncPlayerChatEvent event) {
         ChatManager.ChatProcessResult result = chatManager.processChat(event.getPlayer(), event.getMessage());
 
         if (result.cancelled()) {
             event.setCancelled(true);
+            return;
+        }
+
+        if (chatManager.isInteractiveChatEnabled()) {
+            event.setCancelled(true);
+            chatManager.broadcastInteractive(event.getPlayer(), result.message());
             return;
         }
 

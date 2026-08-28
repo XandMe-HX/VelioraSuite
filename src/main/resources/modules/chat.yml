@@ -14,6 +14,39 @@ settings:
   team-tag-placeholder-enabled: true
   protection-enabled: true
 
+  # Interactive chat: teks seperti [/spawn] menjadi tombol klik.
+  # RUN_COMMAND langsung menjalankan command; SUGGEST_COMMAND lebih aman karena
+  # pemain dapat memeriksa command di kolom chat sebelum mengirimnya.
+  # Saat aktif, VelioraSuite menjadi formatter utama. Matikan EssentialsChat
+  # formatter agar pesan tidak ganda atau formatnya tertimpa.
+  interactive-chat:
+    enabled: true
+    action: SUGGEST_COMMAND
+    hover: '&bKlik untuk memasukkan &f%command%&b ke chat.'
+    # Hanya command ini yang boleh menjadi tombol. Tambahkan command sendiri bila perlu.
+    allowed-commands:
+      - spawn
+      - warp
+      - rtp
+      - home
+      - tpa
+      - tpaccept
+      - tpdeny
+      - msg
+      - r
+      - pay
+      - balance
+      - shop
+      - sell
+      - fish
+      - pet
+      - skills
+      - stats
+      - vgclaim
+      - vguide
+      - vrank
+      - vproduct
+
   cooldown:
     enabled: true
     seconds: 2
