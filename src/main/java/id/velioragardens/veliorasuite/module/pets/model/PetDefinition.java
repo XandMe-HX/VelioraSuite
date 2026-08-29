@@ -20,6 +20,7 @@ public record PetDefinition(
         boolean flyingPet,
         boolean rideable,
         int adultLevel,
-        boolean aquaticPet
+        boolean aquaticPet,
+        boolean babyPet
 ) {
 }

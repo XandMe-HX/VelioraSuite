@@ -89,7 +89,7 @@ public final class PetConfigManager {
     public boolean allowAxolotlGroundPet() { return bool("settings.allow-axolotl-ground-pet", true); }
     public boolean economyEnabled() { return bool("settings.economy.enabled", true); }
     public long gachaPrice() { return config == null ? 25_000L : Math.max(0L, config.getLong("settings.economy.gacha-price", 25_000L)); }
-    public int maxLevel() { return Math.max(1, integer("settings.max-level", 50)); }
+    public int maxLevel() { return Math.max(1, integer("settings.max-level", 100)); }
     public int duplicateExp() { return Math.max(0, integer("settings.duplicate-exp", 50)); }
     public int maxFeedAmount() { return Math.max(1, integer("feeding.max-feed-amount", 64)); }
     public boolean autoSummonNewPet() { return bool("settings.auto-summon-new-pet", false); }
@@ -247,7 +247,8 @@ public final class PetConfigManager {
                 flyingPet,
                 config.getBoolean(path + ".rideable", defaultRideable(type)),
                 Math.max(1, config.getInt(path + ".adult-level", defaultAdultLevel())),
-                aquatic));
+                aquatic,
+                config.getBoolean(path + ".baby", normalizedId.startsWith("baby_"))));
     }
 
     private void addBuiltinAnimalPets() {
@@ -287,7 +288,7 @@ public final class PetConfigManager {
         boolean isAquatic = defaultAquatic(type);
         if (isAxolotlGround(type)) isAquatic = false;
         if (isAquatic && !allowAquaticPets() && !isAxolotlGround(type)) return;
-        pets.put(normalizedId, new PetDefinition(normalizedId, display, type, material(icon, Material.BONE), rarity, PetSkillType.NONE, 0.0D, 0.0D, scale, balancedPrice(rarity, price), storageSize(rarity), material(food, defaultFood(rarity)), Math.max(1, feedExp), flying, rideable, Math.max(1, adultLevel), isAquatic));
+        pets.put(normalizedId, new PetDefinition(normalizedId, display, type, material(icon, Material.BONE), rarity, PetSkillType.NONE, 0.0D, 0.0D, scale, balancedPrice(rarity, price), storageSize(rarity), material(food, defaultFood(rarity)), Math.max(1, feedExp), flying, rideable, Math.max(1, adultLevel), isAquatic, normalizedId.startsWith("baby_")));
     }
 
     private boolean isBlacklistedPet(String id, String rawEntity) {

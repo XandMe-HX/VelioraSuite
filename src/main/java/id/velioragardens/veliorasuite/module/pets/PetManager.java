@@ -394,7 +394,7 @@ public final class PetManager implements Listener {
                 .replace("%exp%", String.valueOf(exp))));
         player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0.0D, 1.0D, 0.0D), Math.min(24, 8 + amount * 3), 0.38D, 0.55D, 0.38D, 0.025D);
         player.playSound(player.getLocation(), leveled ? Sound.UI_TOAST_CHALLENGE_COMPLETE : Sound.ENTITY_GENERIC_EAT, leveled ? 0.75F : 0.5F, leveled ? 1.2F : 1.1F);
-        if (leveled) player.sendTitle(config.color("&dPET LEVEL UP!"), config.color("&f" + owned.name() + " &7Level " + owned.level()), 4, 32, 8);
+        if (leveled) levelUpEffect(player, owned);
     }
 
     /** Consumes only valid food placed in the feeding GUI; all other items are returned. */
@@ -417,7 +417,7 @@ public final class PetManager implements Listener {
                 .replace("%pet%", owned.name()).replace("%amount%", String.valueOf(amount)).replace("%exp%", String.valueOf(exp))));
         player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0.0D, 1.0D, 0.0D), Math.min(24, 8 + amount * 3), 0.38D, 0.55D, 0.38D, 0.025D);
         player.playSound(player.getLocation(), leveled ? Sound.UI_TOAST_CHALLENGE_COMPLETE : Sound.ENTITY_GENERIC_EAT, leveled ? 0.75F : 0.5F, leveled ? 1.2F : 1.1F);
-        if (leveled) player.sendTitle(config.color("&dPET LEVEL UP!"), config.color("&f" + owned.name() + " &7Level " + owned.level()), 4, 32, 8);
+        if (leveled) levelUpEffect(player, owned);
         return offered.getAmount() > 0 ? offered : null;
     }
 
@@ -501,7 +501,7 @@ public final class PetManager implements Listener {
         entity.setGravity(!definition.flyingPet() && !definition.aquaticPet());
         if (entity instanceof Mob mob) mob.setTarget(null);
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
-        tryBaby(entity);
+        if (definition.babyPet()) tryBaby(entity);
         scaleHelper.apply(entity, scaleFor(definition, owned.level()));
     }
 
@@ -709,9 +709,23 @@ public final class PetManager implements Listener {
         entity.setCustomNameVisible(true);
     }
 
+    private void levelUpEffect(Player player, OwnedPet owned) {
+        player.sendTitle(config.color("&dPET LEVEL UP!"), config.color("&f" + owned.name() + " &7Level " + owned.level()), 4, 32, 8);
+        if (owned.level() % 10 != 0) return;
+        VelioraPet active = activePets.get(player.getUniqueId());
+        Location center = active == null ? player.getLocation().add(0, 1.0D, 0) : active.entity().getLocation().add(0, 0.8D, 0);
+        center.getWorld().spawnParticle(Particle.END_ROD, center, 20, 0.45D, 0.70D, 0.45D, 0.04D);
+        center.getWorld().spawnParticle(Particle.ENCHANT, center, 28, 0.55D, 0.65D, 0.55D, 0.20D);
+        center.getWorld().playSound(center, Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.15F);
+        player.sendMessage(config.color(config.prefix() + "&6✦ &f" + owned.name() + " &emencapai level " + owned.level() + " dan bertambah besar!"));
+    }
+
     private double scaleFor(PetDefinition definition, int level) {
-        double bonus = Math.min(config.maxScaleBonus(), Math.max(0, level - 1) * config.scalePerLevel());
-        return definition.scale() + bonus;
+        if (definition.babyPet()) return definition.scale();
+        // Growth happens at levels 10, 20, … 100. This avoids resizing every feed
+        // and guarantees a hard visual ceiling of two blocks.
+        int stages = Math.max(0, Math.min(100, level) / 10);
+        return Math.min(2.0D, definition.scale() + stages * 0.15D);
     }
 
     private boolean isHungry(OwnedPet owned) {
