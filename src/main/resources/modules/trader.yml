@@ -1,7 +1,7 @@
 settings:
   config-version: 6
   enabled: true
-  # Trader dibuka lewat /trader; lima penawaran acak berganti satu kali tiap minggu.
+  # Trader dibuka lewat /trader; lima penawaran acak berganti tiap jam mengikuti WIB.
   gui-only: true
   prefix: '&7[&eVELIORA &aTRADER&7] &r'
   spawn:
@@ -32,6 +32,12 @@ settings:
     # Lima slot tetap tampil. Item dipilih menurut weight setiap item di trade-pool.
     # Angka weight lebih besar = lebih sering muncul dalam kategori item tersebut.
     random-items-per-spawn: 5
+    offer-rotation-hours: 1
+    # Sebelum transaksi final, pemain melihat efek singkat dan bunyi per detik.
+    purchase-animation-seconds: 3
+    farm-sell:
+      # Hasil farm hanya dapat dijual satu kali oleh setiap pemain setiap minggu.
+      weekly-limit: true
     max-money-price: 500000
     # Semua harga MONEY efektif menjadi 80% dari angka payment.money.
     money-price-multiplier: 0.80
@@ -535,6 +541,7 @@ messages:
   trader-reminder: '%prefix% &6Veliora Trader masih ada di &f%world% %x% %y% %z%&6. Hilang dalam &f%time%&6.'
   trader-purchase-money: '%prefix% &e%player% &aberhasil membeli &f%item% &adari Veliora Trader.'
   trader-purchase-fish: '%prefix% &e%player% &aberhasil menukar ikan untuk &f%item%&a.'
+  trader-offers-rotated: '%prefix% &bLima penawaran acak Trader telah diperbarui. Gunakan &f/trader &buntuk melihatnya.'
   buy-success-money: '%prefix% &aBerhasil membeli &f%item% &adengan harga &f%money%&a.'
   buy-success-fish: '%prefix% &aBerhasil menukar ikan untuk &f%item%&a.'
   not-enough-money: '%prefix% &cUang kamu tidak cukup.'

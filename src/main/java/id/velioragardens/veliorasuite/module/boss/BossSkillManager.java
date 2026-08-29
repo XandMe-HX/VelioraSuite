@@ -15,6 +15,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -108,17 +109,27 @@ public final class BossSkillManager {
 
     private void groundSlam(LivingEntity boss) {
         Location location = boss.getLocation();
-        location.getWorld().spawnParticle(Particle.CLOUD, location, 60, 3.0D, 0.4D, 3.0D, 0.05D);
-        location.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0F, 0.8F);
-        for (Player player : nearbyPlayers(location, 6.0D)) {
-            player.damage(config.groundSlamDamage() * outgoingDamageMultiplier());
-            Vector knock = safeDirection(player.getLocation().toVector().subtract(location.toVector()))
-                    .multiply(config.groundSlamKnockback()).setY(config.groundSlamUpward());
-            player.setVelocity(knock);
-        }
+        telegraphRing(boss, location, Particle.CRIT, 3.4D, 1.0D, Sound.BLOCK_STONE_PLACE);
+        runAfterTelegraph(boss, () -> {
+            Location impact = boss.getLocation();
+            impact.getWorld().spawnParticle(Particle.CLOUD, impact, 38, 2.7D, 0.35D, 2.7D, 0.04D);
+            impact.getWorld().spawnParticle(Particle.BLOCK, impact, 26, 2.4D, 0.25D, 2.4D, 0.08D, impact.getBlock().getBlockData());
+            impact.getWorld().playSound(impact, Sound.ENTITY_GENERIC_EXPLODE, 0.85F, 0.82F);
+            for (Player player : nearbyPlayers(impact, 6.0D)) {
+                player.damage(config.groundSlamDamage() * outgoingDamageMultiplier());
+                Vector knock = safeDirection(player.getLocation().toVector().subtract(impact.toVector()))
+                        .multiply(config.groundSlamKnockback()).setY(config.groundSlamUpward());
+                player.setVelocity(knock);
+            }
+        });
     }
 
     private void summonMinions(LivingEntity boss) {
+        telegraphRing(boss, boss.getLocation(), Particle.ENCHANT, 2.5D, 1.3D, Sound.ENTITY_EVOKER_PREPARE_SUMMON);
+        runAfterTelegraph(boss, () -> summonMinionsNow(boss));
+    }
+
+    private void summonMinionsNow(LivingEntity boss) {
         int current = countMinions(boss.getLocation());
         if (current >= config.maxMinions()) return;
         for (int i = 0; i < config.minionsPerCast() && current + i < config.maxMinions(); i++) {
@@ -135,33 +146,40 @@ public final class BossSkillManager {
     private void fireBomb(LivingEntity boss) {
         List<Player> targets = nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal());
         Location target = targets.isEmpty() ? boss.getLocation().clone().add(random.nextInt(9) - 4, 0, random.nextInt(9) - 4) : targets.get(random.nextInt(targets.size())).getLocation();
-        target.getWorld().spawnParticle(Particle.FLAME, target, 40, 1.5D, 0.4D, 1.5D, 0.05D);
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+        telegraphRing(boss, target, Particle.FLAME, 1.65D, 0.08D, Sound.BLOCK_FIRE_AMBIENT);
+        runAfterTelegraph(boss, () -> {
             target.getWorld().spawnParticle(Particle.EXPLOSION, target, 1);
+            target.getWorld().spawnParticle(Particle.LAVA, target, 18, 1.25D, 0.25D, 1.25D, 0.03D);
             target.getWorld().playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 1.0F, 1.0F);
             for (Player player : nearbyPlayers(target, 4.0D)) player.damage(config.fireBombDamage() * outgoingDamageMultiplier());
-        }, 30L);
+        });
     }
 
     private void pullAura(LivingEntity boss) {
-        Location location = boss.getLocation();
-        location.getWorld().playSound(location, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.6F);
-        for (Player player : nearbyPlayers(location, 10.0D)) {
-            Vector pull = safeDirection(location.toVector().subtract(player.getLocation().toVector()))
-                    .multiply(config.pullAuraStrength()).setY(config.pullAuraUpward());
-            player.setVelocity(pull);
-        }
+        telegraphRing(boss, boss.getLocation(), Particle.PORTAL, 4.3D, 1.1D, Sound.ENTITY_ENDERMAN_TELEPORT);
+        runAfterTelegraph(boss, () -> {
+            Location location = boss.getLocation();
+            location.getWorld().playSound(location, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.6F);
+            for (Player player : nearbyPlayers(location, 10.0D)) {
+                Vector pull = safeDirection(location.toVector().subtract(player.getLocation().toVector()))
+                        .multiply(config.pullAuraStrength()).setY(config.pullAuraUpward());
+                player.setVelocity(pull);
+            }
+        });
     }
 
     private void poisonCloud(LivingEntity boss) {
-        Location location = boss.getLocation();
-        location.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, location, 80, 4.0D, 1.0D, 4.0D, 0.05D);
-        PotionEffectType poison = PotionEffectType.getByName("POISON");
-        PotionEffectType slow = PotionEffectType.getByName("SLOW");
-        for (Player player : nearbyPlayers(location, 7.0D)) {
-            if (poison != null) player.addPotionEffect(new PotionEffect(poison, 80, 0));
-            if (slow != null) player.addPotionEffect(new PotionEffect(slow, 80, 0));
-        }
+        telegraphRing(boss, boss.getLocation(), Particle.SPORE_BLOSSOM_AIR, 4.0D, 0.45D, Sound.ENTITY_WITCH_AMBIENT);
+        runAfterTelegraph(boss, () -> {
+            Location location = boss.getLocation();
+            location.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, location, 42, 3.5D, 0.8D, 3.5D, 0.03D);
+            PotionEffectType poison = PotionEffectType.getByName("POISON");
+            PotionEffectType slow = PotionEffectType.getByName("SLOW");
+            for (Player player : nearbyPlayers(location, 7.0D)) {
+                if (poison != null) player.addPotionEffect(new PotionEffect(poison, 80, 0));
+                if (slow != null) player.addPotionEffect(new PotionEffect(slow, 80, 0));
+            }
+        });
     }
 
     /** A readable close-range raid mechanic: every nearby member gets a warning, then 2.5 hearts of lightning damage. */
@@ -264,5 +282,33 @@ public final class BossSkillManager {
 
     private Vector safeDirection(Vector vector) {
         return vector.lengthSquared() <= 0.0001D ? new Vector() : vector.normalize();
+    }
+
+    /** Small moving rings make attacks readable without a permanent particle flood. */
+    private void telegraphRing(LivingEntity boss, Location center, Particle particle, double radius, double height, Sound sound) {
+        if (!config.skillVisualsEnabled() || center == null || center.getWorld() == null) return;
+        Location anchor = center.clone();
+        new BukkitRunnable() {
+            private int elapsed;
+            private double angle;
+
+            @Override public void run() {
+                if (!isCurrentBoss(boss) || elapsed >= config.skillTelegraphTicks()) { cancel(); return; }
+                for (int point = 0; point < 10; point++) {
+                    double current = angle + (Math.PI * 2.0D * point / 10.0D);
+                    Location pointLocation = anchor.clone().add(Math.cos(current) * radius, height, Math.sin(current) * radius);
+                    anchor.getWorld().spawnParticle(particle, pointLocation, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                }
+                if (elapsed == 0 || elapsed + 4 >= config.skillTelegraphTicks()) anchor.getWorld().playSound(anchor, sound, 0.42F, 0.8F + elapsed / 100.0F);
+                angle += 0.42D;
+                elapsed += 2;
+            }
+        }.runTaskTimer(plugin, 0L, 2L);
+    }
+
+    private void runAfterTelegraph(LivingEntity boss, Runnable action) {
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (isCurrentBoss(boss)) action.run();
+        }, config.skillTelegraphTicks());
     }
 }

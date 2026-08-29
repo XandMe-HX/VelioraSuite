@@ -24,6 +24,17 @@ settings:
   debug: false
   prefix: '&8[&bVeliora&3Suite&8] &r'
   brand-version: 1
+  # Runtime player data will move here in stages. Do not delete this folder.
+  database-file: 'database/veliora.db'
+
+# Efek hanya dikirim ke pemain di dekat lokasi. Batas ini mencegah gacha,
+# fishing, pet, dan quest mengirim partikel tanpa batas saat server ramai.
+effects:
+  enabled: true
+  low-lag: true
+  view-distance: 32.0
+  max-particles-per-player-per-second: 100
+  max-particles-per-burst: 36
 
 modules:
   guide: true

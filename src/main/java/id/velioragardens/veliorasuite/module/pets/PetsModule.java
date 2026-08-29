@@ -8,9 +8,6 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.scheduler.BukkitTask;
 
 public final class PetsModule implements VelioraModule {
-    // Pet movement does not need to run every 100 ms. Five ticks keeps following
-    // responsive while cutting the per-player controller work by 60%.
-    private static final long CONTROLLER_INTERVAL_TICKS = 5L;
     private final VelioraSuite plugin;
     private PetManager manager;
     private PetGuiManager guiManager;
@@ -18,7 +15,6 @@ public final class PetsModule implements VelioraModule {
     private PetSafeModeGuardListener safeModeGuardListener;
     private PetRedProtectGuardListener redProtectGuardListener;
     private BukkitTask quietTask;
-    private BukkitTask coreControllerTask;
     private boolean enabled;
 
     public PetsModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -47,8 +43,10 @@ public final class PetsModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(redProtectGuardListener, plugin);
         cleanupAnchorsOnly();
         manager.start(guiManager);
-        coreControllerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetCoreControllerTask(plugin, manager), CONTROLLER_INTERVAL_TICKS, CONTROLLER_INTERVAL_TICKS);
-        quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager.config()), 20L, 40L);
+        // PetManager owns the single follow/combat controller. Do not add a
+        // second controller here: two controllers compete for pathfinding and
+        // velocity and make every active pet work twice as often.
+        quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager), 20L, 40L);
     }
 
     @Override
@@ -56,9 +54,7 @@ public final class PetsModule implements VelioraModule {
         enabled = false;
         if (guiManager != null) guiManager.saveAndCloseOpenStorages();
         if (quietTask != null) quietTask.cancel();
-        if (coreControllerTask != null) coreControllerTask.cancel();
         quietTask = null;
-        coreControllerTask = null;
         if (manager != null) HandlerList.unregisterAll(manager);
         if (guiManager != null) HandlerList.unregisterAll(guiManager);
         if (safetyListener != null) HandlerList.unregisterAll(safetyListener);

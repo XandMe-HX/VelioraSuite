@@ -774,14 +774,21 @@ public final class BossManager implements Listener {
                 mace ? 0.65F : 0.35F, mace ? 1.45F : 1.15F);
     }
 
-    /** Sends a small, per-player aura only every two seconds and scales it down when the arena is busy. */
+    /** Sends a small orbiting aura only every two seconds and scales it down when the arena is busy. */
     private void emitAura() {
         if (activeBoss == null || activeDefinition == null || (System.currentTimeMillis() / 1000L) % 2L != 0L) return;
         List<Player> viewers = nearbyTargetPlayers(activeBoss.getLocation(), config.bossBarRadius());
         int count = viewers.size() > 12 ? 2 : viewers.size() > 6 ? 4 : 8;
         Particle particle = activeDefinition.rarity() == BossRarity.MYTHIC ? Particle.SOUL_FIRE_FLAME : Particle.SOUL;
-        Location location = activeBoss.getLocation().add(0.0D, 1.2D, 0.0D);
-        for (Player viewer : viewers) viewer.spawnParticle(particle, location, count, 1.0D, 1.0D, 1.0D, 0.01D);
+        Location center = activeBoss.getLocation().add(0.0D, Math.min(2.6D, Math.max(1.1D, activeBoss.getHeight() * 0.34D)), 0.0D);
+        double phase = (System.currentTimeMillis() % 4000L) / 4000.0D * Math.PI * 2.0D;
+        for (Player viewer : viewers) {
+            for (int point = 0; point < count; point++) {
+                double angle = phase + Math.PI * 2.0D * point / count;
+                Location orbit = center.clone().add(Math.cos(angle) * 1.15D, Math.sin(angle * 2.0D) * 0.30D, Math.sin(angle) * 1.15D);
+                viewer.spawnParticle(particle, orbit, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
     }
 
     private void cleanupTaggedEntities() {

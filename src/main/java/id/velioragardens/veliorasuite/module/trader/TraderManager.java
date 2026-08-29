@@ -4,18 +4,25 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.trader.model.TraderTradeItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 
 public final class TraderManager {
@@ -33,6 +40,9 @@ public final class TraderManager {
     private final List<TraderTradeItem> activeItems = new ArrayList<>();
     private Location activeLocation;
     private long despawnAt;
+    private BukkitTask offerRotationTask;
+    private final Map<UUID, BukkitTask> pendingPurchases = new HashMap<>();
+    private String lastAnnouncedOfferPeriod = "";
 
     public TraderManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -52,14 +62,20 @@ public final class TraderManager {
         dataManager.load();
         cleanupPersistedActiveState();
         if (configManager.isGuiOnly()) {
-            refreshWeeklyOffers(false);
+            refreshHourlyOffers(false);
         }
     }
 
-    public void enable() { if (!configManager.isGuiOnly()) spawnManager.start(); }
+    public void enable() {
+        if (configManager.isGuiOnly()) startOfferRotation();
+        else spawnManager.start();
+    }
 
     public void disable() {
         spawnManager.stop();
+        stopOfferRotation();
+        pendingPurchases.values().forEach(BukkitTask::cancel);
+        pendingPurchases.clear();
         if (configManager.isGuiOnly()) {
             cleanupLegacyNpcState();
         } else {
@@ -72,7 +88,8 @@ public final class TraderManager {
         configManager.load();
         if (configManager.isGuiOnly()) {
             spawnManager.stop();
-            refreshWeeklyOffers(false);
+            refreshHourlyOffers(false);
+            startOfferRotation();
         } else spawnManager.reload();
     }
 
@@ -121,7 +138,7 @@ public final class TraderManager {
 
     public boolean riset(CommandSender sender) {
         if (configManager.isGuiOnly()) {
-            refreshWeeklyOffers(true);
+            refreshHourlyOffers(true);
             send(sender, "riset-success", "%prefix% &aPenawaran acak Trader berhasil diperbarui.", Map.of());
             return true;
         }
@@ -141,12 +158,39 @@ public final class TraderManager {
     }
 
     public void openGui(Player player) {
-        if (configManager.isGuiOnly()) refreshWeeklyOffers(false);
+        if (configManager.isGuiOnly()) refreshHourlyOffers(false);
         if (!configManager.isGuiOnly() && !isActive()) {
             send(player, "trader-next", "%prefix% &eTrader belum muncul. Spawn berikutnya dalam &f%time%&e.", Map.of("%time%", timeLeft(spawnManager.getNextSpawnAt())));
             return;
         }
         guiManager.open(player);
+    }
+
+    public boolean beginBuy(Player player, String itemId) {
+        if (pendingPurchases.containsKey(player.getUniqueId())) return false;
+        TraderTradeItem item = activeItems.stream().filter(trade -> trade.getId().equalsIgnoreCase(itemId)).findFirst().orElse(null);
+        if (item == null) return false;
+        int seconds = configManager.getPurchaseAnimationSeconds();
+        if (seconds <= 0) { buy(player, itemId); return true; }
+        final int[] remaining = {seconds};
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline()) { cancelPurchase(player.getUniqueId()); return; }
+            if (remaining[0]-- > 0) {
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.55F, 1.0F + (seconds - remaining[0]) * 0.12F);
+                player.getWorld().spawnParticle(Particle.WAX_ON, player.getLocation().add(0, 1.0D, 0), 8, 0.35D, 0.4D, 0.35D, 0.01D);
+                return;
+            }
+            cancelPurchase(player.getUniqueId());
+            buy(player, itemId);
+        }, 0L, 20L);
+        pendingPurchases.put(player.getUniqueId(), task);
+        player.closeInventory();
+        return true;
+    }
+
+    private void cancelPurchase(UUID playerId) {
+        BukkitTask task = pendingPurchases.remove(playerId);
+        if (task != null) task.cancel();
     }
 
     public void buy(Player player, String itemId) {
@@ -169,6 +213,8 @@ public final class TraderManager {
         }
         purchaseManager.markPurchased(player, item);
         give(player, itemFactory.createReward(item));
+        player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, player.getLocation().add(0, 1.0D, 0), 24, 0.45D, 0.55D, 0.45D, 0.1D);
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.75F, 1.1F);
         String itemName = configManager.color(item.getName());
         if (item.getPaymentType().name().equals("FISH")) {
             send(player, "buy-success-fish", "%prefix% &aBerhasil menukar ikan untuk &f%item%&a.", Map.of("%item%", itemName));
@@ -236,8 +282,23 @@ public final class TraderManager {
         return List.copyOf(selected);
     }
 
-    private synchronized void refreshWeeklyOffers(boolean force) {
-        String period = weeklyPeriod();
+    public boolean canSellFarm(Player player) {
+        return !configManager.isFarmSellWeeklyLimit()
+                || !farmSellPeriod().equals(dataManager.getFarmSellPeriod(player.getUniqueId()));
+    }
+
+    public void markFarmSold(Player player) {
+        if (configManager.isFarmSellWeeklyLimit()) {
+            dataManager.saveFarmSellPeriod(player.getUniqueId(), farmSellPeriod());
+        }
+    }
+
+    public String farmSellResetText() {
+        return "minggu berikutnya";
+    }
+
+    private synchronized boolean refreshHourlyOffers(boolean force) {
+        String period = offerPeriod();
         List<String> saved = dataManager.getOfferIds();
         if (!force && period.equals(dataManager.getOfferPeriod()) && !saved.isEmpty()) {
             List<TraderTradeItem> restored = new ArrayList<>();
@@ -246,7 +307,7 @@ public final class TraderManager {
             if (!restored.isEmpty()) {
                 activeItems.clear();
                 activeItems.addAll(restored);
-                return;
+                return false;
             }
         }
         List<TraderTradeItem> selected = selectRandomItems();
@@ -254,9 +315,40 @@ public final class TraderManager {
         activeItems.addAll(selected);
         dataManager.saveOffers(period, selected.stream().map(TraderTradeItem::getId).toList());
         purchaseManager.resetForNewTrader();
+        return !selected.isEmpty();
     }
 
-    private String weeklyPeriod() {
+    private void startOfferRotation() {
+        stopOfferRotation();
+        lastAnnouncedOfferPeriod = offerPeriod();
+        offerRotationTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            String before = dataManager.getOfferPeriod();
+            boolean changed = refreshHourlyOffers(false);
+            String current = dataManager.getOfferPeriod();
+            if (changed && !current.equals(before) && !current.equals(lastAnnouncedOfferPeriod)) {
+                lastAnnouncedOfferPeriod = current;
+                Bukkit.broadcastMessage(configManager.color(configManager.message("trader-offers-rotated",
+                        "%prefix% &bLima penawaran acak Trader telah diperbarui. Gunakan &f/trader &buntuk melihatnya.")));
+            }
+        }, 20L, 20L * 60L);
+    }
+
+    private void stopOfferRotation() {
+        if (offerRotationTask != null) offerRotationTask.cancel();
+        offerRotationTask = null;
+    }
+
+    private String offerPeriod() {
+        ZoneId zone;
+        try { zone = ZoneId.of(configManager.getTimezone()); }
+        catch (RuntimeException ignored) { zone = ZoneId.of("Asia/Jakarta"); }
+        LocalDateTime now = LocalDateTime.now(zone).withMinute(0).withSecond(0).withNano(0);
+        int hours = configManager.getOfferRotationHours();
+        now = now.withHour((now.getHour() / hours) * hours);
+        return now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH"));
+    }
+
+    private String farmSellPeriod() {
         ZoneId zone;
         try { zone = ZoneId.of(configManager.getTimezone()); }
         catch (RuntimeException ignored) { zone = ZoneId.of("Asia/Jakarta"); }

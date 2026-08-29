@@ -5,11 +5,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 
 public final class TeamChatManager {
 
     private final TeamConfigManager configManager;
+    private final Set<UUID> chatMode = ConcurrentHashMap.newKeySet();
 
     public TeamChatManager(TeamConfigManager configManager) {
         this.configManager = configManager;
@@ -34,6 +37,16 @@ public final class TeamChatManager {
             }
         }
     }
+
+    public boolean toggle(Player player) {
+        if (player == null) return false;
+        if (chatMode.remove(player.getUniqueId())) return false;
+        chatMode.add(player.getUniqueId());
+        return true;
+    }
+
+    public boolean isEnabled(UUID uuid) { return uuid != null && chatMode.contains(uuid); }
+    public void disable(UUID uuid) { if (uuid != null) chatMode.remove(uuid); }
 
     private String apply(String text, Map<String, String> placeholders) {
         String result = text;

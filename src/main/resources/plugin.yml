@@ -76,7 +76,12 @@ commands:
     aliases: [vreports]
   team:
     description: Manage VelioraTeam.
-    usage: /team <help|create|invite|accept|leave|list|chat|upgrade|setowner|delete|info|reload>
+    usage: /team <help|create|join|invite|accept|leave|home|sethome|delhome|pvp|chat|info|top|baltop|rank|bal>
+  teama:
+    description: Kelola seluruh Team Veliora sebagai admin.
+    usage: /teama help
+    aliases: [teamadmin, vteama]
+    permission: veliorasuite.team.admin
   veliorachat:
     description: Manage VelioraChat.
     usage: /veliorachat <help|status|reload>
@@ -226,6 +231,22 @@ commands:
     permission: veliorasuite.home.admin
 
 permissions:
+  veliorasuite.team.use:
+    description: Menggunakan command Team Veliora untuk player biasa.
+    default: true
+  veliorasuite.team.admin:
+    description: Mengelola seluruh Team Veliora dengan /teama.
+    default: op
+  veliorasuite.team.reload:
+    default: op
+  veliorasuite.team.setowner:
+    default: op
+  veliorasuite.team.delete:
+    default: op
+  veliorasuite.team.bypasscost:
+    default: op
+  veliorasuite.team.bypasslimit:
+    default: op
   veliorasuite.fishing.trade:
     description: Menggunakan sistem trade aman antarpemain.
     default: true

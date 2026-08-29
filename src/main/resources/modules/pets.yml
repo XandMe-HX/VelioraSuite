@@ -9,7 +9,11 @@ settings:
   walking-pets-only: true
   allow-aquatic-pets: false
   allow-axolotl-ground-pet: true
-  allow-flying-pets: false
+  allow-flying-pets: true
+  flying-pets:
+    # Hanya entity ini yang boleh menjadi pet terbang. Monster dan boss tetap ditolak.
+    allowed-entities: [PARROT, BEE, ALLAY]
+    minimum-level: 30
   follow:
     use-pathfinder: true
   flying-safe-mode:
@@ -29,6 +33,8 @@ riding:
   dismount-on-dismiss: true
   speed: 0.32
   jump-y: 0.42
+  fly-speed: 0.30
+  fly-vertical-speed: 0.24
   prevent-ride-in-combat: false
   rideable-rarities:
     common: true

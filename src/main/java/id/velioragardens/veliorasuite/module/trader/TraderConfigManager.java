@@ -190,6 +190,9 @@ public final class TraderConfigManager {
         int configured = integer("settings.trade.random-items-per-spawn", 5);
         return Math.max(1, Math.min(getTradeSlots().size(), configured));
     }
+    public int getPurchaseAnimationSeconds() { return Math.max(0, Math.min(5, integer("settings.trade.purchase-animation-seconds", 3))); }
+    public int getOfferRotationHours() { return Math.max(1, Math.min(24, integer("settings.trade.offer-rotation-hours", 1))); }
+    public boolean isFarmSellWeeklyLimit() { return bool("settings.trade.farm-sell.weekly-limit", true); }
     public long getMaxMoneyPrice() { return Math.max(0L, Math.min(500_000L, config == null ? 500_000L : config.getLong("settings.trade.max-money-price", 500_000L))); }
     public double getMoneyPriceMultiplier() { return Math.max(0.0D, Math.min(1.0D, number("settings.trade.money-price-multiplier", 0.80D))); }
     public String getStockMode() { return str("settings.trade.stock-mode", "GLOBAL"); }

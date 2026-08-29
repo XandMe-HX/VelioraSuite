@@ -4,6 +4,23 @@ settings:
   enabled: true
   hide-member-commands: true
 
+# XP AuraSkills ikut mengisi level/rank Petualang. Fighting sengaja mati supaya
+# pukul-pukul mob tidak dapat menjadi jalan pintas menaikkan Petualang.
+integrations:
+  auraskills:
+    enabled: true
+    xp-to-adventure-ratio: 0.15
+    minimum-source-xp: 1.0
+    skills:
+      farming: true
+      foraging: true
+      mining: true
+      fishing: true
+      excavation: true
+      fighting: false
+      defense: false
+      archery: false
+
 daily:
   timezone: Asia/Jakarta
   quest-count: 5
@@ -18,8 +35,14 @@ locations:
   max: 2000
   completion-radius: 20
   mob-activation-radius: 48
+  # Kill/mining/farming quest hanya dihitung di sekitar koordinat misi.
+  objective-radius: 96
   spawn-quest-mobs: true
   max-spawned-mobs: 20
+
+anti-farm:
+  # Menahan macro yang mengirim progres terlalu cepat, tanpa mengganggu main normal.
+  max-progress-per-second: 12
 
 level:
   max: 100
@@ -28,31 +51,31 @@ level:
 
 ranks:
   F:
-    display: '&7F'
+    display: '&8[&#9A9A9A&lF&8]'
     required-exp: 0
   E:
-    display: '&aE'
+    display: '&8[&#72F28D&lE&8]'
     required-exp: 2500
   D:
-    display: '&bD'
+    display: '&8[&#45D6FF&lD&8]'
     required-exp: 7500
   C:
-    display: '&9C'
+    display: '&8[&#4D8DFF&lC&8]'
     required-exp: 20000
   B:
-    display: '&5B'
+    display: '&8[&#A86BFF&lB&8]'
     required-exp: 50000
   A:
-    display: '&6A'
+    display: '&8[&#FFD34D&lA&8]'
     required-exp: 100000
   S:
-    display: '&cS'
+    display: '&8[&#FF4D6D&lS&8]'
     required-exp: 200000
   SS:
-    display: '&dSS'
+    display: '&8[&#FF56CB&lS&#B15CFF&lS&8]'
     required-exp: 400000
   SSS:
-    display: '&fSSS'
+    display: '&8[&#FF4D5F&lS&#FF9B45&lS&#FFE14D&lS&8]'
     required-exp: 750000
 
 gui:

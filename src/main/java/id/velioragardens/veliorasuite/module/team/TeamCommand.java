@@ -22,7 +22,12 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+        if (args.length == 0) {
+            if (sender instanceof Player player && teamManager.hasUsePermission(sender)) teamManager.openGui(player);
+            else teamManager.sendHelp(sender);
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("help")) {
             if (!teamManager.hasUsePermission(sender) && !teamManager.hasAdminPermission(sender)) {
                 teamManager.sendNoPermission(sender);
                 return true;
@@ -34,6 +39,11 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
         String subCommand = args[0].toLowerCase(Locale.ROOT);
 
         switch (subCommand) {
+            case "menu" -> {
+                Player player = requirePlayer(sender);
+                if (player != null && checkUse(sender)) teamManager.openGui(player);
+                return true;
+            }
             case "create" -> {
                 Player player = requirePlayer(sender);
                 if (player == null) return true;
@@ -68,8 +78,7 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
                 Player player = requirePlayer(sender);
                 if (player == null) return true;
                 if (!checkUse(sender)) return true;
-                boolean confirm = args.length >= 2 && args[1].equalsIgnoreCase("confirm");
-                teamManager.leave(player, confirm);
+                teamManager.leave(player);
                 return true;
             }
             case "list" -> {
@@ -80,15 +89,97 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
                 teamManager.listTeams(sender);
                 return true;
             }
+            case "join" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                if (args.length < 2) { teamManager.sendUsage(sender); return true; }
+                teamManager.joinOpenTeam(player, args[1]);
+                return true;
+            }
+            case "info" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.teamInfo(player, args.length >= 2 ? args[1] : "");
+                return true;
+            }
+            case "home" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.teleportTeamHome(player);
+                return true;
+            }
+            case "sethome" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.setTeamHome(player);
+                return true;
+            }
+            case "delhome" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.deleteTeamHome(player);
+                return true;
+            }
+            case "pvp" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.toggleTeamPvp(player);
+                return true;
+            }
+            case "open" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.toggleTeamOpen(player);
+                return true;
+            }
+            case "kick", "ban", "promote", "demote" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                if (args.length < 2) { teamManager.sendUsage(sender); return true; }
+                teamManager.manageMember(player, args[1], subCommand);
+                return true;
+            }
+            case "unban" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                if (args.length < 2) { teamManager.sendUsage(sender); return true; }
+                teamManager.unbanMember(player, args[1]);
+                return true;
+            }
+            case "description", "tag", "color" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                if (args.length < 2) { teamManager.sendUsage(sender); return true; }
+                teamManager.setTeamText(player, subCommand, join(args, 1));
+                return true;
+            }
+            case "name" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                if (args.length < 2) { teamManager.sendUsage(sender); return true; }
+                teamManager.renameOwnedTeam(player, args[1]);
+                return true;
+            }
+            case "top" -> { teamManager.rankings(sender, false); return true; }
+            case "baltop" -> { teamManager.rankings(sender, true); return true; }
+            case "rank" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.teamInfo(player, args.length >= 2 ? args[1] : "");
+                return true;
+            }
+            case "bal" -> {
+                Player player = requirePlayer(sender);
+                if (player == null || !checkUse(sender)) return true;
+                teamManager.teamBalance(player);
+                return true;
+            }
             case "chat" -> {
                 Player player = requirePlayer(sender);
                 if (player == null) return true;
                 if (!checkUse(sender)) return true;
-                if (args.length < 2) {
-                    teamManager.sendUsage(sender);
-                    return true;
-                }
-                teamManager.teamChat(player, join(args, 1));
+                if (args.length < 2) teamManager.toggleTeamChat(player);
+                else teamManager.teamChat(player, join(args, 1));
                 return true;
             }
             case "upgrade" -> {
@@ -99,11 +190,12 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             case "setowner" -> {
-                if (!teamManager.hasSetOwnerPermission(sender)) {
-                    teamManager.sendNoPermission(sender);
+                if (sender instanceof Player player && args.length == 2) {
+                    if (!checkUse(sender)) return true;
+                    teamManager.transferOwner(player, Bukkit.getPlayerExact(args[1]));
                     return true;
                 }
-                if (args.length < 3) {
+                if (!teamManager.hasSetOwnerPermission(sender) || args.length < 3) {
                     teamManager.sendUsage(sender);
                     return true;
                 }
@@ -120,18 +212,6 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 teamManager.deleteTeam(sender, args[1]);
-                return true;
-            }
-            case "info" -> {
-                if (!teamManager.hasAdminPermission(sender)) {
-                    teamManager.sendNoPermission(sender);
-                    return true;
-                }
-                if (args.length < 2) {
-                    teamManager.sendUsage(sender);
-                    return true;
-                }
-                teamManager.infoTeam(sender, args[1]);
                 return true;
             }
             case "reload" -> {
@@ -155,9 +235,9 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             List<String> options = new ArrayList<>();
             if (teamManager.hasUsePermission(sender) || teamManager.hasAdminPermission(sender)) {
-                options.addAll(Arrays.asList("help", "create", "invite", "accept", "leave", "list", "chat", "upgrade"));
+                options.addAll(Arrays.asList("help", "menu", "create", "join", "invite", "accept", "leave", "list", "info", "home", "sethome", "delhome", "pvp", "open", "kick", "ban", "unban", "promote", "demote", "name", "description", "tag", "color", "top", "baltop", "rank", "bal", "chat", "upgrade"));
             }
-            if (teamManager.hasSetOwnerPermission(sender)) options.add("setowner");
+            options.add("setowner");
             if (teamManager.hasDeletePermission(sender)) options.add("delete");
             if (teamManager.hasAdminPermission(sender)) options.add("info");
             if (teamManager.hasReloadPermission(sender)) options.add("reload");
@@ -169,15 +249,15 @@ public final class TeamCommand implements CommandExecutor, TabCompleter {
             if (first.equals("invite")) {
                 return filter(onlinePlayers(), args[1]);
             }
-            if (Arrays.asList("setowner", "delete", "info").contains(first)) {
+            if (first.equals("join")) return filter(teamManager.getDataManager().getTeamNames(), args[1]);
+            if (Arrays.asList("delete", "info", "rank").contains(first)) {
                 return filter(teamManager.getDataManager().getTeamNames(), args[1]);
             }
-            if (first.equals("leave")) {
-                return filter(List.of("confirm"), args[1]);
-            }
+            if (first.equals("setowner")) return filter(onlinePlayers(), args[1]);
+            if (Arrays.asList("kick", "ban", "promote", "demote").contains(first)) return filter(onlinePlayers(), args[1]);
         }
 
-        if (args.length == 3 && first.equals("setowner")) {
+        if (args.length == 3 && first.equals("setowner") && !(sender instanceof Player)) {
             return filter(onlinePlayers(), args[2]);
         }
 

@@ -15,6 +15,9 @@ import org.bukkit.entity.EntityType;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.EnumMap;
@@ -26,12 +29,16 @@ import java.util.Set;
 public final class PetConfigManager {
     private static final Set<String> SAFE_ANIMAL_IDS = Set.of(
             "wolf", "cat", "fox", "rabbit", "panda", "axolotl",
-            "chicken", "cow", "sheep", "pig", "mooshroom", "mushroom_cow", "sniffer"
+            "chicken", "cow", "sheep", "pig", "mooshroom", "mushroom_cow", "sniffer",
+            "horse", "donkey", "mule", "llama", "trader_llama", "goat", "camel", "armadillo",
+            "frog", "turtle", "ocelot", "polar_bear"
     );
 
     private static final Set<String> SAFE_ANIMAL_ENTITY_NAMES = Set.of(
             "WOLF", "CAT", "FOX", "RABBIT", "PANDA", "AXOLOTL",
-            "CHICKEN", "COW", "SHEEP", "PIG", "MOOSHROOM", "MUSHROOM_COW", "SNIFFER"
+            "CHICKEN", "COW", "SHEEP", "PIG", "MOOSHROOM", "MUSHROOM_COW", "SNIFFER",
+            "HORSE", "DONKEY", "MULE", "LLAMA", "TRADER_LLAMA", "GOAT", "CAMEL", "ARMADILLO",
+            "FROG", "TURTLE", "OCELOT", "POLAR_BEAR"
     );
 
     private static final Set<String> WALKING_DISABLED_IDS = Set.of(
@@ -69,6 +76,7 @@ public final class PetConfigManager {
         plugin.saveResourceIfNotExists("modules/pets.yml");
         File file = new File(plugin.getDataFolder(), "modules/pets.yml");
         config = YamlConfiguration.loadConfiguration(file);
+        mergeBundledDefaults(file);
         pruneUnsupportedPets(file);
         loadChances();
         loadPets();
@@ -88,8 +96,26 @@ public final class PetConfigManager {
     public boolean autoSummonLastPet() { return bool("settings.auto-summon-last-pet", false); }
     public int deathCooldownMinutes() { return Math.max(0, integer("settings.death-cooldown-minutes", 15)); }
     public boolean usePathfinderFollow() { return bool("settings.follow.use-pathfinder", true); }
-    public boolean allowFlyingPets() { return false; }
-    public boolean flyingSafeMode() { return true; }
+    public boolean allowFlyingPets() { return bool("settings.allow-flying-pets", true); }
+    public boolean flyingSafeMode() { return bool("settings.flying-safe-mode.enabled", true); }
+    public int flyingMinimumLevel() { return Math.max(1, integer("settings.flying-pets.minimum-level", 30)); }
+    public boolean isAllowedFlyingEntity(EntityType type) {
+        return allowFlyingPets() && type != null
+                && config.getStringList("settings.flying-pets.allowed-entities").stream()
+                .anyMatch(entry -> type.name().equalsIgnoreCase(entry));
+    }
+
+    private void mergeBundledDefaults(File file) {
+        try (InputStream input = plugin.getResource("modules/pets.yml")) {
+            if (input == null) return;
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(input, StandardCharsets.UTF_8));
+            config.setDefaults(defaults);
+            config.options().copyDefaults(true);
+            config.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("VelioraPets: gagal memperbarui default pets.yml: " + exception.getMessage());
+        }
+    }
     public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", true); }
     public int storageSize(PetRarity rarity) { return PetDataManager.SHARED_STORAGE_SIZE; }
 
@@ -100,6 +126,8 @@ public final class PetConfigManager {
     public boolean dismountOnDismiss() { return bool("riding.dismount-on-dismiss", true); }
     public double rideSpeed() { return Math.max(0.05D, number("riding.speed", 0.32D)); }
     public double rideJumpY() { return Math.max(0.0D, number("riding.jump-y", 0.42D)); }
+    public double rideFlySpeed() { return Math.max(0.05D, number("riding.fly-speed", 0.30D)); }
+    public double rideFlyVerticalSpeed() { return Math.max(0.05D, number("riding.fly-vertical-speed", 0.24D)); }
     public boolean rideableRarity(PetRarity rarity) { return bool("riding.rideable-rarities." + rarity.name().toLowerCase(Locale.ROOT), true); }
 
     public boolean silentPets() { return bool("sounds.silent-pets", true); }
@@ -137,6 +165,7 @@ public final class PetConfigManager {
         if (SAFE_ANIMAL_IDS.contains(key)) return false;
         if (config != null) {
             EntityType configuredType = entityType(config.getString("pets." + key + ".entity", ""));
+            if (isAllowedFlyingEntity(configuredType)) return false;
             if (isSafeAnimalType(configuredType)) return false;
         }
         if (walkingPetsOnly() && WALKING_DISABLED_IDS.contains(key)) return true;
@@ -160,7 +189,7 @@ public final class PetConfigManager {
             String rawEntity = config.getString(path + ".entity", "");
             EntityType type = entityType(rawEntity);
             boolean aquaticDisabled = type != null && defaultAquatic(type) && !allowAquaticPets() && !isAxolotlGround(type);
-            if (isBlacklistedPet(id, rawEntity) || (type != null && !isSafeAnimalType(type)) || aquaticDisabled) {
+            if (isBlacklistedPet(id, rawEntity) || (type != null && !isPermittedPetType(type)) || aquaticDisabled) {
                 config.set(path, null);
                 changed = true;
             }
@@ -187,9 +216,9 @@ public final class PetConfigManager {
         if (isBlacklistedPet(normalizedId, rawEntity)) return;
         EntityType type = entityType(rawEntity);
         if (type == null) { plugin.getLogger().warning("VelioraPets: skip invalid or unavailable entity for pet " + id + ": " + rawEntity); return; }
-        if (!isSafeAnimalType(type)) return;
+        if (!isPermittedPetType(type)) return;
 
-        boolean flyingPet = false;
+        boolean flyingPet = isFlyingPet(type);
         boolean aquatic = config.getBoolean(path + ".aquatic", defaultAquatic(type));
         if (isAxolotlGround(type)) aquatic = false;
         if (aquatic && !allowAquaticPets() && !isAxolotlGround(type)) return;
@@ -229,6 +258,17 @@ public final class PetConfigManager {
         addBuiltin("pig", "&dPig", "PIG", "CARROT", PetRarity.COMMON, 0.55D, 25_000L, true, 10, "CARROT", 20);
         addBuiltin("mooshroom", "&cMooshroom Cow", "MUSHROOM_COW", "RED_MUSHROOM", PetRarity.RARE, 0.60D, 50_000L, true, 10, "WHEAT", 25);
         addBuiltin("sniffer", "&6Sniffer", "SNIFFER", "SNIFFER_EGG", PetRarity.EPIC, 0.75D, 100_000L, true, 15, "TORCHFLOWER_SEEDS", 35);
+        addBuiltin("horse", "&6Horse", "HORSE", "SADDLE", PetRarity.RARE, 0.75D, 50_000L, true, 10, "WHEAT", 25);
+        addBuiltin("donkey", "&7Donkey", "DONKEY", "CHEST", PetRarity.RARE, 0.70D, 50_000L, true, 10, "WHEAT", 25);
+        addBuiltin("llama", "&eLlama", "LLAMA", "LEAD", PetRarity.RARE, 0.70D, 50_000L, true, 10, "WHEAT", 25);
+        addBuiltin("goat", "&fGoat", "GOAT", "GOAT_HORN", PetRarity.RARE, 0.65D, 50_000L, true, 10, "WHEAT", 25);
+        addBuiltin("camel", "&6Camel", "CAMEL", "SADDLE", PetRarity.EPIC, 0.75D, 100_000L, true, 15, "CACTUS", 35);
+        addBuiltin("armadillo", "&7Armadillo", "ARMADILLO", "ARMADILLO_SCUTE", PetRarity.RARE, 0.55D, 50_000L, false, 10, "SPIDER_EYE", 25);
+        addBuiltin("frog", "&aFrog", "FROG", "SLIME_BALL", PetRarity.RARE, 0.55D, 50_000L, false, 10, "SLIME_BALL", 25);
+        addBuiltin("turtle", "&aTurtle", "TURTLE", "TURTLE_SCUTE", PetRarity.RARE, 0.60D, 50_000L, true, 10, "SEAGRASS", 25);
+        addBuiltin("parrot", "&bParrot", "PARROT", "FEATHER", PetRarity.EPIC, 0.50D, 100_000L, true, 30, "WHEAT_SEEDS", 35);
+        addBuiltin("bee", "&eBee", "BEE", "HONEYCOMB", PetRarity.EPIC, 0.55D, 100_000L, true, 30, "FLOWER", 35);
+        addBuiltin("allay", "&bAllay", "ALLAY", "AMETHYST_SHARD", PetRarity.LEGENDARY, 0.50D, 175_000L, true, 30, "AMETHYST_SHARD", 45);
     }
 
     private void addBuiltin(String id, String display, String entity, String icon, PetRarity rarity, double scale, long price, boolean rideable, int adultLevel, String food, int feedExp) {
@@ -237,8 +277,8 @@ public final class PetConfigManager {
         if (isBlacklistedPet(normalizedId, entity)) return;
         EntityType type = entityType(entity);
         if (type == null) { plugin.getLogger().warning("VelioraPets: skip builtin animal pet, EntityType tidak tersedia: " + entity + " for " + id); return; }
-        if (!isSafeAnimalType(type)) return;
-        boolean flying = false;
+        if (!isPermittedPetType(type)) return;
+        boolean flying = isFlyingPet(type);
         boolean isAquatic = defaultAquatic(type);
         if (isAxolotlGround(type)) isAquatic = false;
         if (isAquatic && !allowAquaticPets() && !isAxolotlGround(type)) return;
@@ -252,6 +292,7 @@ public final class PetConfigManager {
     }
 
     private boolean isSafeAnimalType(EntityType type) { return type != null && SAFE_ANIMAL_ENTITY_NAMES.contains(type.name()); }
+    private boolean isPermittedPetType(EntityType type) { return isSafeAnimalType(type) || isAllowedFlyingEntity(type); }
     private boolean isFlyingPet(EntityType type) { return type != null && FLYING_ENTITY_NAMES.contains(type.name()); }
     private boolean defaultAquatic(EntityType type) { if (type == null || isAxolotlGround(type)) return false; return AQUATIC_ENTITY_NAMES.contains(type.name()); }
     private boolean isAxolotlGround(EntityType type) { return walkingPetsOnly() && allowAxolotlGroundPet() && type == EntityType.AXOLOTL; }

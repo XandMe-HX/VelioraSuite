@@ -168,6 +168,7 @@ public final class BossConfigManager {
         changed |= addDefault("settings.spawn.skip-when-no-players", true);
         changed |= addDefault("settings.notifications.players", true);
         changed |= addDefault("settings.notifications.console", false);
+        changed |= addDefault("effects.skill-visuals.enabled", true);
         if (!changed) return;
         try {
             config.save(file);
@@ -255,6 +256,7 @@ public final class BossConfigManager {
     public boolean skillsEnabled() { return bool("skills.enabled", true); }
     public int skillCooldownSeconds() { return Math.max(3, integer("skills.cooldown-seconds", 12)); }
     public int skillTelegraphTicks() { return Math.max(10, integer("skills.telegraph-ticks", 26)); }
+    public boolean skillVisualsEnabled() { return bool("effects.skill-visuals.enabled", true); }
     public double groundSlamDamage() { return Math.max(0.0D, number("skills.damage.ground-slam", 6.0D)); }
     public double fireBombDamage() { return Math.max(0.0D, number("skills.damage.fire-bomb", 7.0D)); }
     public double lightningChainDamage() { return Math.max(0.0D, number("skills.damage.lightning-chain", 5.0D)); }

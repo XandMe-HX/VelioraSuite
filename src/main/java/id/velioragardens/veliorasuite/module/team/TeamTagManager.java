@@ -25,7 +25,7 @@ public final class TeamTagManager {
             return "";
         }
 
-        return team.getDisplayName();
+        return team.getColor() + team.getTag();
     }
 
     public String getRawTagPrefix(UUID playerId) {

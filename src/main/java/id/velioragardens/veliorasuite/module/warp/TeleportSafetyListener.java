@@ -4,6 +4,8 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,7 +28,6 @@ import java.util.UUID;
 public final class TeleportSafetyListener implements Listener {
     private final VelioraSuite plugin;
     private final WarpManager warps;
-    private final Map<UUID, Long> frozenUntil = new HashMap<>();
     private final Map<UUID, Long> rtpRequestedAt = new HashMap<>();
     private final Map<UUID, Double> rtpBalances = new HashMap<>();
     private final Set<UUID> internalRescue = new HashSet<>();
@@ -43,12 +44,6 @@ public final class TeleportSafetyListener implements Listener {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.isDead()) continue;
                 if (player.getLocation().getY() <= player.getWorld().getMinHeight() + 3) rescue(player, "void");
-                Long until = frozenUntil.get(player.getUniqueId());
-                if (until != null && until <= now) {
-                    frozenUntil.remove(player.getUniqueId());
-                    player.removePotionEffect(PotionEffectType.BLINDNESS);
-                    player.clearTitle();
-                }
             }
         }, 5L, 5L);
     }
@@ -56,13 +51,12 @@ public final class TeleportSafetyListener implements Listener {
     public void stop() {
         if (safetyTask >= 0) Bukkit.getScheduler().cancelTask(safetyTask);
         safetyTask = -1;
-        frozenUntil.clear();
         rtpRequestedAt.clear();
         rtpBalances.clear();
         internalRescue.clear();
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
         boolean rescue = internalRescue.remove(player.getUniqueId());
@@ -70,13 +64,19 @@ public final class TeleportSafetyListener implements Listener {
         if (!rescue && cause != PlayerTeleportEvent.TeleportCause.COMMAND && cause != PlayerTeleportEvent.TeleportCause.PLUGIN) return;
         Location destination = event.getTo() == null ? null : event.getTo().clone();
         if (destination == null) return;
+        Location safeDestination = findSafeStandingLocation(destination);
+        if (safeDestination != null) {
+            event.setTo(safeDestination);
+            destination = safeDestination;
+        }
         destination.getChunk().load(true);
+        final Location finalDestination = destination;
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (!player.isOnline()) return;
             protectArrival(player);
             Long requested = rtpRequestedAt.remove(player.getUniqueId());
             if (requested != null && System.currentTimeMillis() - requested <= 30_000L) {
-                Bukkit.getScheduler().runTaskLater(plugin, () -> validateRtp(player, destination), 40L);
+                Bukkit.getScheduler().runTaskLater(plugin, () -> validateRtp(player, finalDestination), 40L);
             }
         });
     }
@@ -109,19 +109,44 @@ public final class TeleportSafetyListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
-        frozenUntil.remove(id);
         rtpRequestedAt.remove(id);
         rtpBalances.remove(id);
         internalRescue.remove(id);
     }
 
     private void protectArrival(Player player) {
-        int freezeSeconds = Math.max(0, warps.arrivalFreezeSeconds());
-        if (freezeSeconds == 0) return;
-        long arrivalId = System.currentTimeMillis() + freezeSeconds * 1_000L;
-        frozenUntil.put(player.getUniqueId(), arrivalId);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, freezeSeconds * 20, 0, false, false, false));
-        player.sendTitle("§bTeleport berhasil", "§7Menyiapkan lokasi aman...", 0, freezeSeconds * 20, 0);
+        // Arrival must never lock a player or re-run a teleport. Earlier versions
+        // applied a blindness/freeze phase here, which was the source of the
+        // recurring stuck state reported by players.
+    }
+
+    private Location findSafeStandingLocation(Location requested) {
+        World world = requested.getWorld();
+        if (world == null) return null;
+        int baseX = requested.getBlockX();
+        int baseY = requested.getBlockY();
+        int baseZ = requested.getBlockZ();
+        for (int radius = 0; radius <= 3; radius++) {
+            for (int x = -radius; x <= radius; x++) {
+                for (int z = -radius; z <= radius; z++) {
+                    if (radius > 0 && Math.abs(x) != radius && Math.abs(z) != radius) continue;
+                    for (int y = 0; y <= 5; y++) {
+                        int standY = baseY + y;
+                        if (!isSafeStandingBlock(world, baseX + x, standY, baseZ + z)) continue;
+                        return new Location(world, baseX + x + 0.5D, standY, baseZ + z + 0.5D,
+                                requested.getYaw(), requested.getPitch());
+                    }
+                }
+            }
+        }
+        return requested;
+    }
+
+    private boolean isSafeStandingBlock(World world, int x, int y, int z) {
+        Block feet = world.getBlockAt(x, y, z);
+        Block head = world.getBlockAt(x, y + 1, z);
+        Block floor = world.getBlockAt(x, y - 1, z);
+        return feet.isPassable() && head.isPassable() && floor.getType().isSolid();
     }
 
     private void validateRtp(Player player, Location expected) {

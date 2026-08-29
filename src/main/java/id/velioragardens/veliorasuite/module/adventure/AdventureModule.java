@@ -9,6 +9,7 @@ import org.bukkit.event.HandlerList;
 public final class AdventureModule implements VelioraModule {
     private final VelioraSuite plugin;
     private AdventureManager manager;
+    private AuraSkillsAdventureBridge auraSkillsBridge;
     private boolean enabled;
 
     public AdventureModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -26,9 +27,12 @@ public final class AdventureModule implements VelioraModule {
         register("vgpetualang", new AdventureCommand(manager, false));
         register("vgteam", new AdventureCommand(manager, true));
         plugin.getServer().getPluginManager().registerEvents(manager, plugin);
+        auraSkillsBridge = new AuraSkillsAdventureBridge(plugin, manager);
+        auraSkillsBridge.enable();
     }
     @Override public void disable() {
         enabled = false;
+        if (auraSkillsBridge != null) { auraSkillsBridge.disable(); auraSkillsBridge = null; }
         if (manager != null) { HandlerList.unregisterAll(manager); manager.shutdown(); }
         disabled("vgpetualang"); disabled("vgteam");
     }

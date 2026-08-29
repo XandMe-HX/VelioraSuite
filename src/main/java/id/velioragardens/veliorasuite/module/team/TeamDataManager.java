@@ -103,7 +103,23 @@ public final class TeamDataManager {
         data.set(path + ".upgraded", team.isUpgraded());
         data.set(path + ".created-at", team.getCreatedAt());
         data.set(path + ".last-active", team.getLastActive());
+        data.set(path + ".description", team.getDescription());
+        data.set(path + ".tag", team.getTag());
+        data.set(path + ".color", team.getColor());
+        data.set(path + ".open", team.isOpen());
+        data.set(path + ".pvp-enabled", team.isPvpEnabled());
+        data.set(path + ".balance", team.getBalance());
+        data.set(path + ".score", team.getScore());
+        data.set(path + ".rank", team.getRank());
+        data.set(path + ".home.world", team.getHomeWorld());
+        data.set(path + ".home.x", team.getHomeX());
+        data.set(path + ".home.y", team.getHomeY());
+        data.set(path + ".home.z", team.getHomeZ());
+        data.set(path + ".home.yaw", team.getHomeYaw());
+        data.set(path + ".home.pitch", team.getHomePitch());
         data.set(path + ".members", null);
+        data.set(path + ".banned-members", null);
+        for (UUID banned : team.getBannedMembers()) data.set(path + ".banned-members." + banned, true);
 
         for (TeamMember member : team.getMembers().values()) {
             String memberPath = path + ".members." + member.getUuid();
@@ -113,6 +129,15 @@ public final class TeamDataManager {
         }
 
         save();
+    }
+
+    public boolean renameTeam(Team team, String newName) {
+        if (team == null || newName == null || newName.isBlank() || teamExists(newName)) return false;
+        teamsByName.remove(normalize(team.getName()));
+        team.setName(newName);
+        team.setDisplayName(newName);
+        saveTeam(team);
+        return true;
     }
 
     public void deleteTeam(Team team) {
@@ -143,6 +168,20 @@ public final class TeamDataManager {
             }
         }
 
+        return null;
+    }
+
+    public Team getTeamByMemberName(String playerName) {
+        if (playerName == null) return null;
+        for (Team team : teamsByName.values()) if (findMemberUuid(team, playerName) != null) return team;
+        return null;
+    }
+
+    public UUID findMemberUuid(Team team, String playerName) {
+        if (team == null || playerName == null) return null;
+        for (TeamMember member : team.getMembers().values()) {
+            if (member.getName().equalsIgnoreCase(playerName)) return member.getUuid();
+        }
         return null;
     }
 
@@ -199,6 +238,24 @@ public final class TeamDataManager {
                     data.getString(path + ".created-at", "-"),
                     data.getString(path + ".last-active", "")
             );
+            team.setOpen(data.getBoolean(path + ".open", false));
+            team.setPvpEnabled(data.getBoolean(path + ".pvp-enabled", false));
+            team.setBalance(Math.max(0D, data.getDouble(path + ".balance", 0D)));
+            team.setScore(Math.max(0L, data.getLong(path + ".score", 0L)));
+            team.setRank(Math.max(0, data.getInt(path + ".rank", 0)));
+            team.setDescription(data.getString(path + ".description", ""));
+            team.setTag(data.getString(path + ".tag", name));
+            team.setColor(data.getString(path + ".color", "&b"));
+            team.loadHome(
+                    data.getString(path + ".home.world", ""),
+                    data.getDouble(path + ".home.x", 0D), data.getDouble(path + ".home.y", 0D), data.getDouble(path + ".home.z", 0D),
+                    (float) data.getDouble(path + ".home.yaw", 0D), (float) data.getDouble(path + ".home.pitch", 0D)
+            );
+            ConfigurationSection bannedSection = data.getConfigurationSection(path + ".banned-members");
+            if (bannedSection != null) for (String rawUuid : bannedSection.getKeys(false)) {
+                UUID banned = parseUuid(rawUuid);
+                if (banned != null) team.ban(banned);
+            }
 
             ConfigurationSection membersSection = data.getConfigurationSection(path + ".members");
             if (membersSection != null) {

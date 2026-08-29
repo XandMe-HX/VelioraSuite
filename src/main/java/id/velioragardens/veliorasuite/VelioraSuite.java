@@ -2,10 +2,12 @@ package id.velioragardens.veliorasuite;
 
 import id.velioragardens.veliorasuite.command.VelioraCommand;
 import id.velioragardens.veliorasuite.core.ConfigManager;
+import id.velioragardens.veliorasuite.core.effects.VelioraEffects;
 import id.velioragardens.veliorasuite.core.HookManager;
 import id.velioragardens.veliorasuite.core.LegacyHealthCleanupListener;
 import id.velioragardens.veliorasuite.core.MessageManager;
 import id.velioragardens.veliorasuite.core.ModuleManager;
+import id.velioragardens.veliorasuite.core.storage.VelioraDatabase;
 import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
 import id.velioragardens.veliorasuite.module.adminmonitor.AdminMonitorModule;
 import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
@@ -38,6 +40,8 @@ public final class VelioraSuite extends JavaPlugin {
     private ConfigManager configManager;
     private MessageManager messageManager;
     private HookManager hookManager;
+    private VelioraDatabase database;
+    private VelioraEffects effects;
     private ModuleManager moduleManager;
     private VelioraPlaceholderExpansion placeholderExpansion;
 
@@ -51,6 +55,10 @@ public final class VelioraSuite extends JavaPlugin {
 
         this.configManager = new ConfigManager(this);
         this.configManager.load();
+
+        this.database = new VelioraDatabase(this);
+        this.database.initialize();
+        this.effects = new VelioraEffects(this);
 
         this.messageManager = new MessageManager(this);
         this.messageManager.load();
@@ -75,6 +83,7 @@ public final class VelioraSuite extends JavaPlugin {
         if (moduleManager != null) {
             moduleManager.disableAll();
         }
+        if (database != null) database.shutdown();
 
         getLogger().info("VelioraSuite clean core disabled.");
     }
@@ -83,6 +92,7 @@ public final class VelioraSuite extends JavaPlugin {
         configManager.reload();
         messageManager.reload();
         hookManager.loadHooks();
+        if (effects != null) effects.reload();
         moduleManager.reloadAll();
         registerPlaceholderExpansion();
 
@@ -160,6 +170,9 @@ public final class VelioraSuite extends JavaPlugin {
     public ModuleManager getModuleManager() {
         return moduleManager;
     }
+
+    public VelioraDatabase getDatabase() { return database; }
+    public VelioraEffects getEffects() { return effects; }
 
     public void saveResourceIfNotExists(String path) {
         File file = new File(getDataFolder(), path);
