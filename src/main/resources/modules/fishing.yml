@@ -119,6 +119,10 @@ settings:
     enabled: true
 
 effects:
+  # Semua rarity punya respons berbeda, tetapi jumlahnya kecil supaya tidak membebani client/VPS.
+  trash: {enabled: true, sound: BLOCK_NOTE_BLOCK_BASS, particle: SMOKE, amount: 3}
+  vanilla: {enabled: true, sound: ENTITY_FISHING_BOBBER_SPLASH, particle: SPLASH, amount: 5}
+  common: {enabled: true, sound: ENTITY_EXPERIENCE_ORB_PICKUP, particle: BUBBLE, amount: 7}
   ornamental: {enabled: true, sound: ENTITY_EXPERIENCE_ORB_PICKUP, particle: HAPPY_VILLAGER, amount: 10}
   epic: {enabled: true, sound: ENTITY_PLAYER_LEVELUP, particle: ENCHANT, amount: 20}
   legendary: {enabled: true, sound: UI_TOAST_CHALLENGE_COMPLETE, particle: TOTEM_OF_UNDYING, amount: 35, broadcast: true}

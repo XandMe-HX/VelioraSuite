@@ -232,7 +232,7 @@ public final class PetConfigManager {
                 material(config.getString(path + ".icon", "BONE"), Material.BONE),
                 rarity,
                 PetSkillType.NONE,
-                0.0D,
+                Math.max(0.0D, config.getDouble(path + ".damage", defaultDamage(rarity))),
                 0.0D,
                 Math.max(0.1D, config.getDouble(path + ".scale", 0.5D)),
                 price,
@@ -302,7 +302,7 @@ public final class PetConfigManager {
     private double defaultChance(PetRarity rarity) { return switch (rarity) { case COMMON -> 65.0D; case RARE -> 25.0D; case EPIC -> 8.0D; case LEGENDARY -> 2.0D; case MYTHIC -> 0.0D; }; }
     private long defaultPrice(PetRarity rarity) { return switch (rarity) { case COMMON -> 25_000L; case RARE -> 50_000L; case EPIC -> 100_000L; case LEGENDARY -> 175_000L; case MYTHIC -> 250_000L; }; }
     private long balancedPrice(PetRarity rarity, long configured) { return Math.max(0L, configured); }
-    private double defaultDamage(PetRarity rarity) { return 0.0D; }
+    private double defaultDamage(PetRarity rarity) { return switch (rarity) { case COMMON -> 1.5D; case RARE -> 2.0D; case EPIC -> 3.0D; case LEGENDARY -> 4.0D; case MYTHIC -> 5.0D; }; }
     private int defaultFeedExp(PetRarity rarity) { return switch (rarity) { case COMMON -> 20; case RARE -> 25; case EPIC -> 35; case LEGENDARY -> 45; case MYTHIC -> 60; }; }
     private Material defaultFood(PetRarity rarity) { return switch (rarity) { case COMMON -> Material.APPLE; case RARE -> Material.COOKED_CHICKEN; case EPIC -> Material.GOLDEN_CARROT; case LEGENDARY -> Material.GOLDEN_APPLE; case MYTHIC -> Material.ENCHANTED_GOLDEN_APPLE; }; }
     private Material material(String raw, Material fallback) { Material material = Material.matchMaterial(raw == null ? "" : raw.toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }

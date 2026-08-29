@@ -25,11 +25,19 @@ public final class FishingEffectManager {
     public void play(Player player, CaughtFish fish) {
         if (player == null || fish == null) return;
         FishRarity rarity = fish.rarity();
-        if (rarity.power() < FishRarity.ORNAMENTAL.power() || !configManager.isEffectEnabled(rarity)) return;
+        if (!configManager.isEffectEnabled(rarity)) return;
         Location location = player.getLocation().add(0.0D, 1.0D, 0.0D);
-        player.getWorld().playSound(player.getLocation(), configManager.getEffectSound(rarity), 1.0F, 1.0F);
+        float volume = rarity.power() <= FishRarity.COMMON.power() ? 0.45F : 1.0F;
+        float pitch = switch (rarity) {
+            case TRASH -> 0.70F;
+            case VANILLA -> 0.95F;
+            case COMMON -> 1.15F;
+            case ORNAMENTAL -> 1.30F;
+            default -> 1.0F;
+        };
+        player.getWorld().playSound(player.getLocation(), configManager.getEffectSound(rarity), volume, pitch);
         int amount = configManager.getEffectAmount(rarity);
-        if (amount > 0) player.getWorld().spawnParticle(configManager.getEffectParticle(rarity), location, amount, 0.6D, 0.8D, 0.6D, 0.02D);
+        if (amount > 0) player.getWorld().spawnParticle(configManager.getEffectParticle(rarity), location, amount, 0.45D, 0.55D, 0.45D, 0.02D);
         if (rarity.power() >= FishRarity.LEGENDARY.power()) playGrandCatchEffect(player, rarity);
         if (configManager.isVisualLightning(rarity)) player.getWorld().strikeLightningEffect(player.getLocation());
         if (configManager.isEffectBroadcast(rarity)) broadcast(player, fish);
