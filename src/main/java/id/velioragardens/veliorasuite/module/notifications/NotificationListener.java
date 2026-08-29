@@ -155,6 +155,8 @@ public final class NotificationListener implements Listener {
                 .replace("%amount%", MONEY_FORMAT.format(amount));
         target.sendTitle(color(title), color(subtitle), ticks("pay-notifications.fade-in", 5), ticks("pay-notifications.stay", 50), ticks("pay-notifications.fade-out", 15));
         play(target, config.getString("pay-notifications.sound", "ENTITY_EXPERIENCE_ORB_PICKUP"), 0.9F, 1.15F);
+        target.getWorld().spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, target.getLocation().add(0.0D, 1.0D, 0.0D),
+                16, 0.45D, 0.55D, 0.45D, 0.02D);
     }
 
     private int ticks(String path, int fallback) { return Math.max(0, config.getInt(path, fallback)); }

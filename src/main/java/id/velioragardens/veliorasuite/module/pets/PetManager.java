@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Creeper;
@@ -115,6 +116,14 @@ public final class PetManager implements Listener {
     public RedProtectCompat redProtectCompat() { return redProtect; }
     public PlayerPetData playerData(UUID uuid) { return data.get(uuid); }
     public VelioraPet activePet(UUID uuid) { return activePets.get(uuid); }
+    /** Snapshot used by low-frequency maintenance; never scan every world. */
+    public List<LivingEntity> activePetEntities() {
+        List<LivingEntity> entities = new ArrayList<>();
+        for (VelioraPet active : activePets.values()) {
+            if (active != null && active.entity() != null) entities.add(active.entity());
+        }
+        return entities;
+    }
     public String lastSpawnFailure(UUID uuid) { return lastSpawnFailure.getOrDefault(uuid, "none"); }
     public int lastSpawnAttempts(UUID uuid) { return lastSpawnAttempts.getOrDefault(uuid, 0); }
     public void rememberSpawnFailure(UUID uuid, String reason) { lastSpawnFailure.put(uuid, reason == null ? "unknown" : reason); }
@@ -245,6 +254,8 @@ public final class PetManager implements Listener {
         lastSpawnAttempts.put(player.getUniqueId(), 0);
         scheduleSpawnChecks(player, definition, owned, entity);
         player.sendMessage(config.color(config.message("pet-summoned", "%prefix% &aPet &f%pet% &adipanggil.").replace("%pet%", config.color(owned.name()))));
+        player.getWorld().spawnParticle(Particle.END_ROD, entity.getLocation().add(0.0D, Math.min(1.4D, entity.getHeight() * 0.55D), 0.0D), 18, 0.42D, 0.55D, 0.42D, 0.025D);
+        player.playSound(player.getLocation(), Sound.ENTITY_ALLAY_AMBIENT_WITH_ITEM, 0.7F, 1.15F);
         notifyHungry(player, owned);
         sendFoodHint(player, definition);
         return true;
@@ -320,6 +331,10 @@ public final class PetManager implements Listener {
                 active.entity().leaveVehicle();
                 active.entity().remove();
             }
+            if (player != null && player.isOnline()) {
+                player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation().add(0.0D, 0.9D, 0.0D), 10, 0.28D, 0.45D, 0.28D, 0.02D);
+                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.45F, 1.45F);
+            }
         }
         PlayerPetData pdata = data.get(uuid);
         pdata.activePet(null);
@@ -377,6 +392,9 @@ public final class PetManager implements Listener {
                 .replace("%pet%", owned.name())
                 .replace("%amount%", String.valueOf(amount))
                 .replace("%exp%", String.valueOf(exp))));
+        player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0.0D, 1.0D, 0.0D), Math.min(24, 8 + amount * 3), 0.38D, 0.55D, 0.38D, 0.025D);
+        player.playSound(player.getLocation(), leveled ? Sound.UI_TOAST_CHALLENGE_COMPLETE : Sound.ENTITY_GENERIC_EAT, leveled ? 0.75F : 0.5F, leveled ? 1.2F : 1.1F);
+        if (leveled) player.sendTitle(config.color("&dPET LEVEL UP!"), config.color("&f" + owned.name() + " &7Level " + owned.level()), 4, 32, 8);
     }
 
     public void sendInfo(Player player, String target) {
@@ -606,7 +624,7 @@ public final class PetManager implements Listener {
         for (VelioraPet pet : activePets.values()) {
             if (pet.entity().isDead()) continue;
             int amount = config.lowLagParticles() ? 3 : 8;
-            pet.entity().getWorld().spawnParticle(config.auraParticle(), pet.entity().getLocation().add(0, 0.7D, 0), amount, 0.25D, 0.25D, 0.25D, 0.01D);
+            plugin.getEffects().particle(pet.entity().getLocation().add(0, 0.7D, 0), config.auraParticle(), amount, 0.25D, 0.25D, 0.25D, 0.01D);
         }
     }
 

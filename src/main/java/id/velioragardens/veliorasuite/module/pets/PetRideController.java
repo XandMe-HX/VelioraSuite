@@ -69,8 +69,14 @@ public final class PetRideController implements Listener {
             player.sendMessage(config.color(config.message("pet-ride-not-adult", "%prefix% &cPet ini belum dewasa. Minimal level: &f%level%").replace("%level%", String.valueOf(definition.adultLevel()))));
             return;
         }
+        if (definition.flyingPet() && owned.level() < config.flyingMinimumLevel()) {
+            player.sendMessage(config.color("%prefix% &cPet terbang membutuhkan level &f" + config.flyingMinimumLevel() + "&c.".replace("%prefix%", config.prefix())));
+            return;
+        }
         LivingEntity entity = active.entity();
         if (!entity.getPassengers().contains(player)) entity.addPassenger(player);
+        entity.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, entity.getLocation().add(0, 0.7D, 0), 12, 0.3D, 0.3D, 0.3D, 0.02D);
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_HORSE_SADDLE, 0.7F, definition.flyingPet() ? 1.35F : 1.0F);
         player.sendMessage(config.color(config.message("pet-ride-start", "%prefix% &aKamu menaiki &f%pet%&a.").replace("%pet%", owned.name())));
     }
 

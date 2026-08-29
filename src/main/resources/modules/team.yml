@@ -40,8 +40,6 @@ settings:
   # Timeout invite dalam detik.
   invite-timeout-seconds: 60
 
-  # Timeout konfirmasi owner leave dalam detik.
-  owner-leave-confirm-timeout-seconds: 30
 
   # Aturan nama team baru:
   # - Hanya huruf besar A-Z.
@@ -88,14 +86,15 @@ commands:
   examples:
     - '/team help'
     - '/team create SHDW'
+    - '/team join SHDW'
     - '/team invite Steve'
     - '/team accept'
     - '/team leave'
-    - '/team leave confirm'
     - '/team list'
     - '/team chat halo semua'
     - '/team upgrade'
-    - '/team setowner SHDW Steve'
+    - '/team setowner Steve'
+    - '/teama help'
     - '/team delete SHDW'
     - '/team info SHDW'
     - '/team reload'
@@ -152,8 +151,7 @@ messages:
   accept-success: '%prefix% &aKamu bergabung ke team &f%team%&a.'
   member-joined: '%prefix% &f%player% &abergabung ke team.'
   leave-success: '%prefix% &aKamu keluar dari team &f%team%&a.'
-  owner-leave-confirm: '%prefix% &cKamu adalah owner. Jika keluar, team akan dihapus. Ketik &f/team leave confirm &cdalam &f%time%s &cuntuk lanjut.'
-  owner-leave-cancelled: '%prefix% &cKonfirmasi keluar owner sudah expired.'
+  owner-must-transfer: '%prefix% &cOwner tidak dapat keluar langsung. Pindahkan owner terlebih dahulu dengan &f/team setowner <team> <player>&c.'
   team-disbanded: '%prefix% &cTeam &f%team% &ctelah dihapus karena owner keluar.'
   upgrade-success: '%prefix% &aTeam berhasil diupgrade. Maksimal member sekarang &f%max_members%&a.'
   already-upgraded: '%prefix% &cTeam kamu sudah mencapai upgrade maksimal.'
@@ -167,14 +165,24 @@ messages:
     - '&8&m--------------------------------'
     - '&b&lVelioraTeam'
     - '&f/team create <nama> &7- Membuat team.'
+    - '&f/team join <team> &7- Bergabung ke team terbuka.'
     - '&7  Nama team wajib huruf besar A-Z, 3-5 huruf. Contoh: &fSHDW'
     - '&f/team invite <player> &7- Invite player.'
     - '&f/team accept &7- Terima invite.'
     - '&f/team leave &7- Keluar dari team.'
+    - '&f/team home &7- Teleport ke home team.'
+    - '&f/team sethome &7- Atur home team. Owner/Admin.'
+    - '&f/team delhome &7- Hapus home team. Owner/Admin.'
+    - '&f/team pvp &7- Atur PvP antar anggota. Owner/Admin.'
+    - '&f/team open &7- Ubah team menjadi terbuka/undangan. Owner.'
     - '&f/team list &7- Lihat daftar team.'
-    - '&f/team chat <pesan> &7- Chat khusus team.'
+    - '&f/team info [team] &7- Lihat informasi team.'
+    - '&f/team chat [pesan] &7- Kirim atau aktifkan chat khusus team.'
+    - '&f/team top &7- Lihat peringkat team.'
+    - '&f/team baltop &7- Lihat team terkaya.'
+    - '&f/team bal &7- Lihat saldo team.'
     - '&f/team upgrade &7- Upgrade kapasitas team.'
-    - '&f/team setowner <team> <player> &7- Pindah owner team. Admin only.'
+    - '&f/team setowner <player> &7- Pindahkan owner ke anggota team.'
     - '&f/team delete <team> &7- Hapus team. Admin only.'
     - '&f/team info <team> &7- Lihat detail team. Admin only.'
     - '&f/team reload &7- Reload config.'

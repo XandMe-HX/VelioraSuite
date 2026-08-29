@@ -47,7 +47,12 @@ public final class TraderGuiManager implements Listener {
             inventory.setItem(slot, itemFactory.createTradeDisplay(item, soldOut));
             map.put(slot, item.getId());
         }
-        inventory.setItem(45, button(Material.EMERALD, "&a&lJUAL HASIL FARM", List.of("&7Jual item pilihan dengan harga tetap.", "&eKlik untuk membuka halaman jual.")));
+        boolean farmSellOpen = traderManager.canSellFarm(player);
+        inventory.setItem(45, button(farmSellOpen ? Material.EMERALD : Material.BARRIER,
+                farmSellOpen ? "&a&lJUAL HASIL FARM" : "&c&lJUAL FARM SUDAH DIPAKAI",
+                farmSellOpen
+                        ? List.of("&7Jual item pilihan dengan harga tetap.", "&eBuka satu kali setiap minggu.", "&eKlik untuk membuka halaman jual.")
+                        : List.of("&7Kamu sudah menjual hasil farm minggu ini.", "&eBuka lagi: " + traderManager.farmSellResetText())));
         inventory.setItem(49, closeButton());
         slotItems.put(player.getUniqueId(), map);
         sellMenus.remove(player.getUniqueId());
@@ -79,17 +84,26 @@ public final class TraderGuiManager implements Listener {
             player.closeInventory();
             return;
         }
-        if (!sell && event.getRawSlot() == 45) { openSell(player); return; }
+        if (!sell && event.getRawSlot() == 45) {
+            if (!traderManager.canSellFarm(player)) {
+                player.sendMessage(configManager.color(configManager.getPrefix() + "&cJual hasil farm hanya satu kali setiap minggu."));
+                return;
+            }
+            openSell(player); return;
+        }
         if (sell && event.getRawSlot() == 45) { open(player); return; }
         String itemId = slotItems.getOrDefault(player.getUniqueId(), Map.of()).get(event.getRawSlot());
         if (itemId == null) return;
         if (sell) { sellAll(player, Material.matchMaterial(itemId)); openSell(player); return; }
-        traderManager.buy(player, itemId);
-        open(player);
+        if (!traderManager.beginBuy(player, itemId)) open(player);
     }
 
     private void sellAll(Player player, Material material) {
         if (material == null) return; double price = configManager.getSellPrices().getOrDefault(material,0D); int amount=0;
+        if (!traderManager.canSellFarm(player)) {
+            player.sendMessage(configManager.color(configManager.getPrefix()+"&cJual hasil farm hanya satu kali setiap minggu."));
+            return;
+        }
         for (ItemStack stack : player.getInventory().getStorageContents()) if (stack != null && stack.getType()==material) amount += stack.getAmount();
         if (amount == 0) { player.sendMessage(configManager.color(configManager.getPrefix()+"&eKamu tidak memiliki item itu.")); return; }
         Object economy;
@@ -102,6 +116,9 @@ public final class TraderGuiManager implements Listener {
         try { Method deposit=economy.getClass().getMethod("depositPlayer",org.bukkit.OfflinePlayer.class,double.class);deposit.invoke(economy,player,total); }
         catch(ReflectiveOperationException exception){player.sendMessage(configManager.color(configManager.getPrefix()+"&cGagal menambahkan saldo."));return;}
         for(ItemStack stack:player.getInventory().getStorageContents())if(stack!=null&&stack.getType()==material)stack.setAmount(0);
+        traderManager.markFarmSold(player);
+        player.getWorld().spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1.0D, 0), 18, 0.45D, 0.55D, 0.45D, 0.03D);
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.65F, 1.35F);
         player.sendMessage(configManager.color(configManager.getPrefix()+"&aTerjual &f"+amount+" "+material.name()+" &aseharga &f$"+String.format(java.util.Locale.US,"%.2f",total)));
     }
 

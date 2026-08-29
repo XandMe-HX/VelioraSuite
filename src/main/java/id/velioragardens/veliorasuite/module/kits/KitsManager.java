@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.kits;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.kits.model.Kit;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -153,6 +154,7 @@ public final class KitsManager {
         }
         if (!firstJoin) {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.25F);
+            player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, player.getLocation().add(0.0D, 1.0D, 0.0D), 18, 0.4D, 0.65D, 0.4D, 0.02D);
         }
     }
 
@@ -184,6 +186,8 @@ public final class KitsManager {
         if (!chargePlayer(player, kit)) return;
         dataManager.setPurchased(player.getUniqueId(), kit.getId());
         send(player, "kit-bought", "%prefix% &aKamu berhasil membeli kit &f%kit% &adengan harga &f$%price%&a.", Map.of("%kit%", kit.getId(), "%price%", formatPrice(effectivePrice(kit))));
+        player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0.0D, 1.0D, 0.0D), 14, 0.35D, 0.5D, 0.35D, 0.02D);
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.65F, 1.2F);
     }
 
     public void giveFirstJoinKit(Player player) {

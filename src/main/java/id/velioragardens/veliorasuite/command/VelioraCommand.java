@@ -51,6 +51,11 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
+            case "health" -> {
+                sendHealth(sender);
+                return true;
+            }
+
             case "version" -> {
                 send(sender, "&aVelioraSuite &7version &f" + plugin.getDescription().getVersion());
                 return true;
@@ -76,6 +81,7 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&e/" + label + " reload &7- Reload config utama."));
         sender.sendMessage(color("&e/" + label + " modules &7- Melihat status module."));
         sender.sendMessage(color("&e/" + label + " integrations &7- Melihat koneksi plugin."));
+        sender.sendMessage(color("&e/" + label + " health &7- Cek database dan engine efek."));
         sender.sendMessage(color("&e/" + label + " version &7- Melihat versi plugin."));
         sender.sendMessage(color("&e/" + label + " debug &7- Melihat status debug."));
         sender.sendMessage(color("&8&m--------------------------------"));
@@ -112,6 +118,18 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(color("&8&m--------------------------------"));
     }
 
+    private void sendHealth(CommandSender sender) {
+        sender.sendMessage(color("&8&m--------------------------------"));
+        sender.sendMessage(color("&a&lVelioraSuite Status"));
+        boolean databaseReady = plugin.getDatabase() != null && plugin.getDatabase().isAvailable();
+        sender.sendMessage(color("&7SQLite: " + (databaseReady ? "&aSIAP" : "&cFALLBACK YAML")));
+        if (databaseReady) sender.sendMessage(color("&7File: &fdatabase/veliora.db"));
+        sender.sendMessage(color("&7Engine efek: " + (plugin.getEffects() == null ? "&cTIDAK AKTIF" : "&aAKTIF")));
+        sender.sendMessage(color("&7Petualang: &fSQLite + anti-farm area/progres"));
+        sender.sendMessage(color("&7Pet: &fsatu controller follow aktif"));
+        sender.sendMessage(color("&8&m--------------------------------"));
+    }
+
     private void send(CommandSender sender, String message) {
         sender.sendMessage(color("&8[&aVelioraSuite&8] &r" + message));
     }
@@ -127,7 +145,7 @@ public final class VelioraCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filter(Arrays.asList("help", "reload", "modules", "integrations", "version", "debug"), args[0]);
+            return filter(Arrays.asList("help", "reload", "modules", "integrations", "health", "version", "debug"), args[0]);
         }
 
         return new ArrayList<>();

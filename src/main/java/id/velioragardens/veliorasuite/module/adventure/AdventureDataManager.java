@@ -1,12 +1,14 @@
 package id.velioragardens.veliorasuite.module.adventure;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.VelioraDatabase;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -22,6 +24,7 @@ public final class AdventureDataManager {
     private YamlConfiguration yaml;
     private BukkitTask flushTask;
     private boolean dirty;
+    private boolean databaseBacked;
 
     public AdventureDataManager(VelioraSuite plugin) { this.plugin = plugin; }
 
@@ -31,6 +34,18 @@ public final class AdventureDataManager {
         plugin.createFolder("data");
         file = new File(plugin.getDataFolder(), "data/adventure.yml");
         yaml = YamlConfiguration.loadConfiguration(file);
+        VelioraDatabase database = plugin.getDatabase();
+        databaseBacked = database != null && database.isAvailable();
+        if (databaseBacked) {
+            String snapshot = database.loadModuleStateNow("adventure");
+            if (snapshot == null || snapshot.isBlank()) {
+                // First migration: SQLite bootstrap already copied every legacy
+                // YAML file into database/backups before this snapshot is saved.
+                database.saveModuleStateNow("adventure", yaml.saveToString());
+            } else {
+                yaml = YamlConfiguration.loadConfiguration(new StringReader(snapshot));
+            }
+        }
         players.clear();
         guilds.clear();
         loadPlayers();
@@ -125,13 +140,48 @@ public final class AdventureDataManager {
                 yaml.set(path + ".active.contributions." + entry.getKey(), entry.getValue());
             }
         }
+        if (databaseBacked) {
+            // The mutable Bukkit data was serialized on the server thread;
+            // SQLite I/O itself runs on the dedicated database worker.
+            String snapshot = yaml.saveToString();
+            dirty = false;
+            plugin.getDatabase().saveModuleStateAsync("adventure", snapshot).exceptionally(error -> {
+                plugin.getServer().getScheduler().runTask(plugin, () -> dirty = true);
+                plugin.getLogger().warning("VelioraPetualang: SQLite sedang gagal menulis, akan dicoba ulang.");
+                return null;
+            });
+            return;
+        }
         try { yaml.save(file); dirty = false; }
         catch (IOException exception) { plugin.getLogger().severe("VelioraPetualang: gagal menyimpan data: " + exception.getMessage()); }
     }
 
     public void shutdown() {
         save();
-        flush();
+        if (databaseBacked && yaml != null) {
+            // Existing flush serialization is reused, then the final snapshot
+            // is written synchronously before the database worker shuts down.
+            yaml.set("players", null);
+            for (PlayerData data : players.values()) {
+                String path = "players." + data.uuid;
+                yaml.set(path + ".name", data.name); yaml.set(path + ".exp", data.exp);
+                yaml.set(path + ".completed", data.completed); yaml.set(path + ".custom-rank", data.customRank);
+            }
+            yaml.set("guilds", null);
+            for (GuildData guild : guilds.values()) {
+                String path = "guilds." + guild.id;
+                yaml.set(path + ".exp", guild.exp); yaml.set(path + ".completed", guild.completed);
+                yaml.set(path + ".daily-date", guild.dailyDate); yaml.set(path + ".daily-quests", guild.dailyIds);
+                yaml.set(path + ".active.id", guild.activeQuest); yaml.set(path + ".active.progress", guild.activeProgress);
+                yaml.set(path + ".active.target", guild.activeTarget); yaml.set(path + ".active.expires", guild.activeExpires);
+                yaml.set(path + ".active.x", guild.activeX); yaml.set(path + ".active.z", guild.activeZ);
+                yaml.set(path + ".active.ready", guild.ready); yaml.set(path + ".active.mobs-spawned", guild.mobsSpawned);
+                yaml.set(path + ".active.contributions", null);
+                for (Map.Entry<UUID, Integer> entry : guild.contributions.entrySet()) yaml.set(path + ".active.contributions." + entry.getKey(), entry.getValue());
+            }
+            plugin.getDatabase().saveModuleStateNow("adventure", yaml.saveToString());
+            dirty = false;
+        } else flush();
         if (flushTask != null) flushTask.cancel();
         flushTask = null;
     }

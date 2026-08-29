@@ -49,8 +49,9 @@ public final class PetRideTask implements Runnable {
             mob.setTarget(null);
             try { mob.getPathfinder().stopPathfinding(); } catch (Throwable ignored) { }
         }
-        pet.setAI(true);
-        pet.setGravity(true);
+        boolean flying = config.isAllowedFlyingEntity(pet.getType());
+        pet.setAI(!flying);
+        pet.setGravity(!flying);
         pet.setFallDistance(0.0F);
         pet.setFireTicks(0);
 
@@ -70,8 +71,12 @@ public final class PetRideTask implements Runnable {
         }
 
         direction.normalize();
-        Vector velocity = direction.clone().multiply(config.rideSpeed() * input.speedMultiplier());
-        if (input.jump() || shouldStepUp(pet, direction)) {
+        Vector velocity = direction.clone().multiply((flying ? config.rideFlySpeed() : config.rideSpeed()) * input.speedMultiplier());
+        if (flying) {
+            if (input.jump() && pet.getLocation().getY() < pet.getWorld().getMaxHeight() - 4) velocity.setY(config.rideFlyVerticalSpeed());
+            else if (input.forward() < 0.0D) velocity.setY(-config.rideFlyVerticalSpeed());
+            else velocity.setY(0.0D);
+        } else if (input.jump() || shouldStepUp(pet, direction)) {
             velocity.setY(config.rideJumpY());
         } else if (!pet.isOnGround()) {
             velocity.setY(Math.min(0.0D, pet.getVelocity().getY()));

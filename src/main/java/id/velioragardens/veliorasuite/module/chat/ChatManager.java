@@ -4,6 +4,7 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -20,7 +21,7 @@ import java.util.regex.Pattern;
 
 public final class ChatManager {
 
-    private static final Pattern INTERACTIVE_COMMAND = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?)\\]");
+    private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?|@[A-Za-z0-9_]{3,16}|item)\\]", Pattern.CASE_INSENSITIVE);
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final VelioraSuite plugin;
@@ -165,7 +166,7 @@ public final class ChatManager {
 
     public void broadcastInteractive(Player player, String message) {
         String formatted = formatManager.formatPublicChat(player, message);
-        Component component = interactiveComponent(formatted);
+        Component component = interactiveComponent(player, formatted);
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 onlinePlayer.sendMessage(component);
@@ -174,14 +175,15 @@ public final class ChatManager {
         });
     }
 
-    private Component interactiveComponent(String formatted) {
-        Matcher matcher = INTERACTIVE_COMMAND.matcher(formatted);
+    private Component interactiveComponent(Player sender, String formatted) {
+        Matcher matcher = INTERACTIVE_TOKEN.matcher(formatted);
         Component result = Component.empty();
         int position = 0;
         while (matcher.find()) {
             result = result.append(LEGACY.deserialize(formatted.substring(position, matcher.start())));
-            String command = matcher.group(1);
-            if (isAllowedInteractiveCommand(command)) {
+            String token = matcher.group(1);
+            if (token.startsWith("/") && isAllowedInteractiveCommand(token)) {
+                String command = token;
                 String hover = configManager.color(configManager.getInteractiveChatHover().replace("%command%", command));
                 Component button = LEGACY.deserialize("&b" + matcher.group());
                 if (configManager.getInteractiveChatAction().equals("RUN_COMMAND")) {
@@ -190,6 +192,25 @@ public final class ChatManager {
                     button = button.clickEvent(ClickEvent.suggestCommand(command));
                 }
                 result = result.append(button.hoverEvent(HoverEvent.showText(LEGACY.deserialize(hover))));
+            } else if (token.equalsIgnoreCase("item") && configManager.isInteractiveItemEnabled()) {
+                ItemStack item = sender.getInventory().getItemInMainHand();
+                if (item == null || item.getType().isAir()) {
+                    result = result.append(LEGACY.deserialize("&7[item kosong]"));
+                } else {
+                    Component button = LEGACY.deserialize("&d[ITEM: &f" + item.getType().name().replace('_', ' ') + "&d]");
+                    result = result.append(button.hoverEvent(item.asHoverEvent()));
+                }
+            } else if (token.startsWith("@") && configManager.isInteractiveMentionEnabled()) {
+                String name = token.substring(1);
+                Player target = Bukkit.getPlayerExact(name);
+                if (target == null) {
+                    result = result.append(LEGACY.deserialize(matcher.group()));
+                } else {
+                    Component button = LEGACY.deserialize("&e[@" + target.getName() + "]")
+                            .clickEvent(ClickEvent.suggestCommand("/tpa " + target.getName()))
+                            .hoverEvent(HoverEvent.showText(LEGACY.deserialize("&bKlik untuk menulis &f/tpa " + target.getName())));
+                    result = result.append(button);
+                }
             } else {
                 result = result.append(LEGACY.deserialize(matcher.group()));
             }

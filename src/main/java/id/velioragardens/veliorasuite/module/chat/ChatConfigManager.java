@@ -42,6 +42,8 @@ public final class ChatConfigManager {
     public String getInteractiveChatHover() {
         return getString("settings.interactive-chat.hover", "&bKlik untuk memasukkan &f%command%&b ke chat.");
     }
+    public boolean isInteractiveItemEnabled() { return getBoolean("settings.interactive-chat.item-sharing-enabled", true); }
+    public boolean isInteractiveMentionEnabled() { return getBoolean("settings.interactive-chat.mention-enabled", true); }
 
     public boolean isCooldownEnabled() { return getBoolean("settings.cooldown.enabled", true); }
     public int getCooldownSeconds() { return Math.max(0, getInt("settings.cooldown.seconds", 2)); }

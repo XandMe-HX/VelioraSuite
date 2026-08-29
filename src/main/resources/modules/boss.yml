@@ -435,6 +435,9 @@ rewards:
       ancient-debris: 1
 
 effects:
+  # Ring kecil bergerak sebelum skill: terlihat rapi, tetapi tidak dikirim setiap tick.
+  skill-visuals:
+    enabled: true
   spawn:
     title-enabled: true
     title: '&c%boss%'

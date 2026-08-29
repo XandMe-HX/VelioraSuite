@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -60,6 +61,7 @@ public final class AdventureManager implements Listener {
     private final Set<UUID> excludedFarmMobs = new HashSet<>();
     private final Map<UUID, Long> moveChecks = new HashMap<>();
     private final Map<UUID, Long> guideCooldowns = new HashMap<>();
+    private final Map<UUID, ProgressWindow> progressWindows = new HashMap<>();
 
     public AdventureManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -195,16 +197,22 @@ public final class AdventureManager implements Listener {
             Player member = Bukkit.getPlayer(entry.getKey());
             String name = member == null ? Bukkit.getOfflinePlayer(entry.getKey()).getName() : member.getName();
             AdventureDataManager.PlayerData profile = data.player(entry.getKey(), name);
+            int oldLevel = member == null ? 0 : level(member);
+            AdventureRank oldRank = member == null ? null : standardRank(member);
             profile.addExp(quest.playerExp()); profile.complete();
             if (member != null) {
                 deposit(member, quest.money());
                 send(member, "quest-reward", "&aMisi selesai! Hadiah: &f$%money% &7+ &b%exp% Guild EXP.",
                         "%money%", String.valueOf(quest.money()), "%exp%", String.valueOf(quest.playerExp()));
                 member.playSound(member.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1F, 1F);
+                member.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, member.getLocation().add(0.0D, 1.0D, 0.0D), 24, 0.5D, 0.7D, 0.5D, 0.025D);
+                showProgressCelebration(member, oldLevel, oldRank);
             }
         }
         cleanupQuestMobs(team.getId());
         guild.complete(quest.guildExp());
+        TeamModule teamModule = plugin.getModuleManager().getModule("team").filter(TeamModule.class::isInstance).map(TeamModule.class::cast).orElse(null);
+        if (teamModule != null) teamModule.getTeamManager().addQuestScore(team, Math.max(5L, quest.guildExp() / 10L));
         data.save();
         broadcast(team, config.prefix() + config.color("&dGuild memperoleh &f" + quest.guildExp() + " Guild EXP&d."));
         return true;
@@ -214,8 +222,11 @@ public final class AdventureManager implements Listener {
     public void addBossProgress(Player player, int amount) { progress(player, AdventureQuestType.BOSS, "ANY", amount); }
     public void addExperience(Player player, long amount) {
         if (player == null || amount <= 0) return;
+        int oldLevel = level(player);
+        AdventureRank oldRank = standardRank(player);
         profile(player).addExp(amount);
         data.save();
+        showProgressCelebration(player, oldLevel, oldRank);
     }
     public long exp(Player player) { return profile(player).exp(); }
     public int completed(Player player) { return profile(player).completed(); }
@@ -353,9 +364,21 @@ public final class AdventureManager implements Listener {
         if (quest == null || quest.type() != type || guild.ready()) return;
         if (guild.activeExpires() > 0 && System.currentTimeMillis() > guild.activeExpires()) { cleanupQuestMobs(team.getId()); guild.clearActive(); data.save(); return; }
         if (!quest.target().equalsIgnoreCase("ANY") && !quest.target().equalsIgnoreCase(target)) return;
+        if (!config.questWorld().equals(player.getWorld().getName())
+                || horizontalDistance(player.getLocation(), guild.activeX(), guild.activeZ()) > config.objectiveRadius()) return;
+        if (!allowProgress(player, amount)) return;
         guild.addProgress(player.getUniqueId(), amount);
         if (guild.ready()) broadcast(team, config.prefix() + config.color("&aMisi selesai! Kembali ke NPC misi untuk menyetor hadiah."));
         data.save();
+    }
+
+    private boolean allowProgress(Player player, int requested) {
+        long second = System.currentTimeMillis() / 1000L;
+        ProgressWindow window = progressWindows.computeIfAbsent(player.getUniqueId(), ignored -> new ProgressWindow(second));
+        if (window.second != second) { window.second = second; window.amount = 0; }
+        int accepted = Math.max(0, Math.min(Math.max(0, requested), config.maxProgressPerSecond() - window.amount));
+        window.amount += accepted;
+        return accepted >= Math.max(1, requested);
     }
 
     private AdventureDataManager.GuildData daily(Team team) {
@@ -457,6 +480,29 @@ public final class AdventureManager implements Listener {
         for (int index = 0; index + 1 < replacements.length; index += 2) message = message.replace(replacements[index], replacements[index + 1]);
         player.sendMessage(config.prefix() + message);
     }
+    private void showProgressCelebration(Player player, int oldLevel, AdventureRank oldRank) {
+        int newLevel = level(player);
+        AdventureRank newRank = standardRank(player);
+        if (newRank != oldRank) {
+            player.sendTitle(config.color("&6RANK NAIK!"), config.color(config.rankDisplay(newRank)), 5, 40, 12);
+            showRankEffect(player, newRank);
+        } else if (newLevel > oldLevel) {
+            player.sendTitle(config.color("&bLEVEL PETUALANGAN UP!"), config.color("&fLevel " + newLevel), 4, 30, 8);
+            plugin.getEffects().particle(player.getLocation().add(0.0D, 1.0D, 0.0D), Particle.HAPPY_VILLAGER, 18, 0.45D, 0.65D, 0.45D, 0.025D);
+            plugin.getEffects().sound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.75F, 1.15F);
+        }
+    }
+    private void showRankEffect(Player player, AdventureRank rank) {
+        Location location = player.getLocation().add(0.0D, 1.0D, 0.0D);
+        switch (rank) {
+            case F, E -> { player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, location, 18, 0.45D, 0.60D, 0.45D, 0.02D); player.playSound(location, Sound.ENTITY_PLAYER_LEVELUP, 0.8F, 1.15F); }
+            case D, C -> { player.getWorld().spawnParticle(Particle.END_ROD, location, 28, 0.50D, 0.70D, 0.50D, 0.03D); player.playSound(location, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9F, 1.2F); }
+            case B, A -> { player.getWorld().spawnParticle(Particle.ENCHANT, location, 36, 0.65D, 0.80D, 0.65D, 0.35D); player.playSound(location, Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.9F, 1.0F); }
+            case S -> { player.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, location, 42, 0.60D, 0.85D, 0.60D, 0.02D); player.playSound(location, Sound.ITEM_TOTEM_USE, 0.72F, 1.05F); }
+            case SS -> { player.getWorld().spawnParticle(Particle.DRAGON_BREATH, location, 48, 0.60D, 0.90D, 0.60D, 0.02D); player.playSound(location, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.32F, 1.55F); }
+            case SSS -> { player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, location, 54, 0.65D, 0.95D, 0.65D, 0.18D); player.getWorld().spawnParticle(Particle.FIREWORK, location, 3, 0.45D, 0.75D, 0.45D, 0.03D); player.playSound(location, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 0.9F); }
+        }
+    }
     private void deposit(Player player, int amount) {
         if (amount <= 0) return;
         try {
@@ -474,5 +520,11 @@ public final class AdventureManager implements Listener {
         private final String type;
         private AdventureHolder(String type) { this.type = type; }
         @Override public Inventory getInventory() { return null; }
+    }
+
+    private static final class ProgressWindow {
+        private long second;
+        private int amount;
+        private ProgressWindow(long second) { this.second = second; }
     }
 }

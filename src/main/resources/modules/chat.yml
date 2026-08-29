@@ -23,8 +23,11 @@ settings:
   # formatter agar pesan tidak ganda atau formatnya tertimpa.
   interactive-chat:
     enabled: true
-    action: SUGGEST_COMMAND
-    hover: '&bKlik untuk memasukkan &f%command%&b ke chat.'
+    action: RUN_COMMAND
+    hover: '&bKlik untuk menjalankan &f%command%&b.'
+    # [item] menampilkan item tangan dengan hover. [@Nama] menyarankan /tpa Nama.
+    item-sharing-enabled: true
+    mention-enabled: true
     # Hanya command ini yang boleh menjadi tombol. Tambahkan command sendiri bila perlu.
     allowed-commands:
       - spawn

@@ -6,16 +6,21 @@ import id.velioragardens.veliorasuite.module.team.model.TeamInvite;
 import id.velioragardens.veliorasuite.module.team.model.TeamMember;
 import id.velioragardens.veliorasuite.module.team.model.TeamRole;
 import org.bukkit.Bukkit;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class TeamManager {
 
@@ -29,7 +34,9 @@ public final class TeamManager {
     private final TeamChatManager chatManager;
     private final TeamUpgradeManager upgradeManager;
     private final TeamTagManager tagManager;
-    private final Map<UUID, Long> ownerLeaveConfirmations = new HashMap<>();
+    private final Set<UUID> chatSpy = ConcurrentHashMap.newKeySet();
+    private TeamGuiManager guiManager;
+    private final Map<UUID, Long> activityScoreCooldown = new HashMap<>();
 
     public TeamManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -56,7 +63,6 @@ public final class TeamManager {
 
     public void shutdown() {
         inviteManager.clear();
-        ownerLeaveConfirmations.clear();
         dataManager.shutdown();
     }
 
@@ -111,6 +117,30 @@ public final class TeamManager {
         )), Map.of());
     }
 
+    public void setGuiManager(TeamGuiManager guiManager) { this.guiManager = guiManager; }
+    public void openGui(Player player) { if (guiManager != null) guiManager.openMain(player); }
+    public Team getPlayerTeam(UUID playerId) { return dataManager.getTeamByPlayer(playerId); }
+
+    public void sendAdminHelp(CommandSender sender) {
+        sendLines(sender, List.of(
+                "&8&m--------------------------------",
+                "&c&lAdmin Team Veliora",
+                "&f/teama reload &7- Memuat ulang konfigurasi team.",
+                "&f/teama invite <team> <player> &7- Mengirim undangan team.",
+                "&f/teama join <team> <player> &7- Memasukkan player ke team.",
+                "&f/teama leave <player> &7- Mengeluarkan player dari team.",
+                "&f/teama promote <player> &7- Member menjadi admin team.",
+                "&f/teama demote <player> &7- Admin menjadi member team.",
+                "&f/teama setowner <player> &7- Menjadikan member sebagai owner.",
+                "&f/teama disband <team> &7- Membubarkan team.",
+                "&7Pengaturan skor, saldo, tag, warna, dan chatspy masuk Progress 3 bersama GUI.",
+                "&8&m--------------------------------"), Map.of());
+    }
+
+    public void sendAdminUsage(CommandSender sender) {
+        send(sender, "admin-invalid-usage", "%prefix% &cFormat salah. Lihat &f/teama help&c.", Map.of());
+    }
+
     public void createTeam(Player player, String rawName) {
         if (!checkEnabled(player)) return;
 
@@ -130,6 +160,7 @@ public final class TeamManager {
         team.addMember(new TeamMember(player.getUniqueId(), player.getName(), TeamRole.OWNER, now()));
         dataManager.saveTeam(team);
         send(player, "create-success", "%prefix% &aTeam &f%team% &aberhasil dibuat. Biaya: &f$%cost%&a.", teamPlaceholders(team, Map.of("%cost%", formatPrice(cost))));
+        celebrate(player, Particle.END_ROD, Sound.UI_TOAST_CHALLENGE_COMPLETE);
     }
 
     public void invite(Player inviter, Player target) {
@@ -138,8 +169,8 @@ public final class TeamManager {
         Team team = requireTeam(inviter);
         if (team == null) return;
 
-        if (!team.isOwner(inviter.getUniqueId())) {
-            send(inviter, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of());
+        if (!canManageMembers(team, inviter.getUniqueId())) {
+            send(inviter, "only-owner", "%prefix% &cHanya owner atau admin team yang bisa melakukan ini.", Map.of());
             return;
         }
 
@@ -162,6 +193,7 @@ public final class TeamManager {
         inviteManager.createInvite(new TeamInvite(team.getName(), target.getUniqueId(), target.getName(), inviter.getUniqueId(), inviter.getName(), expiresAt));
         send(inviter, "invite-sent", "%prefix% &aInvite team dikirim ke &f%player%&a.", Map.of("%player%", target.getName(), "%team%", team.getDisplayName()));
         send(target, "invite-received", "%prefix% &aKamu diundang ke team &f%team%&a. Ketik &f/team accept &auntuk bergabung.", Map.of("%team%", team.getDisplayName(), "%player%", inviter.getName()));
+        target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.65F, 1.2F);
     }
 
     public void acceptInvite(Player player) {
@@ -199,14 +231,15 @@ public final class TeamManager {
         dataManager.saveTeam(team);
         send(player, "accept-success", "%prefix% &aKamu bergabung ke team &f%team%&a.", teamPlaceholders(team, Map.of()));
         notifyTeam(team, "member-joined", "%prefix% &f%player% &abergabung ke team.", Map.of("%player%", player.getName()), player.getUniqueId());
+        celebrate(player, Particle.HAPPY_VILLAGER, Sound.ENTITY_PLAYER_LEVELUP);
     }
 
-    public void leave(Player player, boolean confirm) {
+    public void leave(Player player) {
         Team team = requireTeam(player);
         if (team == null) return;
 
         if (team.isOwner(player.getUniqueId())) {
-            handleOwnerLeave(player, team, confirm);
+            send(player, "owner-must-transfer", "%prefix% &cOwner tidak dapat keluar langsung. Pindahkan owner terlebih dahulu dengan &f/team setowner <team> <player>&c.", teamPlaceholders(team, Map.of()));
             return;
         }
 
@@ -227,10 +260,185 @@ public final class TeamManager {
         sendLines(sender, configManager.getFormatList("list-footer", List.of("&8&m--------------------------------")), Map.of());
     }
 
+    public void teamInfo(Player player, String query) {
+        Team team = query == null || query.isBlank() ? requireTeam(player) : dataManager.getTeam(query);
+        if (team == null) { if (query != null && !query.isBlank()) send(player, "team-not-found", "%prefix% &cTeam &f%team% &ctidak ditemukan.", Map.of("%team%", query)); return; }
+        send(player, "team-info", "%prefix% &b%team% &7Owner: &f%owner% &7Member: &f%members%/%max_members% &7Status: %open%", teamPlaceholders(team, Map.of("%open%", team.isOpen() ? "&aTERBUKA" : "&eUNDANGAN")));
+    }
+
+    public void disbandOwnedTeam(Player player) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!team.isOwner(player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of()); return; }
+        notifyTeam(team, "team-disbanded", "%prefix% &cTeam &f%team% &ctelah dibubarkan oleh owner.", teamPlaceholders(team, Map.of()), player.getUniqueId());
+        dataManager.deleteTeam(team);
+        send(player, "team-disbanded", "%prefix% &cTeam &f%team% &ctelah dibubarkan.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void joinOpenTeam(Player player, String teamName) {
+        if (dataManager.getTeamByPlayer(player.getUniqueId()) != null) { send(player, "already-in-team", "%prefix% &cKamu sudah punya team.", Map.of()); return; }
+        Team team = dataManager.getTeam(teamName);
+        if (team == null) { send(player, "team-not-found", "%prefix% &cTeam &f%team% &ctidak ditemukan.", Map.of("%team%", teamName)); return; }
+        if (team.isBanned(player.getUniqueId())) { send(player, "team-banned", "%prefix% &cKamu dilarang bergabung ke team ini.", teamPlaceholders(team, Map.of())); return; }
+        if (!team.isOpen()) { send(player, "team-closed", "%prefix% &cTeam ini hanya menerima anggota melalui undangan.", teamPlaceholders(team, Map.of())); return; }
+        if (team.isFull()) { send(player, "team-full", "%prefix% &cTeam sudah penuh.", Map.of()); return; }
+        team.addMember(new TeamMember(player.getUniqueId(), player.getName(), TeamRole.MEMBER, now()));
+        team.setLastActive(now()); dataManager.saveTeam(team);
+        send(player, "accept-success", "%prefix% &aKamu bergabung ke team &f%team%&a.", teamPlaceholders(team, Map.of()));
+        notifyTeam(team, "member-joined", "%prefix% &f%player% &abergabung ke team.", Map.of("%player%", player.getName()), player.getUniqueId());
+    }
+
+    public void setTeamHome(Player player) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!canManageMembers(team, player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner atau admin team yang bisa melakukan ini.", Map.of()); return; }
+        team.setHome(player.getLocation()); dataManager.saveTeam(team);
+        send(player, "team-home-set", "%prefix% &aHome team berhasil ditetapkan.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void deleteTeamHome(Player player) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!canManageMembers(team, player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner atau admin team yang bisa melakukan ini.", Map.of()); return; }
+        if (!team.hasHome()) { send(player, "team-home-missing", "%prefix% &cTeam belum memiliki home.", Map.of()); return; }
+        team.clearHome(); dataManager.saveTeam(team);
+        send(player, "team-home-deleted", "%prefix% &aHome team berhasil dihapus.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void teleportTeamHome(Player player) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!team.hasHome() || team.getHome() == null) { send(player, "team-home-missing", "%prefix% &cTeam belum memiliki home yang tersedia.", Map.of()); return; }
+        player.teleportAsync(team.getHome()).thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (success) send(player, "team-home-teleported", "%prefix% &aKamu berhasil menuju home team &f%team%&a.", teamPlaceholders(team, Map.of()));
+            else send(player, "team-home-failed", "%prefix% &cTeleport ke home team gagal.", Map.of());
+        }));
+    }
+
+    public void toggleTeamChat(Player player) {
+        if (requireTeam(player) == null) return;
+        boolean enabled = chatManager.toggle(player);
+        send(player, "team-chat-toggle", "%prefix% &aMode chat team: %state%&a.", Map.of("%state%", enabled ? "&aAKTIF" : "&cNONAKTIF"));
+    }
+
+    public boolean isTeamChatMode(Player player) { return player != null && dataManager.getTeamByPlayer(player.getUniqueId()) != null && chatManager.isEnabled(player.getUniqueId()); }
+
+    public void toggleTeamPvp(Player player) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!canManageMembers(team, player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner atau admin team yang bisa melakukan ini.", Map.of()); return; }
+        team.setPvpEnabled(!team.isPvpEnabled()); dataManager.saveTeam(team);
+        send(player, "team-pvp-toggle", "%prefix% &aPvP antar anggota team: %state%&a.", teamPlaceholders(team, Map.of("%state%", team.isPvpEnabled() ? "&aAKTIF" : "&cNONAKTIF")));
+    }
+
+    public void toggleTeamOpen(Player player) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!team.isOwner(player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of()); return; }
+        team.setOpen(!team.isOpen()); dataManager.saveTeam(team);
+        send(player, "team-open-toggle", "%prefix% &aStatus masuk team: %state%&a.", teamPlaceholders(team, Map.of("%state%", team.isOpen() ? "&aTERBUKA" : "&eUNDANGAN SAJA")));
+    }
+
+    public void manageMember(Player actor, String targetName, String action) {
+        Team team = requireTeam(actor); if (team == null) return;
+        if (!canManageMembers(team, actor.getUniqueId())) { send(actor, "only-owner", "%prefix% &cHanya owner atau admin team yang bisa melakukan ini.", Map.of()); return; }
+        UUID targetId = dataManager.findMemberUuid(team, targetName);
+        if (targetId == null) { send(actor, "target-not-member", "%prefix% &cPlayer itu bukan member team ini.", Map.of()); return; }
+        TeamMember target = team.getMembers().get(targetId);
+        TeamRole actorRole = team.getRole(actor.getUniqueId());
+        if (targetId.equals(actor.getUniqueId()) || !actorRole.isHigherThan(target.getRole())) { send(actor, "role-protected", "%prefix% &cKamu tidak dapat mengelola anggota dengan jabatan setara atau lebih tinggi.", Map.of()); return; }
+        switch (action) {
+            case "kick" -> { team.removeMember(targetId); chatManager.disable(targetId); send(actor, "member-kicked", "%prefix% &a%player% dikeluarkan dari team.", Map.of("%player%", target.getName())); }
+            case "ban" -> { team.removeMember(targetId); team.ban(targetId); chatManager.disable(targetId); send(actor, "member-banned", "%prefix% &a%player% dilarang bergabung kembali ke team ini.", Map.of("%player%", target.getName())); }
+            case "promote" -> { if (!team.isOwner(actor.getUniqueId())) { send(actor, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of()); return; } target.setRole(TeamRole.ADMIN); send(actor, "member-promoted", "%prefix% &a%player% sekarang menjadi admin team.", Map.of("%player%", target.getName())); }
+            case "demote" -> { if (!team.isOwner(actor.getUniqueId())) { send(actor, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of()); return; } target.setRole(TeamRole.MEMBER); send(actor, "member-demoted", "%prefix% &a%player% sekarang menjadi member team.", Map.of("%player%", target.getName())); }
+            default -> { return; }
+        }
+        team.setLastActive(now()); dataManager.saveTeam(team);
+    }
+
+    public void unbanMember(Player actor, String targetName) {
+        Team team = requireTeam(actor); if (team == null) return;
+        if (!canManageMembers(team, actor.getUniqueId())) { send(actor, "only-owner", "%prefix% &cHanya owner atau admin team yang bisa melakukan ini.", Map.of()); return; }
+        UUID targetId = Bukkit.getOfflinePlayer(targetName).getUniqueId();
+        if (!team.isBanned(targetId)) { send(actor, "target-not-banned", "%prefix% &cPlayer tersebut tidak diban dari team ini.", Map.of()); return; }
+        team.unban(targetId); dataManager.saveTeam(team);
+        send(actor, "member-unbanned", "%prefix% &a%player% boleh bergabung lagi ke team.", Map.of("%player%", targetName));
+    }
+
+    public void setTeamText(Player player, String type, String value) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!team.isOwner(player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of()); return; }
+        if (value == null || value.isBlank() || value.length() > 48) { send(player, "invalid-team-text", "%prefix% &cTeks tidak valid atau terlalu panjang.", Map.of()); return; }
+        if (type.equals("description")) team.setDescription(value);
+        else if (type.equals("tag")) team.setTag(value.replace("&", ""));
+        else if (type.equals("color") && value.matches("&[0-9a-fk-orA-FK-OR]")) team.setColor(value.toLowerCase(Locale.ROOT));
+        else { send(player, "invalid-team-text", "%prefix% &cNilai tidak valid.", Map.of()); return; }
+        dataManager.saveTeam(team);
+        send(player, "team-text-updated", "%prefix% &aPengaturan team berhasil diperbarui.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void renameOwnedTeam(Player player, String newName) {
+        Team team = requireTeam(player); if (team == null) return;
+        if (!team.isOwner(player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of()); return; }
+        String value = newName == null ? "" : newName.trim();
+        if (!value.matches("^[A-Z]+$") || !configManager.getTeamNamePattern().matcher(value).matches() || dataManager.teamExists(value)) {
+            send(player, "team-name-invalid", "%prefix% &cNama team tidak valid atau sudah dipakai.", Map.of()); return;
+        }
+        if (!dataManager.renameTeam(team, value)) { send(player, "team-name-invalid", "%prefix% &cNama team tidak dapat diubah.", Map.of()); return; }
+        send(player, "team-renamed", "%prefix% &aNama team berhasil diubah menjadi &f%team%&a.", teamPlaceholders(team, Map.of()));
+    }
+
+    public boolean isFriendlyFireBlocked(Player attacker, Player victim) {
+        Team first = dataManager.getTeamByPlayer(attacker.getUniqueId());
+        return first != null && first == dataManager.getTeamByPlayer(victim.getUniqueId()) && !first.isPvpEnabled();
+    }
+
+    public void sendFriendlyFireBlocked(Player player) { send(player, "team-friendly-fire", "%prefix% &cPvP antar anggota team sedang dinonaktifkan.", Map.of()); }
+
+    public void teamBalance(Player player) {
+        Team team = requireTeam(player); if (team == null) return;
+        send(player, "team-balance", "%prefix% &7Saldo team &f%team%&7: &a$%balance%", teamPlaceholders(team, Map.of("%balance%", formatPrice(team.getBalance()))));
+    }
+
+    /** Safe team progression: invoked only by vetted sources such as AuraSkills gathering XP and completed guild quests. */
+    public void addActivityScore(Player player, long amount, String source) {
+        if (player == null || amount <= 0L) return;
+        Team team = dataManager.getTeamByPlayer(player.getUniqueId());
+        if (team == null) return;
+        long now = System.currentTimeMillis();
+        long previous = activityScoreCooldown.getOrDefault(player.getUniqueId(), 0L);
+        if (now - previous < 2_000L) return;
+        activityScoreCooldown.put(player.getUniqueId(), now);
+        long gained = Math.min(5L, amount);
+        team.setScore(team.getScore() + gained);
+        team.setLastActive(this.now());
+        dataManager.saveTeam(team);
+        if (team.getScore() % 25L < gained) {
+            player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1, 0), 8, 0.25, 0.35, 0.25, 0.01);
+            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.35F, 1.35F);
+            send(player, "team-score-gained", "%prefix% &aTeam memperoleh &e%amount% skor &adari %source%.", Map.of("%amount%", String.valueOf(gained), "%source%", source));
+        }
+    }
+
+    public void addQuestScore(Team team, long amount) {
+        if (team == null || amount <= 0L) return;
+        team.setScore(team.getScore() + amount);
+        team.setLastActive(now());
+        dataManager.saveTeam(team);
+    }
+
+    public void rankings(CommandSender sender, boolean balance) {
+        List<Team> teams = dataManager.getTeams().stream().sorted(balance ? Comparator.comparingDouble(Team::getBalance).reversed() : Comparator.comparingLong(Team::getScore).reversed()).limit(10).toList();
+        sender.sendMessage(configManager.color("&8&m--------------------------------"));
+        sender.sendMessage(configManager.color(balance ? "&6&lTeam Terkaya" : "&b&lPeringkat Team"));
+        int rank = 1;
+        for (Team team : teams) sender.sendMessage(configManager.color("&7#" + rank++ + " &f" + team.getDisplayName() + " &8- &e" + (balance ? "$" + formatPrice(team.getBalance()) : team.getScore())));
+        sender.sendMessage(configManager.color("&8&m--------------------------------"));
+    }
+
     public void teamChat(Player player, String message) {
         Team team = requireTeam(player);
         if (team == null) return;
         chatManager.sendTeamChat(player, team, message);
+        for (UUID spyId : chatSpy) {
+            Player spy = Bukkit.getPlayer(spyId);
+            if (spy != null && spy.isOnline() && !team.isMember(spyId)) spy.sendMessage(configManager.color("&8[&cSpy " + team.getDisplayName() + "&8] &f" + player.getName() + "&7: &f" + message));
+        }
         team.setLastActive(now());
         dataManager.saveTeam(team);
     }
@@ -257,6 +465,7 @@ public final class TeamManager {
         team.setLastActive(now());
         dataManager.saveTeam(team);
         send(player, "upgrade-success", "%prefix% &aTeam berhasil diupgrade. Maksimal member sekarang &f%max_members%&a.", teamPlaceholders(team, Map.of("%cost%", formatPrice(cost))));
+        celebrate(player, Particle.TOTEM_OF_UNDYING, Sound.UI_TOAST_CHALLENGE_COMPLETE);
     }
 
     public void setOwner(CommandSender sender, String teamName, Player target) {
@@ -302,6 +511,92 @@ public final class TeamManager {
         send(target, "setowner-received", "%prefix% &aKamu sekarang menjadi owner team &f%team%&a.", teamPlaceholders(team, Map.of()));
     }
 
+    public void toggleChatSpy(Player player) {
+        if (chatSpy.remove(player.getUniqueId())) send(player, "chat-spy", "%prefix% &cTeam chat spy dinonaktifkan.", Map.of());
+        else { chatSpy.add(player.getUniqueId()); send(player, "chat-spy", "%prefix% &aTeam chat spy diaktifkan.", Map.of()); }
+    }
+
+    public void setChatSpy(Player player, boolean enabled) {
+        if (enabled) chatSpy.add(player.getUniqueId()); else chatSpy.remove(player.getUniqueId());
+        send(player, "chat-spy", enabled ? "%prefix% &aTeam chat spy diaktifkan." : "%prefix% &cTeam chat spy dinonaktifkan.", Map.of());
+    }
+
+    public void adminCreate(CommandSender sender, String name) {
+        String value = name == null ? "" : name.trim();
+        if (!value.matches("^[A-Z]+$") || !configManager.getTeamNamePattern().matcher(value).matches() || dataManager.teamExists(value)) { send(sender, "team-name-invalid", "%prefix% &cNama team tidak valid atau sudah dipakai.", Map.of()); return; }
+        Team team = new Team(dataManager.nextId(), value, value, null, "-", configManager.getDefaultMaxMembers(), false, now(), now());
+        dataManager.saveTeam(team);
+        send(sender, "admin-created", "%prefix% &aTeam kosong &f%team% &aberhasil dibuat.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void adminSetText(CommandSender sender, String teamName, String type, String value) {
+        Team team = getTeamOrMessage(sender, teamName); if (team == null) return;
+        if (value == null || value.isBlank() || value.length() > 48) { send(sender, "invalid-team-text", "%prefix% &cTeks tidak valid atau terlalu panjang.", Map.of()); return; }
+        if (type.equals("description")) team.setDescription(value);
+        else if (type.equals("tag")) team.setTag(value.replace("&", ""));
+        else if (type.equals("color") && value.matches("&[0-9a-fk-orA-FK-OR]")) team.setColor(value.toLowerCase(Locale.ROOT));
+        else { send(sender, "invalid-team-text", "%prefix% &cNilai tidak valid.", Map.of()); return; }
+        dataManager.saveTeam(team); send(sender, "team-text-updated", "%prefix% &aPengaturan team berhasil diperbarui.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void adminRename(CommandSender sender, String oldName, String newName) {
+        Team team = getTeamOrMessage(sender, oldName); if (team == null) return;
+        String value = newName == null ? "" : newName.trim();
+        if (!value.matches("^[A-Z]+$") || !configManager.getTeamNamePattern().matcher(value).matches() || dataManager.teamExists(value) || !dataManager.renameTeam(team, value)) { send(sender, "team-name-invalid", "%prefix% &cNama team tidak valid atau sudah dipakai.", Map.of()); return; }
+        send(sender, "team-renamed", "%prefix% &aNama team berhasil diubah menjadi &f%team%&a.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void adminSetRank(CommandSender sender, String teamName, int rank) {
+        Team team = getTeamOrMessage(sender, teamName); if (team == null) return;
+        team.setRank(rank); dataManager.saveTeam(team);
+        send(sender, "admin-rank", "%prefix% &aRank team &f%team% &adiatur menjadi &f%rank%&a.", teamPlaceholders(team, Map.of("%rank%", String.valueOf(team.getRank()))));
+    }
+
+    public void adminChangeNumber(CommandSender sender, String operation, String subject, String target, double amount, boolean money) {
+        Team team = dataManager.getTeam(target);
+        if (team == null && subject.equalsIgnoreCase("player")) team = dataManager.getTeamByMemberName(target);
+        if (team == null) { send(sender, "team-not-found", "%prefix% &cTeam atau player tidak ditemukan.", Map.of("%team%", target)); return; }
+        if (amount < 0D || Double.isNaN(amount) || Double.isInfinite(amount)) { send(sender, "invalid-team-text", "%prefix% &cNilai tidak valid.", Map.of()); return; }
+        if (money) {
+            double next = operation.equals("set") ? amount : operation.equals("add") ? team.getBalance() + amount : Math.max(0D, team.getBalance() - amount);
+            team.setBalance(next);
+        } else {
+            long raw = Math.round(amount);
+            long next = operation.equals("set") ? raw : operation.equals("add") ? team.getScore() + raw : Math.max(0L, team.getScore() - raw);
+            team.setScore(next);
+        }
+        dataManager.saveTeam(team);
+        send(sender, "admin-number", "%prefix% &aData &f%team% &aberhasil diperbarui.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void adminPurgeScores(CommandSender sender) {
+        for (Team team : dataManager.getTeams()) { team.setScore(0L); dataManager.saveTeam(team); }
+        send(sender, "admin-purge", "%prefix% &aSemua skor team direset ke 0.", Map.of());
+    }
+
+    public void transferOwner(Player owner, Player target) {
+        Team team = requireTeam(owner);
+        if (team == null) return;
+        if (!team.isOwner(owner.getUniqueId())) {
+            send(owner, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of());
+            return;
+        }
+        if (target == null || !team.isMember(target.getUniqueId())) {
+            send(owner, "target-not-member", "%prefix% &cPlayer itu bukan member team ini.", Map.of());
+            return;
+        }
+        TeamMember oldOwner = team.getMembers().get(owner.getUniqueId());
+        TeamMember newOwner = team.getMembers().get(target.getUniqueId());
+        oldOwner.setRole(TeamRole.ADMIN);
+        newOwner.setRole(TeamRole.OWNER);
+        team.setOwnerUuid(target.getUniqueId());
+        team.setOwnerName(target.getName());
+        team.setLastActive(now());
+        dataManager.saveTeam(team);
+        send(owner, "setowner-success", "%prefix% &aOwner team &f%team% &aberhasil dipindahkan ke &f%player%&a.", teamPlaceholders(team, Map.of("%player%", target.getName())));
+        send(target, "setowner-received", "%prefix% &aKamu sekarang menjadi owner team &f%team%&a.", teamPlaceholders(team, Map.of()));
+    }
+
     public void deleteTeam(CommandSender sender, String teamName) {
         if (!hasDeletePermission(sender)) {
             send(sender, "no-permission", "%prefix% &cKamu tidak punya izin.", Map.of());
@@ -316,6 +611,75 @@ public final class TeamManager {
 
         dataManager.deleteTeam(team);
         send(sender, "team-deleted", "%prefix% &aTeam &f%team% &aberhasil dihapus.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void adminInvite(CommandSender sender, String teamName, Player target) {
+        Team team = getTeamOrMessage(sender, teamName);
+        if (team == null || target == null) {
+            if (target == null) send(sender, "target-not-found", "%prefix% &cPlayer &f%player% &ctidak ditemukan.", Map.of("%player%", "-"));
+            return;
+        }
+        if (dataManager.getTeamByPlayer(target.getUniqueId()) != null) {
+            send(sender, "target-already-in-team", "%prefix% &cPlayer itu sudah punya team.", Map.of());
+            return;
+        }
+        long expiresAt = System.currentTimeMillis() + (configManager.getInviteTimeoutSeconds() * 1000L);
+        inviteManager.createInvite(new TeamInvite(team.getName(), target.getUniqueId(), target.getName(), null, sender.getName(), expiresAt));
+        send(sender, "invite-sent", "%prefix% &aInvite team dikirim ke &f%player%&a.", teamPlaceholders(team, Map.of("%player%", target.getName())));
+        send(target, "invite-received", "%prefix% &aKamu diundang ke team &f%team%&a. Ketik &f/team accept &auntuk bergabung.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void forceJoin(CommandSender sender, String teamName, Player target) {
+        Team team = getTeamOrMessage(sender, teamName);
+        if (team == null || target == null) {
+            if (target == null) send(sender, "target-not-found", "%prefix% &cPlayer &f%player% &ctidak ditemukan.", Map.of("%player%", "-"));
+            return;
+        }
+        Team oldTeam = dataManager.getTeamByPlayer(target.getUniqueId());
+        if (oldTeam != null && oldTeam.isOwner(target.getUniqueId())) {
+            send(sender, "admin-owner-protected", "%prefix% &cOwner harus memindahkan owner terlebih dahulu.", teamPlaceholders(oldTeam, Map.of()));
+            return;
+        }
+        if (team.isFull()) { send(sender, "team-full", "%prefix% &cTeam sudah penuh.", Map.of()); return; }
+        if (oldTeam != null) { oldTeam.removeMember(target.getUniqueId()); dataManager.saveTeam(oldTeam); }
+        team.addMember(new TeamMember(target.getUniqueId(), target.getName(), TeamRole.MEMBER, now()));
+        team.setLastActive(now());
+        dataManager.saveTeam(team);
+        send(sender, "admin-force-join", "%prefix% &a%player% dimasukkan ke team &f%team%&a.", teamPlaceholders(team, Map.of("%player%", target.getName())));
+        send(target, "accept-success", "%prefix% &aKamu bergabung ke team &f%team%&a.", teamPlaceholders(team, Map.of()));
+    }
+
+    public void forceLeave(CommandSender sender, Player target) {
+        if (target == null) { send(sender, "target-not-found", "%prefix% &cPlayer &f%player% &ctidak ditemukan.", Map.of("%player%", "-")); return; }
+        Team team = dataManager.getTeamByPlayer(target.getUniqueId());
+        if (team == null) { send(sender, "not-in-team", "%prefix% &cPlayer tersebut belum punya team.", Map.of()); return; }
+        if (team.isOwner(target.getUniqueId())) { send(sender, "admin-owner-protected", "%prefix% &cOwner tidak bisa dikeluarkan. Pindahkan owner dahulu.", teamPlaceholders(team, Map.of())); return; }
+        team.removeMember(target.getUniqueId());
+        dataManager.saveTeam(team);
+        send(sender, "admin-force-leave", "%prefix% &a%player% dikeluarkan dari team &f%team%&a.", teamPlaceholders(team, Map.of("%player%", target.getName())));
+    }
+
+    public void changeRole(CommandSender sender, Player target, boolean promote) {
+        if (target == null) { send(sender, "target-not-found", "%prefix% &cPlayer &f%player% &ctidak ditemukan.", Map.of("%player%", "-")); return; }
+        Team team = dataManager.getTeamByPlayer(target.getUniqueId());
+        TeamMember member = team == null ? null : team.getMembers().get(target.getUniqueId());
+        if (member == null) { send(sender, "target-not-member", "%prefix% &cPlayer itu bukan member team.", Map.of()); return; }
+        if (team.isOwner(target.getUniqueId())) { send(sender, "role-owner-protected", "%prefix% &cRole owner hanya dipindahkan memakai &f/teama setowner <player>&c.", teamPlaceholders(team, Map.of())); return; }
+        member.setRole(promote ? TeamRole.ADMIN : TeamRole.MEMBER);
+        dataManager.saveTeam(team);
+        send(sender, "admin-role-changed", "%prefix% &aRole %player% diubah menjadi &f%role%&a.", teamPlaceholders(team, Map.of("%player%", target.getName(), "%role%", promote ? "ADMIN" : "MEMBER")));
+    }
+
+    public void setOwnerForMember(CommandSender sender, Player target) {
+        if (target == null) { send(sender, "target-not-found", "%prefix% &cPlayer &f%player% &ctidak ditemukan.", Map.of("%player%", "-")); return; }
+        Team team = dataManager.getTeamByPlayer(target.getUniqueId());
+        if (team == null) { send(sender, "target-not-member", "%prefix% &cPlayer itu bukan member team.", Map.of()); return; }
+        setOwner(sender, team.getName(), target);
+    }
+
+    private void celebrate(Player player, Particle particle, Sound sound) {
+        player.getWorld().spawnParticle(particle, player.getLocation().add(0.0D, 1.0D, 0.0D), 18, 0.42D, 0.6D, 0.42D, 0.025D);
+        player.playSound(player.getLocation(), sound, 0.7F, 1.15F);
     }
 
     public void infoTeam(CommandSender sender, String teamName) {
@@ -349,24 +713,9 @@ public final class TeamManager {
         send(sender, "invalid-usage", "%prefix% &cGunakan: &f/team help", Map.of());
     }
 
-    private void handleOwnerLeave(Player player, Team team, boolean confirm) {
-        if (!confirm) {
-            long expires = System.currentTimeMillis() + (configManager.getOwnerLeaveConfirmTimeoutSeconds() * 1000L);
-            ownerLeaveConfirmations.put(player.getUniqueId(), expires);
-            send(player, "owner-leave-confirm", "%prefix% &cKamu adalah owner. Jika keluar, team akan dihapus. Ketik &f/team leave confirm &cdalam &f%time%s &cuntuk lanjut.", teamPlaceholders(team, Map.of("%time%", String.valueOf(configManager.getOwnerLeaveConfirmTimeoutSeconds()))));
-            return;
-        }
-
-        long expiresAt = ownerLeaveConfirmations.getOrDefault(player.getUniqueId(), 0L);
-        if (System.currentTimeMillis() > expiresAt) {
-            ownerLeaveConfirmations.remove(player.getUniqueId());
-            send(player, "owner-leave-cancelled", "%prefix% &cKonfirmasi keluar owner sudah expired.", Map.of());
-            return;
-        }
-
-        ownerLeaveConfirmations.remove(player.getUniqueId());
-        notifyTeam(team, "team-disbanded", "%prefix% &cTeam &f%team% &ctelah dihapus karena owner keluar.", teamPlaceholders(team, Map.of()), null);
-        dataManager.deleteTeam(team);
+    public boolean canManageMembers(Team team, UUID playerId) {
+        TeamRole role = team == null ? null : team.getRole(playerId);
+        return role != null && role.canManageMembers();
     }
 
     private boolean validateTeamName(Player player, String name) {
@@ -404,6 +753,14 @@ public final class TeamManager {
         if (team == null) {
             send(player, "not-in-team", "%prefix% &cKamu belum punya team.", Map.of());
             return null;
+        }
+        return team;
+    }
+
+    private Team getTeamOrMessage(CommandSender sender, String name) {
+        Team team = dataManager.getTeam(name);
+        if (team == null) {
+            send(sender, "team-not-found", "%prefix% &cTeam &f%team% &ctidak ditemukan.", Map.of("%team%", name));
         }
         return team;
     }

@@ -105,6 +105,16 @@ public final class TraderDataManager {
         flushTrader();
     }
 
+    public String getFarmSellPeriod(java.util.UUID playerId) {
+        return traderData.getString("farm-sells." + playerId + ".period", "");
+    }
+
+    public void saveFarmSellPeriod(java.util.UUID playerId, String period) {
+        traderData.set("farm-sells." + playerId + ".period", period);
+        traderData.set("farm-sells." + playerId + ".updated-at", System.currentTimeMillis());
+        flushTrader();
+    }
+
     public FileConfiguration purchases() {
         return purchasesData;
     }
