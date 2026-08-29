@@ -49,6 +49,10 @@ public final class FishingMinigameManager implements Listener {
         removeCaught(event.getCaught());
         FishGenerator.GeneratedFish generatedFish = manager.getGenerator().generate(player);
         FishRarity rarity = generatedFish.fish().rarity();
+        if (!canHold(player, rarity)) {
+            lineSnap(player, generatedFish.fish());
+            return;
+        }
         boolean skipMinigame = !manager.getConfigManager().isMinigameEnabled()
                 || !manager.getConfigManager().isMinigameEnabledForRarity(rarity)
                 || manager.getConfigManager().getSpamNeeded(rarity) <= 0
@@ -122,6 +126,7 @@ public final class FishingMinigameManager implements Listener {
         Session session = sessions.remove(player.getUniqueId());
         if (session == null) return;
         session.cancelTask();
+        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("minigame-fail", "%prefix% &cIkan lepas.")));
     }
 
     private void showActionBar(Player player, Session session) {
@@ -151,6 +156,30 @@ public final class FishingMinigameManager implements Listener {
             session.hook.getWorld().spawnParticle(hookParticle, session.hook.getLocation(),
                     mythic ? 10 : 4, 0.18D, 0.18D, 0.18D, 0.01D);
         }
+    }
+
+    /** High rarities can appear early, but a weak rod visibly loses the fight instead of silently awarding them. */
+    private boolean canHold(Player player, FishRarity rarity) {
+        int tier = manager.getRodManager().getTier(player);
+        int required = switch (rarity) {
+            case EPIC -> 5;
+            case LEGENDARY -> 10;
+            case MITOLOGI -> 14;
+            case SECRET -> 18;
+            default -> 1;
+        };
+        return tier >= required;
+    }
+
+    private void lineSnap(Player player, CaughtFish fish) {
+        int required = switch (fish.rarity()) {
+            case EPIC -> 5; case LEGENDARY -> 10; case MITOLOGI -> 14; case SECRET -> 18; default -> 1;
+        };
+        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("rod-too-weak", "%prefix% &cTarikan &f%fish% &cterlepas! Butuh Rod Tier &f%tier%&c atau lebih.")
+                .replace("%fish%", fish.name()).replace("%tier%", String.valueOf(required))));
+        player.sendActionBar(manager.getConfigManager().color("&c✖ Pancingan tidak cukup kuat — ikan lepas!"));
+        plugin.getEffects().ring(player.getLocation(), Particle.SMOKE, 0.75D, 10, 0.25D);
+        plugin.getEffects().sound(player.getLocation(), org.bukkit.Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 0.75F, 0.55F);
     }
 
     private void removeCaught(Entity entity) {
