@@ -77,6 +77,7 @@ public final class PetConfigManager {
         File file = new File(plugin.getDataFolder(), "modules/pets.yml");
         config = YamlConfiguration.loadConfiguration(file);
         mergeBundledDefaults(file);
+        migrateGrowthAndMobDefaults(file);
         pruneUnsupportedPets(file);
         loadChances();
         loadPets();
@@ -119,6 +120,26 @@ public final class PetConfigManager {
             config.save(file);
         } catch (IOException exception) {
             plugin.getLogger().warning("VelioraPets: gagal memperbarui default pets.yml: " + exception.getMessage());
+        }
+    }
+
+    private void migrateGrowthAndMobDefaults(File file) {
+        boolean changed = false;
+        if (config.getInt("settings.max-level", 100) < 100) {
+            config.set("settings.max-level", 100);
+            changed = true;
+        }
+        if (!config.getBoolean("settings.allow-aggressive-pets", false)) {
+            config.set("settings.allow-aggressive-pets", true);
+            changed = true;
+        }
+        java.util.List<String> allowed = new java.util.ArrayList<>(config.getStringList("settings.aggressive-pets.allowed-entities"));
+        for (String type : java.util.List.of("ZOMBIE", "HUSK", "DROWNED", "SKELETON", "STRAY", "BOGGED", "SPIDER", "CAVE_SPIDER", "IRON_GOLEM", "SLIME", "MAGMA_CUBE", "BREEZE")) {
+            if (!allowed.contains(type)) { allowed.add(type); changed = true; }
+        }
+        if (changed) {
+            config.set("settings.aggressive-pets.allowed-entities", allowed);
+            try { config.save(file); } catch (IOException exception) { plugin.getLogger().warning("VelioraPets: gagal memperbarui pengaturan growth: " + exception.getMessage()); }
         }
     }
     public boolean allowStorageWithoutActive() { return bool("storage.allow-storage-without-active", true); }
