@@ -43,7 +43,11 @@ public final class ChatConfigManager {
         return getString("settings.interactive-chat.hover", "&bKlik untuk memasukkan &f%command%&b ke chat.");
     }
     public boolean isInteractiveItemEnabled() { return getBoolean("settings.interactive-chat.item-sharing-enabled", true); }
+    public boolean isInteractiveInventoryEnabled() { return getBoolean("settings.interactive-chat.inventory-sharing-enabled", true); }
+    public boolean isInteractiveEnderEnabled() { return getBoolean("settings.interactive-chat.ender-sharing-enabled", true); }
     public boolean isInteractiveMentionEnabled() { return getBoolean("settings.interactive-chat.mention-enabled", true); }
+    public int getInteractiveShareCooldownSeconds() { return Math.max(0, getInt("settings.interactive-chat.share-cooldown-seconds", 10)); }
+    public int getInteractiveShareMaxItems() { return Math.max(1, Math.min(54, getInt("settings.interactive-chat.share-max-items", 36))); }
 
     public boolean isCooldownEnabled() { return getBoolean("settings.cooldown.enabled", true); }
     public int getCooldownSeconds() { return Math.max(0, getInt("settings.cooldown.seconds", 2)); }
