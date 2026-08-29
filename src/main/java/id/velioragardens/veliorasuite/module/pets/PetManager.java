@@ -715,6 +715,10 @@ public final class PetManager implements Listener {
             return;
         }
         if (event.getEntity().getScoreboardTags().contains(PET_TAG)) {
+            if (event.getDamager() instanceof LivingEntity attacker) {
+                Player owner = ownerOf((LivingEntity) event.getEntity());
+                if (owner != null && attacker != owner) setTarget(owner, attacker);
+            }
             if (event.getDamager() instanceof Player) event.setCancelled(true);
             return;
         }

@@ -47,7 +47,7 @@ public final class PetSafetyListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPetTarget(EntityTargetLivingEntityEvent event) {
         if (isPet(event.getEntity())) {
-            event.setCancelled(true);
+            // PetManager owns combat targeting. Do not erase its defensive target here.
             return;
         }
         if (event.getTarget() != null && isPet(event.getTarget())) event.setCancelled(true);
