@@ -10,6 +10,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
 
 public final class ChatManager {
 
-    private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?|@[A-Za-z0-9_]{3,16}|item)\\]", Pattern.CASE_INSENSITIVE);
+    private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?|@[A-Za-z0-9_]{3,16}|item|inv(?:entory)?|ender(?:chest)?)\\]", Pattern.CASE_INSENSITIVE);
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final VelioraSuite plugin;
@@ -32,6 +33,7 @@ public final class ChatManager {
     private final ChatPlaceholderManager placeholderManager;
     private final ChatFormatManager formatManager;
     private final Map<UUID, Long> autoReplyCooldowns = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> interactiveShareCooldowns = new ConcurrentHashMap<>();
     private Map<String, ChatConfigManager.AutoReplyEntry> autoReplies = Map.of();
 
     public ChatManager(VelioraSuite plugin) {
@@ -56,6 +58,7 @@ public final class ChatManager {
         cooldownManager.clear();
         commandCooldownManager.clear();
         autoReplyCooldowns.clear();
+        interactiveShareCooldowns.clear();
         filterManager.clear();
     }
 
@@ -63,6 +66,7 @@ public final class ChatManager {
         cooldownManager.clear();
         commandCooldownManager.clear();
         autoReplyCooldowns.clear();
+        interactiveShareCooldowns.clear();
         filterManager.clear();
     }
 
@@ -164,7 +168,12 @@ public final class ChatManager {
         return configManager.isInteractiveChatEnabled();
     }
 
-    public void broadcastInteractive(Player player, String message) {
+    public boolean broadcastInteractive(Player player, String message) {
+        if (containsShareToken(message) && !canShareInteractive(player)) {
+            long remaining = getShareCooldownRemaining(player);
+            send(player, "interactive-share-cooldown", "%prefix% &cTunggu &f%time% detik &csebelum membagikan item atau inventory lagi.", Map.of("%time%", String.valueOf(remaining)));
+            return false;
+        }
         String formatted = formatManager.formatPublicChat(player, message);
         Component component = interactiveComponent(player, formatted);
         Bukkit.getScheduler().runTask(plugin, () -> {
@@ -173,16 +182,26 @@ public final class ChatManager {
             }
             Bukkit.getConsoleSender().sendMessage(formatted);
         });
+        if (containsShareToken(message)) {
+            interactiveShareCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+        }
+        return true;
     }
 
     private Component interactiveComponent(Player sender, String formatted) {
-        Matcher matcher = INTERACTIVE_TOKEN.matcher(formatted);
+        Pattern tokenPattern = Pattern.compile(INTERACTIVE_TOKEN.pattern() + "|" + Pattern.quote(sender.getName()), Pattern.CASE_INSENSITIVE);
+        Matcher matcher = tokenPattern.matcher(formatted);
         Component result = Component.empty();
         int position = 0;
         while (matcher.find()) {
             result = result.append(LEGACY.deserialize(formatted.substring(position, matcher.start())));
             String token = matcher.group(1);
-            if (token.startsWith("/") && isAllowedInteractiveCommand(token)) {
+            if (token == null && matcher.group().equalsIgnoreCase(sender.getName())) {
+                Component name = LEGACY.deserialize("&f" + sender.getName())
+                        .clickEvent(ClickEvent.suggestCommand("/msg " + sender.getName() + " "))
+                        .hoverEvent(HoverEvent.showText(playerHover(sender)));
+                result = result.append(name);
+            } else if (token.startsWith("/") && isAllowedInteractiveCommand(token)) {
                 String command = token;
                 String hover = configManager.color(configManager.getInteractiveChatHover().replace("%command%", command));
                 Component button = LEGACY.deserialize("&b" + matcher.group());
@@ -200,6 +219,14 @@ public final class ChatManager {
                     Component button = LEGACY.deserialize("&d[ITEM: &f" + item.getType().name().replace('_', ' ') + "&d]");
                     result = result.append(button.hoverEvent(item.asHoverEvent()));
                 }
+            } else if ((token.equalsIgnoreCase("inv") || token.equalsIgnoreCase("inventory")) && configManager.isInteractiveInventoryEnabled()) {
+                Component button = LEGACY.deserialize("&a[INVENTORY: &f" + sender.getName() + "&a]")
+                        .hoverEvent(HoverEvent.showText(inventoryHover(sender, false)));
+                result = result.append(button);
+            } else if ((token.equalsIgnoreCase("ender") || token.equalsIgnoreCase("enderchest")) && configManager.isInteractiveEnderEnabled()) {
+                Component button = LEGACY.deserialize("&5[ENDER CHEST: &f" + sender.getName() + "&5]")
+                        .hoverEvent(HoverEvent.showText(inventoryHover(sender, true)));
+                result = result.append(button);
             } else if (token.startsWith("@") && configManager.isInteractiveMentionEnabled()) {
                 String name = token.substring(1);
                 Player target = Bukkit.getPlayerExact(name);
@@ -217,6 +244,63 @@ public final class ChatManager {
             position = matcher.end();
         }
         return result.append(LEGACY.deserialize(formatted.substring(position)));
+    }
+
+    private Component playerHover(Player player) {
+        String world = player.getWorld().getName();
+        String location = player.getLocation().getBlockX() + ", " + player.getLocation().getBlockY() + ", " + player.getLocation().getBlockZ();
+        String team = placeholderManager.getTeamName(player.getUniqueId());
+        String lines = "&b&l" + player.getName()
+                + "\n&7HP: &c" + Math.ceil(player.getHealth()) + "/" + Math.ceil(player.getMaxHealth())
+                + "\n&7Dunia: &f" + world
+                + "\n&7Lokasi: &f" + location
+                + (team.isBlank() ? "" : "\n&7Tim: &d" + team)
+                + "\n&eKlik untuk menulis pesan pribadi.";
+        return LEGACY.deserialize(lines);
+    }
+
+    private boolean containsShareToken(String message) {
+        if (message == null || message.isBlank()) return false;
+        String normalized = message.toLowerCase(Locale.ROOT);
+        return normalized.contains("[item]") || normalized.contains("[inv]") || normalized.contains("[inventory]")
+                || normalized.contains("[ender]") || normalized.contains("[enderchest]");
+    }
+
+    private boolean canShareInteractive(Player player) {
+        if (hasAdminPermission(player) || player.hasPermission("veliorasuite.chat.bypasssharecooldown")) return true;
+        return getShareCooldownRemaining(player) <= 0;
+    }
+
+    private long getShareCooldownRemaining(Player player) {
+        long seconds = configManager.getInteractiveShareCooldownSeconds();
+        if (seconds <= 0) return 0;
+        long last = interactiveShareCooldowns.getOrDefault(player.getUniqueId(), 0L);
+        long elapsed = System.currentTimeMillis() - last;
+        return Math.max(0L, (seconds * 1000L - elapsed + 999L) / 1000L);
+    }
+
+    private Component inventoryHover(Player sender, boolean enderChest) {
+        ItemStack[] contents = enderChest ? sender.getEnderChest().getContents() : sender.getInventory().getStorageContents();
+        List<String> items = new ArrayList<>();
+        int maxItems = configManager.getInteractiveShareMaxItems();
+        for (ItemStack item : contents) {
+            if (item == null || item.getType().isAir()) continue;
+            if (items.size() >= maxItems) break;
+            String material = item.getType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
+            String displayName = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
+                    ? item.getItemMeta().getDisplayName() : material;
+            items.add("&7- &f" + displayName + " &8x&f" + item.getAmount());
+        }
+        String title = enderChest ? "&5&lENDER CHEST" : "&a&lINVENTORY";
+        Component result = LEGACY.deserialize(title + " &7" + sender.getName());
+        if (items.isEmpty()) return result.append(Component.newline()).append(LEGACY.deserialize("&8Kosong"));
+        for (String item : items) {
+            result = result.append(Component.newline()).append(LEGACY.deserialize(item));
+        }
+        if (items.size() >= maxItems) {
+            result = result.append(Component.newline()).append(LEGACY.deserialize("&8Ditampilkan maksimal " + maxItems + " item."));
+        }
+        return result;
     }
 
     private boolean isAllowedInteractiveCommand(String command) {

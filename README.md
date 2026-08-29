@@ -39,6 +39,24 @@ Catatan:
 - `/vs version`
 - `/vs debug`
 
+## Interactive Chat
+
+VelioraSuite mempunyai interactive chat bawaan yang ringan, sehingga server
+tidak perlu memasang plugin InteractiveChat untuk kebutuhan utama.
+
+- `[/spawn]`, `[/home base]`, dan command yang diizinkan menjadi tombol klik.
+- `[item]` membagikan item di tangan dengan hover Minecraft asli.
+- `[inv]` atau `[inventory]` menampilkan isi tas pemain saat di-hover.
+- `[ender]` atau `[enderchest]` menampilkan isi Ender Chest pemain saat di-hover.
+- Nama pengirim dapat diklik untuk menulis `/msg Nama`; hover nama menampilkan
+  HP, dunia, lokasi, dan timnya.
+- `[@Nama]` menyarankan `/tpa Nama`.
+
+Pengaturan berada di `plugins/VelioraSuite/modules/chat.yml`. Share inventory
+memiliki cooldown sendiri agar chat tidak spam dan tidak membebani server.
+Tampilan inventory adalah hover teks interaktif agar tetap aman untuk Java dan
+Bedrock; plugin tidak membuka inventory asli pemain kepada orang lain.
+
 ## VelioraSkills
 
 VelioraSkills mengatur mana player untuk Veliora Gardens.
