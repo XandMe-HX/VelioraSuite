@@ -197,14 +197,14 @@ public final class ChatManager {
             result = result.append(LEGACY.deserialize(formatted.substring(position, matcher.start())));
             String token = matcher.group(1);
             if (token == null && matcher.group().equalsIgnoreCase(sender.getName())) {
-                Component name = LEGACY.deserialize("&f" + sender.getName())
+                Component name = coloredComponent("&f" + sender.getName())
                         .clickEvent(ClickEvent.suggestCommand("/msg " + sender.getName() + " "))
                         .hoverEvent(HoverEvent.showText(playerHover(sender)));
                 result = result.append(name);
             } else if (token.startsWith("/") && isAllowedInteractiveCommand(token)) {
                 String command = token;
                 String hover = configManager.color(configManager.getInteractiveChatHover().replace("%command%", command));
-                Component button = LEGACY.deserialize("&b" + matcher.group());
+                Component button = coloredComponent("&b" + matcher.group());
                 if (configManager.getInteractiveChatAction().equals("RUN_COMMAND")) {
                     button = button.clickEvent(ClickEvent.runCommand(command));
                 } else {
@@ -214,17 +214,17 @@ public final class ChatManager {
             } else if (token.equalsIgnoreCase("item") && configManager.isInteractiveItemEnabled()) {
                 ItemStack item = sender.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
-                    result = result.append(LEGACY.deserialize("&7[item kosong]"));
+                    result = result.append(coloredComponent("&7[item kosong]"));
                 } else {
-                    Component button = LEGACY.deserialize("&d[ITEM: &f" + item.getType().name().replace('_', ' ') + "&d]");
+                    Component button = coloredComponent("&d[ITEM: &f" + item.getType().name().replace('_', ' ') + "&d]");
                     result = result.append(button.hoverEvent(item.asHoverEvent()));
                 }
             } else if ((token.equalsIgnoreCase("inv") || token.equalsIgnoreCase("inventory")) && configManager.isInteractiveInventoryEnabled()) {
-                Component button = LEGACY.deserialize("&a[INVENTORY: &f" + sender.getName() + "&a]")
+                Component button = coloredComponent("&a[INVENTORY: &f" + sender.getName() + "&a]")
                         .hoverEvent(HoverEvent.showText(inventoryHover(sender, false)));
                 result = result.append(button);
             } else if ((token.equalsIgnoreCase("ender") || token.equalsIgnoreCase("enderchest")) && configManager.isInteractiveEnderEnabled()) {
-                Component button = LEGACY.deserialize("&5[ENDER CHEST: &f" + sender.getName() + "&5]")
+                Component button = coloredComponent("&5[ENDER CHEST: &f" + sender.getName() + "&5]")
                         .hoverEvent(HoverEvent.showText(inventoryHover(sender, true)));
                 result = result.append(button);
             } else if (token.startsWith("@") && configManager.isInteractiveMentionEnabled()) {
@@ -233,9 +233,9 @@ public final class ChatManager {
                 if (target == null) {
                     result = result.append(LEGACY.deserialize(matcher.group()));
                 } else {
-                    Component button = LEGACY.deserialize("&e[@" + target.getName() + "]")
-                            .clickEvent(ClickEvent.suggestCommand("/tpa " + target.getName()))
-                            .hoverEvent(HoverEvent.showText(LEGACY.deserialize("&bKlik untuk menulis &f/tpa " + target.getName())));
+                    Component button = coloredComponent("&e[@" + target.getName() + "]")
+                        .clickEvent(ClickEvent.suggestCommand("/tpa " + target.getName()))
+                        .hoverEvent(HoverEvent.showText(coloredComponent("&bKlik untuk menulis &f/tpa " + target.getName())));
                     result = result.append(button);
                 }
             } else {
@@ -255,8 +255,8 @@ public final class ChatManager {
                 + "\n&7Dunia: &f" + world
                 + "\n&7Lokasi: &f" + location
                 + (team.isBlank() ? "" : "\n&7Tim: &d" + team)
-                + "\n&eKlik untuk menulis pesan pribadi.";
-        return LEGACY.deserialize(lines);
+                + "\n&eKlik untuk mengisi /msg " + player.getName() + ". Tulis pesan lalu tekan Enter.";
+        return coloredComponent(lines);
     }
 
     private boolean containsShareToken(String message) {
@@ -292,15 +292,20 @@ public final class ChatManager {
             items.add("&7- &f" + displayName + " &8x&f" + item.getAmount());
         }
         String title = enderChest ? "&5&lENDER CHEST" : "&a&lINVENTORY";
-        Component result = LEGACY.deserialize(title + " &7" + sender.getName());
-        if (items.isEmpty()) return result.append(Component.newline()).append(LEGACY.deserialize("&8Kosong"));
+        Component result = coloredComponent(title + " &7" + sender.getName());
+        if (items.isEmpty()) return result.append(Component.newline()).append(coloredComponent("&8Kosong"));
         for (String item : items) {
-            result = result.append(Component.newline()).append(LEGACY.deserialize(item));
+            result = result.append(Component.newline()).append(coloredComponent(item));
         }
         if (items.size() >= maxItems) {
-            result = result.append(Component.newline()).append(LEGACY.deserialize("&8Ditampilkan maksimal " + maxItems + " item."));
+            result = result.append(Component.newline()).append(coloredComponent("&8Ditampilkan maksimal " + maxItems + " item."));
         }
         return result;
+    }
+
+    /** Converts the ampersand colours used by the Veliora configuration into chat components. */
+    private Component coloredComponent(String text) {
+        return LEGACY.deserialize(configManager.color(text));
     }
 
     private boolean isAllowedInteractiveCommand(String command) {
