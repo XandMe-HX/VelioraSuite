@@ -297,9 +297,9 @@ public final class BossSkillManager {
                 for (int point = 0; point < 10; point++) {
                     double current = angle + (Math.PI * 2.0D * point / 10.0D);
                     Location pointLocation = anchor.clone().add(Math.cos(current) * radius, height, Math.sin(current) * radius);
-                    anchor.getWorld().spawnParticle(particle, pointLocation, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                    plugin.getEffects().particle(pointLocation, particle, 1, 0.0D, 0.0D, 0.0D, 0.0D);
                 }
-                if (elapsed == 0 || elapsed + 4 >= config.skillTelegraphTicks()) anchor.getWorld().playSound(anchor, sound, 0.42F, 0.8F + elapsed / 100.0F);
+                if (elapsed == 0 || elapsed + 4 >= config.skillTelegraphTicks()) plugin.getEffects().sound(anchor, sound, 0.42F, 0.8F + elapsed / 100.0F);
                 angle += 0.42D;
                 elapsed += 2;
             }

@@ -14,6 +14,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.Particle;
 
 import java.io.File;
 import java.text.DecimalFormat;
@@ -48,6 +51,26 @@ public final class NotificationListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> warnWorld(event.getPlayer()), 35L);
+        if (config.getBoolean("player-effects.join.enabled", true)) plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!event.getPlayer().isOnline()) return;
+            plugin.getEffects().spiral(event.getPlayer().getLocation(), Particle.END_ROD, 0.45D, 10, 1.3D);
+            event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.45F, 1.35F);
+        }, 15L);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onLevel(PlayerLevelChangeEvent event) {
+        if (!config.getBoolean("player-effects.level-up.enabled", true) || event.getNewLevel() <= event.getOldLevel()) return;
+        Player player = event.getPlayer();
+        plugin.getEffects().ring(player.getLocation(), Particle.ENCHANT, 0.75D, 10, 0.15D);
+        plugin.getEffects().sound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.55F, 1.25F);
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        if (!config.getBoolean("player-effects.death.enabled", true)) return;
+        plugin.getEffects().ring(event.getEntity().getLocation(), Particle.SOUL, 0.90D, 12, 0.25D);
+        plugin.getEffects().sound(event.getEntity().getLocation(), Sound.ENTITY_WARDEN_HEARTBEAT, 0.45F, 0.75F);
     }
 
     private void warnWorld(Player player) {
@@ -155,8 +178,7 @@ public final class NotificationListener implements Listener {
                 .replace("%amount%", MONEY_FORMAT.format(amount));
         target.sendTitle(color(title), color(subtitle), ticks("pay-notifications.fade-in", 5), ticks("pay-notifications.stay", 50), ticks("pay-notifications.fade-out", 15));
         play(target, config.getString("pay-notifications.sound", "ENTITY_EXPERIENCE_ORB_PICKUP"), 0.9F, 1.15F);
-        target.getWorld().spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, target.getLocation().add(0.0D, 1.0D, 0.0D),
-                16, 0.45D, 0.55D, 0.45D, 0.02D);
+        plugin.getEffects().spiral(target.getLocation(), Particle.HAPPY_VILLAGER, 0.42D, 10, 1.15D);
     }
 
     private int ticks(String path, int fallback) { return Math.max(0, config.getInt(path, fallback)); }

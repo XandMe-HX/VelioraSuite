@@ -34,3 +34,9 @@ pay-notifications:
   fade-in: 5
   stay: 50
   fade-out: 15
+
+# Efek pemain hanya dipicu pada kejadian penting, bukan setiap langkah/gerakan.
+player-effects:
+  join: { enabled: true }
+  level-up: { enabled: true }
+  death: { enabled: true }
