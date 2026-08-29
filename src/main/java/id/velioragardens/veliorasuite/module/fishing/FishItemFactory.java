@@ -4,6 +4,8 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishDefinition;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -13,19 +15,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.profile.PlayerProfile;
-import org.bukkit.profile.PlayerTextures;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public final class FishItemFactory {
 
@@ -42,7 +37,6 @@ public final class FishItemFactory {
             "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTEzZjA4NmNjYjU2MzIzZjIzOGJhMzQ4OWZmMmExYTM0YzBmZGNlZWFmYzQ4M2FjZmYwZTU0ODhjZmQ2YzJmMSJ9fX0=",
             "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGZkYTc4ZDA2NWYxOThmNzcyMmM4MGY3ODdkM2VlZmY3NGI1M2FlMGY4ODdhOGRiZmJlNTA1OWU2MjM4YmQ3YiJ9fX0="
     };
-    private static final Pattern TEXTURE_URL = Pattern.compile("\\\"url\\\"\\s*:\\s*\\\"(https?://[^\\\"]+)\\\"");
 
     private final FishingConfigManager configManager;
     private final NamespacedKey idKey;
@@ -220,13 +214,10 @@ public final class FishItemFactory {
     }
 
     private void applyHeadTexture(SkullMeta skullMeta, String texture) {
-        String textureUrl = textureUrl(texture);
-        if (textureUrl == null) return;
+        if (texture == null || texture.isBlank()) return;
         try {
-            PlayerProfile profile = Bukkit.createPlayerProfile(UUID.randomUUID(), "VelioraFish");
-            PlayerTextures textures = profile.getTextures();
-            textures.setSkin(new URL(textureUrl));
-            profile.setTextures(textures);
+            PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID(), "VelioraFish");
+            profile.setProperty(new ProfileProperty("textures", texture));
             skullMeta.setPlayerProfile(profile);
             return;
         } catch (Exception ignored) {
@@ -250,19 +241,6 @@ public final class FishItemFactory {
             } catch (Exception ignored) {
                 // Head texture is optional; fallback head remains safe.
             }
-        }
-    }
-
-    private String textureUrl(String texture) {
-        if (texture == null || texture.isBlank()) return null;
-        try {
-            String decoded = new String(Base64.getDecoder().decode(texture.trim()), StandardCharsets.UTF_8);
-            Matcher matcher = TEXTURE_URL.matcher(decoded);
-            if (!matcher.find()) return null;
-            String url = matcher.group(1);
-            return url.startsWith("https://textures.minecraft.net/texture/") ? url : null;
-        } catch (IllegalArgumentException ignored) {
-            return null;
         }
     }
 
