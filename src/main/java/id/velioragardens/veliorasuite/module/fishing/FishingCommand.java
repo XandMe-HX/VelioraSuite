@@ -98,6 +98,23 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
                 manager.sendReloadSuccess(sender);
                 return true;
             }
+            case "test" -> {
+                if (!hasAdmin(sender)) { manager.sendNoPermission(sender); return true; }
+                if (!(sender instanceof Player player)) { manager.sendPlayerOnly(sender); return true; }
+                if (args.length != 2) {
+                    sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
+                            + "&eGunakan /fish test <id-ikan>. Contoh: &f/fish test eclipse_kraken"));
+                    return true;
+                }
+                if (!manager.giveTestFish(player, args[1])) {
+                    sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
+                            + "&cID ikan tidak ditemukan. Gunakan Tab untuk melihat daftar ID."));
+                    return true;
+                }
+                sender.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
+                        + "&aItem tes diberikan. Periksa texture kepala dan hover item-nya."));
+                return true;
+            }
             default -> {
                 manager.sendHelp(sender);
                 return true;
@@ -116,6 +133,9 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
             Bukkit.getOnlinePlayers().forEach(player -> targets.add(player.getName()));
             return filter(targets, args[2]);
         }
+        if (args.length == 2 && hasAdmin(sender) && args[0].equalsIgnoreCase("test")) {
+            return filter(new ArrayList<>(manager.getConfigManager().getFishDefinitions().keySet()), args[1]);
+        }
         if (args.length != 1) return new ArrayList<>();
         List<String> options = new ArrayList<>(Arrays.asList("help"));
         if (hasBag(sender)) options.add("bag");
@@ -123,7 +143,7 @@ public final class FishingCommand implements CommandExecutor, TabCompleter {
         if (hasUse(sender)) { options.add("collection"); options.add("rods"); options.add("questrods"); options.add("coins"); }
         if (hasTop(sender)) options.add("top");
         if (hasReload(sender)) options.add("reload");
-        if (hasAdmin(sender)) { options.add("give"); options.add("take"); }
+        if (hasAdmin(sender)) { options.add("give"); options.add("take"); options.add("test"); }
         return filter(options, args[0]);
     }
 
