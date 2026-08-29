@@ -54,6 +54,27 @@ public final class VelioraEffects {
         }
     }
 
+    /** Sends a readable telegraph ring through the same per-player particle budget. */
+    public void ring(Location center, Particle type, double radius, int points, double height) {
+        if (center == null || points < 3) return;
+        for (int point = 0; point < points; point++) {
+            double angle = Math.PI * 2.0D * point / points;
+            Location location = center.clone().add(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+            particle(location, type, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    /** A small vertical flourish for milestones; intended for infrequent triggers only. */
+    public void spiral(Location center, Particle type, double radius, int points, double height) {
+        if (center == null || points < 2) return;
+        for (int point = 0; point < points; point++) {
+            double progress = point / (double) (points - 1);
+            double angle = Math.PI * 4.0D * progress;
+            Location location = center.clone().add(Math.cos(angle) * radius, progress * height, Math.sin(angle) * radius);
+            particle(location, type, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
     private int reserve(UUID player, int wanted) {
         long second = System.currentTimeMillis() / 1000L;
         ParticleBudget budget = budgets.computeIfAbsent(player, ignored -> new ParticleBudget(second));

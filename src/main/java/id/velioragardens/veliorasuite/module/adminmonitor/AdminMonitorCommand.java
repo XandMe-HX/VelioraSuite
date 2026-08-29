@@ -13,7 +13,8 @@ public final class AdminMonitorCommand implements CommandExecutor, TabCompleter 
     private final AdminMonitorManager manager;
     public AdminMonitorCommand(AdminMonitorManager manager) { this.manager = manager; }
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0 || args[0].equalsIgnoreCase("help")) { if (!manager.canView(sender)) manager.sendNoPermission(sender); else manager.sendHelp(sender); return true; }
+        if (args.length == 0) { if (!manager.canView(sender)) manager.sendNoPermission(sender); else if (sender instanceof org.bukkit.entity.Player player) player.performCommand("adminmanager"); else manager.sendHelp(sender); return true; }
+        if (args[0].equalsIgnoreCase("help")) { if (!manager.canView(sender)) manager.sendNoPermission(sender); else manager.sendHelp(sender); return true; }
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (sub.equals("reload")) { if (!manager.canReload(sender)) manager.sendNoPermission(sender); else { manager.load(); manager.sendReloadSuccess(sender); } return true; }
         if (!manager.canView(sender)) { manager.sendNoPermission(sender); return true; }

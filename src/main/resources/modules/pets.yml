@@ -1,6 +1,6 @@
 settings:
   enabled: true
-  max-level: 50
+  max-level: 100
   duplicate-exp: 50
   auto-summon-new-pet: false
   auto-summon-last-pet: false
@@ -10,6 +10,11 @@ settings:
   allow-aquatic-pets: false
   allow-axolotl-ground-pet: true
   allow-flying-pets: true
+  # Monster tidak pernah menyerang owner atau pemain lain. Mereka hanya membela
+  # owner terhadap monster yang sudah menyerang / diserang oleh owner.
+  allow-aggressive-pets: true
+  aggressive-pets:
+    allowed-entities: [ZOMBIE, HUSK, DROWNED, SKELETON, STRAY, BOGGED, SPIDER, CAVE_SPIDER, IRON_GOLEM, SLIME, MAGMA_CUBE, BREEZE]
   flying-pets:
     # Hanya entity ini yang boleh menjadi pet terbang. Monster dan boss tetap ditolak.
     allowed-entities: [PARROT, BEE, ALLAY]
@@ -53,8 +58,10 @@ sounds:
   pitch: 1.2
 
 leveling:
-  scale-per-level: 0.003
-  max-scale-bonus: 0.15
+  # Pet dewasa bertambah 0.15 scale di level 10, 20, … 100. Batas akhir 2.0.
+  # Pet yang memiliki baby: true tidak tumbuh dan ukurannya tetap kecil.
+  scale-per-level: 0.15
+  max-scale-bonus: 1.4
 
 gacha:
   chance:
@@ -90,6 +97,95 @@ cosmetic:
 
 # Hanya pet yang memang tersedia di Pet Store.
 pets:
+  mini_skeleton:
+    display-name: '&7Mini Skeleton'
+    entity: SKELETON
+    icon: SKELETON_SKULL
+    rarity: RARE
+    baby: true
+    scale: 0.45
+    price: 50000
+    rideable: false
+    adult-level: 100
+    damage: 2.0
+    food: { material: BONE, exp: 25 }
+  zombie_guard:
+    display-name: '&2Zombie Guard'
+    entity: ZOMBIE
+    icon: ZOMBIE_HEAD
+    rarity: RARE
+    scale: 0.65
+    price: 50000
+    rideable: false
+    adult-level: 10
+    damage: 2.5
+    food: { material: ROTTEN_FLESH, exp: 25 }
+  skeleton_archer:
+    display-name: '&7Skeleton Archer'
+    entity: SKELETON
+    icon: BONE
+    rarity: EPIC
+    scale: 0.65
+    price: 100000
+    rideable: false
+    adult-level: 15
+    damage: 3.0
+    food: { material: BONE, exp: 35 }
+  spider_guard:
+    display-name: '&8Spider Guard'
+    entity: SPIDER
+    icon: SPIDER_EYE
+    rarity: EPIC
+    scale: 0.60
+    price: 100000
+    rideable: true
+    adult-level: 15
+    damage: 3.0
+    food: { material: SPIDER_EYE, exp: 35 }
+  drowned_sailor:
+    display-name: '&3Drowned Sailor'
+    entity: DROWNED
+    icon: HEART_OF_THE_SEA
+    rarity: EPIC
+    scale: 0.70
+    price: 100000
+    rideable: false
+    adult-level: 15
+    damage: 3.2
+    food: { material: KELP, exp: 35 }
+  stray_ranger:
+    display-name: '&bStray Ranger'
+    entity: STRAY
+    icon: ICE
+    rarity: EPIC
+    scale: 0.70
+    price: 100000
+    rideable: false
+    adult-level: 15
+    damage: 3.2
+    food: { material: BONE, exp: 35 }
+  iron_sentinel:
+    display-name: '&fIron Sentinel'
+    entity: IRON_GOLEM
+    icon: IRON_BLOCK
+    rarity: LEGENDARY
+    scale: 0.90
+    price: 175000
+    rideable: true
+    adult-level: 25
+    damage: 4.5
+    food: { material: IRON_INGOT, exp: 45 }
+  breeze_wisp:
+    display-name: '&bBreeze Wisp'
+    entity: BREEZE
+    icon: WIND_CHARGE
+    rarity: LEGENDARY
+    scale: 0.65
+    price: 175000
+    rideable: false
+    adult-level: 30
+    damage: 4.0
+    food: { material: WIND_CHARGE, exp: 45 }
   cow:
     display-name: '&fCow'
     entity: COW

@@ -520,8 +520,8 @@ public final class BossManager implements Listener {
         damageTracker.clear();
         skillManager.start(definition);
         notifyConsole("spawned: " + definition.id() + " virtual-health=" + (int) spawnHealth + " size=" + String.format(Locale.US, "%.2f", spawnScale));
-        location.getWorld().playSound(location, config.sound("effects.spawn.sound", "ENTITY_WARDEN_ROAR"), 1.0F, 0.8F);
-        location.getWorld().spawnParticle(config.particle("effects.spawn.particle", "SOUL"), location, config.spawnParticleCount(), 3.0D, 1.7D, 3.0D, 0.07D);
+        plugin.getEffects().sound(location, config.sound("effects.spawn.sound", "ENTITY_WARDEN_ROAR"), 1.0F, 0.8F);
+        plugin.getEffects().spiral(location, config.particle("effects.spawn.particle", "SOUL"), 2.4D, Math.min(24, config.spawnParticleCount() / 4), 2.5D);
         if (config.spawnTitleEnabled()) sendSpawnTitle(definition, location);
         if (announce && config.announceSpawn()) notifyPlayers(config.color(config.message("boss-spawn", "%prefix% &c%boss% &7muncul di &f%world% %x% %y% %z%&7!")
                 .replace("%boss%", config.color(definition.displayName()))
