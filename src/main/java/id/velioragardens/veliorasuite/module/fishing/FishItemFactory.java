@@ -4,6 +4,7 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishDefinition;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -12,14 +13,36 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.profile.PlayerProfile;
+import org.bukkit.profile.PlayerTextures;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class FishItemFactory {
+
+    /*
+     * Stable custom heads from minecraft-heads.com. They resolve only to Mojang's
+     * textures CDN in the client, so fishing never downloads an image or calls an API.
+     * A fish may still override this with head.texture-base64 in fishing.yml.
+     */
+    private static final String[] HIGH_TIER_FISH_TEXTURES = {
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDBjZDcxZmJiYmJiNjZjN2JhZjc4ODFmNDE1YzY0ZmE4NGY2NTA0OTU4YTU3Y2NkYjg1ODkyNTI2NDdlYSJ9fX0=",
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODVlYWY4N2NmYmMyM2NjZmNkYWUwZmM4ZGY4NDc3MTFhNmJlMDRiYjNjZWFmODBlMjcxZmRlZGZkMjUzNWU4In19fQ==",
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWQ1NWI5MTI5ZTVjZWY3MjAwOWE4MjcxYmFlZjc4NzQwYjk2YzQ4YjAyNWY4NjM2YjU1MTNmMTAzZWY5NzU0OCJ9fX0=",
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWI3YThkMGQ3MzY1ZGU5NWYyM2FjMzc1NDk4MDI0Y2IzMWFlNGU4ZDZkMDZkMTJhNjIxZTQzY2YxYjc2NjdkNiJ9fX0=",
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTEzZjA4NmNjYjU2MzIzZjIzOGJhMzQ4OWZmMmExYTM0YzBmZGNlZWFmYzQ4M2FjZmYwZTU0ODhjZmQ2YzJmMSJ9fX0=",
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGZkYTc4ZDA2NWYxOThmNzcyMmM4MGY3ODdkM2VlZmY3NGI1M2FlMGY4ODdhOGRiZmJlNTA1OWU2MjM4YmQ3YiJ9fX0="
+    };
+    private static final Pattern TEXTURE_URL = Pattern.compile("\\\"url\\\"\\s*:\\s*\\\"(https?://[^\\\"]+)\\\"");
 
     private final FishingConfigManager configManager;
     private final NamespacedKey idKey;
@@ -54,8 +77,8 @@ public final class FishItemFactory {
         ItemStack item = new ItemStack(material == null ? Material.COD : material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            if (meta instanceof SkullMeta skullMeta && definition.headEnabled() && !definition.headTextureBase64().isBlank()) {
-                applyHeadTexture(skullMeta, definition.headTextureBase64());
+            if (meta instanceof SkullMeta skullMeta && definition.headEnabled()) {
+                applyHeadTexture(skullMeta, effectiveHeadTexture(definition));
                 meta = skullMeta;
             }
             meta.setDisplayName(configManager.color(fish.rarity().color() + fish.name()));
@@ -188,7 +211,27 @@ public final class FishItemFactory {
         return definition.material() == null ? definition.fallbackMaterial() : definition.material();
     }
 
+    private String effectiveHeadTexture(FishDefinition definition) {
+        if (definition.headTextureBase64() != null && !definition.headTextureBase64().isBlank()) {
+            return definition.headTextureBase64().trim();
+        }
+        if (definition.rarity().power() < FishRarity.LEGENDARY.power()) return "";
+        return HIGH_TIER_FISH_TEXTURES[Math.floorMod(definition.id().hashCode(), HIGH_TIER_FISH_TEXTURES.length)];
+    }
+
     private void applyHeadTexture(SkullMeta skullMeta, String texture) {
+        String textureUrl = textureUrl(texture);
+        if (textureUrl == null) return;
+        try {
+            PlayerProfile profile = Bukkit.createPlayerProfile(UUID.randomUUID(), "VelioraFish");
+            PlayerTextures textures = profile.getTextures();
+            textures.setSkin(new URL(textureUrl));
+            profile.setTextures(textures);
+            skullMeta.setPlayerProfile(profile);
+            return;
+        } catch (Exception ignored) {
+            // Kept for older Paper implementations whose PlayerProfile API cannot set a custom URL.
+        }
         try {
             Class<?> gameProfileClass = Class.forName("com.mojang.authlib.GameProfile");
             Class<?> propertyClass = Class.forName("com.mojang.authlib.properties.Property");
@@ -207,6 +250,19 @@ public final class FishItemFactory {
             } catch (Exception ignored) {
                 // Head texture is optional; fallback head remains safe.
             }
+        }
+    }
+
+    private String textureUrl(String texture) {
+        if (texture == null || texture.isBlank()) return null;
+        try {
+            String decoded = new String(Base64.getDecoder().decode(texture.trim()), StandardCharsets.UTF_8);
+            Matcher matcher = TEXTURE_URL.matcher(decoded);
+            if (!matcher.find()) return null;
+            String url = matcher.group(1);
+            return url.startsWith("https://textures.minecraft.net/texture/") ? url : null;
+        } catch (IllegalArgumentException ignored) {
+            return null;
         }
     }
 

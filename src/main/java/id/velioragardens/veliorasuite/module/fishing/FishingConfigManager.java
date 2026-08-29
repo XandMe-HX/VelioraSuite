@@ -13,6 +13,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -306,9 +308,23 @@ public final class FishingConfigManager {
                 section.getString("origin", "VelioraFishing"),
                 section.getString("region", "Veliora"),
                 section.getBoolean("head.enabled", rarity.power() >= FishRarity.LEGENDARY.power()),
-                section.getString("head.texture-base64", ""),
+                headTexture(section),
                 fallback
         );
+    }
+
+    /**
+     * minecraft-heads.com exposes a Base64 textures value. A direct Mojang texture
+     * URL is accepted as a friendlier config alternative and is converted once on
+     * reload; this never performs an HTTP request from the game server.
+     */
+    private String headTexture(ConfigurationSection section) {
+        String value = section.getString("head.texture-base64", "").trim();
+        if (!value.isBlank()) return value;
+        String url = section.getString("head.texture-url", "").trim();
+        if (!url.startsWith("https://textures.minecraft.net/texture/")) return "";
+        String payload = "{\"textures\":{\"SKIN\":{\"url\":\"" + url + "\"}}}";
+        return Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     }
 
     private void addFallbackFish() {

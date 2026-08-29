@@ -2,6 +2,11 @@ settings:
   enabled: true
   prefix: '&7[&eVELIORA &aFISHING&7] &r'
 
+  # Kepala ikan Legendry, Mitologi, dan Secret memakai texture tetap dari Mojang.
+  # Nilai texture-base64 dari minecraft-heads.com langsung didukung. Alternatif yang lebih
+  # mudah: isi head.texture-url dengan https://textures.minecraft.net/texture/<hash>, lalu /fish reload.
+  # Jangan pakai URL gambar CraftHead/Crafatar/Minotar karena itu hanya gambar untuk website.
+
   rarity-chance:
     trash: 24.0
     vanilla: 20.0
