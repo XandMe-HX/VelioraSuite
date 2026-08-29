@@ -144,7 +144,7 @@ public final class FishingConfigManager {
     public String getCollectionTitle() { return str("settings.collection.title", "&8Fish Collection"); }
     public int getCollectionSize() { return inventorySize(integer("settings.collection.size", 54)); }
 
-    public boolean isEffectEnabled(FishRarity rarity) { return bool(rarityPath("effects", rarity, ".enabled"), rarity.power() >= FishRarity.ORNAMENTAL.power()); }
+    public boolean isEffectEnabled(FishRarity rarity) { return bool(rarityPath("effects", rarity, ".enabled"), true); }
     public Sound getEffectSound(FishRarity rarity) { return sound(str(rarityPath("effects", rarity, ".sound"), fallbackSound(rarity).name()), fallbackSound(rarity)); }
     public Particle getEffectParticle(FishRarity rarity) { return particle(str(rarityPath("effects", rarity, ".particle"), fallbackParticle(rarity).name()), fallbackParticle(rarity)); }
     public int getEffectAmount(FishRarity rarity) { return Math.max(0, integer(rarityPath("effects", rarity, ".amount"), fallbackParticleAmount(rarity))); }
@@ -333,9 +333,9 @@ public final class FishingConfigManager {
     private double fallbackMinWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 0.1D; case VANILLA -> 0.5D; case COMMON -> 1.0D; case ORNAMENTAL -> 0.2D; case EPIC -> 10.0D; case LEGENDARY -> 10.0D; case MITOLOGI -> 100.0D; case SECRET -> 500.0D; }; }
     private double fallbackMaxWeight(FishRarity rarity) { return switch (rarity) { case TRASH -> 1.0D; case VANILLA -> 5.0D; case COMMON -> 10.0D; case ORNAMENTAL -> 3.0D; case EPIC -> 200.0D; case LEGENDARY -> 1000.0D; case MITOLOGI -> 5000.0D; case SECRET -> 20000.0D; }; }
     private Material fallbackMaterial(FishRarity rarity) { return switch (rarity) { case TRASH -> Material.LEATHER_BOOTS; case VANILLA, COMMON -> Material.COD; case ORNAMENTAL -> Material.TROPICAL_FISH; case EPIC -> Material.SALMON; case LEGENDARY, MITOLOGI, SECRET -> Material.PLAYER_HEAD; }; }
-    private Sound fallbackSound(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; case EPIC -> Sound.ENTITY_PLAYER_LEVELUP; case LEGENDARY -> Sound.UI_TOAST_CHALLENGE_COMPLETE; case MITOLOGI, SECRET -> Sound.ENTITY_ENDER_DRAGON_GROWL; default -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; }; }
-    private Particle fallbackParticle(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> Particle.HAPPY_VILLAGER; case EPIC -> Particle.ENCHANT; case LEGENDARY -> Particle.TOTEM_OF_UNDYING; case MITOLOGI, SECRET -> Particle.DRAGON_BREATH; default -> Particle.HAPPY_VILLAGER; }; }
-    private int fallbackParticleAmount(FishRarity rarity) { return switch (rarity) { case ORNAMENTAL -> 10; case EPIC -> 20; case LEGENDARY -> 35; case MITOLOGI -> 60; case SECRET -> 90; default -> 0; }; }
+    private Sound fallbackSound(FishRarity rarity) { return switch (rarity) { case TRASH -> Sound.BLOCK_NOTE_BLOCK_BASS; case VANILLA -> Sound.ENTITY_FISHING_BOBBER_SPLASH; case COMMON, ORNAMENTAL -> Sound.ENTITY_EXPERIENCE_ORB_PICKUP; case EPIC -> Sound.ENTITY_PLAYER_LEVELUP; case LEGENDARY -> Sound.UI_TOAST_CHALLENGE_COMPLETE; case MITOLOGI, SECRET -> Sound.ENTITY_ENDER_DRAGON_GROWL; }; }
+    private Particle fallbackParticle(FishRarity rarity) { return switch (rarity) { case TRASH -> Particle.SMOKE; case VANILLA -> Particle.SPLASH; case COMMON -> Particle.BUBBLE; case ORNAMENTAL -> Particle.HAPPY_VILLAGER; case EPIC -> Particle.ENCHANT; case LEGENDARY -> Particle.TOTEM_OF_UNDYING; case MITOLOGI, SECRET -> Particle.DRAGON_BREATH; }; }
+    private int fallbackParticleAmount(FishRarity rarity) { return switch (rarity) { case TRASH -> 3; case VANILLA -> 5; case COMMON -> 7; case ORNAMENTAL -> 10; case EPIC -> 20; case LEGENDARY -> 35; case MITOLOGI -> 60; case SECRET -> 90; }; }
     private Material material(String name, Material fallback) { Material material = Material.matchMaterial(name == null ? "" : name.trim().toUpperCase(Locale.ROOT)); return material == null ? fallback : material; }
     private Sound sound(String name, Sound fallback) { try { return Sound.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
     private Particle particle(String name, Particle fallback) { try { return Particle.valueOf(name.trim().toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return fallback; } }
