@@ -59,8 +59,7 @@ public final class FishingRodManager implements Listener {
      * pemilik rod, supaya efek tetap terlihat mewah tanpa membebani server.
      */
     private void showHeldAura(Player player, int tier, double phase) {
-        Particle particle = tier >= 17 ? Particle.END_ROD : tier >= 13 ? Particle.TOTEM_OF_UNDYING
-                : tier >= 9 ? Particle.ELECTRIC_SPARK : tier >= 5 ? Particle.ENCHANT : Particle.BUBBLE_POP;
+        Particle particle = particleForTier(tier);
         // Tier 1-4: cincin kecil di sekitar tangan/pinggang.
         if (tier <= 4) {
             for (int i = 0; i < 4; i++) point(player, particle, phase + i * Math.PI / 2.0D, 0.38D, 0.85D);
@@ -82,8 +81,8 @@ public final class FishingRodManager implements Listener {
         // Tier 13-16: halo/crown di atas kepala dengan dua kilau kecil.
         if (tier <= 16) {
             for (int i = 0; i < 6; i++) point(player, particle, phase + i * Math.PI / 3.0D, 0.45D, 2.12D);
-            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0.35D, 2.28D, 0), 1, 0, 0, 0, 0);
-            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(-0.35D, 2.28D, 0), 1, 0, 0, 0, 0);
+            particle(player.getLocation().add(0.35D, 2.28D, 0), Particle.END_ROD);
+            particle(player.getLocation().add(-0.35D, 2.28D, 0), Particle.END_ROD);
             return;
         }
         // Tier 17+: sayap malaikat + lingkaran mahkota; efek tertinggi.
@@ -144,8 +143,7 @@ public final class FishingRodManager implements Listener {
     public void showAura(Player player, FishHook hook) {
         int tier = getTier(player);
         if (tier < 3 || hook == null || !hook.isValid()) return;
-        Particle particle = tier >= 17 ? Particle.END_ROD : tier >= 11 ? Particle.SOUL_FIRE_FLAME
-                : tier >= 6 ? Particle.ENCHANT : Particle.BUBBLE_POP;
+        Particle particle = particleForTier(tier);
         double phase = (System.currentTimeMillis() % 4000L) / 4000.0D * Math.PI * 2.0D;
         // 3-5 ring, 6-10 double spiral, 11-16 wings, 17+ crown/horns.
         if (tier <= 5) {
@@ -160,10 +158,10 @@ public final class FishingRodManager implements Listener {
             wings(player, particle, phase, 7, 0.82D, 1.12D);
         } else {
             for (int i = 0; i < 12; i++) point(player, particle, phase + i * Math.PI / 6.0D, 0.62D, 2.05D);
-            player.getWorld().spawnParticle(particle, player.getLocation().add(0.38D, 2.35D, 0), 2, 0.03D, 0.18D, 0.03D, 0);
-            player.getWorld().spawnParticle(particle, player.getLocation().add(-0.38D, 2.35D, 0), 2, 0.03D, 0.18D, 0.03D, 0);
+            manager.getConfigManager().getPlugin().getEffects().particle(player.getLocation().add(0.38D, 2.35D, 0), particle, 2, 0.03D, 0.18D, 0.03D, 0);
+            manager.getConfigManager().getPlugin().getEffects().particle(player.getLocation().add(-0.38D, 2.35D, 0), particle, 2, 0.03D, 0.18D, 0.03D, 0);
         }
-        hook.getWorld().spawnParticle(particle, hook.getLocation(), Math.min(8, 2 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
+        manager.getConfigManager().getPlugin().getEffects().particle(hook.getLocation(), particle, Math.min(8, 2 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -278,8 +276,38 @@ public final class FishingRodManager implements Listener {
     }
 
     private void point(Player player, Particle particle, double angle, double radius, double y) {
-        player.getWorld().spawnParticle(particle, player.getLocation().add(Math.cos(angle) * radius, y,
-                Math.sin(angle) * radius), 1, 0, 0, 0, 0);
+        particle(player.getLocation().add(Math.cos(angle) * radius, y, Math.sin(angle) * radius), particle);
+    }
+
+    private void particle(Location location, Particle particle) {
+        manager.getConfigManager().getPlugin().getEffects().particle(location, particle, 1, 0, 0, 0, 0);
+    }
+
+    /** Each rod tier deliberately has its own particle identity, not a shared tier group. */
+    private Particle particleForTier(int tier) {
+        return switch (tier) {
+            case 1 -> Particle.BUBBLE_POP;
+            case 2 -> Particle.HAPPY_VILLAGER;
+            case 3 -> Particle.SMOKE;
+            case 4 -> Particle.SPORE_BLOSSOM_AIR;
+            case 5 -> Particle.ENCHANT;
+            case 6 -> Particle.SNOWFLAKE;
+            case 7 -> Particle.WAX_ON;
+            case 8 -> Particle.PORTAL;
+            case 9 -> Particle.ELECTRIC_SPARK;
+            case 10 -> Particle.GLOW;
+            case 11 -> Particle.FLAME;
+            case 12 -> Particle.COMPOSTER;
+            case 13 -> Particle.REVERSE_PORTAL;
+            case 14 -> Particle.END_ROD;
+            case 15 -> Particle.DOLPHIN;
+            case 16 -> Particle.NAUTILUS;
+            case 17 -> Particle.SOUL;
+            case 18 -> Particle.CRIT;
+            case 19 -> Particle.LAVA;
+            case 20 -> Particle.TOTEM_OF_UNDYING;
+            default -> Particle.FIREWORK;
+        };
     }
 
     /** Places a mirrored wing in coordinates relative to the player's yaw. */
@@ -306,7 +334,7 @@ public final class FishingRodManager implements Listener {
         Vector right = new Vector(-forward.getZ(), 0, forward.getX());
         Location point = player.getLocation().clone().add(0, y, 0)
                 .add(right.multiply(rightOffset)).add(forward.multiply(forwardOffset));
-        player.getWorld().spawnParticle(particle, point, 1, 0, 0, 0, 0);
+        particle(point, particle);
     }
 
     private ItemStack createRod(Player owner, FishingRodDefinition rod) {
