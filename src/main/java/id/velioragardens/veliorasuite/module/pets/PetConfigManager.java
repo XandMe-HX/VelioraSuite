@@ -97,6 +97,11 @@ public final class PetConfigManager {
     public int deathCooldownMinutes() { return Math.max(0, integer("settings.death-cooldown-minutes", 15)); }
     public boolean usePathfinderFollow() { return bool("settings.follow.use-pathfinder", true); }
     public boolean allowFlyingPets() { return bool("settings.allow-flying-pets", true); }
+    public boolean allowAggressivePets() { return bool("settings.allow-aggressive-pets", false); }
+    public boolean isAllowedAggressiveEntity(EntityType type) {
+        return allowAggressivePets() && type != null && config.getStringList("settings.aggressive-pets.allowed-entities").stream()
+                .anyMatch(entry -> type.name().equalsIgnoreCase(entry));
+    }
     public boolean flyingSafeMode() { return bool("settings.flying-safe-mode.enabled", true); }
     public int flyingMinimumLevel() { return Math.max(1, integer("settings.flying-pets.minimum-level", 30)); }
     public boolean isAllowedFlyingEntity(EntityType type) {
@@ -292,7 +297,7 @@ public final class PetConfigManager {
     }
 
     private boolean isSafeAnimalType(EntityType type) { return type != null && SAFE_ANIMAL_ENTITY_NAMES.contains(type.name()); }
-    private boolean isPermittedPetType(EntityType type) { return isSafeAnimalType(type) || isAllowedFlyingEntity(type); }
+    private boolean isPermittedPetType(EntityType type) { return isSafeAnimalType(type) || isAllowedFlyingEntity(type) || isAllowedAggressiveEntity(type); }
     private boolean isFlyingPet(EntityType type) { return type != null && FLYING_ENTITY_NAMES.contains(type.name()); }
     private boolean defaultAquatic(EntityType type) { if (type == null || isAxolotlGround(type)) return false; return AQUATIC_ENTITY_NAMES.contains(type.name()); }
     private boolean isAxolotlGround(EntityType type) { return walkingPetsOnly() && allowAxolotlGroundPet() && type == EntityType.AXOLOTL; }

@@ -14,6 +14,7 @@ public final class PetsModule implements VelioraModule {
     private PetSafetyListener safetyListener;
     private PetSafeModeGuardListener safeModeGuardListener;
     private PetRedProtectGuardListener redProtectGuardListener;
+    private PetRideController rideController;
     private BukkitTask quietTask;
     private boolean enabled;
 
@@ -30,6 +31,7 @@ public final class PetsModule implements VelioraModule {
         safetyListener = new PetSafetyListener();
         safeModeGuardListener = new PetSafeModeGuardListener(manager);
         redProtectGuardListener = new PetRedProtectGuardListener(plugin, manager);
+        rideController = new PetRideController(manager);
     }
 
     @Override
@@ -41,6 +43,7 @@ public final class PetsModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(safetyListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(safeModeGuardListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(redProtectGuardListener, plugin);
+        plugin.getServer().getPluginManager().registerEvents(rideController, plugin);
         cleanupAnchorsOnly();
         manager.start(guiManager);
         // PetManager owns the single follow/combat controller. Do not add a
@@ -60,6 +63,7 @@ public final class PetsModule implements VelioraModule {
         if (safetyListener != null) HandlerList.unregisterAll(safetyListener);
         if (safeModeGuardListener != null) HandlerList.unregisterAll(safeModeGuardListener);
         if (redProtectGuardListener != null) HandlerList.unregisterAll(redProtectGuardListener);
+        if (rideController != null) HandlerList.unregisterAll(rideController);
         if (manager != null) manager.shutdown();
         registerDisabledCommand();
     }

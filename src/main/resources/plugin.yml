@@ -28,6 +28,11 @@ commands:
     usage: /adminmonitor <help|online|log|today|reload>
     aliases: [amonitor, staffactivity, adminlog]
     permission: veliorasuite.adminmonitor.admin
+  adminmanager:
+    description: Membuka GUI pengelola admin dan pemain Veliora.
+    usage: /adminmanager
+    aliases: [admingui, amanager, vadmin]
+    permission: veliorasuite.adminmonitor.admin
   veliorasuite:
     description: Main command for VelioraSuite.
     usage: /veliorasuite

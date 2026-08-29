@@ -10,6 +10,11 @@ settings:
   allow-aquatic-pets: false
   allow-axolotl-ground-pet: true
   allow-flying-pets: true
+  # Monster tidak pernah menyerang owner atau pemain lain. Mereka hanya membela
+  # owner terhadap monster yang sudah menyerang / diserang oleh owner.
+  allow-aggressive-pets: true
+  aggressive-pets:
+    allowed-entities: [ZOMBIE, HUSK, DROWNED, SKELETON, STRAY, SPIDER, CAVE_SPIDER, IRON_GOLEM]
   flying-pets:
     # Hanya entity ini yang boleh menjadi pet terbang. Monster dan boss tetap ditolak.
     allowed-entities: [PARROT, BEE, ALLAY]
@@ -90,6 +95,39 @@ cosmetic:
 
 # Hanya pet yang memang tersedia di Pet Store.
 pets:
+  zombie_guard:
+    display-name: '&2Zombie Guard'
+    entity: ZOMBIE
+    icon: ZOMBIE_HEAD
+    rarity: RARE
+    scale: 0.65
+    price: 50000
+    rideable: false
+    adult-level: 10
+    damage: 2.5
+    food: { material: ROTTEN_FLESH, exp: 25 }
+  skeleton_archer:
+    display-name: '&7Skeleton Archer'
+    entity: SKELETON
+    icon: BONE
+    rarity: EPIC
+    scale: 0.65
+    price: 100000
+    rideable: false
+    adult-level: 15
+    damage: 3.0
+    food: { material: BONE, exp: 35 }
+  spider_guard:
+    display-name: '&8Spider Guard'
+    entity: SPIDER
+    icon: SPIDER_EYE
+    rarity: EPIC
+    scale: 0.60
+    price: 100000
+    rideable: true
+    adult-level: 15
+    damage: 3.0
+    food: { material: SPIDER_EYE, exp: 35 }
   cow:
     display-name: '&fCow'
     entity: COW

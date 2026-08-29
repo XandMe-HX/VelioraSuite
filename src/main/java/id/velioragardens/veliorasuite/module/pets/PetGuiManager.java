@@ -48,7 +48,7 @@ public final class PetGuiManager implements Listener {
         inventory.setItem(13, item(Material.ENDER_CHEST, "&bPet Gacha", List.of("&7Harga: &f" + config.formatMoney(config.gachaPrice())), "gacha", null));
         inventory.setItem(14, item(Material.BARREL, "&6Pet Storage", List.of("&7Storage bersama semua pet.", "&7Kapasitas: &f27 slot"), "storage", null));
         inventory.setItem(15, item(Material.LEAD, "&cDismiss Pet", List.of("&7Simpan pet aktif."), "dismiss", null));
-        inventory.setItem(16, item(Material.PAPER, "&fRename / Feed", List.of("&7/pet rename <pet|active> <nama>", "&7/pet feed <pet|active>"), null, null));
+        inventory.setItem(16, item(Material.GOLDEN_CARROT, "&6Beri Makan Pet", List.of("&7Pilih pet lalu taruh makanan", "&7di GUI makan yang aman."), "feed_menu", null));
         player.openInventory(inventory);
     }
 
@@ -121,6 +121,28 @@ public final class PetGuiManager implements Listener {
         player.openInventory(inventory);
     }
 
+    public void openFeedMenu(Player player) {
+        Inventory inventory = menu(54, "&8Pilih Pet untuk Diberi Makan", "feed_menu", null);
+        int slot = 0;
+        for (OwnedPet owned : manager.playerData(player.getUniqueId()).owned().values()) {
+            PetDefinition pet = config.pets().get(owned.id());
+            if (pet == null || slot >= 54) continue;
+            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), List.of("&7Level: &f" + owned.level(), "&7Makanan: &f" + pet.foodMaterial().name(), "&aKlik untuk membuka tempat makan."), "feed_select", pet.id()));
+        }
+        if (slot == 0) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli pet terlebih dahulu."), null, null));
+        player.openInventory(inventory);
+    }
+
+    public void openFeeder(Player player, String petId) {
+        PetDefinition pet = config.pets().get(petId);
+        if (pet == null || manager.playerData(player.getUniqueId()).get(petId) == null) return;
+        Inventory inventory = menu(27, "&8Makan: " + config.plain(pet.displayName()), "feeding", petId);
+        for (int slot = 0; slot < inventory.getSize(); slot++) if (slot != 13) inventory.setItem(slot, item(Material.GRAY_STAINED_GLASS_PANE, " ", List.of(), null, null));
+        inventory.setItem(4, item(pet.icon(), pet.displayName(), List.of("&7Masukkan maksimal " + config.maxFeedAmount() + " item.", "&7Makanan: &f" + pet.foodMaterial().name()), null, null));
+        inventory.setItem(13, null);
+        player.openInventory(inventory);
+    }
+
     public void openStorage(Player viewer, UUID ownerUuid, String ownerName, boolean readOnly) {
         String title = readOnly ? "&8Pet Storage - " + ownerName : "&8Pet Storage";
         PetMenuHolder holder = new PetMenuHolder("storage", null, ownerUuid, readOnly);
@@ -150,6 +172,11 @@ public final class PetGuiManager implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!(event.getView().getTopInventory().getHolder() instanceof PetMenuHolder holder)) return;
+        if ("feeding".equals(holder.type)) {
+            int topSize = event.getView().getTopInventory().getSize();
+            if (event.isShiftClick() || (event.getRawSlot() < topSize && event.getRawSlot() != 13)) event.setCancelled(true);
+            return;
+        }
         if ("storage".equals(holder.type)) {
             if (holder.readOnly) event.setCancelled(true);
             else scheduleStorageSave(holder, event.getView().getTopInventory());
@@ -167,6 +194,8 @@ public final class PetGuiManager implements Listener {
             case "gacha" -> manager.openGacha(player);
             case "storage" -> manager.openStorage(player);
             case "dismiss" -> manager.dismiss(player, true);
+            case "feed_menu" -> openFeedMenu(player);
+            case "feed_select" -> openFeeder(player, petId);
             case "confirm" -> openConfirm(player, petId);
             case "buy" -> { manager.buy(player, petId); openShop(player); }
             case "gacha_start" -> manager.startGacha(player);
@@ -178,6 +207,10 @@ public final class PetGuiManager implements Listener {
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof PetMenuHolder holder)) return;
+        if ("feeding".equals(holder.type)) {
+            if (event.getRawSlots().stream().anyMatch(slot -> slot != 13)) event.setCancelled(true);
+            return;
+        }
         if (!"storage".equals(holder.type)) return;
         if (holder.readOnly) event.setCancelled(true);
         else scheduleStorageSave(holder, event.getView().getTopInventory());
@@ -187,6 +220,15 @@ public final class PetGuiManager implements Listener {
     public void onClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player)) return;
         if (!(event.getInventory().getHolder() instanceof PetMenuHolder holder)) return;
+        if ("feeding".equals(holder.type)) {
+            ItemStack offered = event.getInventory().getItem(13);
+            ItemStack returned = manager.feedFromGui((Player) event.getPlayer(), holder.petId, offered);
+            if (returned != null) {
+                java.util.Map<Integer, ItemStack> leftovers = ((Player) event.getPlayer()).getInventory().addItem(returned);
+                leftovers.values().forEach(item -> ((Player) event.getPlayer()).getWorld().dropItemNaturally(((Player) event.getPlayer()).getLocation(), item));
+            }
+            return;
+        }
         if (!"storage".equals(holder.type) || holder.storageOwner == null || holder.readOnly) return;
         manager.saveStorage(holder.storageOwner, event.getInventory());
     }

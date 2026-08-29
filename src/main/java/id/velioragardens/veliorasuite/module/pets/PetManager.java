@@ -350,7 +350,7 @@ public final class PetManager implements Listener {
         }
         owned.name(name);
         VelioraPet active = activePets.get(player.getUniqueId());
-        if (active != null && active.petId().equalsIgnoreCase(owned.id())) active.entity().setCustomName(config.color(name));
+        if (active != null && active.petId().equalsIgnoreCase(owned.id())) updatePetName(active.entity(), owned, config.pets().get(owned.id()));
         data.save(player.getUniqueId());
         player.sendMessage(config.color(config.message("pet-renamed", "%prefix% &aNama pet diubah menjadi &f%name%&a.").replace("%name%", name)));
     }
@@ -395,6 +395,30 @@ public final class PetManager implements Listener {
         player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0.0D, 1.0D, 0.0D), Math.min(24, 8 + amount * 3), 0.38D, 0.55D, 0.38D, 0.025D);
         player.playSound(player.getLocation(), leveled ? Sound.UI_TOAST_CHALLENGE_COMPLETE : Sound.ENTITY_GENERIC_EAT, leveled ? 0.75F : 0.5F, leveled ? 1.2F : 1.1F);
         if (leveled) player.sendTitle(config.color("&dPET LEVEL UP!"), config.color("&f" + owned.name() + " &7Level " + owned.level()), 4, 32, 8);
+    }
+
+    /** Consumes only valid food placed in the feeding GUI; all other items are returned. */
+    public ItemStack feedFromGui(Player player, String target, ItemStack offered) {
+        if (offered == null || offered.getType().isAir()) return null;
+        OwnedPet owned = resolveOwned(player, target);
+        PetDefinition definition = owned == null ? null : config.pets().get(owned.id());
+        if (definition == null || offered.getType() != definition.foodMaterial()) {
+            if (definition != null) player.sendMessage(config.color(config.message("pet-feed-wrong-food", "%prefix% &cPet ini butuh makanan: &f%food%").replace("%food%", definition.foodMaterial().name())));
+            return offered;
+        }
+        int amount = Math.min(offered.getAmount(), config.maxFeedAmount());
+        int exp = definition.feedExp() * amount;
+        offered.setAmount(offered.getAmount() - amount);
+        owned.lastFed(System.currentTimeMillis());
+        boolean leveled = owned.addExp(exp, config.maxLevel());
+        data.save(player.getUniqueId());
+        if (leveled) updateActiveScale(player, owned.id());
+        player.sendMessage(config.color(config.message("pet-fed", "%prefix% &aPet &f%pet% &adiberi makan x&f%amount%&a. EXP +&f%exp%&a.")
+                .replace("%pet%", owned.name()).replace("%amount%", String.valueOf(amount)).replace("%exp%", String.valueOf(exp))));
+        player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0.0D, 1.0D, 0.0D), Math.min(24, 8 + amount * 3), 0.38D, 0.55D, 0.38D, 0.025D);
+        player.playSound(player.getLocation(), leveled ? Sound.UI_TOAST_CHALLENGE_COMPLETE : Sound.ENTITY_GENERIC_EAT, leveled ? 0.75F : 0.5F, leveled ? 1.2F : 1.1F);
+        if (leveled) player.sendTitle(config.color("&dPET LEVEL UP!"), config.color("&f" + owned.name() + " &7Level " + owned.level()), 4, 32, 8);
+        return offered.getAmount() > 0 ? offered : null;
     }
 
     public void sendInfo(Player player, String target) {
@@ -442,7 +466,7 @@ public final class PetManager implements Listener {
         VelioraPet active = activePets.get(player.getUniqueId());
         if (active == null) return;
         PetDefinition definition = config.pets().get(active.petId());
-        if (definition != null && (definition.aquaticPet() || definition.flyingPet() || active.entity() instanceof Monster)) return;
+        if (definition != null && (definition.aquaticPet() || definition.flyingPet())) return;
         active.targetUuid(target.getUniqueId());
     }
 
@@ -457,14 +481,12 @@ public final class PetManager implements Listener {
     }
 
     private void configureSpawnedEntity(LivingEntity entity, Player player, PetDefinition definition, OwnedPet owned) {
-        boolean hostilePet = entity instanceof Monster;
         entity.addScoreboardTag(PET_TAG);
         entity.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
         entity.getPersistentDataContainer().set(petIdKey, PersistentDataType.STRING, definition.id());
         entity.getPersistentDataContainer().set(rarityKey, PersistentDataType.STRING, definition.rarity().name());
         entity.getPersistentDataContainer().set(levelKey, PersistentDataType.INTEGER, owned.level());
-        entity.setCustomName(config.color(definition.rarity().color() + owned.name()));
-        entity.setCustomNameVisible(true);
+        updatePetName(entity, owned, definition);
         entity.setRemoveWhenFarAway(false);
         entity.setPersistent(true);
         entity.setCanPickupItems(false);
@@ -477,9 +499,7 @@ public final class PetManager implements Listener {
         setInvisible(entity, false);
         entity.setAI(!definition.flyingPet() && !definition.aquaticPet());
         entity.setGravity(!definition.flyingPet() && !definition.aquaticPet());
-        if (entity instanceof Mob mob) {
-            mob.setTarget(hostilePet ? player : null);
-        }
+        if (entity instanceof Mob mob) mob.setTarget(null);
         if (entity instanceof Creeper creeper) creeper.setPowered(false);
         tryBaby(entity);
         scaleHelper.apply(entity, scaleFor(definition, owned.level()));
@@ -531,7 +551,7 @@ public final class PetManager implements Listener {
         pet.setGravity(true);
 
         if (pet instanceof Monster && pet instanceof Mob mob) {
-            mob.setTarget(owner);
+            mob.setTarget(null);
             if (distanceSquared > 196.0D) moveWithVelocity(pet, safeFollowLocation(owner), HOSTILE_FALLBACK_SPEED);
             return;
         }
@@ -568,7 +588,7 @@ public final class PetManager implements Listener {
             if (owned != null) notifyHungry(owner, owned);
             return;
         }
-        if (definition.aquaticPet() || definition.flyingPet() || pet.entity() instanceof Monster) { pet.targetUuid(null); return; }
+        if (definition.aquaticPet() || definition.flyingPet()) { pet.targetUuid(null); return; }
         Entity target = Bukkit.getEntity(pet.targetUuid());
         if (!(target instanceof LivingEntity living) || living.isDead() || !isAllowedTarget(living)) { pet.targetUuid(null); return; }
         if (!living.getWorld().equals(pet.entity().getWorld())) { pet.targetUuid(null); return; }
@@ -623,8 +643,17 @@ public final class PetManager implements Listener {
         if (!config.auraEnabled()) return;
         for (VelioraPet pet : activePets.values()) {
             if (pet.entity().isDead()) continue;
-            int amount = config.lowLagParticles() ? 3 : 8;
-            plugin.getEffects().particle(pet.entity().getLocation().add(0, 0.7D, 0), config.auraParticle(), amount, 0.25D, 0.25D, 0.25D, 0.01D);
+            PetDefinition definition = config.pets().get(pet.petId());
+            if (definition == null) continue;
+            Particle particle = switch (definition.rarity()) {
+                case COMMON -> Particle.HAPPY_VILLAGER;
+                case RARE -> Particle.WAX_ON;
+                case EPIC -> Particle.ENCHANT;
+                case LEGENDARY -> Particle.END_ROD;
+                case MYTHIC -> Particle.SOUL_FIRE_FLAME;
+            };
+            int amount = config.lowLagParticles() ? 2 : 6;
+            plugin.getEffects().particle(pet.entity().getLocation().add(0, 0.7D, 0), particle, amount, 0.20D, 0.25D, 0.20D, 0.005D);
         }
     }
 
@@ -671,6 +700,13 @@ public final class PetManager implements Listener {
         if (owned == null || definition == null) return;
         active.entity().getPersistentDataContainer().set(levelKey, PersistentDataType.INTEGER, owned.level());
         scaleHelper.apply(active.entity(), scaleFor(definition, owned.level()));
+        updatePetName(active.entity(), owned, definition);
+    }
+
+    private void updatePetName(LivingEntity entity, OwnedPet owned, PetDefinition definition) {
+        if (entity == null || owned == null || definition == null) return;
+        entity.setCustomName(config.color(definition.rarity().color() + "[Lv." + owned.level() + "] &f" + owned.name()));
+        entity.setCustomNameVisible(true);
     }
 
     private double scaleFor(PetDefinition definition, int level) {
@@ -707,10 +743,6 @@ public final class PetManager implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager().getScoreboardTags().contains(PET_TAG)) {
-            if (event.getDamager() instanceof Monster) {
-                event.setCancelled(true);
-                return;
-            }
             if (event.getEntity() instanceof Player || event.getEntity().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true);
             return;
         }
@@ -743,7 +775,7 @@ public final class PetManager implements Listener {
         }
         if (pet instanceof Monster) {
             Player owner = ownerOf(pet);
-            if (owner != null && event.getTarget() != null && event.getTarget().getUniqueId().equals(owner.getUniqueId())) return;
+            if (owner != null && event.getTarget() != null && event.getTarget().getUniqueId().equals(owner.getUniqueId())) { event.setCancelled(true); return; }
         }
         event.setCancelled(true);
     }
