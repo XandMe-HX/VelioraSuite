@@ -24,6 +24,7 @@ public final class ConfigManager {
             "kits",
             "report",
             "announcement",
+            "biome",
             "fishing",
             "boss",
             "security",

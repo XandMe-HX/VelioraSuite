@@ -8,6 +8,7 @@ modules:
   kits: true
   report: true
   announcement: true
+  biome: true
   fishing: true
   trader: true
   boss: true

@@ -102,6 +102,11 @@ commands:
     description: Manage VelioraChat.
     usage: /veliorachat <help|status|reload>
     aliases: [vchat, vc]
+  vbiome:
+    description: Mengatur pengumuman biome layar.
+    usage: /vbiome <toggle|status|reload>
+    aliases: [biomeannouncer]
+    permission: veliorasuite.biome.use
   vsecurity:
     description: Manage VelioraSecurity.
     usage: /vsecurity <help|status|alerts|reload|alt>
@@ -247,6 +252,10 @@ commands:
     permission: veliorasuite.home.admin
 
 permissions:
+  veliorasuite.biome.use:
+    default: true
+  veliorasuite.biome.admin:
+    default: op
   veliorasuite.team.use:
     description: Menggunakan command Team Veliora untuk player biasa.
     default: true
