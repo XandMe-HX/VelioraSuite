@@ -24,9 +24,10 @@ public final class RaceGui implements Listener {
     private final RaceManager manager;
     private final NamespacedKey actionKey;
     private final RaceScaleHelper scaleHelper;
+    private final RaceBenefits benefits;
 
-    public RaceGui(VelioraSuite plugin, RaceManager manager) {
-        this.plugin = plugin; this.manager = manager; this.actionKey = new NamespacedKey(plugin, "race_gui_action"); this.scaleHelper = new RaceScaleHelper(plugin);
+    public RaceGui(VelioraSuite plugin, RaceManager manager, RaceBenefits benefits) {
+        this.plugin = plugin; this.manager = manager; this.benefits = benefits; this.actionKey = new NamespacedKey(plugin, "race_gui_action"); this.scaleHelper = new RaceScaleHelper(plugin);
     }
     public void openGuide(Player player) {
         Inventory inventory = menu("guide", 27, "§8Pilih Ras §7| Panduan");
@@ -90,10 +91,11 @@ public final class RaceGui implements Listener {
         if (manager.selected(player.getUniqueId())) { player.closeInventory(); player.sendMessage("§cKamu sudah memiliki ras."); return; }
         manager.complete(player.getUniqueId(), race, form);
         scaleHelper.apply(player, manager.scaleFor(form));
+        benefits.applyPassive(player);
         player.closeInventory();
         RaceInfo info = RaceInfo.valueOf(race);
         player.sendMessage("§a[Ras] §fPilihan tersimpan: " + info.color + info.title + " §7• §f" + formName(form) + "§a.");
-        player.sendMessage("§7Benefit gameplay ras akan aktif pada Progress 4. Ukuran tubuh sudah diterapkan.");
+        player.sendMessage("§7Benefit gameplay ras dan ukuran tubuh sudah diterapkan.");
         player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.65F, 1.2F);
     }
     @EventHandler public void click(InventoryClickEvent event) {
@@ -131,12 +133,12 @@ public final class RaceGui implements Listener {
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value); }
     private record Holder(String type) implements InventoryHolder { @Override public Inventory getInventory() { return null; } }
     private enum RaceInfo {
-        HUMAN("Human", "&f", Material.PLAYER_HEAD, "Seimbang dan cepat berkembang", List.of("&aBenefit", "&7• XP aktivitas &f+16%", "&7• Reward quest &f+10%", "", "&cKelemahan", "&7• Tidak memiliki spesialisasi elemen.")),
+        HUMAN("Human", "&f", Material.PLAYER_HEAD, "Seimbang dan cepat berkembang", List.of("&aBenefit", "&7• Semua XP yang didapat &f+16%", "", "&cKelemahan", "&7• Tidak memiliki spesialisasi elemen.")),
         ELF("Elf", "&a", Material.BOW, "Pemanah dan penjelajah hutan", List.of("&aBenefit", "&7• Speed &f+10%", "&7• Damage bow &f+16%", "&7• XP eksplorasi &f+10%", "", "&cKelemahan", "&7• Defense &f-8%")),
         DWARF("Dwarf", "&6", Material.IRON_PICKAXE, "Penambang dan penjaga tangguh", List.of("&aBenefit", "&7• Mining XP &f+24%", "&7• Tahan knockback", "&7• Durability alat hemat &f16%", "", "&cKelemahan", "&7• Speed &f-8%")),
         BEASTMAN("Beastman", "&e", Material.RABBIT_FOOT, "Petarung cepat dan lincah", List.of("&aBenefit", "&7• Sprint speed &f+14%", "&7• Damage melee &f+12%", "&7• Fall damage &f-30%", "", "&cKelemahan", "&7• Damage bow &f-8%")),
         DEMON("Demon", "&c", Material.BLAZE_ROD, "Pejuang api dan malam", List.of("&aBenefit", "&7• Fire resistance", "&7• Damage malam &f+16%", "", "&cKelemahan", "&7• Damage diterima siang &f+10%")),
-        ANGEL("Angel", "&b", Material.FEATHER, "Pelindung cahaya dan penjelajah", List.of("&aBenefit", "&7• Tidak menerima fall damage", "&7• Regen ringan siang hari", "&7• Quest XP &f+10%", "", "&cKelemahan", "&7• Damage melee malam &f-8%"));
+        ANGEL("Angel", "&b", Material.FEATHER, "Pelindung cahaya dan penjelajah", List.of("&aBenefit", "&7• Tidak menerima fall damage", "&7• Regen ringan siang hari", "&7• Semua XP yang didapat &f+10%", "", "&cKelemahan", "&7• Damage melee malam &f-8%"));
         private final String title, color, tagline; private final Material material; private final List<String> lore;
         RaceInfo(String title, String color, Material material, String tagline, List<String> lore) { this.title=title; this.color=color; this.material=material; this.tagline=tagline; this.lore=lore; }
         List<String> lore() { return lore; }

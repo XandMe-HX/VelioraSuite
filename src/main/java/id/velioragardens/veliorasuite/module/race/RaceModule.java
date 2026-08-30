@@ -12,6 +12,7 @@ public final class RaceModule implements VelioraModule {
     private RaceManager manager;
     private RaceListener listener;
     private RaceGui gui;
+    private RaceBenefits benefits;
     private boolean enabled;
 
     public RaceModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -20,8 +21,9 @@ public final class RaceModule implements VelioraModule {
         plugin.saveResourceIfNotExists("modules/race.yml");
         manager = new RaceManager(plugin);
         manager.load();
-        gui = new RaceGui(plugin, manager);
-        listener = new RaceListener(plugin, manager, gui);
+        benefits = new RaceBenefits(plugin, manager);
+        gui = new RaceGui(plugin, manager, benefits);
+        listener = new RaceListener(plugin, manager, gui, benefits);
     }
     @Override public void enable() {
         enabled = true;
@@ -29,12 +31,15 @@ public final class RaceModule implements VelioraModule {
         if (command != null) { command.setExecutor(listener); command.setTabCompleter(listener); }
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
         plugin.getServer().getPluginManager().registerEvents(gui, plugin);
+        plugin.getServer().getPluginManager().registerEvents(benefits, plugin);
+        plugin.getServer().getOnlinePlayers().forEach(benefits::applyPassive);
     }
     @Override public void disable() {
         enabled = false;
-        if (gui != null && manager != null) plugin.getServer().getOnlinePlayers().stream().filter(player -> manager.selected(player.getUniqueId())).forEach(gui::resetScale);
+        if (gui != null && manager != null) plugin.getServer().getOnlinePlayers().stream().filter(player -> manager.selected(player.getUniqueId())).forEach(player -> { gui.resetScale(player); if (benefits != null) benefits.clearPassive(player); });
         if (listener != null) HandlerList.unregisterAll(listener);
         if (gui != null) HandlerList.unregisterAll(gui);
+        if (benefits != null) HandlerList.unregisterAll(benefits);
         if (manager != null) manager.shutdown();
         PluginCommand command = plugin.getCommand("race");
         if (command != null) command.setExecutor(new DisabledCommand(plugin, "Race"));

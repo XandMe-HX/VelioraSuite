@@ -31,8 +31,9 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
     private final VelioraSuite plugin;
     private final RaceManager manager;
     private final RaceGui gui;
+    private final RaceBenefits benefits;
     private final Map<UUID, Long> reminders = new ConcurrentHashMap<>();
-    public RaceListener(VelioraSuite plugin, RaceManager manager, RaceGui gui) { this.plugin = plugin; this.manager = manager; this.gui = gui; }
+    public RaceListener(VelioraSuite plugin, RaceManager manager, RaceGui gui, RaceBenefits benefits) { this.plugin = plugin; this.manager = manager; this.gui = gui; this.benefits = benefits; }
 
     private boolean pending(Player player) { return manager.enforcementEnabled() && !player.hasPermission("veliorasuite.race.admin") && !manager.selected(player.getUniqueId()); }
     private void remind(Player player) {
@@ -60,10 +61,10 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
     }
     @EventHandler public void join(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (manager.selected(player.getUniqueId())) { Bukkit.getScheduler().runTaskLater(plugin, () -> gui.applySavedScale(player), 10L); return; }
+        if (manager.selected(player.getUniqueId())) { Bukkit.getScheduler().runTaskLater(plugin, () -> { gui.applySavedScale(player); benefits.applyPassive(player); }, 10L); return; }
         if (pending(player)) Bukkit.getScheduler().runTaskLater(plugin, () -> gui.openGuide(player), 30L);
     }
-    @EventHandler public void quit(PlayerQuitEvent event) { reminders.remove(event.getPlayer().getUniqueId()); manager.clearDraft(event.getPlayer().getUniqueId()); }
+    @EventHandler public void quit(PlayerQuitEvent event) { reminders.remove(event.getPlayer().getUniqueId()); manager.clearDraft(event.getPlayer().getUniqueId()); benefits.clearPassive(event.getPlayer()); }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length >= 1 && args[0].equalsIgnoreCase("admin")) {
@@ -71,7 +72,7 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
             if (args.length >= 3 && args[1].equalsIgnoreCase("reset")) {
                 Player target = Bukkit.getPlayerExact(args[2]);
                 if (target == null) { sender.sendMessage("§cPemain harus online untuk reset aman di fase ini."); return true; }
-                manager.reset(target.getUniqueId()); gui.resetScale(target); sender.sendMessage("§aData ras " + target.getName() + " direset dan skala dikembalikan normal."); return true;
+                manager.reset(target.getUniqueId()); gui.resetScale(target); benefits.clearPassive(target); sender.sendMessage("§aData ras " + target.getName() + " direset dan skala dikembalikan normal."); return true;
             }
             if (args.length >= 3 && args[1].equalsIgnoreCase("enforce")) {
                 if (!args[2].equalsIgnoreCase("on") && !args[2].equalsIgnoreCase("off")) { sender.sendMessage("§e/race admin enforce <on|off>"); return true; }
