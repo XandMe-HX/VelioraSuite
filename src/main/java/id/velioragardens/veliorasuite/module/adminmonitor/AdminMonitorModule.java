@@ -55,7 +55,7 @@ public final class AdminMonitorModule implements VelioraModule {
     @Override public void disable() {
         enabled = false;
         if (listener != null) HandlerList.unregisterAll(listener);
-        if (gui != null) HandlerList.unregisterAll(gui);
+        if (gui != null) { gui.shutdown(); HandlerList.unregisterAll(gui); }
         if (manager != null) manager.shutdown();
         PluginCommand command = plugin.getCommand("adminmonitor");
         if (command != null) {

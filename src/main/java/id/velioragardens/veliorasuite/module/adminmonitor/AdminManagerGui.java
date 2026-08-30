@@ -32,14 +32,18 @@ import org.bukkit.NamespacedKey;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Map;
-import java.util.HashMap;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.Location;
 import org.bukkit.GameMode;
@@ -63,13 +67,15 @@ public final class AdminManagerGui implements Listener {
     private final AdminMonitorManager monitor;
     private final NamespacedKey actionKey;
     private final NamespacedKey targetKey;
-    private final Set<UUID> frozen = new HashSet<>();
-    private final Set<UUID> vanished = new HashSet<>();
-    private final Map<UUID, Long> mutedUntil = new HashMap<>();
+    private final Set<UUID> frozen = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> vanished = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Long> mutedUntil = new ConcurrentHashMap<>();
     private final Map<UUID, Location> backs = new HashMap<>();
     private final Map<UUID, List<String>> moderationHistory = new HashMap<>();
     private final File stateFile;
-    private boolean globalChatMuted;
+    private final AtomicBoolean stateWriteRunning = new AtomicBoolean();
+    private final AtomicReference<String> pendingStateSnapshot = new AtomicReference<>();
+    private volatile boolean globalChatMuted;
 
     public AdminManagerGui(VelioraSuite plugin, AdminMonitorManager monitor) {
         this.plugin = plugin;
@@ -325,7 +331,12 @@ public final class AdminManagerGui implements Listener {
     @EventHandler(ignoreCancelled = true) public void onChat(AsyncPlayerChatEvent event) {
         UUID id=event.getPlayer().getUniqueId(); long until=mutedUntil.getOrDefault(id,0L);
         if(until>0 && (until==Long.MAX_VALUE || until>System.currentTimeMillis())) {event.setCancelled(true);event.getPlayer().sendMessage(color("&cKamu sedang dimute oleh staf."));return;}
-        if(until>0) { mutedUntil.remove(id); saveState(); }
+        if(until>0) {
+            mutedUntil.remove(id);
+            // AsyncPlayerChatEvent may run outside the server thread. Building a
+            // YAML snapshot here would race normal GUI actions, so schedule it.
+            Bukkit.getScheduler().runTask(plugin, this::saveState);
+        }
         if(vanished.contains(id)) {event.setCancelled(true);event.getPlayer().sendMessage(color("&7Chat dimatikan saat vanish aktif. Command tetap boleh."));return;}
         if(globalChatMuted && !event.getPlayer().hasPermission("veliorasuite.adminmonitor.admin")){event.setCancelled(true);event.getPlayer().sendMessage(color("&cGlobal chat sedang dimute."));}
     }
@@ -441,11 +452,49 @@ public final class AdminManagerGui implements Listener {
         org.bukkit.configuration.ConfigurationSection history=yaml.getConfigurationSection("history");
         if(history!=null) for(String raw:history.getKeys(false)) try { moderationHistory.put(UUID.fromString(raw), new ArrayList<>(history.getStringList(raw))); } catch(IllegalArgumentException ignored) { }
     }
+    /** Queues a complete state snapshot; disk I/O itself never runs on the server thread. */
     private void saveState() {
+        pendingStateSnapshot.set(createStateSnapshot());
+        flushStateAsync();
+    }
+
+    private String createStateSnapshot() {
         YamlConfiguration yaml=new YamlConfiguration(); yaml.set("global-chat-muted",globalChatMuted); yaml.set("vanished",vanished.stream().map(UUID::toString).toList());
         for(Map.Entry<UUID,Long> entry:mutedUntil.entrySet()) yaml.set("muted."+entry.getKey(),entry.getValue());
         for(Map.Entry<UUID,List<String>> entry:moderationHistory.entrySet()) yaml.set("history."+entry.getKey(),entry.getValue());
-        try { File parent=stateFile.getParentFile(); if(parent!=null&&!parent.exists())parent.mkdirs(); yaml.save(stateFile); } catch(IOException exception) { plugin.getLogger().warning("AdminManager: gagal menyimpan mute/vanish: "+exception.getMessage()); }
+        return yaml.saveToString();
+    }
+
+    private void flushStateAsync() {
+        if (!stateWriteRunning.compareAndSet(false, true)) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String snapshot = pendingStateSnapshot.getAndSet(null);
+            if (snapshot != null) {
+                try {
+                    File parent = stateFile.getParentFile();
+                    if (parent != null) Files.createDirectories(parent.toPath());
+                    Files.writeString(stateFile.toPath(), snapshot, StandardCharsets.UTF_8);
+                } catch (IOException exception) {
+                    plugin.getLogger().warning("AdminManager: gagal menyimpan mute/vanish: " + exception.getMessage());
+                    pendingStateSnapshot.compareAndSet(null, snapshot);
+                }
+            }
+            stateWriteRunning.set(false);
+            if (pendingStateSnapshot.get() != null) Bukkit.getScheduler().runTask(plugin, this::flushStateAsync);
+        });
+    }
+
+    /** Final synchronous save is only used during plugin shutdown, after gameplay has stopped. */
+    public void shutdown() {
+        String snapshot = createStateSnapshot();
+        pendingStateSnapshot.set(null);
+        try {
+            File parent = stateFile.getParentFile();
+            if (parent != null) Files.createDirectories(parent.toPath());
+            Files.writeString(stateFile.toPath(), snapshot, StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("AdminManager: gagal menyimpan state saat shutdown: " + exception.getMessage());
+        }
     }
 
     private void recordModeration(UUID target, String staff, String action, String reason, String duration) {
