@@ -19,6 +19,7 @@ import java.util.*;
 public final class CodeRedeemManager {
     public enum Type { MONEY, TEMPLATE, ITEM, COMMAND }
     public record Draft(Type type, double money, String template, ItemStack item) {}
+    public record DeletedCodeAudit(String code, String actor, long deletedAt, int claimCount, String reward) {}
     private final VelioraSuite plugin;
     private final Map<UUID, Draft> drafts = new HashMap<>();
     private final Map<UUID, Long> attempts = new HashMap<>();
@@ -88,7 +89,30 @@ public final class CodeRedeemManager {
         putBase(code, Type.COMMAND, creator); data.set("codes." + code + ".command", safe); save();
         return "§aKode §f" + code + " §aberhasil dibuat untuk hadiah plugin eksternal.";
     }
-    public String delete(String raw) { String code = normalize(raw); if (code == null || !data.contains("codes." + code)) return "§cKode tidak ditemukan."; data.set("codes." + code, null); data.set("claims." + code, null); save(); return "§aKode §f" + code + " §aberhasil dihapus."; }
+    public String delete(String raw, String actor) {
+        String code = normalize(raw);
+        if (code == null || !data.contains("codes." + code)) return "§cKode tidak ditemukan.";
+        auditDeletion(code, actor);
+        data.set("codes." + code, null);
+        data.set("claims." + code, null);
+        save();
+        plugin.getLogger().warning("CodeRedeem audit: " + actor + " menghapus kode " + code + ".");
+        return "§aKode §f" + code + " §aberhasil dihapus dan masuk riwayat audit.";
+    }
+    public List<DeletedCodeAudit> deletionHistory(String rawCode) {
+        String filter = rawCode == null || rawCode.isBlank() ? null : normalize(rawCode);
+        ConfigurationSection section = data.getConfigurationSection("history.deleted");
+        if (section == null) return List.of();
+        List<DeletedCodeAudit> rows = new ArrayList<>();
+        for (String id : section.getKeys(false)) {
+            String path = "history.deleted." + id;
+            String code = data.getString(path + ".code", "?");
+            if (filter != null && !filter.equals(code)) continue;
+            rows.add(new DeletedCodeAudit(code, data.getString(path + ".actor", "Console"), data.getLong(path + ".deleted-at"), data.getInt(path + ".claim-count"), data.getString(path + ".reward", "Tidak diketahui")));
+        }
+        rows.sort(Comparator.comparingLong(DeletedCodeAudit::deletedAt).reversed());
+        return rows;
+    }
     public String redeem(Player player, String raw) {
         long now = System.currentTimeMillis();
         pruneAttemptCache(now);
@@ -123,6 +147,35 @@ public final class CodeRedeemManager {
     }
     private int emptySlots(Player p) { int n=0; for (ItemStack item : p.getInventory().getStorageContents()) if (item == null || item.getType().isAir()) n++; return n; }
     private void putBase(String code, Type type, String creator) { data.set("codes." + code + ".enabled", true); data.set("codes." + code + ".type", type.name()); data.set("codes." + code + ".created-by", creator); data.set("codes." + code + ".created-at", System.currentTimeMillis()); data.set("claims." + code, new ArrayList<String>()); }
+    private void auditDeletion(String code, String actor) {
+        long now = System.currentTimeMillis();
+        String id = now + "-" + UUID.randomUUID().toString().substring(0, 8);
+        String path = "history.deleted." + id;
+        data.set(path + ".code", code);
+        data.set(path + ".actor", actor == null || actor.isBlank() ? "Console" : actor);
+        data.set(path + ".deleted-at", now);
+        data.set(path + ".claim-count", data.getStringList("claims." + code).size());
+        data.set(path + ".reward", rewardSummary(code));
+        pruneDeletionHistory();
+    }
+    private String rewardSummary(String code) {
+        Type type;
+        try { type = Type.valueOf(data.getString("codes." + code + ".type", "").toUpperCase(Locale.ROOT)); }
+        catch (IllegalArgumentException ex) { return "Data tipe rusak"; }
+        return switch (type) {
+            case MONEY -> "Uang $" + trim(data.getDouble("codes." + code + ".money"));
+            case TEMPLATE -> "Template " + data.getString("codes." + code + ".template", "?");
+            case ITEM -> { ItemStack item = data.getItemStack("codes." + code + ".item"); yield "Item " + (item == null ? "rusak" : item.getType().name() + " x" + item.getAmount()); }
+            case COMMAND -> "Command hadiah";
+        };
+    }
+    private void pruneDeletionHistory() {
+        ConfigurationSection section = data.getConfigurationSection("history.deleted");
+        if (section == null || section.getKeys(false).size() <= 200) return;
+        List<String> ids = new ArrayList<>(section.getKeys(false));
+        ids.sort(Comparator.comparingLong(id -> data.getLong("history.deleted." + id + ".deleted-at")));
+        while (ids.size() > 200) data.set("history.deleted." + ids.removeFirst(), null);
+    }
     private String normalize(String input) { if (input == null) return null; String c=input.trim().toUpperCase(Locale.ROOT); return c.matches("[A-Z0-9_-]{3,32}") ? c : null; }
     private String sanitizeCommand(String command) { if(command==null)return null; String safe=command.trim(); if(safe.startsWith("/"))safe=safe.substring(1); return safe.isBlank()||safe.contains("\n")||safe.contains("\r")||safe.contains(";") ? null : safe; }
     /** Persistence is async during gameplay; a redemption can never block ticks on a YAML write. */
