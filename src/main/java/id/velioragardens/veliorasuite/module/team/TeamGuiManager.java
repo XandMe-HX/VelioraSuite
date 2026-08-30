@@ -16,10 +16,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /** GUI ringan: tidak menyimpan session global dan tidak menjalankan polling. */
 public final class TeamGuiManager implements Listener {
+    private static final int[] MEMBER_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
     private final TeamManager manager;
 
     public TeamGuiManager(TeamManager manager) { this.manager = manager; }
@@ -40,19 +47,29 @@ public final class TeamGuiManager implements Listener {
     }
 
     private void openMembers(Player player, Team team) {
-        Holder holder = new Holder("members", player.getUniqueId());
+        openMembers(player, team, 0);
+    }
+
+    private void openMembers(Player player, Team team, int requestedPage) {
+        List<TeamMember> members = new ArrayList<>(team.getMembers().values());
+        int pages = Math.max(1, (members.size() + MEMBER_SLOTS.length - 1) / MEMBER_SLOTS.length);
+        int page = Math.max(0, Math.min(requestedPage, pages - 1));
+        Holder holder = new Holder("members", player.getUniqueId(), page);
         Inventory inventory = Bukkit.createInventory(holder, 54, "§8Anggota §b" + team.getDisplayName()); holder.inventory = inventory; fill(inventory);
-        int slot = 10;
-        for (TeamMember member : team.getMembers().values()) {
-            if (slot >= 44) break;
+        int start = page * MEMBER_SLOTS.length;
+        int end = Math.min(start + MEMBER_SLOTS.length, members.size());
+        for (int index = start; index < end; index++) {
+            TeamMember member = members.get(index);
             ItemStack head = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) head.getItemMeta();
             SafePlayerHead.applyOnlineProfile(meta, member.getUuid());
             meta.setDisplayName("§f" + member.getName());
-            meta.setLore(List.of("§7Jabatan: " + roleColor(member.getRole().name()), "§7Bergabung: §f" + member.getJoinedAt()));
-            head.setItemMeta(meta); inventory.setItem(slot++, head);
+            meta.setLore(List.of("§8━━━━━━━━━━━━━━━━", "§7Jabatan: " + roleColor(member.getRole().name()), "§7Bergabung: §f" + member.getJoinedAt(), "§8━━━━━━━━━━━━━━━━"));
+            head.setItemMeta(meta); inventory.setItem(MEMBER_SLOTS[index - start], head);
         }
+        inventory.setItem(45, item(page > 0 ? Material.ARROW : Material.GRAY_DYE, page > 0 ? "§e§lHALAMAN SEBELUMNYA" : "§8Halaman pertama", List.of("§7Halaman " + (page + 1) + " dari " + pages)));
         inventory.setItem(49, item(Material.ARROW, "§eKEMBALI", List.of("§7Kembali ke menu team.")));
+        inventory.setItem(53, item(page + 1 < pages ? Material.ARROW : Material.GRAY_DYE, page + 1 < pages ? "§e§lHALAMAN BERIKUTNYA" : "§8Halaman terakhir", List.of("§7Halaman " + (page + 1) + " dari " + pages)));
         player.openInventory(inventory);
     }
 
@@ -85,7 +102,7 @@ public final class TeamGuiManager implements Listener {
         int slot = event.getRawSlot();
         switch (holder.page) {
             case "main" -> { if (slot == 10) manager.teleportTeamHome(player); else if (slot == 11) manager.toggleTeamChat(player); else if (slot == 12) openMembers(player, team); else if (slot == 15) openSettings(player, team); else if (slot == 16) { player.closeInventory(); manager.leave(player); } }
-            case "members" -> { if (slot == 49) openMain(player); }
+            case "members" -> { if (slot == 45 && holder.currentPage > 0) openMembers(player, team, holder.currentPage - 1); else if (slot == 49) openMain(player); else if (slot == 53) openMembers(player, team, holder.currentPage + 1); }
             case "settings" -> { if (slot == 10) { manager.setTeamHome(player); openSettings(player, team); } else if (slot == 11) { manager.toggleTeamPvp(player); openSettings(player, team); } else if (slot == 12) { manager.toggleTeamOpen(player); openSettings(player, team); } else if (slot == 15) openConfirm(player, team); else if (slot == 18) openMain(player); }
             case "confirm" -> { if (slot == 11) { player.closeInventory(); manager.disbandOwnedTeam(player); } else if (slot == 15) openSettings(player, team); }
             default -> { }
@@ -95,5 +112,5 @@ public final class TeamGuiManager implements Listener {
     private void fill(Inventory inventory) { ItemStack pane = item(Material.GRAY_STAINED_GLASS_PANE, " ", List.of()); for (int slot = 0; slot < inventory.getSize(); slot++) inventory.setItem(slot, pane); }
     private ItemStack item(Material material, String name, List<String> lore) { ItemStack item = new ItemStack(material); ItemMeta meta = item.getItemMeta(); meta.setDisplayName(name); meta.setLore(lore); item.setItemMeta(meta); return item; }
     private String roleColor(String role) { return switch (role) { case "OWNER" -> "§6OWNER"; case "ADMIN" -> "§cADMIN"; default -> "§aMEMBER"; }; }
-    private static final class Holder implements InventoryHolder { private final String page; private final UUID owner; private Inventory inventory; private Holder(String page, UUID owner) { this.page = page; this.owner = owner; } @Override public Inventory getInventory() { return inventory; } }
+    private static final class Holder implements InventoryHolder { private final String page; private final UUID owner; private final int currentPage; private Inventory inventory; private Holder(String page, UUID owner) { this(page, owner, 0); } private Holder(String page, UUID owner, int currentPage) { this.page = page; this.owner = owner; this.currentPage = currentPage; } @Override public Inventory getInventory() { return inventory; } }
 }

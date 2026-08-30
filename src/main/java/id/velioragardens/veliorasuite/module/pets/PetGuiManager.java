@@ -26,6 +26,12 @@ import java.util.List;
 import java.util.UUID;
 
 public final class PetGuiManager implements Listener {
+    private static final int[] CONTENT_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
     private final VelioraSuite plugin;
     private final PetManager manager;
     private final PetConfigManager config;
@@ -42,48 +48,58 @@ public final class PetGuiManager implements Listener {
 
     public void openMain(Player player) {
         Inventory inventory = menu(27, "&8Veliora Pets", "main", null);
-        inventory.setItem(10, item(Material.NAME_TAG, "&dActive Pet", List.of("&7Lihat dan kelola pet aktif."), "list", null));
-        inventory.setItem(11, item(Material.CHEST, "&ePet List", List.of("&7Lihat pet yang kamu miliki."), "list", null));
-        inventory.setItem(12, item(Material.EMERALD, "&aPet Shop", List.of("&7Beli pet langsung."), "shop", null));
-        inventory.setItem(13, item(Material.ENDER_CHEST, "&bPet Gacha", List.of("&7Harga: &f" + config.formatMoney(config.gachaPrice())), "gacha", null));
-        inventory.setItem(14, item(Material.BARREL, "&6Pet Storage", List.of("&7Storage bersama semua pet.", "&7Kapasitas: &f27 slot"), "storage", null));
-        inventory.setItem(15, item(Material.LEAD, "&cDismiss Pet", List.of("&7Simpan pet aktif."), "dismiss", null));
-        inventory.setItem(16, item(Material.GOLDEN_CARROT, "&6Beri Makan Pet", List.of("&7Pilih pet lalu taruh makanan", "&7di GUI makan yang aman."), "feed_menu", null));
+        inventory.setItem(10, item(Material.NAME_TAG, "&d&lPET AKTIF", List.of("&7Lihat daftar pet dan panggil", "&7pet yang ingin menemanimu."), "list", null));
+        inventory.setItem(11, item(Material.CHEST, "&e&lDAFTAR PET", List.of("&7Lihat level, EXP, dan status", "&7seluruh pet milikmu."), "list", null));
+        inventory.setItem(12, item(Material.EMERALD, "&a&lTOKO PET", List.of("&7Beli pet permanen dengan", "&7harga yang terlihat jelas."), "shop", null));
+        inventory.setItem(13, item(Material.ENDER_CHEST, "&b&lGACHA PET", List.of("&7Harga: &f" + config.formatMoney(config.gachaPrice()), "&7Hadiah dipilih secara acak."), "gacha", null));
+        inventory.setItem(14, item(Material.BARREL, "&6&lPENYIMPANAN PET", List.of("&7Penyimpanan bersama semua pet.", "&7Kapasitas: &f27 slot"), "storage", null));
+        inventory.setItem(15, item(Material.GOLDEN_CARROT, "&6&lBERI MAKAN", List.of("&7Pilih pet, lalu letakkan makanan", "&7hanya pada slot makan yang tersedia."), "feed_menu", null));
+        inventory.setItem(16, item(Material.LEAD, "&c&lSIMPAN PET AKTIF", List.of("&7Menghilangkan pet aktif tanpa", "&7menghapus data atau levelnya."), "dismiss", null));
         player.openInventory(inventory);
     }
 
     public void openShop(Player player) {
-        Inventory inventory = menu(54, "&8Pet Shop", "shop", null);
-        int slot = 0;
+        openShop(player, 0);
+    }
+
+    private void openShop(Player player, int page) {
+        List<PetDefinition> pets = new ArrayList<>(config.pets().values());
+        int pages = pages(pets.size());
+        int current = clampPage(page, pages);
+        Inventory inventory = menu(54, "&8Veliora Pets &7• &aToko", "shop", null, current);
         PlayerPetData pdata = manager.playerData(player.getUniqueId());
-        for (PetDefinition pet : config.pets().values()) {
-            if (slot >= 54) break;
+        int start = current * CONTENT_SLOTS.length;
+        int end = Math.min(start + CONTENT_SLOTS.length, pets.size());
+        for (int index = start; index < end; index++) {
+            PetDefinition pet = pets.get(index);
             List<String> lore = new ArrayList<>();
-            lore.add("&7Rarity: " + pet.rarity().color() + pet.rarity().name());
+            lore.add("&8━━━━━━━━━━━━━━━━━━━━");
+            lore.add("&7Kelangkaan: " + pet.rarity().color() + pet.rarity().name());
             lore.add("&7Harga: &f" + config.formatMoney(pet.price()));
-            lore.add("&7Food: &f" + pet.foodMaterial().name() + " &8(+" + pet.feedExp() + " EXP)");
-            lore.add("&7Damage: &f" + pet.damage());
+            lore.add("&7Makanan: &f" + prettyMaterial(pet.foodMaterial()) + " &8(+" + pet.feedExp() + " EXP)");
+            lore.add("&7Serangan: &f" + pet.damage());
             lore.add(pet.babyPet() ? "&dMode: &fBAYI permanen &8(tidak membesar)" : "&aMode: &fDewasa &8(tumbuh tiap 10 level)");
             lore.add("&7Tunggangan: " + (pet.rideable() ? "&aBisa setelah level " + pet.adultLevel() : "&cTidak bisa"));
-            lore.add("&7Shared Storage: &f" + PetDataManager.SHARED_STORAGE_SIZE + " slot");
-            lore.add(pdata.owns(pet.id()) ? "&eSudah dimiliki." : "&aKlik untuk beli.");
-            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), lore, pdata.owns(pet.id()) ? null : "confirm", pet.id()));
+            lore.add("&8━━━━━━━━━━━━━━━━━━━━");
+            lore.add(pdata.owns(pet.id()) ? "&e✓ Kamu sudah memiliki pet ini." : "&aKlik untuk melihat konfirmasi pembelian.");
+            inventory.setItem(CONTENT_SLOTS[index - start], item(pet.icon(), pet.displayName(), lore, pdata.owns(pet.id()) ? null : "confirm", pet.id()));
         }
+        navigation(inventory, current, pages, "shop");
         player.openInventory(inventory);
     }
 
     public void openConfirm(Player player, String petId) {
         PetDefinition pet = config.pets().get(petId);
         if (pet == null) return;
-        Inventory inventory = menu(27, "&8Confirm Pet Buy", "confirm", petId);
-        inventory.setItem(11, item(Material.LIME_WOOL, "&aBeli " + pet.displayName(), List.of("&7Harga: &f" + config.formatMoney(pet.price())), "buy", petId));
-        inventory.setItem(15, item(Material.RED_WOOL, "&cBatal", List.of("&7Kembali ke shop."), "shop", null));
+        Inventory inventory = menu(27, "&8Konfirmasi Pembelian", "confirm", petId);
+        inventory.setItem(11, item(Material.LIME_WOOL, "&a&lBELI " + pet.displayName(), List.of("&7Harga: &f" + config.formatMoney(pet.price()), "&7Pet akan masuk ke daftar milikmu.", "&eKlik untuk mengonfirmasi."), "buy", petId));
+        inventory.setItem(15, item(Material.RED_WOOL, "&c&lBATAL", List.of("&7Kembali ke toko tanpa membeli."), "shop", null));
         player.openInventory(inventory);
     }
 
     public void openGacha(Player player) {
-        Inventory inventory = menu(27, "&8Pet Gacha", "gacha", null);
-        inventory.setItem(13, item(Material.ENDER_CHEST, "&bMulai Gacha", List.of("&7Harga: &f" + config.formatMoney(config.gachaPrice()), "&7Animasi ringan, tidak lag."), "gacha_start", null));
+        Inventory inventory = menu(27, "&8Veliora Pets &7• &bGacha", "gacha", null);
+        inventory.setItem(13, item(Material.ENDER_CHEST, "&b&lMULAI GACHA", List.of("&7Harga: &f" + config.formatMoney(config.gachaPrice()), "&7Animasi singkat dan aman untuk server.", "&eKlik untuk memulai."), "gacha_start", null));
         player.openInventory(inventory);
     }
 
@@ -111,32 +127,52 @@ public final class PetGuiManager implements Listener {
     }
 
     public void openList(Player player) {
-        Inventory inventory = menu(54, "&8Pet List", "list", null);
+        openList(player, 0);
+    }
+
+    private void openList(Player player, int page) {
+        List<OwnedPet> ownedPets = new ArrayList<>(manager.playerData(player.getUniqueId()).owned().values());
+        int pages = pages(ownedPets.size());
+        int current = clampPage(page, pages);
+        Inventory inventory = menu(54, "&8Veliora Pets &7• &eKoleksi", "list", null, current);
         PlayerPetData pdata = manager.playerData(player.getUniqueId());
-        int slot = 0;
-        for (OwnedPet owned : pdata.owned().values()) {
+        int start = current * CONTENT_SLOTS.length;
+        int end = Math.min(start + CONTENT_SLOTS.length, ownedPets.size());
+        for (int index = start; index < end; index++) {
+            OwnedPet owned = ownedPets.get(index);
             PetDefinition pet = config.pets().get(owned.id());
-            if (pet == null || slot >= 54) continue;
-            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), List.of(
-                    "&7Level: &f" + owned.level(), "&7EXP: &f" + owned.exp(),
+            if (pet == null) continue;
+            inventory.setItem(CONTENT_SLOTS[index - start], item(pet.icon(), pet.displayName(), List.of(
+                    "&8━━━━━━━━━━━━━━━━━━━━", "&7Level: &f" + owned.level(), "&7EXP: &f" + owned.exp(),
                     pet.babyPet() ? "&dMode: &fBAYI permanen" : "&aMode: &fDewasa, tumbuh tiap 10 level",
-                    "&7Food: &f" + pet.foodMaterial().name(),
+                    "&7Makanan: &f" + prettyMaterial(pet.foodMaterial()),
                     pet.rideable() ? "&eTunggangan: &fLevel " + pet.adultLevel() : "&8Tidak bisa ditunggangi",
-                    "&aKlik untuk summon."), "summon", pet.id()));
+                    "&8━━━━━━━━━━━━━━━━━━━━", "&aKlik untuk memanggil pet ini."), "summon", pet.id()));
         }
-        if (slot == 0) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli di shop atau gacha dulu."), null, null));
+        if (ownedPets.isEmpty()) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli di toko atau gunakan gacha dahulu."), null, null));
+        navigation(inventory, current, pages, "list");
         player.openInventory(inventory);
     }
 
     public void openFeedMenu(Player player) {
-        Inventory inventory = menu(54, "&8Pilih Pet untuk Diberi Makan", "feed_menu", null);
-        int slot = 0;
-        for (OwnedPet owned : manager.playerData(player.getUniqueId()).owned().values()) {
+        openFeedMenu(player, 0);
+    }
+
+    private void openFeedMenu(Player player, int page) {
+        List<OwnedPet> ownedPets = new ArrayList<>(manager.playerData(player.getUniqueId()).owned().values());
+        int pages = pages(ownedPets.size());
+        int current = clampPage(page, pages);
+        Inventory inventory = menu(54, "&8Veliora Pets &7• &6Beri Makan", "feed_menu", null, current);
+        int start = current * CONTENT_SLOTS.length;
+        int end = Math.min(start + CONTENT_SLOTS.length, ownedPets.size());
+        for (int index = start; index < end; index++) {
+            OwnedPet owned = ownedPets.get(index);
             PetDefinition pet = config.pets().get(owned.id());
-            if (pet == null || slot >= 54) continue;
-            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), List.of("&7Level: &f" + owned.level(), "&7Makanan: &f" + pet.foodMaterial().name(), "&aKlik untuk membuka tempat makan."), "feed_select", pet.id()));
+            if (pet == null) continue;
+            inventory.setItem(CONTENT_SLOTS[index - start], item(pet.icon(), pet.displayName(), List.of("&7Level: &f" + owned.level(), "&7Makanan: &f" + prettyMaterial(pet.foodMaterial()), "&aKlik untuk membuka tempat makan."), "feed_select", pet.id()));
         }
-        if (slot == 0) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli pet terlebih dahulu."), null, null));
+        if (ownedPets.isEmpty()) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli pet terlebih dahulu."), null, null));
+        navigation(inventory, current, pages, "feed_menu");
         player.openInventory(inventory);
     }
 
@@ -203,6 +239,13 @@ public final class PetGuiManager implements Listener {
             case "dismiss" -> manager.dismiss(player, true);
             case "feed_menu" -> openFeedMenu(player);
             case "feed_select" -> openFeeder(player, petId);
+            case "shop_prev" -> openShop(player, holder.page - 1);
+            case "shop_next" -> openShop(player, holder.page + 1);
+            case "list_prev" -> openList(player, holder.page - 1);
+            case "list_next" -> openList(player, holder.page + 1);
+            case "feed_menu_prev" -> openFeedMenu(player, holder.page - 1);
+            case "feed_menu_next" -> openFeedMenu(player, holder.page + 1);
+            case "pets_main" -> openMain(player);
             case "confirm" -> openConfirm(player, petId);
             case "buy" -> { manager.buy(player, petId); openShop(player); }
             case "gacha_start" -> manager.startGacha(player);
@@ -246,11 +289,26 @@ public final class PetGuiManager implements Listener {
     }
 
     private Inventory menu(int size, String title, String type, String petId) {
-        PetMenuHolder holder = new PetMenuHolder(type, petId);
+        return menu(size, title, type, petId, 0);
+    }
+
+    private Inventory menu(int size, String title, String type, String petId, int page) {
+        PetMenuHolder holder = new PetMenuHolder(type, petId, null, false, page);
         Inventory inventory = Bukkit.createInventory(holder, size, config.color(title));
         holder.inventory = inventory;
+        for (int slot = 0; slot < size; slot++) inventory.setItem(slot, item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of(), null, null));
         return inventory;
     }
+
+    private void navigation(Inventory inventory, int page, int pages, String section) {
+        inventory.setItem(45, item(page > 0 ? Material.ARROW : Material.GRAY_DYE, page > 0 ? "&e&lHALAMAN SEBELUMNYA" : "&8Halaman pertama", List.of("&7Halaman " + (page + 1) + " dari " + pages), page > 0 ? section + "_prev" : null, null));
+        inventory.setItem(49, item(Material.BARRIER, "&c&lKEMBALI KE PET", List.of("&7Kembali ke menu utama pet."), "pets_main", null));
+        inventory.setItem(53, item(page + 1 < pages ? Material.ARROW : Material.GRAY_DYE, page + 1 < pages ? "&e&lHALAMAN BERIKUTNYA" : "&8Halaman terakhir", List.of("&7Halaman " + (page + 1) + " dari " + pages), page + 1 < pages ? section + "_next" : null, null));
+    }
+
+    private int pages(int amount) { return Math.max(1, (amount + CONTENT_SLOTS.length - 1) / CONTENT_SLOTS.length); }
+    private int clampPage(int page, int pages) { return Math.max(0, Math.min(page, pages - 1)); }
+    private String prettyMaterial(Material material) { return material.name().toLowerCase(java.util.Locale.ROOT).replace('_', ' '); }
 
     private ItemStack item(Material material, String name, List<String> lore, String action, String petId) {
         ItemStack item = new ItemStack(material == null ? Material.STONE : material);
@@ -270,13 +328,18 @@ public final class PetGuiManager implements Listener {
         private final String petId;
         private final UUID storageOwner;
         private final boolean readOnly;
+        private final int page;
         private Inventory inventory;
-        private PetMenuHolder(String type, String petId) { this(type, petId, null, false); }
+        private PetMenuHolder(String type, String petId) { this(type, petId, null, false, 0); }
         private PetMenuHolder(String type, String petId, UUID storageOwner, boolean readOnly) {
+            this(type, petId, storageOwner, readOnly, 0);
+        }
+        private PetMenuHolder(String type, String petId, UUID storageOwner, boolean readOnly, int page) {
             this.type = type;
             this.petId = petId;
             this.storageOwner = storageOwner;
             this.readOnly = readOnly;
+            this.page = page;
         }
         @Override public Inventory getInventory() { return inventory; }
     }

@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,25 +24,27 @@ public final class FishingMainGuiManager implements Listener {
     }
 
     public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 36, manager.getConfigManager().color("&8VelioraFishing"));
-        inventory.setItem(10, item(Material.CHEST, "&bFish Bag", List.of("&7Buka tas ikan virtual.", "&f/fish bag")));
-        inventory.setItem(11, item(Material.BARREL, "&aSell Fish", List.of("&7Buka GUI jual ikan.", "&f/fish sell")));
-        inventory.setItem(12, item(Material.FISHING_ROD, "&aRod Shop", List.of("&7Rod tier 1-16 yang dapat dibeli", "&7menggunakan Koin Fishing.")));
-        inventory.setItem(14, item(Material.ENCHANTED_BOOK, "&dQuest Rods", List.of("&7Rod tier 17-21 untuk pemancing", "&7yang menuntaskan syarat panjang.")));
-        inventory.setItem(15, item(Material.BOOK, "&dFish Collection", List.of("&7Lihat ikan yang sudah kamu temukan.", "&f/fish collection")));
-        inventory.setItem(16, item(Material.OAK_SIGN, "&eFish Top", List.of("&7Lihat leaderboard gabungan.", "&f/fish top")));
-        inventory.setItem(20, item(Material.SUNFLOWER, "&6Fishing Coins", List.of("&7Saldo: &f" + manager.formattedCoins(player) + " Koin", "&7Terpisah aman dari Vault.")));
-        inventory.setItem(22, item(Material.AMETHYST_SHARD, "&dRelic & Rod Enchant", List.of("&7Relic dapat ditemukan saat memancing.", "&7Sistem altar enchant tersedia bertahap.")));
-        inventory.setItem(24, item(Material.POTION, "&bFishing Potions", List.of("&7Luck, Mutation, dan Lure Speed.", "&7Boost tidak menyentuh ekonomi utama.")));
-        inventory.setItem(31, item(Material.ANVIL, "&dRelic Altar", List.of("&7Gabungkan Fishing Rod + Relic", "&7menggunakan anvil vanilla.")));
-        inventory.setItem(35, item(Material.BARRIER, "&cClose", List.of("&7Tutup menu.")));
+        Holder holder = new Holder();
+        Inventory inventory = Bukkit.createInventory(holder, 36, manager.getConfigManager().color("&8Veliora Fishing"));
+        holder.inventory = inventory;
+        frame(inventory);
+        inventory.setItem(10, item(Material.CHEST, "&b&lTAS IKAN", List.of("&7Buka tas ikan virtual.", "&eKlik untuk membuka.")));
+        inventory.setItem(11, item(Material.BARREL, "&a&lJUAL IKAN", List.of("&7Jual hasil tangkapan dengan aman.", "&eKlik untuk membuka toko jual.")));
+        inventory.setItem(12, item(Material.FISHING_ROD, "&a&lTOKO ROD", List.of("&7Rod tier 1–16 yang dapat dibeli", "&7menggunakan Koin Fishing.")));
+        inventory.setItem(14, item(Material.ENCHANTED_BOOK, "&d&lROD MISI", List.of("&7Rod tier 17–21 untuk pemancing", "&7yang telah menyelesaikan syarat.")));
+        inventory.setItem(15, item(Material.BOOK, "&d&lKOLEKSI IKAN", List.of("&7Lihat seluruh ikan yang telah", "&7kamu temukan.")));
+        inventory.setItem(16, item(Material.OAK_SIGN, "&e&lPERINGKAT MEMANCING", List.of("&7Lihat leaderboard pemancing.")));
+        inventory.setItem(20, item(Material.SUNFLOWER, "&6&lKOIN FISHING", List.of("&7Saldo: &f" + manager.formattedCoins(player) + " Koin", "&8Terpisah dari saldo Vault.")));
+        inventory.setItem(22, item(Material.AMETHYST_SHARD, "&d&lRELIC & ENCHANT ROD", List.of("&7Relic didapat saat memancing.", "&7Pelajari jalur upgrade rod.")));
+        inventory.setItem(24, item(Material.POTION, "&b&lPOTION MEMANCING", List.of("&7Luck, Mutation, dan Lure Speed.", "&8Boost dibuat tanpa inflasi ekonomi.")));
+        inventory.setItem(35, item(Material.BARRIER, "&c&lTUTUP", List.of("&7Tutup menu memancing.")));
         player.openInventory(inventory);
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8VelioraFishing"))) return;
+        if (!(event.getView().getTopInventory().getHolder() instanceof Holder)) return;
         event.setCancelled(true);
 
         int slot = event.getRawSlot();
@@ -63,7 +66,7 @@ public final class FishingMainGuiManager implements Listener {
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8VelioraFishing"))) return;
+        if (!(event.getView().getTopInventory().getHolder() instanceof Holder)) return;
         event.setCancelled(true);
     }
 
@@ -81,5 +84,19 @@ public final class FishingMainGuiManager implements Listener {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private void frame(Inventory inventory) {
+        ItemStack pane = item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of());
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            int row = slot / 9;
+            int column = slot % 9;
+            if (row == 0 || row == 3 || column == 0 || column == 8) inventory.setItem(slot, pane);
+        }
+    }
+
+    private static final class Holder implements InventoryHolder {
+        private Inventory inventory;
+        @Override public Inventory getInventory() { return inventory; }
     }
 }
