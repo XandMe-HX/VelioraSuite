@@ -1,20 +1,16 @@
 package id.velioragardens.veliorasuite.module.pets;
 
 import org.bukkit.Location;
+import org.bukkit.Input;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import java.lang.reflect.Method;
-
 public final class PetRideTask implements Runnable {
     private final PetManager manager;
     private final PetConfigManager config;
-    private boolean inputApiChecked;
-    private boolean inputApiAvailable;
-
     public PetRideTask(PetManager manager) {
         this.manager = manager;
         this.config = manager.config();
@@ -100,39 +96,11 @@ public final class PetRideTask implements Runnable {
     }
 
     private RideInput readInput(Player rider) {
-        try {
-            Method getCurrentInput = rider.getClass().getMethod("getCurrentInput");
-            Object input = getCurrentInput.invoke(rider);
-            if (input == null) return RideInput.unsupported();
-            inputApiChecked = true;
-            inputApiAvailable = true;
-            double forward = 0.0D;
-            double strafe = 0.0D;
-            if (bool(input, "isForward", "forward")) forward += 1.0D;
-            if (bool(input, "isBackward", "backward")) forward -= 0.65D;
-            if (bool(input, "isLeft", "left")) strafe += 0.75D;
-            if (bool(input, "isRight", "right")) strafe -= 0.75D;
-            boolean jump = bool(input, "isJump", "jump", "isJumping");
-            return new RideInput(true, forward, strafe, jump);
-        } catch (Throwable ignored) {
-            if (!inputApiChecked) {
-                inputApiChecked = true;
-                inputApiAvailable = false;
-            }
-            return RideInput.unsupported();
-        }
-    }
-
-    private boolean bool(Object input, String... names) {
-        for (String name : names) {
-            try {
-                Method method = input.getClass().getMethod(name);
-                Object value = method.invoke(input);
-                if (value instanceof Boolean bool) return bool;
-            } catch (Throwable ignored) {
-            }
-        }
-        return false;
+        Input input = rider.getCurrentInput();
+        if (input == null) return RideInput.unsupported();
+        double forward = input.isForward() ? 1.0D : input.isBackward() ? -0.65D : 0.0D;
+        double strafe = input.isLeft() ? 0.75D : input.isRight() ? -0.75D : 0.0D;
+        return new RideInput(true, forward, strafe, input.isJump());
     }
 
     private boolean shouldStepUp(LivingEntity pet, Vector direction) {

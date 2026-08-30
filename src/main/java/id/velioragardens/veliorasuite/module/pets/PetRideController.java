@@ -14,10 +14,14 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 
 import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public final class PetRideController implements Listener {
     private final PetManager manager;
     private final PetConfigManager config;
+    private final Map<UUID, Long> lastRideAttempt = new HashMap<>();
 
     public PetRideController(PetManager manager) {
         this.manager = manager;
@@ -48,11 +52,16 @@ public final class PetRideController implements Listener {
         VelioraPet active = manager.activePet(event.getPlayer().getUniqueId());
         if (active == null || !active.entity().getUniqueId().equals(clicked.getUniqueId())) return;
         event.setCancelled(true);
+        if (clicked.getPassengers().contains(event.getPlayer())) return;
         startRide(event.getPlayer());
     }
 
     public void startRide(Player player) {
         if (!config.ridingEnabled()) return;
+        long now = System.currentTimeMillis();
+        long last = lastRideAttempt.getOrDefault(player.getUniqueId(), 0L);
+        if (now - last < 1200L) return;
+        lastRideAttempt.put(player.getUniqueId(), now);
         VelioraPet active = manager.activePet(player.getUniqueId());
         if (active == null || active.entity().isDead()) {
             player.sendMessage(config.color(config.message("pet-ride-not-active", "%prefix% &cTidak ada pet aktif untuk ditunggangi.")));

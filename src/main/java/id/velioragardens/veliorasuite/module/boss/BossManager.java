@@ -328,7 +328,7 @@ public final class BossManager implements Listener {
             double virtualDamage = adjustedDamage * config.virtualDamageMultiplier();
             event.setCancelled(true);
             damageActiveBoss(player, virtualDamage);
-            showHitFeedback(player, chargedMace, event.getDamager() instanceof Projectile, virtualDamage);
+            showHitFeedback(player, mace, chargedMace, event.getDamager() instanceof Projectile, virtualDamage);
             if (chargedMace) player.sendMessage(config.color("&8[&6VelioraBoss&8] &eMace Smash &f"
                     + maceSmashes.get(player.getUniqueId()).charges() + "&7/" + config.maceSmashCharges()));
             if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
@@ -766,20 +766,31 @@ public final class BossManager implements Listener {
     }
 
     /** Shows a real hit reaction even though damage is stored in virtual health. */
-    private void showHitFeedback(Player player, boolean mace, boolean projectile, double damage) {
+    private void showHitFeedback(Player player, boolean mace, boolean chargedMace, boolean projectile, double damage) {
         if (!isActive()) return;
         try { activeBoss.playHurtAnimation(player.getLocation().getYaw()); } catch (Exception ignored) { }
-        String weapon = mace ? "MACE SMASH" : projectile ? "BOW HIT" : "HIT";
+        String weapon = mace ? (chargedMace ? "MACE SMASH CRIT" : "MACE HIT") : projectile ? "BOW HIT" : "HIT";
         player.sendActionBar(Component.text(String.format(Locale.US, "%s  -%.1f HP  |  Boss: %.0f/%.0f", weapon, damage, activeVirtualHealth, activeVirtualMaxHealth)));
         long now = System.currentTimeMillis();
         if (now - lastHitEffectAt < 80L) return;
         lastHitEffectAt = now;
         Location hit = activeBoss.getLocation().add(0.0D, Math.max(0.8D, activeBoss.getHeight() * 0.55D), 0.0D);
-        Particle particle = mace ? Particle.FLASH : projectile ? Particle.CRIT : Particle.DAMAGE_INDICATOR;
-        int amount = mace ? 1 : projectile ? 14 : 8;
-        activeBoss.getWorld().spawnParticle(particle, hit, amount, 0.65D, 0.75D, 0.65D, 0.04D);
-        activeBoss.getWorld().playSound(hit, mace ? Sound.ENTITY_GENERIC_EXPLODE : projectile ? Sound.ENTITY_ARROW_HIT_PLAYER : Sound.ENTITY_PLAYER_ATTACK_CRIT,
-                mace ? 0.65F : projectile ? 0.55F : 0.35F, mace ? 1.45F : projectile ? 1.25F : 1.15F);
+        Particle particle = mace ? Particle.CRIT : projectile ? Particle.CRIT : Particle.DAMAGE_INDICATOR;
+        int amount = mace ? (chargedMace ? 32 : 18) : projectile ? 14 : 8;
+        spawnHitParticle(particle, hit, amount, 0.72D, 0.85D, 0.72D, 0.12D);
+        if (chargedMace) spawnHitParticle(Particle.FLASH, hit, 2, 0.3D, 0.3D, 0.3D, 0.0D);
+        Sound sound = mace ? (chargedMace ? Sound.ENTITY_GENERIC_EXPLODE : Sound.ENTITY_PLAYER_ATTACK_CRIT) : projectile ? Sound.ENTITY_ARROW_HIT_PLAYER : Sound.ENTITY_PLAYER_ATTACK_CRIT;
+        activeBoss.getWorld().playSound(hit, sound, mace ? (chargedMace ? 0.85F : 0.75F) : projectile ? 0.55F : 0.35F, mace ? (chargedMace ? 1.15F : 1.65F) : projectile ? 1.25F : 1.15F);
+    }
+
+    /** Paper may change a particle's required payload between minor versions.
+     * A visual effect must never break the boss damage event. */
+    private void spawnHitParticle(Particle particle, Location location, int count, double offsetX, double offsetY, double offsetZ, double extra) {
+        try {
+            activeBoss.getWorld().spawnParticle(particle, location, count, offsetX, offsetY, offsetZ, extra);
+        } catch (IllegalArgumentException ignored) {
+            activeBoss.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, location, Math.max(4, count / 2), offsetX, offsetY, offsetZ, 0.02D);
+        }
     }
 
     /** Sends a small orbiting aura only every two seconds and scales it down when the arena is busy. */

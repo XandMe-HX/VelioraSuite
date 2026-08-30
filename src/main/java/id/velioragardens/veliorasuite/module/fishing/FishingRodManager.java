@@ -60,16 +60,22 @@ public final class FishingRodManager implements Listener {
      */
     private void showHeldAura(Player player, int tier, double phase) {
         Particle particle = particleForTier(tier);
-        // Tier 1-4: cincin kecil di sekitar tangan/pinggang.
+        // Tier rendah sengaja memakai motif berbeda per rod, bukan hanya warna/partikel yang diganti.
         if (tier <= 4) {
-            for (int i = 0; i < 4; i++) point(player, particle, phase + i * Math.PI / 2.0D, 0.38D, 0.85D);
+            switch (tier) {
+                case 1 -> { for (int i = 0; i < 5; i++) point(player, particle, phase + i * Math.PI * 2.0D / 5.0D, 0.30D, 0.72D); }
+                case 2 -> { for (int i = 0; i < 5; i++) point(player, particle, phase + i * 0.65D, 0.20D + i * 0.045D, 0.50D + i * 0.15D); }
+                case 3 -> { for (int i = 0; i < 4; i++) point(player, particle, phase + i * Math.PI / 2.0D, i % 2 == 0 ? 0.55D : 0.28D, 0.85D); }
+                default -> { for (int i = 0; i < 6; i++) point(player, particle, phase + i * Math.PI / 3.0D, 0.42D, 0.72D + (i % 2) * 0.22D); }
+            }
             return;
         }
-        // Tier 5-8: spiral air/arcane yang naik ke atas kepala.
+        // Tier 5-8: spiral/gelombang berbeda agar setiap upgrade terasa baru.
         if (tier <= 8) {
-            for (int i = 0; i < 4; i++) {
-                double angle = phase + i * 0.85D;
-                point(player, particle, angle, 0.28D + i * 0.06D, 0.55D + i * 0.28D);
+            int points = tier == 5 ? 5 : tier == 6 ? 6 : tier == 7 ? 7 : 8;
+            for (int i = 0; i < points; i++) {
+                double angle = phase + i * (tier == 8 ? 1.10D : 0.78D);
+                point(player, particle, angle, 0.25D + i * 0.045D, 0.50D + i * 0.19D);
             }
             return;
         }
@@ -303,7 +309,8 @@ public final class FishingRodManager implements Listener {
             case 15 -> Particle.DOLPHIN;
             case 16 -> Particle.NAUTILUS;
             case 17 -> Particle.SOUL;
-            case 18 -> Particle.CRIT;
+            // CRIT membutuhkan payload berbeda pada sebagian build Paper 1.21.11.
+            case 18 -> Particle.ELECTRIC_SPARK;
             case 19 -> Particle.LAVA;
             case 20 -> Particle.TOTEM_OF_UNDYING;
             default -> Particle.FIREWORK;

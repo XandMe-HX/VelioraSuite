@@ -33,8 +33,9 @@ settings:
     console: false
   boss-size:
     random-enabled: true
-    min: 3.0
-    max: 6.0
+    # Boss tetap terasa spesial, tetapi tidak menutup arena atau mengganggu kamera.
+    min: 1.6
+    max: 3.0
   combat:
     # Semua HP definisi boss dikurangi 20% tanpa merusak data boss lama.
     global-health-multiplier: 0.80

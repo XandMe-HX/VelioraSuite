@@ -17,6 +17,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.Inventory;
@@ -132,6 +133,7 @@ public final class AdminManagerGui implements Listener {
         inventory.setItem(31, item(Material.PAPER, "&eWarn", List.of("&7Pilih alasan peringatan."), "choose_warn", targetName));
         inventory.setItem(33, item(Material.BOOK, "&bRiwayat Moderasi", List.of("&7Lihat maksimal 15 tindakan terakhir.", "&7Tersimpan setelah server direstart."), "history", targetName));
         inventory.setItem(40, item(Material.ARROW, "&eKembali ke daftar", List.of("&7Tidak ada perubahan."), "back", null));
+        fillEmpty(inventory, Material.GRAY_STAINED_GLASS_PANE, "&8•");
         viewer.openInventory(inventory);
     }
 
@@ -141,6 +143,7 @@ public final class AdminManagerGui implements Listener {
         holder.inventory = inventory;
         inventory.setItem(11, item(Material.LIME_WOOL, "&aYa, lanjutkan", List.of("&7Tindakan: &f" + displayAction(action), "&7Target: &f" + target), "execute_" + action, target));
         inventory.setItem(15, item(Material.RED_WOOL, "&cBatal", List.of("&7Kembali tanpa perubahan."), "profile", target));
+        fillEmpty(inventory, Material.BLACK_STAINED_GLASS_PANE, "&8Konfirmasi diperlukan");
         viewer.openInventory(inventory);
     }
 
@@ -155,6 +158,7 @@ public final class AdminManagerGui implements Listener {
             inventory.setItem(10 + index, item(icons[index], labels[index], List.of("&7Gunakan alasan ini.", "&7Tahap berikutnya tetap perlu konfirmasi."), "reason:" + kind + ":" + reasons[index], target));
         }
         inventory.setItem(22, item(Material.ARROW, "&eKembali", List.of("&7Kembali ke profil pemain."), "profile", target));
+        fillEmpty(inventory, Material.GRAY_STAINED_GLASS_PANE, "&8Pilih alasan dengan hati-hati");
         viewer.openInventory(inventory);
     }
 
@@ -166,6 +170,7 @@ public final class AdminManagerGui implements Listener {
         inventory.setItem(13, item(Material.CLOCK, "&61 Hari", List.of("&7Alasan: &f" + reasonText(reason), "&7Lanjut ke konfirmasi akhir."), "confirm_" + kind + ":" + reason + ":1d", target));
         inventory.setItem(15, item(Material.CLOCK, "&c7 Hari", List.of("&7Alasan: &f" + reasonText(reason), "&7Lanjut ke konfirmasi akhir."), "confirm_" + kind + ":" + reason + ":7d", target));
         inventory.setItem(22, item(Material.ARROW, "&eKembali", List.of("&7Pilih alasan lagi."), "choose_" + kind, target));
+        fillEmpty(inventory, Material.GRAY_STAINED_GLASS_PANE, "&8Pilih durasi dengan hati-hati");
         viewer.openInventory(inventory);
     }
 
@@ -185,6 +190,7 @@ public final class AdminManagerGui implements Listener {
             }
         }
         inventory.setItem(22, item(Material.ARROW, "&eKembali", List.of("&7Kembali ke profil pemain."), "profile", targetName));
+        fillEmpty(inventory, Material.GRAY_STAINED_GLASS_PANE, "&8Riwayat moderasi");
         viewer.openInventory(inventory);
     }
 
@@ -285,6 +291,18 @@ public final class AdminManagerGui implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true) public void onBreak(BlockBreakEvent event) { if (frozen.contains(event.getPlayer().getUniqueId())) { event.setCancelled(true); event.getPlayer().sendActionBar(net.kyori.adventure.text.Component.text("Kamu sedang di-freeze oleh staf.")); } }
+    @EventHandler(ignoreCancelled = true)
+    public void onCommand(PlayerCommandPreprocessEvent event) {
+        String[] parts = event.getMessage().substring(1).trim().split("\\s+");
+        if (parts.length < 2) return;
+        String root = parts[0].toLowerCase(java.util.Locale.ROOT);
+        if (!Set.of("msg", "tell", "w", "whisper").contains(root)) return;
+        Player target = Bukkit.getPlayerExact(parts[1]);
+        if (target != null && vanished.contains(target.getUniqueId()) && !event.getPlayer().hasPermission("veliorasuite.adminmonitor.admin")) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(color("&cPemain tersebut tidak ditemukan."));
+        }
+    }
     @EventHandler(ignoreCancelled = true) public void onChat(AsyncPlayerChatEvent event) {
         UUID id=event.getPlayer().getUniqueId(); long until=mutedUntil.getOrDefault(id,0L);
         if(until>0 && (until==Long.MAX_VALUE || until>System.currentTimeMillis())) {event.setCancelled(true);event.getPlayer().sendMessage(color("&cKamu sedang dimute oleh staf."));return;}
@@ -294,9 +312,12 @@ public final class AdminManagerGui implements Listener {
     }
     @EventHandler public void onJoin(PlayerJoinEvent event) {
         for(Player hidden:Bukkit.getOnlinePlayers()) if(vanished.contains(hidden.getUniqueId())) event.getPlayer().hidePlayer(plugin,hidden);
-        if(vanished.contains(event.getPlayer().getUniqueId())) for(Player other:Bukkit.getOnlinePlayers()) if(!other.hasPermission("veliorasuite.adminmonitor.admin")) other.hidePlayer(plugin,event.getPlayer());
+        if(vanished.contains(event.getPlayer().getUniqueId())) {
+            event.joinMessage(null);
+            for(Player other:Bukkit.getOnlinePlayers()) if(!other.hasPermission("veliorasuite.adminmonitor.admin")) other.hidePlayer(plugin,event.getPlayer());
+        }
     }
-    @EventHandler public void onQuit(PlayerQuitEvent event) { frozen.remove(event.getPlayer().getUniqueId()); }
+    @EventHandler public void onQuit(PlayerQuitEvent event) { if(vanished.contains(event.getPlayer().getUniqueId())) event.quitMessage(null); frozen.remove(event.getPlayer().getUniqueId()); }
     @EventHandler public void onDeath(PlayerDeathEvent event) { backs.put(event.getPlayer().getUniqueId(),event.getPlayer().getLocation().clone()); }
 
     @EventHandler public void onEditorClose(InventoryCloseEvent event) {
@@ -329,12 +350,19 @@ public final class AdminManagerGui implements Listener {
         inv.setItem(28,item(Material.TNT,"&cBersihkan Semua Mob",List.of("&7Hanya world saat ini.","&cButuh konfirmasi."),"confirm_killall",null));
         inv.setItem(29,item(Material.IRON_SWORD,"&6Bersihkan Mob Hostile",List.of("&7Hanya monster, bukan pet/player.","&cButuh konfirmasi."),"confirm_killhostile",null));
         inv.setItem(30,item(Material.WHEAT,"&aBersihkan Mob Passive",List.of("&7Hanya hewan, bukan player.","&cButuh konfirmasi."),"confirm_killpassive",null));
-        inv.setItem(40,item(Material.ARROW,"&eKembali",List.of("&7Kembali ke daftar pemain."),"server_back",null)); viewer.openInventory(inv);
+        inv.setItem(40,item(Material.ARROW,"&eKembali",List.of("&7Kembali ke daftar pemain."),"server_back",null)); fillEmpty(inv,Material.GRAY_STAINED_GLASS_PANE,"&8Kontrol server"); viewer.openInventory(inv);
     }
     private void toggleVanish(Player player) {
         boolean enabled=!vanished.contains(player.getUniqueId());
-        if(enabled){vanished.add(player.getUniqueId()); for(Player other:Bukkit.getOnlinePlayers())if(!other.hasPermission("veliorasuite.adminmonitor.admin"))other.hidePlayer(plugin,player); player.sendActionBar(net.kyori.adventure.text.Component.text("Vanish aktif — chat dinonaktifkan."));}
-        else {vanished.remove(player.getUniqueId()); for(Player other:Bukkit.getOnlinePlayers())other.showPlayer(plugin,player); player.sendActionBar(net.kyori.adventure.text.Component.text("Vanish dinonaktifkan."));}
+        if(enabled){
+            vanished.add(player.getUniqueId());
+            for(Player other:Bukkit.getOnlinePlayers()) if(!other.hasPermission("veliorasuite.adminmonitor.admin")) { other.hidePlayer(plugin,player); other.sendMessage(color("&e"+player.getName()+" &7keluar dari server.")); }
+            player.sendActionBar(net.kyori.adventure.text.Component.text("Vanish aktif — kamu terlihat keluar bagi pemain biasa."));
+        } else {
+            vanished.remove(player.getUniqueId());
+            for(Player other:Bukkit.getOnlinePlayers()) if(!other.hasPermission("veliorasuite.adminmonitor.admin")) { other.showPlayer(plugin,player); other.sendMessage(color("&e"+player.getName()+" &7bergabung ke server.")); }
+            player.sendActionBar(net.kyori.adventure.text.Component.text("Vanish dinonaktifkan."));
+        }
         saveState();
     }
 
@@ -388,6 +416,9 @@ public final class AdminManagerGui implements Listener {
         if (target != null) meta.getPersistentDataContainer().set(targetKey, PersistentDataType.STRING, target);
         stack.setItemMeta(meta);
         return stack;
+    }
+    private void fillEmpty(Inventory inventory, Material material, String name) {
+        for (int slot = 0; slot < inventory.getSize(); slot++) if (inventory.getItem(slot) == null) inventory.setItem(slot, item(material, name, List.of(), null, null));
     }
     private String displayAction(String action) {
         String kind = action.contains(":") ? action.substring(0, action.indexOf(':')) : action;
