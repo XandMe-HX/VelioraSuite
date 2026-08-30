@@ -1,0 +1,5 @@
+# Progress 1: data dan guard sudah ada, tetapi penguncian tetap mati sampai GUI
+# pemilihan Progress 2 selesai dan diuji. Jangan aktifkan manual dulu.
+settings:
+  enabled: true
+  enforce-selection: false

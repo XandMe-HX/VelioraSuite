@@ -23,6 +23,7 @@ public final class ConfigManager {
             "team",
             "kits",
             "report",
+            "race",
             "announcement",
             "biome",
             "fishing",

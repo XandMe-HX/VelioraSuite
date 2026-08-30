@@ -86,6 +86,11 @@ commands:
     description: Create a VelioraReport report.
     usage: /report <player|bug> <reason>
     aliases: [vreport]
+  race:
+    description: Pilih dan lihat ras Veliora.
+    usage: /race [status|admin]
+    aliases: [ras, vrace]
+    permission: veliorasuite.race.use
   reports:
     description: Manage VelioraReport reports.
     usage: /reports <list|view|close|reopen|reload>
@@ -252,6 +257,10 @@ commands:
     permission: veliorasuite.home.admin
 
 permissions:
+  veliorasuite.race.use:
+    default: true
+  veliorasuite.race.admin:
+    default: op
   veliorasuite.biome.use:
     default: true
   veliorasuite.biome.admin:
