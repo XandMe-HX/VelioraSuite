@@ -21,6 +21,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import id.velioragardens.veliorasuite.module.fishing.model.FishingRodDefinition;
+import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import id.velioragardens.veliorasuite.core.effects.VelioraEffects.Priority;
 
 import java.util.List;
 
@@ -233,6 +235,40 @@ public final class FishingRodManager implements Listener {
         manager.getConfigManager().getPlugin().getEffects().particle(hook.getLocation(), hookParticle, Math.min(10, 3 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
     }
 
+    /** One short signature when a rod is cast; it never repeats in the background. */
+    public void playCastEffect(Player player, FishHook hook) {
+        int tier = getTier(player);
+        if (tier < 1 || hook == null || !hook.isValid()) return;
+        Location point = hook.getLocation();
+        manager.getConfigManager().getPlugin().getEffects().particle(point, hookParticleForTier(tier), Math.min(14, 4 + tier / 2),
+                0.20D, 0.12D, 0.20D, 0.015D, tier >= 14 ? Priority.IMPORTANT : Priority.GAMEPLAY);
+        if (tier >= 17) manager.getConfigManager().getPlugin().getEffects().ring(point, hookParticleForTier(tier), 0.42D, 8, 0.02D);
+        manager.getConfigManager().getPlugin().getEffects().sound(point, org.bukkit.Sound.ENTITY_FISHING_BOBBER_THROW,
+                0.42F, Math.min(1.85F, 0.85F + tier * 0.045F));
+    }
+
+    /** Visual payoff from the exact rod which completed the catch. */
+    public void playReelEffect(Player player, FishHook hook, FishRarity rarity) {
+        int tier = getTier(player);
+        if (tier < 1) return;
+        Location point = hook != null && hook.isValid() ? hook.getLocation() : player.getLocation().add(0.0D, 1.0D, 0.0D);
+        int count = rarity.power() >= FishRarity.LEGENDARY.power() ? 22 : 10;
+        manager.getConfigManager().getPlugin().getEffects().particle(point, hookParticleForTier(tier), count,
+                0.40D, 0.34D, 0.40D, 0.02D, rarity.power() >= FishRarity.LEGENDARY.power() ? Priority.IMPORTANT : Priority.GAMEPLAY);
+        if (tier >= 18 && rarity.power() >= FishRarity.EPIC.power()) {
+            manager.getConfigManager().getPlugin().getEffects().ring(player.getLocation().add(0.0D, 1.0D, 0.0D), hookParticleForTier(tier), 0.72D, 10, 0.03D);
+        }
+        manager.getConfigManager().getPlugin().getEffects().sound(point, org.bukkit.Sound.ENTITY_FISHING_BOBBER_RETRIEVE,
+                rarity.power() >= FishRarity.LEGENDARY.power() ? 0.85F : 0.55F, Math.min(1.9F, 1.0F + tier * 0.035F));
+    }
+
+    public void playSnapEffect(Player player, FishHook hook) {
+        int tier = getTier(player);
+        Location point = hook != null && hook.isValid() ? hook.getLocation() : player.getLocation().add(0.0D, 1.0D, 0.0D);
+        manager.getConfigManager().getPlugin().getEffects().particle(point, Particle.SMOKE, 10, 0.32D, 0.22D, 0.32D, 0.02D, Priority.IMPORTANT);
+        if (tier >= 10) manager.getConfigManager().getPlugin().getEffects().particle(point, hookParticleForTier(tier), 5, 0.18D, 0.18D, 0.18D, 0.01D, Priority.GAMEPLAY);
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onDrop(PlayerDropItemEvent event) {
         if (getBoundTier(event.getItemDrop().getItemStack()) <= 0) return;
@@ -384,6 +420,23 @@ public final class FishingRodManager implements Listener {
         };
     }
 
+    private Particle hookParticleForTier(int tier) {
+        return switch (tier) {
+            case 1, 15, 16 -> Particle.BUBBLE_POP;
+            case 2, 4 -> Particle.HAPPY_VILLAGER;
+            case 3, 11, 19 -> Particle.FLAME;
+            case 5, 9, 18 -> Particle.ELECTRIC_SPARK;
+            case 6 -> Particle.SNOWFLAKE;
+            case 7 -> Particle.WAX_ON;
+            case 8, 13 -> Particle.REVERSE_PORTAL;
+            case 10, 14 -> Particle.END_ROD;
+            case 12 -> Particle.COMPOSTER;
+            case 17 -> Particle.SOUL;
+            case 20 -> Particle.TOTEM_OF_UNDYING;
+            default -> Particle.FIREWORK;
+        };
+    }
+
     /** Places a mirrored wing in coordinates relative to the player's yaw. */
     private void wings(Player player, Particle particle, double phase, int feathers, double width, double baseY) {
         for (int i = 0; i < feathers; i++) {
@@ -420,7 +473,8 @@ public final class FishingRodManager implements Listener {
                 Component.text("+" + rod.secondsBonus() + ".0 detik • -" + rod.clickReduction() + " klik", TextColor.color(0xD6E0EB)),
                 Component.text("Luck " + rod.luckPercent() + "% • Speed " + rod.speedPercent() + "% • Max " + Math.round(rod.maxWeight()) + " Kg", TextColor.color(0x70E0C0)),
                 Component.text("Custom: " + customEnchantName(rod.tier()), TextColor.color(0xB56CFF)),
-                Component.text("Enchant: Lure " + rod.tier() + " • Luck " + rod.tier() + " • Unbreaking " + (rod.tier() + 2), TextColor.color(0x70E0C0)),
+                Component.text("Enchant Vanilla: Lure/Luck aman • Unbreaking", TextColor.color(0x70E0C0)),
+                Component.text("Bonus tier diproses oleh VelioraFishing", TextColor.color(0x8391A5)),
                 Component.text("Terikat: " + owner.getName(), TextColor.color(0x8391A5))
         ));
         meta.getPersistentDataContainer().set(tierKey, PersistentDataType.INTEGER, rod.tier());

@@ -43,6 +43,7 @@ public final class FishingMinigameManager implements Listener {
             int max = Math.max(min + 20, (int) Math.round(600 * (1.0D - speed / 100.0D)));
             event.getHook().setMinWaitTime(min);
             event.getHook().setMaxWaitTime(max);
+            manager.getRodManager().playCastEffect(event.getPlayer(), event.getHook());
             return;
         }
         if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH) return;
@@ -120,6 +121,7 @@ public final class FishingMinigameManager implements Listener {
         Session session = sessions.remove(player.getUniqueId());
         if (session == null) return;
         session.cancelTask();
+        manager.getRodManager().playReelEffect(player, session.hook, session.generatedFish.fish().rarity());
         manager.giveGeneratedFish(player, session.generatedFish);
     }
 
@@ -179,7 +181,7 @@ public final class FishingMinigameManager implements Listener {
         player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().message("rod-too-weak", "%prefix% &cTarikan &f%fish% &cterlepas! Butuh Rod Tier &f%tier%&c atau lebih.")
                 .replace("%fish%", fish.name()).replace("%tier%", String.valueOf(required))));
         player.sendActionBar(manager.getConfigManager().color("&c✖ Pancingan tidak cukup kuat — ikan lepas!"));
-        plugin.getEffects().ring(player.getLocation(), Particle.SMOKE, 0.75D, 10, 0.25D);
+        manager.getRodManager().playSnapEffect(player, null);
         plugin.getEffects().sound(player.getLocation(), org.bukkit.Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 0.75F, 0.55F);
     }
 
