@@ -32,6 +32,7 @@ public final class RaceModule implements VelioraModule {
     }
     @Override public void disable() {
         enabled = false;
+        if (gui != null && manager != null) plugin.getServer().getOnlinePlayers().stream().filter(player -> manager.selected(player.getUniqueId())).forEach(gui::resetScale);
         if (listener != null) HandlerList.unregisterAll(listener);
         if (gui != null) HandlerList.unregisterAll(gui);
         if (manager != null) manager.shutdown();

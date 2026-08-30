@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class RaceManager {
     private final VelioraSuite plugin;
     private final File dataFile;
+    private final File configFile;
     private YamlConfiguration config;
     private YamlConfiguration data;
     private BufferedYamlWriter writer;
@@ -22,6 +23,7 @@ public final class RaceManager {
     public RaceManager(VelioraSuite plugin) {
         this.plugin = plugin;
         this.dataFile = new File(plugin.getDataFolder(), "data/races.yml");
+        this.configFile = new File(plugin.getDataFolder(), "modules/race.yml");
     }
     public void load() {
         reloadConfig();
@@ -29,13 +31,36 @@ public final class RaceManager {
         writer = new BufferedYamlWriter(plugin, dataFile, data, "data/races.yml");
         writer.start();
     }
-    public void reloadConfig() { config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/race.yml")); }
+    public void reloadConfig() { config = YamlConfiguration.loadConfiguration(configFile); }
     public boolean enforcementEnabled() { return config.getBoolean("settings.enforce-selection", false); }
+    public void setEnforcementEnabled(boolean enabled) {
+        config.set("settings.enforce-selection", enabled);
+        try { config.save(configFile); } catch (Exception exception) { plugin.getLogger().warning("Gagal menyimpan pengaturan race: " + exception.getMessage()); }
+    }
     public boolean selected(UUID uuid) { return data.contains("players." + uuid + ".race"); }
     public String race(UUID uuid) { return data.getString("players." + uuid + ".race", "BELUM_MEMILIH").toUpperCase(Locale.ROOT); }
+    public String form(UUID uuid) { return data.getString("players." + uuid + ".form", "ADULT").toUpperCase(Locale.ROOT); }
+    public double scaleFor(String form) {
+        String key = switch (form.toUpperCase(Locale.ROOT)) {
+            case "CHILD" -> "child";
+            case "TALL" -> "tall";
+            default -> "adult";
+        };
+        return Math.clamp(config.getDouble("scale." + key, 1.0D), 0.5D, 1.2D);
+    }
     public void setDraft(UUID uuid, String race) { drafts.put(uuid, race.toUpperCase(Locale.ROOT)); }
     public String draft(UUID uuid) { return drafts.get(uuid); }
     public void clearDraft(UUID uuid) { drafts.remove(uuid); }
+    public void complete(UUID uuid, String race, String form) {
+        String normalizedRace = race.toUpperCase(Locale.ROOT);
+        String normalizedForm = form.toUpperCase(Locale.ROOT);
+        data.set("players." + uuid + ".race", normalizedRace);
+        data.set("players." + uuid + ".form", normalizedForm);
+        data.set("players." + uuid + ".selected-at", System.currentTimeMillis());
+        clearDraft(uuid);
+        writer.markDirty();
+        writer.flushAsync();
+    }
     public void reset(UUID uuid) { data.set("players." + uuid, null); writer.markDirty(); writer.flushAsync(); }
     public void shutdown() { if (writer != null) writer.shutdown(); drafts.clear(); }
 }
