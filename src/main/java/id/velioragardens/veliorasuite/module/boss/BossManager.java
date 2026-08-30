@@ -21,6 +21,7 @@ import org.bukkit.entity.Mob;
 import org.bukkit.entity.PiglinAbstract;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Trident;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -67,6 +68,9 @@ public final class BossManager implements Listener {
     private final Map<UUID, MaceSmashState> maceSmashes = new HashMap<>();
     private final Map<UUID, List<Long>> invalidReachHits = new HashMap<>();
     private final Map<UUID, Long> bossDamageLocks = new HashMap<>();
+    // Feedback needs a per-player limiter. A global limiter made one player's hit
+    // hide another player's critical feedback during busy boss fights.
+    private final Map<UUID, Long> lastHitEffects = new HashMap<>();
     private final NamespacedKey bossIdKey;
     private final NamespacedKey bossNameKey;
     private final NamespacedKey bossRarityKey;
@@ -83,7 +87,6 @@ public final class BossManager implements Listener {
     private long despawnAt;
     private long lastRetargetAt;
     private long lastMinionCleanupAt;
-    private long lastHitEffectAt;
     private double activeVirtualHealth;
     private double activeVirtualMaxHealth;
     private Chunk forcedBossChunk;
@@ -321,14 +324,15 @@ public final class BossManager implements Listener {
                 return;
             }
 
-            boolean mace = player.getInventory().getItemInMainHand().getType() == Material.MACE;
+            AttackKind attack = attackKind(event.getDamager(), player);
+            boolean mace = attack == AttackKind.MACE;
             boolean chargedMace = mace && isMaceSmash(player) && consumeMaceSmashCharge(player);
             double adjustedDamage = event.getFinalDamage();
             if (chargedMace) adjustedDamage = Math.min(config.maceMaxDamagePerHit(), adjustedDamage * config.maceDamageMultiplier());
             double virtualDamage = adjustedDamage * config.virtualDamageMultiplier();
             event.setCancelled(true);
             damageActiveBoss(player, virtualDamage);
-            showHitFeedback(player, mace, chargedMace, event.getDamager() instanceof Projectile, virtualDamage);
+            showHitFeedback(player, attack, chargedMace, virtualDamage);
             if (chargedMace) player.sendMessage(config.color("&8[&6VelioraBoss&8] &eMace Smash &f"
                     + maceSmashes.get(player.getUniqueId()).charges() + "&7/" + config.maceSmashCharges()));
             if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
@@ -739,7 +743,7 @@ public final class BossManager implements Listener {
         despawnAt = 0L;
         lastRetargetAt = 0L;
         lastMinionCleanupAt = 0L;
-        lastHitEffectAt = 0L;
+        lastHitEffects.clear();
         activeVirtualHealth = 0.0D;
         activeVirtualMaxHealth = 0.0D;
         releaseBossChunk();
@@ -766,22 +770,46 @@ public final class BossManager implements Listener {
     }
 
     /** Shows a real hit reaction even though damage is stored in virtual health. */
-    private void showHitFeedback(Player player, boolean mace, boolean chargedMace, boolean projectile, double damage) {
+    private AttackKind attackKind(Entity damager, Player player) {
+        // Only a direct player swing may count as a mace smash. Projectiles must
+        // never inherit the item the shooter happens to hold after firing.
+        if (damager instanceof Player) {
+            return player.getInventory().getItemInMainHand().getType() == Material.MACE
+                    ? AttackKind.MACE : AttackKind.MELEE;
+        }
+        if (damager instanceof Trident) return AttackKind.TRIDENT;
+        if (damager instanceof Projectile) return AttackKind.ARROW;
+        return AttackKind.MELEE;
+    }
+
+    private void showHitFeedback(Player player, AttackKind attack, boolean chargedMace, double damage) {
         if (!isActive()) return;
         try { activeBoss.playHurtAnimation(player.getLocation().getYaw()); } catch (Exception ignored) { }
-        String weapon = mace ? (chargedMace ? "MACE SMASH CRIT" : "MACE HIT") : projectile ? "BOW HIT" : "HIT";
+        String weapon = switch (attack) {
+            case MACE -> chargedMace ? "MACE SMASH CRIT" : "MACE HIT";
+            case TRIDENT -> "TRIDENT HIT";
+            case ARROW -> "PANAH HIT";
+            case MELEE -> "MELEE HIT";
+        };
         player.sendActionBar(Component.text(String.format(Locale.US, "%s  -%.1f HP  |  Boss: %.0f/%.0f", weapon, damage, activeVirtualHealth, activeVirtualMaxHealth)));
         long now = System.currentTimeMillis();
-        if (now - lastHitEffectAt < 80L) return;
-        lastHitEffectAt = now;
+        Long lastEffect = lastHitEffects.put(player.getUniqueId(), now);
+        if (lastEffect != null && now - lastEffect < 80L) return;
         Location hit = activeBoss.getLocation().add(0.0D, Math.max(0.8D, activeBoss.getHeight() * 0.55D), 0.0D);
-        Particle particle = mace ? Particle.CRIT : projectile ? Particle.CRIT : Particle.DAMAGE_INDICATOR;
-        int amount = mace ? (chargedMace ? 32 : 18) : projectile ? 14 : 8;
+        boolean mace = attack == AttackKind.MACE;
+        boolean ranged = attack == AttackKind.ARROW || attack == AttackKind.TRIDENT;
+        Particle particle = mace || ranged ? Particle.CRIT : Particle.DAMAGE_INDICATOR;
+        int amount = mace ? (chargedMace ? 32 : 18) : attack == AttackKind.TRIDENT ? 20 : ranged ? 14 : 10;
         spawnHitParticle(particle, hit, amount, 0.72D, 0.85D, 0.72D, 0.12D);
         if (chargedMace) spawnHitParticle(Particle.FLASH, hit, 2, 0.3D, 0.3D, 0.3D, 0.0D);
-        Sound sound = mace ? (chargedMace ? Sound.ENTITY_GENERIC_EXPLODE : Sound.ENTITY_PLAYER_ATTACK_CRIT) : projectile ? Sound.ENTITY_ARROW_HIT_PLAYER : Sound.ENTITY_PLAYER_ATTACK_CRIT;
-        activeBoss.getWorld().playSound(hit, sound, mace ? (chargedMace ? 0.85F : 0.75F) : projectile ? 0.55F : 0.35F, mace ? (chargedMace ? 1.15F : 1.65F) : projectile ? 1.25F : 1.15F);
+        Sound sound = mace ? (chargedMace ? Sound.ENTITY_GENERIC_EXPLODE : Sound.ENTITY_PLAYER_ATTACK_CRIT)
+                : attack == AttackKind.TRIDENT ? Sound.ITEM_TRIDENT_HIT
+                : ranged ? Sound.ENTITY_ARROW_HIT_PLAYER : Sound.ENTITY_PLAYER_ATTACK_CRIT;
+        activeBoss.getWorld().playSound(hit, sound, mace ? (chargedMace ? 0.85F : 0.75F) : ranged ? 0.65F : 0.45F,
+                mace ? (chargedMace ? 1.15F : 1.65F) : attack == AttackKind.TRIDENT ? 1.05F : ranged ? 1.25F : 1.15F);
     }
+
+    private enum AttackKind { MELEE, MACE, ARROW, TRIDENT }
 
     /** Paper may change a particle's required payload between minor versions.
      * A visual effect must never break the boss damage event. */
