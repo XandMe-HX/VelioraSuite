@@ -46,6 +46,8 @@ public final class BufferedYamlWriter {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             synchronized (fileLock) {
                 try {
+                    File parent = file.getParentFile();
+                    if (parent != null) Files.createDirectories(parent.toPath());
                     Files.writeString(file.toPath(), snapshot, StandardCharsets.UTF_8);
                 } catch (IOException exception) {
                     plugin.getLogger().warning("Gagal menyimpan " + displayName);
