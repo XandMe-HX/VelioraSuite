@@ -33,6 +33,11 @@ public final class RaceManager {
     }
     public void reloadConfig() { config = YamlConfiguration.loadConfiguration(configFile); }
     public boolean enforcementEnabled() { return config.getBoolean("settings.enforce-selection", false); }
+    public double changeCost() { return Math.max(0D, config.getDouble("change.cost", 100000D)); }
+    public long changeCooldownMillis() { return Math.max(0L, config.getLong("change.cooldown-days", 7L)) * 86_400_000L; }
+    public long nextChangeAt(UUID uuid) { return data.getLong("players." + uuid + ".last-changed-at", data.getLong("players." + uuid + ".selected-at", 0L)) + changeCooldownMillis(); }
+    public long changeRemaining(UUID uuid) { return Math.max(0L, nextChangeAt(uuid) - System.currentTimeMillis()); }
+    public boolean canChange(UUID uuid) { return selected(uuid) && changeRemaining(uuid) == 0L; }
     public void setEnforcementEnabled(boolean enabled) {
         config.set("settings.enforce-selection", enabled);
         try { config.save(configFile); } catch (Exception exception) { plugin.getLogger().warning("Gagal menyimpan pengaturan race: " + exception.getMessage()); }
@@ -57,6 +62,14 @@ public final class RaceManager {
         data.set("players." + uuid + ".race", normalizedRace);
         data.set("players." + uuid + ".form", normalizedForm);
         data.set("players." + uuid + ".selected-at", System.currentTimeMillis());
+        clearDraft(uuid);
+        writer.markDirty();
+        writer.flushAsync();
+    }
+    public void change(UUID uuid, String race, String form) {
+        data.set("players." + uuid + ".race", race.toUpperCase(Locale.ROOT));
+        data.set("players." + uuid + ".form", form.toUpperCase(Locale.ROOT));
+        data.set("players." + uuid + ".last-changed-at", System.currentTimeMillis());
         clearDraft(uuid);
         writer.markDirty();
         writer.flushAsync();

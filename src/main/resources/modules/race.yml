@@ -10,3 +10,8 @@ scale:
   child: 0.55
   adult: 1.00
   tall: 1.15
+
+# Pilihan pertama gratis. Perubahan berikutnya memakai saldo ekonomi melalui Vault.
+change:
+  cost: 100000
+  cooldown-days: 7

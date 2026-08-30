@@ -261,6 +261,9 @@ permissions:
     default: true
   veliorasuite.race.admin:
     default: op
+  veliorasuite.race.bypasschange:
+    description: Mengganti ras tanpa biaya dan cooldown; khusus staff.
+    default: op
   veliorasuite.biome.use:
     default: true
   veliorasuite.biome.admin:

@@ -25,9 +25,10 @@ public final class RaceGui implements Listener {
     private final NamespacedKey actionKey;
     private final RaceScaleHelper scaleHelper;
     private final RaceBenefits benefits;
+    private final RaceEconomyHook economy;
 
     public RaceGui(VelioraSuite plugin, RaceManager manager, RaceBenefits benefits) {
-        this.plugin = plugin; this.manager = manager; this.benefits = benefits; this.actionKey = new NamespacedKey(plugin, "race_gui_action"); this.scaleHelper = new RaceScaleHelper(plugin);
+        this.plugin = plugin; this.manager = manager; this.benefits = benefits; this.economy = new RaceEconomyHook(plugin); this.actionKey = new NamespacedKey(plugin, "race_gui_action"); this.scaleHelper = new RaceScaleHelper(plugin);
     }
     public void openGuide(Player player) {
         Inventory inventory = menu("guide", 27, "§8Pilih Ras §7| Panduan");
@@ -38,23 +39,36 @@ public final class RaceGui implements Listener {
         player.openInventory(inventory);
     }
     private void openRaces(Player player) {
+        openRaces(player, false);
+    }
+    public void openChange(Player player) {
+        if (!manager.selected(player.getUniqueId())) { openGuide(player); return; }
+        long remaining = manager.changeRemaining(player.getUniqueId());
+        if (remaining > 0L && !player.hasPermission("veliorasuite.race.bypasschange")) { player.sendMessage("§cRas baru dapat diubah lagi dalam §e" + duration(remaining) + "§c."); return; }
+        openRaces(player, true);
+    }
+    private void openRaces(Player player, boolean changing) {
         Inventory inventory = menu("races", 27, "§8Pilih Ras §7| 6 Ras Utama");
-        inventory.setItem(4, icon(Material.BOOK, "&bPilih satu ras", List.of("&7Klik ras untuk melihat benefit dan kelemahannya.", "&7Klik tidak langsung mengunci pilihan."), null));
-        inventory.setItem(10, raceIcon("HUMAN", Material.PLAYER_HEAD));
-        inventory.setItem(11, raceIcon("ELF", Material.BOW));
-        inventory.setItem(12, raceIcon("DWARF", Material.IRON_PICKAXE));
-        inventory.setItem(14, raceIcon("BEASTMAN", Material.RABBIT_FOOT));
-        inventory.setItem(15, raceIcon("DEMON", Material.BLAZE_ROD));
-        inventory.setItem(16, raceIcon("ANGEL", Material.FEATHER));
+        List<String> info = changing ? List.of("&7Pilih ras baru untuk melihat detail.", "&7Biaya: &6$" + String.format("%,.0f", manager.changeCost()), "&7Cooldown setelah berhasil: &f7 hari", "", "&eKlik tidak langsung memotong uang.") : List.of("&7Klik ras untuk melihat benefit dan kelemahannya.", "&7Klik tidak langsung mengunci pilihan.");
+        inventory.setItem(4, icon(Material.BOOK, changing ? "&6Ganti Ras" : "&bPilih satu ras", info, null));
+        inventory.setItem(10, raceIcon("HUMAN", Material.PLAYER_HEAD, changing));
+        inventory.setItem(11, raceIcon("ELF", Material.BOW, changing));
+        inventory.setItem(12, raceIcon("DWARF", Material.IRON_PICKAXE, changing));
+        inventory.setItem(14, raceIcon("BEASTMAN", Material.RABBIT_FOOT, changing));
+        inventory.setItem(15, raceIcon("DEMON", Material.BLAZE_ROD, changing));
+        inventory.setItem(16, raceIcon("ANGEL", Material.FEATHER, changing));
         inventory.setItem(22, icon(Material.ARROW, "&eKembali ke panduan", List.of("&7Baca ulang aturan pemilihan ras."), "guide"));
         player.openInventory(inventory);
     }
     private void openDetail(Player player, String race) {
+        openDetail(player, race, false);
+    }
+    private void openDetail(Player player, String race, boolean changing) {
         RaceInfo info = RaceInfo.valueOf(race);
         Inventory inventory = menu("detail:" + race, 27, "§8Detail Ras §7| " + info.title);
         inventory.setItem(4, icon(info.material, info.color + "&l" + info.title, info.lore(), null));
-        inventory.setItem(11, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke daftar ras."), "races"));
-        inventory.setItem(15, icon(Material.LIME_DYE, "&aPilih " + info.title, List.of("&7Pilihan belum permanen.", "&7Berikutnya kamu memilih bentuk player."), "draft:" + race));
+        inventory.setItem(11, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke daftar ras."), changing ? "change_races" : "races"));
+        inventory.setItem(15, icon(Material.LIME_DYE, changing ? "&aGanti ke " + info.title : "&aPilih " + info.title, changing ? List.of("&7Uang belum dipotong.", "&7Pilih bentuk lalu konfirmasi perubahan.") : List.of("&7Pilihan belum permanen.", "&7Berikutnya kamu memilih bentuk player."), (changing ? "change_draft:" : "draft:") + race));
         player.openInventory(inventory);
     }
     private void draft(Player player, String race) {
@@ -65,26 +79,33 @@ public final class RaceGui implements Listener {
         openForms(player, race);
     }
     private void openForms(Player player, String race) {
+        openForms(player, race, false);
+    }
+    private void openForms(Player player, String race, boolean changing) {
         RaceInfo info = RaceInfo.valueOf(race);
         Inventory inventory = menu("form:" + race, 27, "§8Bentuk Tubuh §7| " + info.title);
         inventory.setItem(4, icon(info.material, info.color + "&l" + info.title, List.of("&7Ras masih pilihan sementara.", "&7Pilih bentuk yang nyaman dilihat."), null));
-        inventory.setItem(10, formIcon(Material.SMALL_AMETHYST_BUD, "&d&lMode Bocil", "&7Skala: &f55%", "&7Tubuh kecil; hanya tampilan.", race, "CHILD"));
-        inventory.setItem(13, formIcon(Material.ARMOR_STAND, "&a&lDewasa Normal", "&7Skala: &f100%", "&7Ukuran Minecraft standar.", race, "ADULT"));
-        inventory.setItem(16, formIcon(Material.END_ROD, "&b&lDewasa Tinggi", "&7Skala: &f115%", "&7Sedikit lebih tinggi, tetap aman.", race, "TALL"));
-        inventory.setItem(22, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke detail ras."), "detail:" + race));
+        inventory.setItem(10, formIcon(Material.SMALL_AMETHYST_BUD, "&d&lMode Bocil", "&7Skala: &f55%", "&7Tubuh kecil; hanya tampilan.", race, "CHILD", changing));
+        inventory.setItem(13, formIcon(Material.ARMOR_STAND, "&a&lDewasa Normal", "&7Skala: &f100%", "&7Ukuran Minecraft standar.", race, "ADULT", changing));
+        inventory.setItem(16, formIcon(Material.END_ROD, "&b&lDewasa Tinggi", "&7Skala: &f115%", "&7Sedikit lebih tinggi, tetap aman.", race, "TALL", changing));
+        inventory.setItem(22, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke detail ras."), (changing ? "change_detail:" : "detail:") + race));
         player.openInventory(inventory);
     }
-    private ItemStack formIcon(Material material, String name, String scale, String description, String race, String form) {
-        return icon(material, name, List.of(scale, description, "", "&eKlik untuk membuka konfirmasi."), "confirm:" + race + ":" + form);
+    private ItemStack formIcon(Material material, String name, String scale, String description, String race, String form, boolean changing) {
+        return icon(material, name, List.of(scale, description, "", "&eKlik untuk membuka konfirmasi."), (changing ? "change_confirm:" : "confirm:") + race + ":" + form);
     }
     private void openConfirm(Player player, String race, String form) {
+        openConfirm(player, race, form, false);
+    }
+    private void openConfirm(Player player, String race, String form, boolean changing) {
         RaceInfo info = RaceInfo.valueOf(race);
         String formName = formName(form);
         Inventory inventory = menu("confirm:" + race + ":" + form, 27, "§8Konfirmasi Ras");
         inventory.setItem(4, icon(info.material, info.color + "&l" + info.title, List.of("&7Ras pilihanmu."), null));
-        inventory.setItem(13, icon(Material.WRITABLE_BOOK, "&fRingkasan Pilihan", List.of("&7Ras: " + info.color + info.title, "&7Bentuk: &f" + formName, "&7Skala: &f" + (int) (manager.scaleFor(form) * 100) + "%", "", "&cSetelah dikonfirmasi, perubahan", "&cmengikuti aturan biaya/cooldown tahap berikutnya."), null));
-        inventory.setItem(11, icon(Material.ARROW, "&eUbah Bentuk", List.of("&7Kembali tanpa menyimpan pilihan."), "form:" + race));
-        inventory.setItem(15, icon(Material.LIME_DYE, "&a&lKonfirmasi Pilihan", List.of("&7Simpan ras dan bentuk tubuh sekarang.", "&aTidak bisa dipilih ulang bebas."), "complete:" + race + ":" + form));
+        List<String> summary = changing ? List.of("&7Ras baru: " + info.color + info.title, "&7Bentuk: &f" + formName, "&7Skala: &f" + (int) (manager.scaleFor(form) * 100) + "%", "", "&6Biaya: &f$" + String.format("%,.0f", manager.changeCost()), "&cUang hanya dipotong saat tombol hijau ditekan.") : List.of("&7Ras: " + info.color + info.title, "&7Bentuk: &f" + formName, "&7Skala: &f" + (int) (manager.scaleFor(form) * 100) + "%", "", "&cSetelah dikonfirmasi, perubahan", "&cmengikuti aturan biaya/cooldown tahap berikutnya.");
+        inventory.setItem(13, icon(Material.WRITABLE_BOOK, "&fRingkasan Pilihan", summary, null));
+        inventory.setItem(11, icon(Material.ARROW, "&eUbah Bentuk", List.of("&7Kembali tanpa menyimpan pilihan."), (changing ? "change_form:" : "form:") + race));
+        inventory.setItem(15, icon(Material.LIME_DYE, changing ? "&a&lBayar dan Ganti Ras" : "&a&lKonfirmasi Pilihan", changing ? List.of("&7Potong &f$" + String.format("%,.0f", manager.changeCost()) + " &7hanya jika transaksi sukses.", "&7Cooldown berikutnya: &f7 hari.") : List.of("&7Simpan ras dan bentuk tubuh sekarang.", "&aTidak bisa dipilih ulang bebas."), (changing ? "change_complete:" : "complete:") + race + ":" + form));
         player.openInventory(inventory);
     }
     private void complete(Player player, String race, String form) {
@@ -98,6 +119,21 @@ public final class RaceGui implements Listener {
         player.sendMessage("§7Benefit gameplay ras dan ukuran tubuh sudah diterapkan.");
         player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.65F, 1.2F);
     }
+    private void change(Player player, String race, String form) {
+        if (!manager.canChange(player.getUniqueId()) && !player.hasPermission("veliorasuite.race.bypasschange")) { player.closeInventory(); player.sendMessage("§cRas baru dapat diubah lagi dalam §e" + duration(manager.changeRemaining(player.getUniqueId())) + "§c."); return; }
+        if (!player.hasPermission("veliorasuite.race.bypasschange")) {
+            RaceEconomyHook.Result result = economy.charge(player, manager.changeCost());
+            if (result != RaceEconomyHook.Result.OK) { player.sendMessage(switch (result) { case UNAVAILABLE -> "§cVault Economy belum tersedia. Ras tidak diubah dan uang tidak dipotong."; case INSUFFICIENT -> "§cSaldo tidak cukup untuk mengganti ras."; default -> "§cTransaksi gagal. Ras tidak diubah dan tidak ada biaya yang diproses."; }); return; }
+        }
+        manager.change(player.getUniqueId(), race, form);
+        scaleHelper.apply(player, manager.scaleFor(form));
+        benefits.applyPassive(player);
+        player.closeInventory();
+        RaceInfo info = RaceInfo.valueOf(race);
+        player.sendMessage("§a[Ras] §fRas berhasil diubah ke " + info.color + info.title + " §7• §f" + formName(form) + "§a.");
+        player.sendMessage("§7Perubahan berikutnya tersedia dalam 7 hari.");
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8F, 1.1F);
+    }
     @EventHandler public void click(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder)) return;
@@ -108,11 +144,17 @@ public final class RaceGui implements Listener {
         if (action.equals("guide_continue")) { openRaces(player); return; }
         if (action.equals("guide")) { openGuide(player); return; }
         if (action.equals("races")) { openRaces(player); return; }
+        if (action.equals("change_races")) { openRaces(player, true); return; }
         if (action.startsWith("detail:")) { openDetail(player, action.substring("detail:".length())); return; }
         if (action.startsWith("draft:")) { draft(player, action.substring("draft:".length())); return; }
+        if (action.startsWith("change_detail:")) { openDetail(player, action.substring("change_detail:".length()), true); return; }
+        if (action.startsWith("change_draft:")) { String race = action.substring("change_draft:".length()); manager.setDraft(player.getUniqueId(), race); openForms(player, race, true); return; }
+        if (action.startsWith("change_form:")) { openForms(player, action.substring("change_form:".length()), true); return; }
         if (action.startsWith("form:")) { openForms(player, action.substring("form:".length())); return; }
         if (action.startsWith("confirm:")) { String[] parts = action.split(":"); if (parts.length == 3) openConfirm(player, parts[1], parts[2]); return; }
         if (action.startsWith("complete:")) { String[] parts = action.split(":"); if (parts.length == 3) complete(player, parts[1], parts[2]); return; }
+        if (action.startsWith("change_confirm:")) { String[] parts = action.split(":"); if (parts.length == 3) openConfirm(player, parts[1], parts[2], true); return; }
+        if (action.startsWith("change_complete:")) { String[] parts = action.split(":"); if (parts.length == 3) change(player, parts[1], parts[2]); return; }
         if (action.equals("close")) player.closeInventory();
     }
     @EventHandler public void close(InventoryCloseEvent event) {
@@ -127,7 +169,8 @@ public final class RaceGui implements Listener {
     public void applySavedScale(Player player) { if (manager.selected(player.getUniqueId())) scaleHelper.apply(player, manager.scaleFor(manager.form(player.getUniqueId()))); }
     public void resetScale(Player player) { scaleHelper.reset(player); }
     private String formName(String form) { return switch (form.toUpperCase(Locale.ROOT)) { case "CHILD" -> "Mode Bocil"; case "TALL" -> "Dewasa Tinggi"; default -> "Dewasa Normal"; }; }
-    private ItemStack raceIcon(String race, Material material) { RaceInfo info = RaceInfo.valueOf(race); return icon(material, info.color + "&l" + info.title, List.of("&7" + info.tagline, "", "&eKlik untuk melihat detail."), "detail:" + race); }
+    private ItemStack raceIcon(String race, Material material, boolean changing) { RaceInfo info = RaceInfo.valueOf(race); return icon(material, info.color + "&l" + info.title, List.of("&7" + info.tagline, "", "&eKlik untuk melihat detail."), (changing ? "change_detail:" : "detail:") + race); }
+    private String duration(long millis) { long minutes = Math.max(1L, (millis + 59_999L) / 60_000L); long days = minutes / 1_440L; long hours = (minutes % 1_440L) / 60L; long mins = minutes % 60L; return days > 0 ? days + "h " + hours + "j" : hours > 0 ? hours + "j " + mins + "m" : mins + "m"; }
     private Inventory menu(String type, int size, String title) { return org.bukkit.Bukkit.createInventory(new Holder(type), size, title); }
     private ItemStack icon(Material material, String name, List<String> lore, String action) { ItemStack item = new ItemStack(material); ItemMeta meta = item.getItemMeta(); meta.setDisplayName(color(name)); meta.setLore(lore.stream().map(this::color).toList()); if (action != null) meta.getPersistentDataContainer().set(actionKey, PersistentDataType.STRING, action); item.setItemMeta(meta); return item; }
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value); }
