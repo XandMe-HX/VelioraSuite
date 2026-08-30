@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.fishing;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import id.velioragardens.veliorasuite.core.effects.VelioraEffects.Priority;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.FishHook;
 import org.bukkit.entity.Player;
@@ -150,11 +151,11 @@ public final class FishingMinigameManager implements Listener {
         boolean mythic = rarity.power() >= FishRarity.MITOLOGI.power();
         Particle playerParticle = mythic ? Particle.DRAGON_BREATH : Particle.ENCHANT;
         Particle hookParticle = mythic ? Particle.TOTEM_OF_UNDYING : Particle.END_ROD;
-        player.getWorld().spawnParticle(playerParticle, player.getLocation().add(0.0D, 1.0D, 0.0D),
-                mythic ? 7 : 3, 0.35D, 0.55D, 0.35D, 0.01D);
+        plugin.getEffects().particle(player.getLocation().add(0.0D, 1.0D, 0.0D), playerParticle,
+                mythic ? 7 : 3, 0.35D, 0.55D, 0.35D, 0.01D, mythic ? Priority.IMPORTANT : Priority.GAMEPLAY);
         if (session.hook != null && session.hook.isValid()) {
-            session.hook.getWorld().spawnParticle(hookParticle, session.hook.getLocation(),
-                    mythic ? 10 : 4, 0.18D, 0.18D, 0.18D, 0.01D);
+            plugin.getEffects().particle(session.hook.getLocation(), hookParticle,
+                    mythic ? 10 : 4, 0.18D, 0.18D, 0.18D, 0.01D, mythic ? Priority.IMPORTANT : Priority.GAMEPLAY);
         }
     }
 

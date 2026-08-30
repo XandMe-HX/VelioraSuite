@@ -187,7 +187,7 @@ public final class FishingRodManager implements Listener {
         if (tier < 3 || hook == null || !hook.isValid()) return;
         Particle particle = particleForTier(tier);
         double phase = (System.currentTimeMillis() % 4000L) / 4000.0D * Math.PI * 2.0D;
-        // 3-5 ring, 6-10 double spiral, 11-16 wings, 17+ crown/horns.
+        // 3-5 ring, 6-10 double spiral, 11-16 wings, then a unique hooked signature per endgame rod.
         if (tier <= 5) {
             for (int i = 0; i < 10; i++) point(player, particle, phase + i * Math.PI / 5.0D, 0.75D, 1.05D);
         } else if (tier <= 10) {
@@ -199,11 +199,38 @@ public final class FishingRodManager implements Listener {
         } else if (tier <= 16) {
             wings(player, particle, phase, 7, 0.82D, 1.12D);
         } else {
-            for (int i = 0; i < 12; i++) point(player, particle, phase + i * Math.PI / 6.0D, 0.62D, 2.05D);
-            manager.getConfigManager().getPlugin().getEffects().particle(player.getLocation().add(0.38D, 2.35D, 0), particle, 2, 0.03D, 0.18D, 0.03D, 0);
-            manager.getConfigManager().getPlugin().getEffects().particle(player.getLocation().add(-0.38D, 2.35D, 0), particle, 2, 0.03D, 0.18D, 0.03D, 0);
+            switch (tier) {
+                case 17 -> { // Abyss: a low soul-current around player and hook.
+                    ring(player, Particle.SOUL, phase, 8, 0.66D, 0.72D);
+                    ring(player, Particle.SOUL, -phase, 5, 0.38D, 1.55D);
+                }
+                case 18 -> { // Spirit: vertical sparks rather than another crown.
+                    for (int i = 0; i < 5; i++) point(player, Particle.ELECTRIC_SPARK, phase + i * Math.PI * 0.4D, 0.48D, 0.70D + i * 0.30D);
+                    ring(player, Particle.ENCHANT, -phase, 5, 0.36D, 1.95D);
+                }
+                case 19 -> { // Ares: battle-cross and ember ring.
+                    for (int i = 0; i < 4; i++) point(player, Particle.SOUL_FIRE_FLAME, phase + i * Math.PI / 2.0D, 0.70D, 1.12D);
+                    ring(player, Particle.FLAME, -phase, 6, 0.46D, 0.52D);
+                }
+                case 20 -> { // Element: four clearly separate elements circle the hooked fight.
+                    Particle[] elements = {Particle.FLAME, Particle.BUBBLE_POP, Particle.ENCHANT, Particle.ELECTRIC_SPARK};
+                    for (int i = 0; i < elements.length; i++) point(player, elements[i], phase + i * Math.PI / 2.0D, 0.74D, 1.30D);
+                    ring(player, Particle.END_ROD, -phase, 5, 0.44D, 2.02D);
+                }
+                default -> { // Diamond: bright two-level constellation.
+                    ring(player, Particle.END_ROD, phase, 9, 0.72D, 1.10D);
+                    ring(player, Particle.ELECTRIC_SPARK, -phase, 5, 0.38D, 2.12D);
+                }
+            }
         }
-        manager.getConfigManager().getPlugin().getEffects().particle(hook.getLocation(), particle, Math.min(8, 2 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
+        Particle hookParticle = switch (tier) {
+            case 17 -> Particle.SOUL;
+            case 18 -> Particle.ELECTRIC_SPARK;
+            case 19 -> Particle.FLAME;
+            case 20 -> Particle.BUBBLE_POP;
+            default -> particle;
+        };
+        manager.getConfigManager().getPlugin().getEffects().particle(hook.getLocation(), hookParticle, Math.min(10, 3 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
     }
 
     @EventHandler(ignoreCancelled = true)

@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.fishing;
 
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import id.velioragardens.veliorasuite.core.effects.VelioraEffects.Priority;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -35,9 +36,10 @@ public final class FishingEffectManager {
             case ORNAMENTAL -> 1.30F;
             default -> 1.0F;
         };
-        player.getWorld().playSound(player.getLocation(), configManager.getEffectSound(rarity), volume, pitch);
+        configManager.getPlugin().getEffects().sound(player.getLocation(), configManager.getEffectSound(rarity), volume, pitch);
         int amount = configManager.getEffectAmount(rarity);
-        if (amount > 0) player.getWorld().spawnParticle(configManager.getEffectParticle(rarity), location, amount, 0.45D, 0.55D, 0.45D, 0.02D);
+        if (amount > 0) configManager.getPlugin().getEffects().particle(location, configManager.getEffectParticle(rarity), amount, 0.45D, 0.55D, 0.45D, 0.02D,
+                rarity.power() >= FishRarity.LEGENDARY.power() ? Priority.IMPORTANT : Priority.GAMEPLAY);
         if (rarity.power() >= FishRarity.LEGENDARY.power()) playGrandCatchEffect(player, rarity);
         if (configManager.isVisualLightning(rarity)) player.getWorld().strikeLightningEffect(player.getLocation());
         if (configManager.isEffectBroadcast(rarity)) broadcast(player, fish);
@@ -46,7 +48,7 @@ public final class FishingEffectManager {
     private void playGrandCatchEffect(Player player, FishRarity rarity) {
         boolean mythic = rarity.power() >= FishRarity.MITOLOGI.power();
         Location center = player.getLocation().add(0.0D, 1.0D, 0.0D);
-        player.getWorld().playSound(center, mythic ? Sound.ENTITY_LIGHTNING_BOLT_THUNDER : Sound.UI_TOAST_CHALLENGE_COMPLETE,
+        configManager.getPlugin().getEffects().sound(center, mythic ? Sound.ENTITY_LIGHTNING_BOLT_THUNDER : Sound.UI_TOAST_CHALLENGE_COMPLETE,
                 mythic ? 0.9F : 0.75F, mythic ? 0.8F : 1.15F);
         new BukkitRunnable() {
             private int wave;
@@ -59,12 +61,13 @@ public final class FishingEffectManager {
                 }
                 double radius = 0.45D + (wave * 0.26D);
                 Particle particle = mythic ? Particle.DRAGON_BREATH : Particle.TOTEM_OF_UNDYING;
-                player.getWorld().spawnParticle(particle, center, mythic ? 26 : 16,
-                        radius, 0.35D + radius / 3.0D, radius, 0.015D);
-                player.getWorld().spawnParticle(Particle.END_ROD, center, mythic ? 14 : 8,
-                        radius, 0.55D, radius, 0.01D);
+                Priority priority = mythic ? Priority.CRITICAL : Priority.IMPORTANT;
+                configManager.getPlugin().getEffects().particle(center, particle, mythic ? 26 : 16,
+                        radius, 0.35D + radius / 3.0D, radius, 0.015D, priority);
+                configManager.getPlugin().getEffects().particle(center, Particle.END_ROD, mythic ? 14 : 8,
+                        radius, 0.55D, radius, 0.01D, priority);
                 if (wave == 2 || (mythic && wave == 5)) {
-                    player.getWorld().playSound(center, mythic ? Sound.BLOCK_BEACON_POWER_SELECT : Sound.BLOCK_AMETHYST_BLOCK_CHIME,
+                    configManager.getPlugin().getEffects().sound(center, mythic ? Sound.BLOCK_BEACON_POWER_SELECT : Sound.BLOCK_AMETHYST_BLOCK_CHIME,
                             mythic ? 0.9F : 0.6F, mythic ? 0.7F : 1.35F);
                 }
                 wave++;
