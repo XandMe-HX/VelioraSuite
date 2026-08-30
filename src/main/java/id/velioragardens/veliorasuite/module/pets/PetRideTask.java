@@ -97,10 +97,32 @@ public final class PetRideTask implements Runnable {
 
     private RideInput readInput(Player rider) {
         Input input = rider.getCurrentInput();
-        if (input == null) return RideInput.unsupported();
+        if (input == null) return fallbackInput(rider);
         double forward = input.isForward() ? 1.0D : input.isBackward() ? -0.65D : 0.0D;
         double strafe = input.isLeft() ? 0.75D : input.isRight() ? -0.75D : 0.0D;
-        return new RideInput(true, forward, strafe, input.isJump());
+        if (forward != 0.0D || strafe != 0.0D || input.isJump()) return new RideInput(true, forward, strafe, input.isJump());
+        return fallbackInput(rider);
+    }
+
+    /**
+     * Paper exposes direct riding input for Java players. Some Bedrock/Geyser
+     * clients can temporarily omit that packet, so use only real secondary
+     * movement signals as a fallback. It never auto-walks a stationary rider.
+     */
+    private RideInput fallbackInput(Player rider) {
+        if (rider.isSprinting()) return new RideInput(true, 1.0D, 0.0D, false);
+        Vector velocity = rider.getVelocity();
+        if (velocity.lengthSquared() > 0.004D) {
+            Location view = rider.getLocation();
+            Vector forward = view.getDirection().setY(0.0D);
+            if (forward.lengthSquared() > 0.0001D) {
+                forward.normalize();
+                velocity.setY(0.0D);
+                double projection = velocity.dot(forward);
+                if (Math.abs(projection) > 0.03D) return new RideInput(true, projection > 0.0D ? 1.0D : -0.65D, 0.0D, false);
+            }
+        }
+        return RideInput.unsupported();
     }
 
     private boolean shouldStepUp(LivingEntity pet, Vector direction) {

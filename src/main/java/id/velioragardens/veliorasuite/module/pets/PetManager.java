@@ -113,6 +113,8 @@ public final class PetManager implements Listener {
     }
 
     public PetConfigManager config() { return config; }
+    /** Shared runtime services used by tightly scoped pet controllers. */
+    public VelioraSuite plugin() { return plugin; }
     public PetDataManager data() { return data; }
     public RedProtectCompat redProtectCompat() { return redProtect; }
     public PlayerPetData playerData(UUID uuid) { return data.get(uuid); }
@@ -732,10 +734,11 @@ public final class PetManager implements Listener {
 
     private double scaleFor(PetDefinition definition, int level) {
         if (definition.babyPet()) return definition.scale();
-        // Growth happens at levels 10, 20, … 100. This avoids resizing every feed
-        // and guarantees a hard visual ceiling of two blocks.
+        // Growth happens at levels 10, 20, … 100. This avoids resizing every
+        // feed, honors the administrator's tuning values, and has a hard 2.0 cap.
         int stages = Math.max(0, Math.min(100, level) / 10);
-        return Math.min(2.0D, definition.scale() + stages * 0.15D);
+        double bonus = Math.min(config.maxScaleBonus(), stages * config.scalePerLevel());
+        return Math.min(2.0D, definition.scale() + bonus);
     }
 
     private boolean isHungry(OwnedPet owned) {
