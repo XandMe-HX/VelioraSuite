@@ -89,7 +89,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("players", null, page);
         Inventory inventory = Bukkit.createInventory(holder, 54, color("&8Admin Manager &7(" + (page + 1) + "/" + pages + ")"));
         holder.inventory = inventory;
-        fillEmpty(inventory, Material.BLACK_STAINED_GLASS_PANE, "&8Admin Manager");
+        prepareMenu(inventory, "&8Admin Manager");
         int start = page * PAGE_SIZE;
         for (int index = start; index < Math.min(players.size(), start + PAGE_SIZE); index++) {
             OfflinePlayer target = players.get(index);
@@ -106,6 +106,7 @@ public final class AdminManagerGui implements Listener {
         inventory.setItem(49, item(Material.REDSTONE, "&cKontrol Server", List.of("&7Chat, cuaca, waktu, difficulty", "&7dan bersihkan mob dengan konfirmasi."), "server", null));
         inventory.setItem(51, item(Material.ENDER_EYE, vanished.contains(viewer.getUniqueId()) ? "&aVanish aktif" : "&eVanish diri", List.of("&7Menyembunyikan dirimu dari pemain biasa.", "&7Chat dimatikan saat vanish aktif."), "vanish", null));
         inventory.setItem(53, item(Material.ARROW, "&eHalaman berikutnya →", List.of("&7Klik untuk lanjut."), page + 1 < pages ? "next" : null, null));
+        inventory.setItem(4, item(Material.BOOK, "&bDaftar Pemain", List.of("&7Pilih kepala pemain untuk membuka", "&7profil, moderasi, dan tindakan staf.", "&8Halaman " + (page + 1) + " dari " + pages), null, null));
         viewer.openInventory(inventory);
     }
 
@@ -115,6 +116,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("profile", targetName, 0);
         Inventory inventory = Bukkit.createInventory(holder, 45, color("&8Kelola: &f" + targetName));
         holder.inventory = inventory;
+        prepareMenu(inventory, "&8Kelola pemain");
         long played = 0;
         try { played = target.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20L; } catch (Exception ignored) { }
         List<String> info = List.of(
@@ -124,24 +126,25 @@ public final class AdminManagerGui implements Listener {
                 "&7Playtime: &f" + formatSeconds(played),
                 "&7UUID: &8" + target.getUniqueId());
         inventory.setItem(4, skull(target, "&f" + targetName, info, null, null));
+        // Every action sits on an even column. This leaves a clear visual gap
+        // between categories and prevents the profile screen from looking random.
         inventory.setItem(10, item(Material.ENDER_PEARL, "&bTeleport ke pemain", List.of("&7Hanya jika pemain sedang online."), "teleport", targetName));
-        inventory.setItem(11, item(Material.CHORUS_FRUIT, "&bTarik pemain ke kamu", List.of("&7Memindahkan target online ke lokasi kamu.", "&cButuh konfirmasi."), "confirm_tohere", targetName));
-        inventory.setItem(12, item(Material.CHEST, "&eEdit inventory live", List.of("&7Membuka salinan aman, lalu perubahan", "&7disalin saat GUI ditutup."), "inventory", targetName));
-        inventory.setItem(13, item(Material.ENDER_CHEST, "&5Ender Chest", List.of("&7Klik kiri: lihat saja", "&7Shift+klik: edit live aman"), "ender", targetName));
-        inventory.setItem(14, item(Material.SPYGLASS, "&bInspeksi pemain", List.of("&7HP, food, gamemode, lokasi."), "inspect", targetName));
-        inventory.setItem(15, item(Material.COMPASS, "&bTeleport ke Spawn", List.of("&7Teleport dirimu ke spawn world target."), "spawn", targetName));
-        inventory.setItem(19, item(Material.PACKED_ICE, frozen.contains(target.getUniqueId()) ? "&aLepaskan freeze" : "&eFreeze pemain", List.of("&7Mencegah berjalan, menghancurkan blok", "&7dan damage jatuh."), "freeze", targetName));
-        inventory.setItem(21, item(Material.LEATHER_BOOTS, "&eKick", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_kick", targetName));
-        inventory.setItem(23, item(Material.BARRIER, "&cBan", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_ban", targetName));
-        inventory.setItem(24, item(Material.CLOCK, "&6Tempban", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempban", targetName));
-        inventory.setItem(25, item(Material.LIME_DYE, "&aUnban", List.of("&7Menghapus ban nama pemain.", "&cButuh konfirmasi."), "confirm_unban", targetName));
-        inventory.setItem(28, item(Material.GRAY_DYE, "&eMute", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_mute", targetName));
-        inventory.setItem(29, item(Material.CLOCK, "&6Tempmute", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempmute", targetName));
-        inventory.setItem(30, item(Material.LIME_DYE, "&aUnmute", List.of("&7Membuka akses chat target.", "&cButuh konfirmasi."), "confirm_unmute", targetName));
-        inventory.setItem(31, item(Material.PAPER, "&eWarn", List.of("&7Pilih alasan peringatan."), "choose_warn", targetName));
-        inventory.setItem(33, item(Material.BOOK, "&bRiwayat Moderasi", List.of("&7Lihat maksimal 15 tindakan terakhir.", "&7Tersimpan setelah server direstart."), "history", targetName));
-        inventory.setItem(40, item(Material.ARROW, "&eKembali ke daftar", List.of("&7Tidak ada perubahan."), "back", null));
-        fillEmpty(inventory, Material.GRAY_STAINED_GLASS_PANE, "&8•");
+        inventory.setItem(12, item(Material.CHORUS_FRUIT, "&bTarik pemain ke kamu", List.of("&7Memindahkan target online ke lokasi kamu.", "&cButuh konfirmasi."), "confirm_tohere", targetName));
+        inventory.setItem(14, item(Material.CHEST, "&eEdit inventory live", List.of("&7Membuka salinan aman, lalu perubahan", "&7disalin saat GUI ditutup."), "inventory", targetName));
+        inventory.setItem(16, item(Material.ENDER_CHEST, "&5Ender Chest", List.of("&7Klik kiri: lihat saja", "&7Shift+klik: edit live aman"), "ender", targetName));
+        inventory.setItem(19, item(Material.SPYGLASS, "&bInspeksi pemain", List.of("&7HP, food, gamemode, lokasi."), "inspect", targetName));
+        inventory.setItem(21, item(Material.COMPASS, "&bTeleport ke Spawn", List.of("&7Teleport dirimu ke spawn world target."), "spawn", targetName));
+        inventory.setItem(23, item(Material.PACKED_ICE, frozen.contains(target.getUniqueId()) ? "&aLepaskan freeze" : "&eFreeze pemain", List.of("&7Mencegah berjalan, menghancurkan blok", "&7dan damage jatuh."), "freeze", targetName));
+        inventory.setItem(25, item(Material.LEATHER_BOOTS, "&eKick", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_kick", targetName));
+        inventory.setItem(28, item(Material.BARRIER, "&cBan", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_ban", targetName));
+        inventory.setItem(30, item(Material.CLOCK, "&6Tempban", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempban", targetName));
+        inventory.setItem(32, item(Material.LIME_DYE, "&aUnban", List.of("&7Menghapus ban nama pemain.", "&cButuh konfirmasi."), "confirm_unban", targetName));
+        inventory.setItem(34, item(Material.GRAY_DYE, "&eMute", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_mute", targetName));
+        inventory.setItem(36, item(Material.CLOCK, "&6Tempmute", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempmute", targetName));
+        inventory.setItem(38, item(Material.LIME_DYE, "&aUnmute", List.of("&7Membuka akses chat target.", "&cButuh konfirmasi."), "confirm_unmute", targetName));
+        inventory.setItem(40, item(Material.PAPER, "&eWarn", List.of("&7Pilih alasan peringatan."), "choose_warn", targetName));
+        inventory.setItem(42, item(Material.BOOK, "&bRiwayat Moderasi", List.of("&7Lihat maksimal 15 tindakan terakhir.", "&7Tersimpan setelah server direstart."), "history", targetName));
+        inventory.setItem(44, item(Material.ARROW, "&eKembali ke daftar", List.of("&7Tidak ada perubahan."), "back", null));
         viewer.openInventory(inventory);
     }
 
@@ -431,6 +434,14 @@ public final class AdminManagerGui implements Listener {
     }
     private void fillEmpty(Inventory inventory, Material material, String name) {
         for (int slot = 0; slot < inventory.getSize(); slot++) if (inventory.getItem(slot) == null) inventory.setItem(slot, item(material, name, List.of(), null, null));
+    }
+    private void prepareMenu(Inventory inventory, String label) {
+        fillEmpty(inventory, Material.BLACK_STAINED_GLASS_PANE, label);
+        // A restrained cyan frame makes pages readable even with a resource pack
+        // that replaces glass textures. Content is written after this method.
+        ItemStack frame = item(Material.CYAN_STAINED_GLASS_PANE, "&8•", List.of(), null, null);
+        for (int slot = 0; slot < 9; slot++) inventory.setItem(slot, frame);
+        for (int slot : new int[]{9, 17, 18, 26, 27, 35}) inventory.setItem(slot, frame);
     }
     private String displayAction(String action) {
         String kind = action.contains(":") ? action.substring(0, action.indexOf(':')) : action;
