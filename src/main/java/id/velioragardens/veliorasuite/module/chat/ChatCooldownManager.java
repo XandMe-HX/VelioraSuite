@@ -1,12 +1,13 @@
 package id.velioragardens.veliorasuite.module.chat;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ChatCooldownManager {
 
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    /** Chat events can be asynchronous on Paper, so this map must be safe for concurrent access. */
+    private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
 
     public long getRemainingSeconds(UUID uuid) {
         long remainingMillis = cooldowns.getOrDefault(uuid, 0L) - System.currentTimeMillis();
@@ -24,5 +25,9 @@ public final class ChatCooldownManager {
 
     public void clear() {
         cooldowns.clear();
+    }
+
+    public void clear(UUID uuid) {
+        if (uuid != null) cooldowns.remove(uuid);
     }
 }

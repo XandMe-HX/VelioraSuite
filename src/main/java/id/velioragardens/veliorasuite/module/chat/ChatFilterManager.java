@@ -53,6 +53,12 @@ public final class ChatFilterManager {
         repeatCounts.clear();
     }
 
+    public void clear(UUID uuid) {
+        if (uuid == null) return;
+        lastMessages.remove(uuid);
+        repeatCounts.remove(uuid);
+    }
+
     private boolean isRepeated(UUID uuid, String message) {
         String normalized = message.trim().toLowerCase(Locale.ROOT);
         String last = lastMessages.get(uuid);

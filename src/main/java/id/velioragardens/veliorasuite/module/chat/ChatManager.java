@@ -79,6 +79,15 @@ public final class ChatManager {
         filterManager.clear();
     }
 
+    /** Removes all per-player chat state on disconnect so long-running servers do not retain UUIDs. */
+    public void clearPlayerState(UUID playerId) {
+        cooldownManager.clear(playerId);
+        commandCooldownManager.clear(playerId);
+        autoReplyCooldowns.remove(playerId);
+        interactiveShareCooldowns.remove(playerId);
+        filterManager.clear(playerId);
+    }
+
     public ChatConfigManager getConfigManager() { return configManager; }
     public ChatPlaceholderManager getPlaceholderManager() { return placeholderManager; }
 
@@ -514,7 +523,9 @@ public final class ChatManager {
     }
 
     private void send(CommandSender sender, String path, String fallback, Map<String, String> placeholders) {
-        sender.sendMessage(configManager.color(apply(configManager.getMessage(path, fallback), placeholders)));
+        String message = configManager.color(apply(configManager.getMessage(path, fallback), placeholders));
+        if (Bukkit.isPrimaryThread()) sender.sendMessage(message);
+        else Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(message));
     }
 
     private void sendLines(CommandSender sender, List<String> lines, Map<String, String> placeholders) {
