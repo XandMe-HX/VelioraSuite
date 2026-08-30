@@ -1,0 +1,17 @@
+# Progress 3: GUI ras, bentuk, dan konfirmasi akhir sudah tersedia.
+# Tetap false saat upgrade agar server aktif tidak langsung membekukan semua player.
+# Setelah menguji GUI, admin dapat menyalakan dengan: /race admin enforce on
+settings:
+  enabled: true
+  enforce-selection: false
+
+# Menggunakan Attribute SCALE bawaan Paper; tidak memakai packet/NMS atau task berulang.
+scale:
+  child: 0.55
+  adult: 1.00
+  tall: 1.15
+
+# Pilihan pertama gratis. Perubahan berikutnya memakai saldo ekonomi melalui Vault.
+change:
+  cost: 100000
+  cooldown-days: 7

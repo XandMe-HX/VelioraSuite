@@ -4,6 +4,7 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
+import id.velioragardens.veliorasuite.module.race.RaceModule;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
@@ -31,6 +32,11 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
             case "playtime" -> playtime(player);
             case "fishing_coins" -> String.valueOf(fishingCoins(player));
             case "fishing_coins_formatted" -> fishingCoinsFormatted(player);
+            case "race", "ras" -> race(player) == null ? "BELUM_MEMILIH" : race(player).race(player.getUniqueId());
+            case "race_form", "ras_bentuk" -> race(player) == null || !race(player).selected(player.getUniqueId()) ? "-" : race(player).form(player.getUniqueId());
+            case "race_scale", "ras_skala" -> race(player) == null || !race(player).selected(player.getUniqueId()) ? "1.00" : String.format(java.util.Locale.ROOT, "%.2f", race(player).scaleFor(race(player).form(player.getUniqueId())));
+            case "race_change_available", "ras_ganti_tersedia" -> String.valueOf(race(player) != null && race(player).selected(player.getUniqueId()) && race(player).changeRemaining(player.getUniqueId()) == 0L);
+            case "race_change_remaining", "ras_ganti_sisa" -> race(player) == null ? "-" : duration(race(player).changeRemaining(player.getUniqueId()));
             case "integration_war" -> integration("VelioraWar");
             case "integration_gacha" -> integration("VelioraGacha");
             case "integration_ftb" -> integration("VelioraFTB");
@@ -80,6 +86,19 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
     private String fishingCoinsFormatted(Player player) {
         FishingModule module = module("fishing", FishingModule.class);
         return module == null || module.getFishingManager() == null ? "0" : module.getFishingManager().formattedCoins(player);
+    }
+
+    private id.velioragardens.veliorasuite.module.race.RaceManager race(Player player) {
+        RaceModule module = module("race", RaceModule.class);
+        return module == null || !module.isEnabled() ? null : module.getManager();
+    }
+
+    private String duration(long millis) {
+        if (millis <= 0L) return "tersedia";
+        long minutes = Math.max(1L, (millis + 59_999L) / 60_000L);
+        long days = minutes / 1_440L;
+        long hours = (minutes % 1_440L) / 60L;
+        return days > 0 ? days + "h " + hours + "j" : hours + "j";
     }
 
     private String integration(String name) {

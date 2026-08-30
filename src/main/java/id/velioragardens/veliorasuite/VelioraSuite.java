@@ -24,6 +24,7 @@ import id.velioragardens.veliorasuite.module.home.HomeModule;
 import id.velioragardens.veliorasuite.module.guard.GuardClaimModule;
 import id.velioragardens.veliorasuite.module.pets.PetsModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
+import id.velioragardens.veliorasuite.module.race.RaceModule;
 import id.velioragardens.veliorasuite.module.redeem.CodeRedeemModule;
 import id.velioragardens.veliorasuite.module.security.SecurityModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
@@ -112,6 +113,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new KitsModule(this));
         moduleManager.register(new CodeRedeemModule(this));
         moduleManager.register(new ReportModule(this));
+        moduleManager.register(new RaceModule(this));
         moduleManager.register(new ChatModule(this));
         moduleManager.register(new NotificationModule(this));
         moduleManager.register(new GuardClaimModule(this));
@@ -133,7 +135,7 @@ public final class VelioraSuite extends JavaPlugin {
         unregisterPlaceholderExpansion();
         placeholderExpansion = new VelioraPlaceholderExpansion(this);
         if (placeholderExpansion.register()) {
-            getLogger().info("PlaceholderAPI VelioraSuite terdaftar: %veliorasuite_team_tag%, %veliorasuite_playtime%, dan placeholder petualang/fishing.");
+            getLogger().info("PlaceholderAPI VelioraSuite terdaftar: %veliorasuite_team_tag%, %veliorasuite_playtime%, placeholder petualang/fishing, dan %veliorasuite_race%.");
         } else {
             getLogger().warning("PlaceholderAPI ditemukan, tetapi expansion VelioraSuite gagal didaftarkan.");
             placeholderExpansion = null;
