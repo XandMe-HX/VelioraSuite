@@ -12,6 +12,12 @@ public enum BossSkillType {
     SHADOW_PULSE,
     HEAL_PULSE,
     SOUL_CAGE,
+    FROST_NOVA,
+    ARCANE_BARRAGE,
+    VINE_SNARE,
+    METEOR_SHOWER,
+    SONIC_BURST,
+    BLOOD_MARK,
     RAGE_MODE;
 
     public static BossSkillType from(String raw) {

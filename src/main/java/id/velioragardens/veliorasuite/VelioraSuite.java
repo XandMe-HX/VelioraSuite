@@ -23,6 +23,7 @@ import id.velioragardens.veliorasuite.module.home.HomeModule;
 import id.velioragardens.veliorasuite.module.guard.GuardClaimModule;
 import id.velioragardens.veliorasuite.module.pets.PetsModule;
 import id.velioragardens.veliorasuite.module.report.ReportModule;
+import id.velioragardens.veliorasuite.module.redeem.CodeRedeemModule;
 import id.velioragardens.veliorasuite.module.security.SecurityModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.trader.TraderModule;
@@ -107,6 +108,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new LoginSecurityModule(this));
         moduleManager.register(new TeamModule(this));
         moduleManager.register(new KitsModule(this));
+        moduleManager.register(new CodeRedeemModule(this));
         moduleManager.register(new ReportModule(this));
         moduleManager.register(new ChatModule(this));
         moduleManager.register(new NotificationModule(this));

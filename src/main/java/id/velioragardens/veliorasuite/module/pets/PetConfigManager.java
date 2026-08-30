@@ -56,7 +56,9 @@ public final class PetConfigManager {
     );
 
     private static final Set<String> RIDEABLE_ENTITY_NAMES = Set.of(
-            "COW", "SHEEP", "PIG", "PANDA", "MOOSHROOM", "MUSHROOM_COW", "SNIFFER"
+            "COW", "SHEEP", "PIG", "PANDA", "MOOSHROOM", "MUSHROOM_COW", "SNIFFER",
+            "HORSE", "DONKEY", "MULE", "LLAMA", "TRADER_LLAMA", "GOAT", "CAMEL", "TURTLE", "POLAR_BEAR",
+            "SPIDER", "CAVE_SPIDER", "IRON_GOLEM", "SLIME", "MAGMA_CUBE"
     );
 
     private final VelioraSuite plugin;
@@ -149,6 +151,7 @@ public final class PetConfigManager {
     public boolean ridingRequireAdult() { return bool("riding.require-adult", true); }
     public int defaultAdultLevel() { return Math.max(1, integer("riding.default-adult-level", 10)); }
     public boolean allowRideActiveOnly() { return bool("riding.allow-ride-active-only", true); }
+    public boolean allowRideBabyPets() { return bool("riding.allow-baby-pets", false); }
     public boolean dismountOnDismiss() { return bool("riding.dismount-on-dismiss", true); }
     public double rideSpeed() { return Math.max(0.05D, number("riding.speed", 0.32D)); }
     public double rideJumpY() { return Math.max(0.0D, number("riding.jump-y", 0.42D)); }
@@ -233,6 +236,7 @@ public final class PetConfigManager {
         ConfigurationSection section = config.getConfigurationSection("pets");
         if (section != null) for (String id : section.getKeys(false)) loadConfiguredPet(id);
         addBuiltinAnimalPets();
+        addSafeMobCatalog();
     }
 
     private void loadConfiguredPet(String id) {
@@ -296,6 +300,87 @@ public final class PetConfigManager {
         addBuiltin("parrot", "&bParrot", "PARROT", "FEATHER", PetRarity.EPIC, 0.50D, 100_000L, true, 30, "WHEAT_SEEDS", 35);
         addBuiltin("bee", "&eBee", "BEE", "HONEYCOMB", PetRarity.EPIC, 0.55D, 100_000L, true, 30, "FLOWER", 35);
         addBuiltin("allay", "&bAllay", "ALLAY", "AMETHYST_SHARD", PetRarity.LEGENDARY, 0.50D, 175_000L, true, 30, "AMETHYST_SHARD", 45);
+    }
+
+    /**
+     * Mengisi katalog dengan mob yang benar-benar aman untuk dikelola sebagai pet.
+     * Boss, entity teknis, mob yang dapat menghancurkan block, dan aquatic murni
+     * sengaja tidak dibuat otomatis agar tidak merusak world atau AI server.
+     */
+    private void addSafeMobCatalog() {
+        if (!bool("settings.catalog.auto-add-safe-mobs", true)) return;
+        for (String typeName : SAFE_ANIMAL_ENTITY_NAMES) addCatalogPet(typeName, false);
+        for (String typeName : config.getStringList("settings.aggressive-pets.allowed-entities")) addCatalogPet(typeName, true);
+        for (String typeName : config.getStringList("settings.flying-pets.allowed-entities")) addCatalogPet(typeName, false);
+    }
+
+    private void addCatalogPet(String rawType, boolean aggressive) {
+        EntityType type = entityType(rawType);
+        if (type == null || !isPermittedPetType(type)) return;
+        String id = type.name().toLowerCase(Locale.ROOT);
+        if (pets.containsKey(id)) return;
+        if (defaultAquatic(type) && !allowAquaticPets() && !isAxolotlGround(type)) return;
+
+        PetRarity rarity = aggressive ? PetRarity.RARE : (isFlyingPet(type) ? PetRarity.EPIC : PetRarity.COMMON);
+        if (type == EntityType.IRON_GOLEM || type == EntityType.BREEZE || type == EntityType.ALLAY) rarity = PetRarity.LEGENDARY;
+        double scale = aggressive ? 0.65D : 0.55D;
+        double damage = aggressive ? defaultDamage(rarity) : 0.0D;
+        int feedExp = defaultFeedExp(rarity);
+        long price = defaultPrice(rarity);
+        boolean flying = isFlyingPet(type);
+        boolean aquatic = defaultAquatic(type) && !isAxolotlGround(type);
+        String display = (aggressive ? "&c" : "&f") + humanName(type.name());
+        pets.put(id, new PetDefinition(id, display, type, catalogIcon(type), rarity, PetSkillType.NONE,
+                0.0D, damage, scale, price, storageSize(rarity), catalogFood(type, rarity), feedExp,
+                flying, defaultRideable(type), flying ? flyingMinimumLevel() : defaultAdultLevel(), aquatic, false));
+    }
+
+    private String humanName(String raw) {
+        StringBuilder result = new StringBuilder();
+        for (String word : raw.toLowerCase(Locale.ROOT).split("_")) {
+            if (result.length() > 0) result.append(' ');
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return result.toString();
+    }
+
+    private Material catalogIcon(EntityType type) {
+        return switch (type.name()) {
+            case "HORSE", "DONKEY", "MULE", "CAMEL" -> material("SADDLE", Material.BONE);
+            case "LLAMA", "TRADER_LLAMA" -> material("LEAD", Material.BONE);
+            case "GOAT" -> material("GOAT_HORN", Material.BONE);
+            case "TURTLE" -> material("TURTLE_SCUTE", Material.BONE);
+            case "POLAR_BEAR" -> material("SNOWBALL", Material.BONE);
+            case "OCELOT", "CAT" -> material("COD", Material.BONE);
+            case "WOLF" -> material("BONE", Material.BONE);
+            case "FROG", "SLIME", "MAGMA_CUBE" -> material("SLIME_BALL", Material.BONE);
+            case "ARMADILLO" -> material("ARMADILLO_SCUTE", Material.BONE);
+            case "ZOMBIE", "HUSK", "DROWNED" -> material("ROTTEN_FLESH", Material.BONE);
+            case "SKELETON", "STRAY", "BOGGED" -> material("BONE", Material.BONE);
+            case "SPIDER", "CAVE_SPIDER" -> material("SPIDER_EYE", Material.BONE);
+            case "IRON_GOLEM" -> material("IRON_BLOCK", Material.BONE);
+            case "BREEZE" -> material("WIND_CHARGE", Material.BONE);
+            case "BEE" -> material("HONEYCOMB", Material.BONE);
+            case "ALLAY" -> material("AMETHYST_SHARD", Material.BONE);
+            case "PARROT" -> material("FEATHER", Material.BONE);
+            default -> material("BONE", Material.BONE);
+        };
+    }
+
+    private Material catalogFood(EntityType type, PetRarity rarity) {
+        return switch (type.name()) {
+            case "HORSE", "DONKEY", "MULE", "LLAMA", "TRADER_LLAMA", "GOAT", "COW", "SHEEP", "PANDA" -> material("WHEAT", defaultFood(rarity));
+            case "PIG", "RABBIT" -> material("CARROT", defaultFood(rarity));
+            case "CAMEL" -> material("CACTUS", defaultFood(rarity));
+            case "TURTLE" -> material("SEAGRASS", defaultFood(rarity));
+            case "BEE" -> material("POPPY", defaultFood(rarity));
+            case "ZOMBIE", "HUSK", "DROWNED" -> material("ROTTEN_FLESH", defaultFood(rarity));
+            case "SKELETON", "STRAY", "BOGGED" -> material("BONE", defaultFood(rarity));
+            case "SPIDER", "CAVE_SPIDER", "ARMADILLO" -> material("SPIDER_EYE", defaultFood(rarity));
+            case "IRON_GOLEM" -> material("IRON_INGOT", defaultFood(rarity));
+            case "BREEZE" -> material("WIND_CHARGE", defaultFood(rarity));
+            default -> defaultFood(rarity);
+        };
     }
 
     private void addBuiltin(String id, String display, String entity, String icon, PetRarity rarity, double scale, long price, boolean rideable, int adultLevel, String food, int feedExp) {

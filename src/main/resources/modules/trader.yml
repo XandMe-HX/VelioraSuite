@@ -1,14 +1,14 @@
 settings:
-  config-version: 6
+  config-version: 7
   enabled: true
-  # Trader dibuka lewat /trader; lima penawaran acak berganti tiap jam mengikuti WIB.
+  # Trader dibuka lewat /trader; lima penawaran acak berganti satu kali per minggu mengikuti WIB.
   gui-only: true
   prefix: '&7[&eVELIORA &aTRADER&7] &r'
   spawn:
     enabled: false
     # Trader muncul satu kali tiap minggu, pada hari dan jam berikut.
     interval-days: 7
-    day-of-week: SUNDAY
+    day-of-week: SATURDAY
     interval-hours: 168
     anchor-hour: 1
     timezone: Asia/Jakarta
@@ -32,11 +32,11 @@ settings:
     # Lima slot tetap tampil. Item dipilih menurut weight setiap item di trade-pool.
     # Angka weight lebih besar = lebih sering muncul dalam kategori item tersebut.
     random-items-per-spawn: 5
-    offer-rotation-hours: 1
+    offer-rotation-hours: 168
     # Sebelum transaksi final, pemain melihat efek singkat dan bunyi per detik.
     purchase-animation-seconds: 3
     farm-sell:
-      # Hasil farm hanya dapat dijual satu kali oleh setiap pemain setiap minggu.
+      # Hasil farm dapat ditukar satu kali oleh setiap pemain pada periode Sabtu--Jumat.
       weekly-limit: true
     max-money-price: 500000
     # Semua harga MONEY efektif menjadi 80% dari angka payment.money.

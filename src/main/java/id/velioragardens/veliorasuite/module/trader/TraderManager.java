@@ -294,7 +294,7 @@ public final class TraderManager {
     }
 
     public String farmSellResetText() {
-        return "minggu berikutnya";
+        return "Sabtu berikutnya";
     }
 
     private synchronized boolean refreshHourlyOffers(boolean force) {
@@ -342,8 +342,14 @@ public final class TraderManager {
         ZoneId zone;
         try { zone = ZoneId.of(configManager.getTimezone()); }
         catch (RuntimeException ignored) { zone = ZoneId.of("Asia/Jakarta"); }
-        LocalDateTime now = LocalDateTime.now(zone).withMinute(0).withSecond(0).withNano(0);
         int hours = configManager.getOfferRotationHours();
+        if (hours >= 168) {
+            DayOfWeek startDay = configManager.getSpawnDayOfWeek();
+            if (startDay == null) startDay = DayOfWeek.SATURDAY;
+            LocalDate start = LocalDate.now(zone).with(TemporalAdjusters.previousOrSame(startDay));
+            return "weekly-" + start;
+        }
+        LocalDateTime now = LocalDateTime.now(zone).withMinute(0).withSecond(0).withNano(0);
         now = now.withHour((now.getHour() / hours) * hours);
         return now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH"));
     }
@@ -353,7 +359,7 @@ public final class TraderManager {
         try { zone = ZoneId.of(configManager.getTimezone()); }
         catch (RuntimeException ignored) { zone = ZoneId.of("Asia/Jakarta"); }
         DayOfWeek startDay = configManager.getSpawnDayOfWeek();
-        if (startDay == null) startDay = DayOfWeek.SUNDAY;
+        if (startDay == null) startDay = DayOfWeek.SATURDAY;
         LocalDate start = LocalDate.now(zone).with(TemporalAdjusters.previousOrSame(startDay));
         return start.toString();
     }

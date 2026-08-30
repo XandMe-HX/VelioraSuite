@@ -4,6 +4,9 @@ import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import org.bukkit.Bukkit;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -33,6 +36,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.lang.reflect.Method;
 import java.time.LocalDate;
@@ -62,6 +66,9 @@ public final class AdventureManager implements Listener {
     private final Map<UUID, Long> moveChecks = new HashMap<>();
     private final Map<UUID, Long> guideCooldowns = new HashMap<>();
     private final Map<UUID, ProgressWindow> progressWindows = new HashMap<>();
+    private final Map<UUID, BossBar> questBars = new HashMap<>();
+    private BukkitTask questBarTask;
+    private BukkitTask inactivityTask;
 
     public AdventureManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -71,9 +78,9 @@ public final class AdventureManager implements Listener {
         this.questKey = new NamespacedKey(plugin, "adventure_quest");
     }
 
-    public void load() { config.load(); data.load(); }
-    public void reload() { data.shutdown(); config.load(); data.load(); }
-    public void shutdown() { data.shutdown(); cleanupQuestMobs(-1); }
+    public void load() { config.load(); data.load(); startQuestBars(); startInactivityChecks(); }
+    public void reload() { stopQuestBars(); stopInactivityChecks(); data.shutdown(); config.load(); data.load(); startQuestBars(); startInactivityChecks(); }
+    public void shutdown() { stopQuestBars(); stopInactivityChecks(); data.shutdown(); cleanupQuestMobs(-1); }
     public AdventureConfigManager config() { return config; }
 
     public void openMain(Player player) {
@@ -170,14 +177,16 @@ public final class AdventureManager implements Listener {
             send(player, "rank-too-low", "&cRank kamu belum cukup. Butuh rank &f%rank%&c.", "%rank%", quest.rank().name());
             return false;
         }
-        Random random = new Random(System.nanoTime() ^ team.getId());
-        int min = Math.min(config.coordinateMin(), config.coordinateMax());
-        int max = Math.max(config.coordinateMin(), config.coordinateMax());
-        int x = random.nextInt(max - min + 1) + min;
-        int z = random.nextInt(max - min + 1) + min;
+        World world = Bukkit.getWorld(config.questWorld());
+        if (world == null) { send(player, "quest-world-missing", "&cWorld misi tidak ditemukan: &f" + config.questWorld()); return false; }
+        Location location = findSafeQuestLocation(world, new Random(System.nanoTime() ^ team.getId()));
+        if (location == null) { send(player, "quest-location-failed", "&cLokasi misi aman belum ditemukan. Coba lagi."); return false; }
+        int x = location.getBlockX();
+        int z = location.getBlockZ();
         guild.start(quest, System.currentTimeMillis() + quest.durationMinutes() * 60_000L, x, z);
         data.save();
         broadcast(team, config.prefix() + config.color("&aMisi &f" + quest.name() + " &aditerima. Lokasi: &fX " + x + " Z " + z + "&a."));
+        refreshQuestBars();
         return true;
     }
 
@@ -187,9 +196,9 @@ public final class AdventureManager implements Listener {
         AdventureDataManager.GuildData guild = daily(team);
         AdventureQuestTemplate quest = template(guild.activeQuest());
         if (quest == null || !guild.ready()) { send(player, "quest-not-ready", "&cMisi belum siap disetor."); return false; }
-        if (guild.activeExpires() > 0 && System.currentTimeMillis() > guild.activeExpires()) {
+        if (expired(guild)) {
             cleanupQuestMobs(team.getId()); guild.clearActive(); data.save();
-            send(player, "quest-expired", "&cMisi telah kedaluwarsa."); return false;
+            send(player, "quest-expired", "&cMisi telah kedaluwarsa atau hangus karena tidak ada progres."); return false;
         }
         int minimum = Math.max(1, (int) Math.ceil(quest.amount() * 0.10D));
         for (Map.Entry<UUID, Integer> entry : guild.contributions().entrySet()) {
@@ -362,7 +371,7 @@ public final class AdventureManager implements Listener {
         Team team = team(player); if (team == null || onlineMembers(team) < config.minimumOnlineMembers()) return;
         AdventureDataManager.GuildData guild = daily(team); AdventureQuestTemplate quest = template(guild.activeQuest());
         if (quest == null || quest.type() != type || guild.ready()) return;
-        if (guild.activeExpires() > 0 && System.currentTimeMillis() > guild.activeExpires()) { cleanupQuestMobs(team.getId()); guild.clearActive(); data.save(); return; }
+        if (expired(guild)) { cleanupQuestMobs(team.getId()); guild.clearActive(); data.save(); refreshQuestBars(); return; }
         if (!quest.target().equalsIgnoreCase("ANY") && !quest.target().equalsIgnoreCase(target)) return;
         if (!config.questWorld().equals(player.getWorld().getName())
                 || horizontalDistance(player.getLocation(), guild.activeX(), guild.activeZ()) > config.objectiveRadius()) return;
@@ -370,6 +379,7 @@ public final class AdventureManager implements Listener {
         guild.addProgress(player.getUniqueId(), amount);
         if (guild.ready()) broadcast(team, config.prefix() + config.color("&aMisi selesai! Kembali ke NPC misi untuk menyetor hadiah."));
         data.save();
+        refreshQuestBars();
     }
 
     private boolean allowProgress(Player player, int requested) {
@@ -428,6 +438,98 @@ public final class AdventureManager implements Listener {
             if (entity instanceof LivingEntity living) living.setRemoveWhenFarAway(false);
         } catch (IllegalArgumentException ignored) { }
         guild.setMobsSpawned(); data.save();
+    }
+
+    private boolean expired(AdventureDataManager.GuildData guild) {
+        long now = System.currentTimeMillis();
+        if (guild.activeExpires() > 0L && now > guild.activeExpires()) return true;
+        return guild.activeLastActivity() > 0L && now - guild.activeLastActivity() >= config.inactivityExpireMinutes() * 60_000L;
+    }
+
+    private Location findSafeQuestLocation(World world, Random random) {
+        int min = Math.min(config.coordinateMin(), config.coordinateMax());
+        int max = Math.max(config.coordinateMin(), config.coordinateMax());
+        for (int attempt = 0; attempt < 48; attempt++) {
+            int x = random.nextInt(max - min + 1) + min;
+            int z = random.nextInt(max - min + 1) + min;
+            org.bukkit.block.Block ground = world.getHighestBlockAt(x, z);
+            Location feet = ground.getLocation().add(0.5D, 1.0D, 0.5D);
+            if (ground.isLiquid() || !ground.getType().isSolid() || !feet.getBlock().isPassable()
+                    || !feet.clone().add(0.0D, 1.0D, 0.0D).getBlock().isPassable()) continue;
+            return feet;
+        }
+        return null;
+    }
+
+    private void startQuestBars() {
+        stopQuestBars();
+        questBarTask = Bukkit.getScheduler().runTaskTimer(plugin, this::refreshQuestBars, 20L, 20L);
+    }
+
+    private void startInactivityChecks() {
+        stopInactivityChecks();
+        inactivityTask = Bukkit.getScheduler().runTaskTimer(plugin, this::expireInactiveQuests, 20L * 60L, 20L * 60L);
+    }
+
+    private void stopInactivityChecks() {
+        if (inactivityTask != null) inactivityTask.cancel();
+        inactivityTask = null;
+    }
+
+    private void expireInactiveQuests() {
+        long now = System.currentTimeMillis();
+        long inactivityMillis = config.inactivityExpireMinutes() * 60_000L;
+        boolean changed = false;
+        for (AdventureDataManager.GuildData guild : data.guilds()) {
+            if (guild.activeQuest().isBlank() || guild.ready()) continue;
+            boolean durationExpired = guild.activeExpires() > 0L && now > guild.activeExpires();
+            boolean inactive = guild.activeLastActivity() > 0L && now - guild.activeLastActivity() >= inactivityMillis;
+            if (!durationExpired && !inactive) continue;
+            cleanupQuestMobs(guild.id());
+            guild.clearActive();
+            changed = true;
+            notifyQuestExpired(guild.id(), inactive);
+        }
+        if (changed) { data.save(); refreshQuestBars(); }
+    }
+
+    private void notifyQuestExpired(int guildId, boolean inactive) {
+        TeamModule module = plugin.getModuleManager().getModule("team").filter(TeamModule.class::isInstance).map(TeamModule.class::cast).orElse(null);
+        if (module == null || module.getTeamManager() == null) return;
+        for (Team team : module.getTeamManager().getDataManager().getTeams()) {
+            if (team.getId() != guildId) continue;
+            String reason = inactive ? "&cMisi hangus karena tidak ada progres selama 15 menit." : "&cMisi telah kedaluwarsa.";
+            broadcast(team, config.prefix() + config.color(reason));
+            return;
+        }
+    }
+
+    private void stopQuestBars() {
+        if (questBarTask != null) questBarTask.cancel();
+        questBarTask = null;
+        questBars.values().forEach(BossBar::removeAll);
+        questBars.clear();
+    }
+
+    private void refreshQuestBars() {
+        Set<UUID> visible = new HashSet<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Team team = team(player);
+            AdventureDataManager.GuildData guild = team == null ? null : daily(team);
+            AdventureQuestTemplate quest = guild == null ? null : template(guild.activeQuest());
+            if (quest == null || guild.activeExpires() > 0 && System.currentTimeMillis() > guild.activeExpires()) continue;
+            visible.add(player.getUniqueId());
+            BossBar bar = questBars.computeIfAbsent(player.getUniqueId(), ignored -> Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SOLID));
+            bar.setTitle(config.color("&bMisi: &f" + quest.name() + " &7(" + guild.activeProgress() + "/" + guild.activeTarget() + ")"));
+            bar.setProgress(guild.activeTarget() <= 0 ? 0.0D : Math.min(1.0D, (double) guild.activeProgress() / guild.activeTarget()));
+            bar.setColor(guild.ready() ? BarColor.GREEN : BarColor.BLUE);
+            bar.addPlayer(player);
+        }
+        questBars.entrySet().removeIf(entry -> {
+            if (visible.contains(entry.getKey())) return false;
+            entry.getValue().removeAll();
+            return true;
+        });
     }
 
     private void cleanupQuestMobs(int teamId) {

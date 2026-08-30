@@ -63,6 +63,8 @@ public final class PetGuiManager implements Listener {
             lore.add("&7Harga: &f" + config.formatMoney(pet.price()));
             lore.add("&7Food: &f" + pet.foodMaterial().name() + " &8(+" + pet.feedExp() + " EXP)");
             lore.add("&7Damage: &f" + pet.damage());
+            lore.add(pet.babyPet() ? "&dMode: &fBAYI permanen &8(tidak membesar)" : "&aMode: &fDewasa &8(tumbuh tiap 10 level)");
+            lore.add("&7Tunggangan: " + (pet.rideable() ? "&aBisa setelah level " + pet.adultLevel() : "&cTidak bisa"));
             lore.add("&7Shared Storage: &f" + PetDataManager.SHARED_STORAGE_SIZE + " slot");
             lore.add(pdata.owns(pet.id()) ? "&eSudah dimiliki." : "&aKlik untuk beli.");
             inventory.setItem(slot++, item(pet.icon(), pet.displayName(), lore, pdata.owns(pet.id()) ? null : "confirm", pet.id()));
@@ -115,7 +117,12 @@ public final class PetGuiManager implements Listener {
         for (OwnedPet owned : pdata.owned().values()) {
             PetDefinition pet = config.pets().get(owned.id());
             if (pet == null || slot >= 54) continue;
-            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), List.of("&7Level: &f" + owned.level(), "&7EXP: &f" + owned.exp(), "&7Food: &f" + pet.foodMaterial().name(), "&aKlik untuk summon."), "summon", pet.id()));
+            inventory.setItem(slot++, item(pet.icon(), pet.displayName(), List.of(
+                    "&7Level: &f" + owned.level(), "&7EXP: &f" + owned.exp(),
+                    pet.babyPet() ? "&dMode: &fBAYI permanen" : "&aMode: &fDewasa, tumbuh tiap 10 level",
+                    "&7Food: &f" + pet.foodMaterial().name(),
+                    pet.rideable() ? "&eTunggangan: &fLevel " + pet.adultLevel() : "&8Tidak bisa ditunggangi",
+                    "&aKlik untuk summon."), "summon", pet.id()));
         }
         if (slot == 0) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli di shop atau gacha dulu."), null, null));
         player.openInventory(inventory);

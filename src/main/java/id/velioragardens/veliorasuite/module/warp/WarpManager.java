@@ -203,6 +203,28 @@ public final class WarpManager implements Listener {
         pendingOrigins.remove(playerId);
     }
 
+    /** One-way, non-destructive import from plugins/Essentials/warps/*.yml. */
+    public synchronized ImportResult importEssentialsWarps() {
+        if (!plugin.getHookManager().hasHook("Essentials")) return new ImportResult(0, 0, 0, "Essentials tidak aktif.");
+        File folder = new File(plugin.getDataFolder().getParentFile(), "Essentials/warps");
+        File[] files = folder.listFiles((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        if (files == null || files.length == 0) return new ImportResult(0, 0, 0, "Tidak ada file warp Essentials.");
+        int added = 0, skipped = 0, invalid = 0;
+        for (File file : files) {
+            String name = normalize(file.getName().substring(0, file.getName().length() - 4));
+            if (!validName(name) || warps.containsKey(name)) { skipped++; continue; }
+            YamlConfiguration source = YamlConfiguration.loadConfiguration(file);
+            String worldName = source.getString("world", "");
+            World world = Bukkit.getWorld(worldName);
+            if (world == null) { invalid++; continue; }
+            WarpPoint point = new WarpPoint(name, world.getUID(), world.getName(), source.getDouble("x"), source.getDouble("y"), source.getDouble("z"),
+                    (float) source.getDouble("yaw"), (float) source.getDouble("pitch"), "Essentials import", List.of(), "");
+            warps.put(name, point); added++;
+        }
+        if (added > 0) { rebuildAliases(); save(); }
+        return new ImportResult(added, skipped, invalid, "");
+    }
+
     /**
      * Cancels only a warp that is still in its pre-teleport countdown. Looking
      * around does not count as movement; changing position does.
@@ -328,4 +350,5 @@ public final class WarpManager implements Listener {
                     List.copyOf(new LinkedHashSet<>(newAliases)), permission);
         }
     }
+    public record ImportResult(int added, int skipped, int invalid, String issue) { }
 }

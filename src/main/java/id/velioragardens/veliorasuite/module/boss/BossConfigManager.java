@@ -263,6 +263,16 @@ public final class BossConfigManager {
     public double lightningChainRadius() { return Math.max(2.0D, number("skills.lightning-radius", 8.0D)); }
     public double shadowPulseDamage() { return Math.max(0.0D, number("skills.damage.shadow-pulse", 5.0D)); }
     public double soulCageDamage() { return Math.max(0.0D, number("skills.damage.soul-cage", 4.0D)); }
+    public double frostNovaDamage() { return Math.max(0.0D, number("skills.damage.frost-nova", 4.0D)); }
+    public double arcaneBarrageDamage() { return Math.max(0.0D, number("skills.damage.arcane-barrage", 4.5D)); }
+    public double vineSnareDamage() { return Math.max(0.0D, number("skills.damage.vine-snare", 3.0D)); }
+    public double meteorDamage() { return Math.max(0.0D, number("skills.damage.meteor-shower", 5.0D)); }
+    public double sonicBurstDamage() { return Math.max(0.0D, number("skills.damage.sonic-burst", 4.0D)); }
+    public double bloodMarkDamage() { return Math.max(0.0D, number("skills.damage.blood-mark", 4.0D)); }
+    public double frostNovaRadius() { return Math.max(2.0D, number("skills.frost-nova-radius", 6.0D)); }
+    public double vineSnareRadius() { return Math.max(2.0D, number("skills.vine-snare-radius", 7.0D)); }
+    public double sonicBurstRadius() { return Math.max(2.0D, number("skills.sonic-burst-radius", 8.0D)); }
+    public int meteorCount() { return Math.max(1, Math.min(4, integer("skills.meteor-count", 3))); }
     public double groundSlamKnockback() { return clamp(number("skills.movement.ground-slam-knockback", 0.45D), 0.0D, 1.5D); }
     public double groundSlamUpward() { return clamp(number("skills.movement.ground-slam-upward", 0.18D), 0.0D, 0.75D); }
     public double pullAuraStrength() { return clamp(number("skills.movement.pull-aura-strength", 0.25D), 0.0D, 1.0D); }
@@ -344,11 +354,26 @@ public final class BossConfigManager {
             EntityType type = entityType(boss.getString("entity", "ZOMBIE"), EntityType.ZOMBIE);
             if (!isAllowedBossType(type)) { plugin.getLogger().warning("VelioraBoss: entity boss tidak aman/terbang atau tidak dipakai lagi, skip: " + type); continue; }
             BossRarity rarity = BossRarity.from(boss.getString("rarity", "COMMON"));
-            List<BossSkillType> skills = parseSkills(boss.getStringList("skills"));
+            List<BossSkillType> skills = enhanceSkills(id, rarity, parseSkills(boss.getStringList("skills")));
             double damage = Math.max(minimumDamage(rarity), boss.getDouble("damage", minimumDamage(rarity)));
             double health = Math.min(maximumBossHealth(), Math.max(1.0D, boss.getDouble("health", 5000.0D)));
             bosses.put(id.toLowerCase(Locale.ROOT), new BossDefinition(id.toLowerCase(Locale.ROOT), type, boss.getString("display-name", id), rarity, health, damage, Math.max(0.0625D, boss.getDouble("scale", 4.0D)), skills.isEmpty() ? defaultSkills() : skills));
         }
+    }
+    /** Every existing boss receives a small deterministic rotation of the new skills. */
+    private List<BossSkillType> enhanceSkills(String id, BossRarity rarity, List<BossSkillType> source) {
+        List<BossSkillType> skills = new ArrayList<>(source);
+        if (!bool("skills.auto-enhance-bosses", true)) return skills;
+        List<BossSkillType> additions = List.of(BossSkillType.FROST_NOVA, BossSkillType.ARCANE_BARRAGE,
+                BossSkillType.VINE_SNARE, BossSkillType.METEOR_SHOWER, BossSkillType.SONIC_BURST, BossSkillType.BLOOD_MARK);
+        int start = Math.floorMod(id.toLowerCase(Locale.ROOT).hashCode(), additions.size());
+        BossSkillType first = additions.get(start);
+        if (!skills.contains(first)) skills.add(first);
+        if (rarity == BossRarity.EPIC || rarity == BossRarity.LEGENDARY || rarity == BossRarity.MYTHIC) {
+            BossSkillType second = additions.get((start + 1) % additions.size());
+            if (!skills.contains(second)) skills.add(second);
+        }
+        return skills;
     }
     private List<BossSkillType> parseSkills(List<String> raw) { List<BossSkillType> skills = new ArrayList<>(); for (String value : raw) { BossSkillType skill = BossSkillType.from(value); if (skill != null && !skills.contains(skill)) skills.add(skill); } if (skills.isEmpty()) skills.addAll(List.of(BossSkillType.GROUND_SLAM, BossSkillType.SUMMON_MINIONS, BossSkillType.FIRE_BOMB, BossSkillType.PULL_AURA, BossSkillType.POISON_CLOUD, BossSkillType.RAGE_MODE)); return skills; }
     private boolean isAllowedBossType(EntityType type) { return switch (type) { case WARDEN, RAVAGER, ZOMBIE, HUSK, DROWNED, PIGLIN_BRUTE, WITHER_SKELETON, VINDICATOR, EVOKER -> true; default -> false; }; }

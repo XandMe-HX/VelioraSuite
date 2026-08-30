@@ -65,6 +65,10 @@ public final class PetRideController implements Listener {
             player.sendMessage(config.color(config.message("pet-ride-not-rideable", "%prefix% &cPet ini tidak bisa ditunggangi.")));
             return;
         }
+        if (definition.babyPet() && !config.allowRideBabyPets()) {
+            player.sendMessage(config.color(config.message("pet-ride-baby", "%prefix% &cPet bayi tidak bisa ditunggangi. Tunggu atau pilih pet dewasa.")));
+            return;
+        }
         if (config.ridingRequireAdult() && owned.level() < definition.adultLevel()) {
             player.sendMessage(config.color(config.message("pet-ride-not-adult", "%prefix% &cPet ini belum dewasa. Minimal level: &f%level%").replace("%level%", String.valueOf(definition.adultLevel()))));
             return;

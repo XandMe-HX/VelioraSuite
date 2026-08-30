@@ -16,6 +16,7 @@ public final class PetsModule implements VelioraModule {
     private PetRedProtectGuardListener redProtectGuardListener;
     private PetRideController rideController;
     private BukkitTask quietTask;
+    private BukkitTask rideTask;
     private boolean enabled;
 
     public PetsModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -50,6 +51,7 @@ public final class PetsModule implements VelioraModule {
         // second controller here: two controllers compete for pathfinding and
         // velocity and make every active pet work twice as often.
         quietTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetQuietTask(manager), 20L, 40L);
+        rideTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new PetRideTask(manager), 2L, 2L);
     }
 
     @Override
@@ -58,6 +60,8 @@ public final class PetsModule implements VelioraModule {
         if (guiManager != null) guiManager.saveAndCloseOpenStorages();
         if (quietTask != null) quietTask.cancel();
         quietTask = null;
+        if (rideTask != null) rideTask.cancel();
+        rideTask = null;
         if (manager != null) HandlerList.unregisterAll(manager);
         if (guiManager != null) HandlerList.unregisterAll(guiManager);
         if (safetyListener != null) HandlerList.unregisterAll(safetyListener);
@@ -75,6 +79,9 @@ public final class PetsModule implements VelioraModule {
     }
 
     @Override public boolean isEnabled() { return enabled; }
+
+    /** Read-only access for optional integrations such as InteractiveChat. */
+    public PetManager getManager() { return manager; }
 
     private void registerCommand() {
         PluginCommand command = plugin.getCommand("pet");
