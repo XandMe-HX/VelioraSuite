@@ -35,6 +35,7 @@ public final class ChatConfigManager {
     public boolean isTeamTagPlaceholderEnabled() { return getBoolean("settings.team-tag-placeholder-enabled", true); }
     public boolean isProtectionEnabled() { return getBoolean("settings.protection-enabled", true); }
     public boolean isInteractiveChatEnabled() { return getBoolean("settings.interactive-chat.enabled", false); }
+    public boolean doesInteractiveChatOwnFormat() { return getBoolean("settings.interactive-chat.own-chat-format", true); }
     public String getInteractiveChatAction() { return getString("settings.interactive-chat.action", "SUGGEST_COMMAND").toUpperCase(Locale.ROOT); }
     public List<String> getInteractiveChatCommands() {
         return config == null ? List.of() : config.getStringList("settings.interactive-chat.allowed-commands");
@@ -48,6 +49,24 @@ public final class ChatConfigManager {
     public boolean isInteractiveMentionEnabled() { return getBoolean("settings.interactive-chat.mention-enabled", true); }
     public int getInteractiveShareCooldownSeconds() { return Math.max(0, getInt("settings.interactive-chat.share-cooldown-seconds", 10)); }
     public int getInteractiveShareMaxItems() { return Math.max(1, Math.min(54, getInt("settings.interactive-chat.share-max-items", 36))); }
+    public Map<String, InteractiveTrigger> getInteractiveTriggers() {
+        Map<String, InteractiveTrigger> triggers = new LinkedHashMap<>();
+        if (config == null) return triggers;
+        ConfigurationSection section = config.getConfigurationSection("settings.interactive-chat.custom-triggers");
+        if (section == null) return triggers;
+        for (String id : section.getKeys(false)) {
+            List<String> tokens = section.getStringList(id + ".tokens");
+            String command = section.getString(id + ".command", "").trim();
+            if (tokens.isEmpty() || command.isBlank()) continue;
+            String label = section.getString(id + ".label", "&b[" + id.toUpperCase(Locale.ROOT) + "]");
+            String hover = section.getString(id + ".hover", "&eKlik untuk menulis &f" + command);
+            for (String token : tokens) {
+                if (token != null && !token.isBlank()) triggers.put(token.trim().toLowerCase(Locale.ROOT), new InteractiveTrigger(label, command, hover));
+            }
+        }
+        return triggers;
+    }
+    public record InteractiveTrigger(String label, String command, String hover) { }
 
     public boolean isCooldownEnabled() { return getBoolean("settings.cooldown.enabled", true); }
     public int getCooldownSeconds() { return Math.max(0, getInt("settings.cooldown.seconds", 2)); }

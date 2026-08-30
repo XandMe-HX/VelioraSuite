@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 public final class ChatManager {
 
-    private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?|@[A-Za-z0-9_]{3,16}|item|inv(?:entory)?|ender(?:chest)?|pet|quest|fish|team|warp)\\]", Pattern.CASE_INSENSITIVE);
+    private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[([^\\[\\]\\r\\n]{1,120})\\]", Pattern.CASE_INSENSITIVE);
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final VelioraSuite plugin;
@@ -41,6 +41,7 @@ public final class ChatManager {
     private final Map<UUID, Long> autoReplyCooldowns = new ConcurrentHashMap<>();
     private final Map<UUID, Long> interactiveShareCooldowns = new ConcurrentHashMap<>();
     private Map<String, ChatConfigManager.AutoReplyEntry> autoReplies = Map.of();
+    private Map<String, ChatConfigManager.InteractiveTrigger> interactiveTriggers = Map.of();
 
     public ChatManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -55,12 +56,14 @@ public final class ChatManager {
     public void load() {
         configManager.load();
         autoReplies = configManager.getAutoReplies();
+        interactiveTriggers = configManager.getInteractiveTriggers();
         plugin.getLogger().info("VelioraChat loaded.");
     }
 
     public void reload() {
         configManager.load();
         autoReplies = configManager.getAutoReplies();
+        interactiveTriggers = configManager.getInteractiveTriggers();
         cooldownManager.clear();
         commandCooldownManager.clear();
         autoReplyCooldowns.clear();
@@ -176,6 +179,7 @@ public final class ChatManager {
     public boolean isInteractiveChatEnabled() {
         return configManager.isInteractiveChatEnabled();
     }
+    public boolean doesInteractiveChatOwnFormat() { return configManager.doesInteractiveChatOwnFormat(); }
 
     public boolean broadcastInteractive(Player player, String message) {
         if (message == null || message.trim().startsWith("/")) return false;
@@ -211,14 +215,19 @@ public final class ChatManager {
                         .clickEvent(ClickEvent.suggestCommand("/msg " + sender.getName() + " "))
                         .hoverEvent(HoverEvent.showText(playerHover(sender)));
                 result = result.append(name);
-            } else if (token.startsWith("/")) {
+            } else if (token.startsWith("/") && isAllowedInteractiveCommand(token)) {
                 // A command written between brackets is an interactive *suggestion*.
                 // It never runs automatically: the recipient must still review and send it.
                 String suggested = token.trim();
                 Component button = coloredComponent("&b[" + suggested + "&b]")
                         .clickEvent(ClickEvent.suggestCommand(suggested))
-                        .hoverEvent(HoverEvent.showText(coloredComponent("&eKlik untuk menulis &f" + suggested + "\n&7Command tidak dijalankan otomatis.")));
+                        .hoverEvent(HoverEvent.showText(coloredComponent(configManager.getInteractiveChatHover().replace("%command%", suggested) + "\n&7Command tidak dijalankan otomatis.")));
                 result = result.append(button);
+            } else if (interactiveTriggers.containsKey(token.toLowerCase(Locale.ROOT))) {
+                ChatConfigManager.InteractiveTrigger trigger = interactiveTriggers.get(token.toLowerCase(Locale.ROOT));
+                result = result.append(coloredComponent(trigger.label())
+                        .clickEvent(ClickEvent.suggestCommand(trigger.command()))
+                        .hoverEvent(HoverEvent.showText(coloredComponent(trigger.hover() + "\n&7Command tidak dijalankan otomatis."))));
             } else if (token.equalsIgnoreCase("item") && configManager.isInteractiveItemEnabled()) {
                 ItemStack item = sender.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
@@ -311,7 +320,8 @@ public final class ChatManager {
         String normalized = message.toLowerCase(Locale.ROOT);
         return normalized.contains("[item]") || normalized.contains("[inv]") || normalized.contains("[inventory]")
                 || normalized.contains("[ender]") || normalized.contains("[enderchest]") || normalized.contains("[pet]")
-                || normalized.contains("[quest]") || normalized.contains("[fish]") || normalized.contains("[team]") || normalized.contains("[warp]");
+                || normalized.contains("[quest]") || normalized.contains("[fish]") || normalized.contains("[team]") || normalized.contains("[warp]")
+                || interactiveTriggers.keySet().stream().anyMatch(token -> normalized.contains("[" + token + "]"));
     }
 
     private boolean canShareInteractive(Player player) {
