@@ -17,5 +17,6 @@ modules:
   warp: true
   adventure: true
   notifications: true
+  redeem: true
   home: true
   guardclaim: true
