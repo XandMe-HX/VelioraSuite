@@ -9,6 +9,7 @@ import id.velioragardens.veliorasuite.core.MessageManager;
 import id.velioragardens.veliorasuite.core.ModuleManager;
 import id.velioragardens.veliorasuite.core.storage.VelioraDatabase;
 import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
+import id.velioragardens.veliorasuite.module.biome.BiomeModule;
 import id.velioragardens.veliorasuite.module.adminmonitor.AdminMonitorModule;
 import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
@@ -105,6 +106,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new GuideModule(this));
         moduleManager.register(new MenuModule(this));
         moduleManager.register(new AnnouncementModule(this));
+        moduleManager.register(new BiomeModule(this));
         moduleManager.register(new LoginSecurityModule(this));
         moduleManager.register(new TeamModule(this));
         moduleManager.register(new KitsModule(this));

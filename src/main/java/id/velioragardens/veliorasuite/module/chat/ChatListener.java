@@ -15,7 +15,9 @@ public final class ChatListener implements Listener {
         this.chatManager = chatManager;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    // When Veliora owns the format, cancel the original message before another
+    // formatter (notably EssentialsChat) can inject a second prefix/message.
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onAsyncPlayerChat(AsyncPlayerChatEvent event) {
         ChatManager.ChatProcessResult result = chatManager.processChat(event.getPlayer(), event.getMessage());
 

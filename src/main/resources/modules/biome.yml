@@ -1,0 +1,14 @@
+# Pengumuman biome bawaan VelioraSuite. Hanya Title/Action Bar sementara;
+# tidak membuat TextDisplay permanen atau entity tambahan di chunk.
+settings:
+  enabled: true
+worlds: ["*"]
+cooldown-seconds: 8
+display:
+  title: '&d&lBIOME BARU'
+  subtitle: '&f{biome}'
+  actionbar: '&8✦ &fMemasuki &d{biome}'
+effects:
+  particle: END_ROD
+  count: 12
+  sound: BLOCK_AMETHYST_BLOCK_CHIME
