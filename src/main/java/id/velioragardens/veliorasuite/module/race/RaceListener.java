@@ -86,10 +86,9 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
         }
         if (!(sender instanceof Player player)) { sender.sendMessage("§cCommand ini khusus player."); return true; }
         if (manager.selected(player.getUniqueId())) {
+            if (args.length >= 1 && args[0].equalsIgnoreCase("status")) { sendStatus(player); return true; }
             if (args.length >= 1 && args[0].equalsIgnoreCase("change")) { gui.openChange(player); return true; }
-            sender.sendMessage("§d[Ras] §fRas aktif: §e" + manager.race(player.getUniqueId()) + " §7• §f" + manager.form(player.getUniqueId()));
-            long remaining = manager.changeRemaining(player.getUniqueId());
-            sender.sendMessage(remaining > 0L ? "§7Ganti ras tersedia dalam §e" + duration(remaining) + "§7." : "§aKamu dapat mengganti ras dengan §f/race change§a (biaya $" + String.format("%,.0f", manager.changeCost()) + ").");
+            sendStatus(player);
         } else gui.openGuide(player);
         return true;
     }
@@ -99,6 +98,14 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
         if (args.length == 2 && args[0].equalsIgnoreCase("admin")) return List.of("reset", "enforce");
         if (args.length == 3 && args[0].equalsIgnoreCase("admin") && args[1].equalsIgnoreCase("enforce")) return List.of("on", "off");
         return List.of();
+    }
+    private void sendStatus(Player player) {
+        player.sendMessage("§8§m--------------------------------");
+        player.sendMessage("§d§lRAS §7| §f" + manager.race(player.getUniqueId()) + " §7• §f" + manager.form(player.getUniqueId()));
+        player.sendMessage("§7Skala: §f" + (int) (manager.scaleFor(manager.form(player.getUniqueId())) * 100) + "%");
+        long remaining = manager.changeRemaining(player.getUniqueId());
+        player.sendMessage(remaining > 0L ? "§7Ganti ras: §e" + duration(remaining) : "§7Ganti ras: §aTersedia §7($" + String.format("%,.0f", manager.changeCost()) + ")");
+        player.sendMessage("§8§m--------------------------------");
     }
     private String duration(long millis) { long minutes = Math.max(1L, (millis + 59_999L) / 60_000L); long days = minutes / 1_440L; long hours = (minutes % 1_440L) / 60L; long mins = minutes % 60L; return days > 0 ? days + "h " + hours + "j" : hours > 0 ? hours + "j " + mins + "m" : mins + "m"; }
 }

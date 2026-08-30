@@ -135,7 +135,7 @@ public final class VelioraSuite extends JavaPlugin {
         unregisterPlaceholderExpansion();
         placeholderExpansion = new VelioraPlaceholderExpansion(this);
         if (placeholderExpansion.register()) {
-            getLogger().info("PlaceholderAPI VelioraSuite terdaftar: %veliorasuite_team_tag%, %veliorasuite_playtime%, dan placeholder petualang/fishing.");
+            getLogger().info("PlaceholderAPI VelioraSuite terdaftar: %veliorasuite_team_tag%, %veliorasuite_playtime%, placeholder petualang/fishing, dan %veliorasuite_race%.");
         } else {
             getLogger().warning("PlaceholderAPI ditemukan, tetapi expansion VelioraSuite gagal didaftarkan.");
             placeholderExpansion = null;

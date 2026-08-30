@@ -46,4 +46,5 @@ public final class RaceModule implements VelioraModule {
     }
     @Override public void reload() { if (manager != null) manager.reloadConfig(); }
     @Override public boolean isEnabled() { return enabled; }
+    public RaceManager getManager() { return manager; }
 }
