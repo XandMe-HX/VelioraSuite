@@ -13,6 +13,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
@@ -25,8 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class RaceListener implements Listener, CommandExecutor, TabCompleter {
     private final VelioraSuite plugin;
     private final RaceManager manager;
+    private final RaceGui gui;
     private final Map<UUID, Long> reminders = new ConcurrentHashMap<>();
-    public RaceListener(VelioraSuite plugin, RaceManager manager) { this.plugin = plugin; this.manager = manager; }
+    public RaceListener(VelioraSuite plugin, RaceManager manager, RaceGui gui) { this.plugin = plugin; this.manager = manager; this.gui = gui; }
 
     private boolean pending(Player player) { return manager.enforcementEnabled() && !player.hasPermission("veliorasuite.race.admin") && !manager.selected(player.getUniqueId()); }
     private void remind(Player player) {
@@ -42,6 +44,10 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
     @EventHandler public void pickup(PlayerPickupItemEvent event) { if (pending(event.getPlayer())) { event.setCancelled(true); remind(event.getPlayer()); } }
     @EventHandler public void teleport(PlayerTeleportEvent event) { if (pending(event.getPlayer())) { event.setCancelled(true); remind(event.getPlayer()); } }
     @EventHandler public void damage(EntityDamageByEntityEvent event) { if (event.getDamager() instanceof Player player && pending(player)) { event.setCancelled(true); remind(player); } }
+    @EventHandler public void join(PlayerJoinEvent event) {
+        if (!pending(event.getPlayer())) return;
+        Bukkit.getScheduler().runTaskLater(plugin, () -> gui.openGuide(event.getPlayer()), 30L);
+    }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length >= 1 && args[0].equalsIgnoreCase("admin")) {
@@ -54,7 +60,8 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
             sender.sendMessage("§e/race admin reset <player> §7- Reset data ras player."); return true;
         }
         if (!(sender instanceof Player player)) { sender.sendMessage("§cCommand ini khusus player."); return true; }
-        sender.sendMessage("§d[Ras] §fStatus: §e" + manager.race(player.getUniqueId()) + "§7. GUI pemilihan aman hadir pada Progress 2.");
+        if (manager.selected(player.getUniqueId())) sender.sendMessage("§d[Ras] §fRas aktif: §e" + manager.race(player.getUniqueId()));
+        else gui.openGuide(player);
         return true;
     }
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) { if (args.length == 1 && sender.hasPermission("veliorasuite.race.admin")) return List.of("admin", "status"); if (args.length == 2 && args[0].equalsIgnoreCase("admin")) return List.of("reset"); return List.of(); }

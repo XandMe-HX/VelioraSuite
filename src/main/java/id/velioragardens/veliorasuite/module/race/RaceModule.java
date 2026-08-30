@@ -11,6 +11,7 @@ public final class RaceModule implements VelioraModule {
     private final VelioraSuite plugin;
     private RaceManager manager;
     private RaceListener listener;
+    private RaceGui gui;
     private boolean enabled;
 
     public RaceModule(VelioraSuite plugin) { this.plugin = plugin; }
@@ -19,17 +20,20 @@ public final class RaceModule implements VelioraModule {
         plugin.saveResourceIfNotExists("modules/race.yml");
         manager = new RaceManager(plugin);
         manager.load();
-        listener = new RaceListener(plugin, manager);
+        gui = new RaceGui(plugin, manager);
+        listener = new RaceListener(plugin, manager, gui);
     }
     @Override public void enable() {
         enabled = true;
         PluginCommand command = plugin.getCommand("race");
         if (command != null) { command.setExecutor(listener); command.setTabCompleter(listener); }
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+        plugin.getServer().getPluginManager().registerEvents(gui, plugin);
     }
     @Override public void disable() {
         enabled = false;
         if (listener != null) HandlerList.unregisterAll(listener);
+        if (gui != null) HandlerList.unregisterAll(gui);
         if (manager != null) manager.shutdown();
         PluginCommand command = plugin.getCommand("race");
         if (command != null) command.setExecutor(new DisabledCommand(plugin, "Race"));
