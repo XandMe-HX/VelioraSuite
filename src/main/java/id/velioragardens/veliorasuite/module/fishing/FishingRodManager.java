@@ -79,21 +79,57 @@ public final class FishingRodManager implements Listener {
             }
             return;
         }
-        // Tier 9-12: sayap partikel tipis di belakang badan.
-        if (tier <= 12) {
-            wings(player, particle, phase, 5, 0.58D, 1.08D);
-            return;
+        // Tier 9+ is intentionally a per-rod signature, not one shared wing effect.
+        switch (tier) {
+            case 9 -> { // Steampunk: two rotating copper gear rings.
+                ring(player, Particle.ELECTRIC_SPARK, phase, 4, 0.38D, 0.70D);
+                ring(player, Particle.ELECTRIC_SPARK, -phase, 4, 0.58D, 1.22D);
+            }
+            case 10 -> { // Fluorescent: neon double halo.
+                ring(player, Particle.GLOW, phase, 6, 0.46D, 1.02D);
+                ring(player, Particle.END_ROD, -phase * 0.7D, 4, 0.27D, 1.58D);
+            }
+            case 11 -> { // Lava: rising ember column.
+                for (int i = 0; i < 6; i++) point(player, Particle.FLAME, phase + i * 1.05D, 0.24D + i * 0.05D, 0.52D + i * 0.20D);
+            }
+            case 12 -> { // Radioactive: unstable green orbit.
+                ring(player, Particle.COMPOSTER, phase, 5, 0.62D, 1.04D);
+                particle(player.getLocation().add(0, 1.48D, 0), Particle.ELECTRIC_SPARK);
+            }
+            case 13 -> { // Obsidian: four floating shards.
+                for (int i = 0; i < 4; i++) point(player, Particle.REVERSE_PORTAL, phase + i * Math.PI / 2.0D, 0.62D, 1.15D + (i % 2) * 0.30D);
+            }
+            case 14 -> wings(player, Particle.END_ROD, phase, 5, 0.62D, 1.03D); // Chrome
+            case 15 -> { // Coral: bubbles drifting upward around the player.
+                ring(player, Particle.BUBBLE_POP, phase, 6, 0.55D, 0.70D);
+                ring(player, Particle.NAUTILUS, -phase, 3, 0.32D, 1.48D);
+            }
+            case 16 -> { // Poseidon: wide sea crown.
+                wings(player, Particle.DOLPHIN, phase, 5, 0.72D, 0.98D);
+                ring(player, Particle.NAUTILUS, phase, 5, 0.48D, 2.02D);
+            }
+            case 17 -> { // Ghostfinn: spectral fins.
+                wings(player, Particle.SOUL, phase, 6, 0.72D, 1.02D);
+                ring(player, Particle.SOUL, -phase, 4, 0.34D, 1.84D);
+            }
+            case 18 -> { // Angler: ancient luminous crown.
+                ring(player, Particle.GLOW, phase, 6, 0.45D, 2.08D);
+                particle(player.getLocation().add(0, 2.42D, 0), Particle.ELECTRIC_SPARK);
+            }
+            case 19 -> { // Ares: a fiery battle cross.
+                for (int i = 0; i < 4; i++) point(player, Particle.SOUL_FIRE_FLAME, phase + i * Math.PI / 2.0D, 0.63D, 1.10D);
+                ring(player, Particle.FLAME, -phase, 4, 0.34D, 1.72D);
+            }
+            case 20 -> { // Element: one visible orbit for each element.
+                Particle[] elements = {Particle.FLAME, Particle.BUBBLE_POP, Particle.ENCHANT, Particle.ELECTRIC_SPARK};
+                for (int i = 0; i < elements.length; i++) point(player, elements[i], phase + i * Math.PI / 2.0D, 0.68D, 1.16D);
+                ring(player, Particle.END_ROD, -phase, 4, 0.38D, 2.00D);
+            }
+            default -> { // Diamond and future highest rods: crystal constellation.
+                ring(player, Particle.END_ROD, phase, 8, 0.64D, 1.10D);
+                ring(player, Particle.ELECTRIC_SPARK, -phase, 4, 0.34D, 2.08D);
+            }
         }
-        // Tier 13-16: halo/crown di atas kepala dengan dua kilau kecil.
-        if (tier <= 16) {
-            for (int i = 0; i < 6; i++) point(player, particle, phase + i * Math.PI / 3.0D, 0.45D, 2.12D);
-            particle(player.getLocation().add(0.35D, 2.28D, 0), Particle.END_ROD);
-            particle(player.getLocation().add(-0.35D, 2.28D, 0), Particle.END_ROD);
-            return;
-        }
-        // Tier 17+: sayap malaikat + lingkaran mahkota; efek tertinggi.
-        wings(player, Particle.END_ROD, phase, 7, 0.78D, 1.04D);
-        for (int i = 0; i < 6; i++) point(player, Particle.ELECTRIC_SPARK, phase + i * Math.PI / 3.0D, 0.48D, 2.18D);
     }
 
     public void reload() {
@@ -283,6 +319,10 @@ public final class FishingRodManager implements Listener {
 
     private void point(Player player, Particle particle, double angle, double radius, double y) {
         particle(player.getLocation().add(Math.cos(angle) * radius, y, Math.sin(angle) * radius), particle);
+    }
+
+    private void ring(Player player, Particle particle, double phase, int points, double radius, double y) {
+        for (int i = 0; i < points; i++) point(player, particle, phase + i * Math.PI * 2.0D / points, radius, y);
     }
 
     private void particle(Location location, Particle particle) {

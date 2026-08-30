@@ -47,9 +47,17 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Animals;
 
-/** A deliberately small, confirmation-first moderation screen. It never scans worlds or profiles. */
+/** A deliberately small, confirmation-first moderation screen. It never fetches Mojang profiles. */
 public final class AdminManagerGui implements Listener {
-    private static final int PAGE_SIZE = 45;
+    // The central 7 x 4 grid keeps player heads visually tidy, with a fixed
+    // frame and controls that never move when the number of players changes.
+    private static final int PAGE_SIZE = 28;
+    private static final int[] PLAYER_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
     private final VelioraSuite plugin;
     private final AdminMonitorManager monitor;
     private final NamespacedKey actionKey;
@@ -81,6 +89,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("players", null, page);
         Inventory inventory = Bukkit.createInventory(holder, 54, color("&8Admin Manager &7(" + (page + 1) + "/" + pages + ")"));
         holder.inventory = inventory;
+        fillEmpty(inventory, Material.BLACK_STAINED_GLASS_PANE, "&8Admin Manager");
         int start = page * PAGE_SIZE;
         for (int index = start; index < Math.min(players.size(), start + PAGE_SIZE); index++) {
             OfflinePlayer target = players.get(index);
@@ -90,13 +99,12 @@ public final class AdminManagerGui implements Listener {
             lore.add(online ? "&a● Online sekarang" : "&7● Offline");
             lore.add("&7Terakhir terlihat: &f" + timeAgo(target.getLastPlayed()));
             lore.add("&7Klik untuk buka tindakan dan profil.");
-            inventory.setItem(index - start, skull(target, (online ? "&a" : "&7") + name, lore, "profile", name));
+            inventory.setItem(PLAYER_SLOTS[index - start], skull(target, (online ? "&a" : "&7") + name, lore, "profile", name));
         }
         inventory.setItem(45, item(Material.ARROW, "&e← Halaman sebelumnya", List.of("&7Klik untuk kembali."), page > 0 ? "previous" : null, null));
-        inventory.setItem(46, item(Material.RECOVERY_COMPASS, "&bTeleport Kembali", List.of("&7Kembali ke lokasi sebelum teleport", "&7atau lokasi kematian terakhir."), "backtp", null));
-        inventory.setItem(47, item(Material.REDSTONE, "&cKontrol Server", List.of("&7Chat, cuaca, waktu, difficulty", "&7dan bersihkan mob dengan konfirmasi."), "server", null));
-        inventory.setItem(48, item(Material.ENDER_EYE, vanished.contains(viewer.getUniqueId()) ? "&aVanish aktif" : "&eVanish diri", List.of("&7Menyembunyikan dirimu dari pemain biasa.", "&7Chat dimatikan saat vanish aktif."), "vanish", null));
-        inventory.setItem(49, item(Material.COMPASS, "&bPemain & Moderasi", List.of("&7Pilih kepala pemain untuk melihat profil.", "&7Semua tindakan penting memakai konfirmasi."), null, null));
+        inventory.setItem(47, item(Material.RECOVERY_COMPASS, "&bTeleport Kembali", List.of("&7Kembali ke lokasi sebelum teleport", "&7atau lokasi kematian terakhir."), "backtp", null));
+        inventory.setItem(49, item(Material.REDSTONE, "&cKontrol Server", List.of("&7Chat, cuaca, waktu, difficulty", "&7dan bersihkan mob dengan konfirmasi."), "server", null));
+        inventory.setItem(51, item(Material.ENDER_EYE, vanished.contains(viewer.getUniqueId()) ? "&aVanish aktif" : "&eVanish diri", List.of("&7Menyembunyikan dirimu dari pemain biasa.", "&7Chat dimatikan saat vanish aktif."), "vanish", null));
         inventory.setItem(53, item(Material.ARROW, "&eHalaman berikutnya →", List.of("&7Klik untuk lanjut."), page + 1 < pages ? "next" : null, null));
         viewer.openInventory(inventory);
     }
@@ -403,7 +411,11 @@ public final class AdminManagerGui implements Listener {
     private ItemStack skull(OfflinePlayer owner, String name, List<String> lore, String action, String target) {
         ItemStack stack = item(Material.PLAYER_HEAD, name, lore, action, target);
         SkullMeta skull = (SkullMeta) stack.getItemMeta();
-        skull.setOwningPlayer(owner);
+        // Do not call setOwningPlayer for offline accounts. Paper may then ask Mojang to
+        // resolve every texture in this 45-slot page, causing HTTP 429 and noisy logs.
+        // An online profile already has its signed texture in memory, so it is safe to use.
+        Player online = owner.getPlayer();
+        if (online != null) skull.setOwnerProfile(online.getPlayerProfile());
         stack.setItemMeta(skull);
         return stack;
     }

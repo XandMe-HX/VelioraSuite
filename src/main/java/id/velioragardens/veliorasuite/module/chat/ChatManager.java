@@ -211,6 +211,14 @@ public final class ChatManager {
                         .clickEvent(ClickEvent.suggestCommand("/msg " + sender.getName() + " "))
                         .hoverEvent(HoverEvent.showText(playerHover(sender)));
                 result = result.append(name);
+            } else if (token.startsWith("/")) {
+                // A command written between brackets is an interactive *suggestion*.
+                // It never runs automatically: the recipient must still review and send it.
+                String suggested = token.trim();
+                Component button = coloredComponent("&b[" + suggested + "&b]")
+                        .clickEvent(ClickEvent.suggestCommand(suggested))
+                        .hoverEvent(HoverEvent.showText(coloredComponent("&eKlik untuk menulis &f" + suggested + "\n&7Command tidak dijalankan otomatis.")));
+                result = result.append(button);
             } else if (token.equalsIgnoreCase("item") && configManager.isInteractiveItemEnabled()) {
                 ItemStack item = sender.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {

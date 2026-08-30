@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.team;
 
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import id.velioragardens.veliorasuite.module.team.model.TeamMember;
+import id.velioragardens.veliorasuite.util.SafePlayerHead;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -46,7 +47,7 @@ public final class TeamGuiManager implements Listener {
             if (slot >= 44) break;
             ItemStack head = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) head.getItemMeta();
-            meta.setOwningPlayer(Bukkit.getOfflinePlayer(member.getUuid()));
+            SafePlayerHead.applyOnlineProfile(meta, member.getUuid());
             meta.setDisplayName("§f" + member.getName());
             meta.setLore(List.of("§7Jabatan: " + roleColor(member.getRole().name()), "§7Bergabung: §f" + member.getJoinedAt()));
             head.setItemMeta(meta); inventory.setItem(slot++, head);

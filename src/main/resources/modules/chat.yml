@@ -16,9 +16,9 @@ settings:
   team-tag-placeholder-enabled: true
   protection-enabled: true
 
-  # Interactive chat hanya untuk token profil seperti [item], [pet], dan [quest].
-  # Teks command dalam chat, termasuk [/spawn] atau bentuk [/apa pun], tidak
-  # pernah diubah menjadi tombol atau dijalankan oleh VelioraSuite.
+  # Interactive chat mendukung token profil seperti [item], [pet], dan [quest].
+  # Command dalam kurung, misalnya [/spawn] atau [/warp lobby], menjadi tombol
+  # yang hanya MENGISI chat penerima. Tidak ada command yang dijalankan otomatis.
   # Saat aktif, VelioraSuite menjadi formatter utama. Matikan EssentialsChat
   # formatter agar pesan tidak ganda atau formatnya tertimpa.
   interactive-chat:
@@ -36,8 +36,8 @@ settings:
     mention-enabled: true
     share-cooldown-seconds: 10
     share-max-items: 36
-    # Daftar lama untuk kompatibilitas konfigurasi. Tidak dipakai untuk membuat
-    # command chat menjadi tombol, agar perintah tidak terpicu dari chat.
+    # Daftar lama tetap disimpan untuk kompatibilitas konfigurasi. Semua command
+    # yang ditulis dalam [kurung] tetap aman karena hanya disarankan, bukan dijalankan.
     allowed-commands:
       - spawn
       - warp

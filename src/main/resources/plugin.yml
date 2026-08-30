@@ -11,6 +11,7 @@ softdepend:
   - LuckPerms
   - Essentials
   - EconomyShopGUI
+  - AuraSkills
   - RedProtect
   - SkinsRestorer
   - GSit
