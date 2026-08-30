@@ -1,10 +1,7 @@
 package id.velioragardens.veliorasuite.module.pets;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
@@ -13,24 +10,24 @@ import org.bukkit.util.Vector;
 import java.lang.reflect.Method;
 
 public final class PetRideTask implements Runnable {
+    private final PetManager manager;
     private final PetConfigManager config;
     private boolean inputApiChecked;
     private boolean inputApiAvailable;
 
-    public PetRideTask(PetConfigManager config) {
-        this.config = config;
+    public PetRideTask(PetManager manager) {
+        this.manager = manager;
+        this.config = manager.config();
     }
 
     @Override
     public void run() {
-        for (World world : Bukkit.getWorlds()) {
-            for (Entity entity : world.getEntities()) {
-                if (!entity.getScoreboardTags().contains("veliorapets_pet")) continue;
-                if (!(entity instanceof LivingEntity pet)) continue;
-                if (pet.getPassengers().isEmpty()) continue;
-                if (!(pet.getPassengers().get(0) instanceof Player rider)) continue;
-                tickRide(pet, rider);
-            }
+        // Hanya snapshot pet aktif milik pemain. Ini menghindari scan semua entity
+        // setiap dua tick yang bisa berat di world survival besar.
+        for (LivingEntity pet : manager.activePetEntities()) {
+            if (pet == null || pet.isDead() || pet.getPassengers().isEmpty()) continue;
+            if (!(pet.getPassengers().get(0) instanceof Player rider)) continue;
+            tickRide(pet, rider);
         }
     }
 
@@ -50,7 +47,9 @@ public final class PetRideTask implements Runnable {
             try { mob.getPathfinder().stopPathfinding(); } catch (Throwable ignored) { }
         }
         boolean flying = config.isAllowedFlyingEntity(pet.getType());
-        pet.setAI(!flying);
+        // Semua AI dimatikan saat dinaiki agar mob tidak memilih target atau
+        // berjalan sendiri. Gerak sepenuhnya dari input penunggang.
+        pet.setAI(false);
         pet.setGravity(!flying);
         pet.setFallDistance(0.0F);
         pet.setFireTicks(0);
@@ -93,9 +92,7 @@ public final class PetRideTask implements Runnable {
         forward.normalize();
         Vector right = new Vector(-forward.getZ(), 0.0D, forward.getX()).normalize();
 
-        if (!input.supported()) {
-            return forward;
-        }
+        if (!input.supported()) return new Vector();
         Vector result = new Vector(0.0D, 0.0D, 0.0D);
         result.add(forward.multiply(input.forward()));
         result.add(right.multiply(input.strafe()));

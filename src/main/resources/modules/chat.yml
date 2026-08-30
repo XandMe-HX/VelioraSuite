@@ -16,9 +16,9 @@ settings:
   team-tag-placeholder-enabled: true
   protection-enabled: true
 
-  # Interactive chat: teks seperti [/spawn] menjadi tombol klik.
-  # RUN_COMMAND langsung menjalankan command; SUGGEST_COMMAND lebih aman karena
-  # pemain dapat memeriksa command di kolom chat sebelum mengirimnya.
+  # Interactive chat hanya untuk token profil seperti [item], [pet], dan [quest].
+  # Teks command dalam chat, termasuk [/spawn] atau bentuk [/apa pun], tidak
+  # pernah diubah menjadi tombol atau dijalankan oleh VelioraSuite.
   # Saat aktif, VelioraSuite menjadi formatter utama. Matikan EssentialsChat
   # formatter agar pesan tidak ganda atau formatnya tertimpa.
   interactive-chat:
@@ -27,6 +27,8 @@ settings:
     hover: '&bKlik untuk menjalankan &f%command%&b.'
     # [item] menampilkan item tangan dengan hover. [inv]/[inventory] dan
     # [ender]/[enderchest] membagikan isi sendiri lewat hover teks interaktif.
+    # [pet], [quest], [fish], [team], dan [warp] memberi profil hover yang
+    # hanya bekerja di chat biasa, tidak pernah di command /... .
     # [@Nama] menyarankan /tpa Nama. Share diberi cooldown terpisah agar tidak spam.
     item-sharing-enabled: true
     inventory-sharing-enabled: true
@@ -34,7 +36,8 @@ settings:
     mention-enabled: true
     share-cooldown-seconds: 10
     share-max-items: 36
-    # Hanya command ini yang boleh menjadi tombol. Tambahkan command sendiri bila perlu.
+    # Daftar lama untuk kompatibilitas konfigurasi. Tidak dipakai untuk membuat
+    # command chat menjadi tombol, agar perintah tidak terpicu dari chat.
     allowed-commands:
       - spawn
       - warp
@@ -57,6 +60,20 @@ settings:
       - vguide
       - vrank
       - vproduct
+      - kits
+      - team
+      - teama
+      - trader
+      - vtrading
+      - boss
+      - pet
+      - vgpetualang
+      - vgteam
+      - vgwarp
+      - homes
+      - sethome
+      - delhome
+      - report
 
   cooldown:
     enabled: true

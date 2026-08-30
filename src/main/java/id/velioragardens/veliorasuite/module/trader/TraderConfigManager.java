@@ -110,8 +110,15 @@ public final class TraderConfigManager {
             // Bobot menentukan peluang item terpilih di kategori penawaran mingguan.
             changed = true;
         }
+        if (version < 7) {
+            // Trader GUI memakai satu katalog untuk satu periode Sabtu--Jumat.
+            // Ini juga memigrasikan server lama yang sebelumnya masih berganti tiap jam.
+            config.set("settings.spawn.day-of-week", "SATURDAY");
+            config.set("settings.trade.offer-rotation-hours", 168);
+            changed = true;
+        }
         if (!changed) return;
-        config.set("settings.config-version", 6);
+        config.set("settings.config-version", 7);
         try {
             config.save(file);
         } catch (IOException exception) {
@@ -191,7 +198,7 @@ public final class TraderConfigManager {
         return Math.max(1, Math.min(getTradeSlots().size(), configured));
     }
     public int getPurchaseAnimationSeconds() { return Math.max(0, Math.min(5, integer("settings.trade.purchase-animation-seconds", 3))); }
-    public int getOfferRotationHours() { return Math.max(1, Math.min(24, integer("settings.trade.offer-rotation-hours", 1))); }
+    public int getOfferRotationHours() { return Math.max(1, Math.min(168, integer("settings.trade.offer-rotation-hours", 168))); }
     public boolean isFarmSellWeeklyLimit() { return bool("settings.trade.farm-sell.weekly-limit", true); }
     public long getMaxMoneyPrice() { return Math.max(0L, Math.min(500_000L, config == null ? 500_000L : config.getLong("settings.trade.max-money-price", 500_000L))); }
     public double getMoneyPriceMultiplier() { return Math.max(0.0D, Math.min(1.0D, number("settings.trade.money-price-multiplier", 0.80D))); }

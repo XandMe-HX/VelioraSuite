@@ -25,9 +25,12 @@ daily:
   timezone: Asia/Jakarta
   quest-count: 5
   reset-hour: 0
+  # Jika tidak ada progres sama sekali selama 15 menit, misi otomatis hangus.
+  inactivity-expire-minutes: 15
 
 team:
-  minimum-online-members: 2
+  # Team satu orang tetap boleh mengambil dan menyelesaikan misi.
+  minimum-online-members: 1
 
 locations:
   world: world

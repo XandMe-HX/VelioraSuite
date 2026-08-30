@@ -9,6 +9,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
+import id.velioragardens.veliorasuite.module.fishing.FishingModule;
+import id.velioragardens.veliorasuite.module.pets.PetsModule;
+import id.velioragardens.veliorasuite.module.pets.model.VelioraPet;
+import id.velioragardens.veliorasuite.module.team.TeamModule;
+import id.velioragardens.veliorasuite.module.team.model.Team;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,7 +28,7 @@ import java.util.regex.Pattern;
 
 public final class ChatManager {
 
-    private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?|@[A-Za-z0-9_]{3,16}|item|inv(?:entory)?|ender(?:chest)?)\\]", Pattern.CASE_INSENSITIVE);
+    private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[(/[^\\s\\]]+(?:\\s+[^\\]]+)?|@[A-Za-z0-9_]{3,16}|item|inv(?:entory)?|ender(?:chest)?|pet|quest|fish|team|warp)\\]", Pattern.CASE_INSENSITIVE);
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final VelioraSuite plugin;
@@ -86,6 +92,9 @@ public final class ChatManager {
     }
 
     public ChatProcessResult processChat(Player player, String message) {
+        // A command is never interactive chat. This guard is deliberate even if
+        // another plugin forwards a command-like line through a chat event.
+        if (message != null && message.trim().startsWith("/")) return ChatProcessResult.pass(message);
         if (!configManager.isEnabled()) {
             return ChatProcessResult.pass(message);
         }
@@ -169,6 +178,7 @@ public final class ChatManager {
     }
 
     public boolean broadcastInteractive(Player player, String message) {
+        if (message == null || message.trim().startsWith("/")) return false;
         if (containsShareToken(message) && !canShareInteractive(player)) {
             long remaining = getShareCooldownRemaining(player);
             send(player, "interactive-share-cooldown", "%prefix% &cTunggu &f%time% detik &csebelum membagikan item atau inventory lagi.", Map.of("%time%", String.valueOf(remaining)));
@@ -201,16 +211,6 @@ public final class ChatManager {
                         .clickEvent(ClickEvent.suggestCommand("/msg " + sender.getName() + " "))
                         .hoverEvent(HoverEvent.showText(playerHover(sender)));
                 result = result.append(name);
-            } else if (token.startsWith("/") && isAllowedInteractiveCommand(token)) {
-                String command = token;
-                String hover = configManager.color(configManager.getInteractiveChatHover().replace("%command%", command));
-                Component button = coloredComponent("&b" + matcher.group());
-                if (configManager.getInteractiveChatAction().equals("RUN_COMMAND")) {
-                    button = button.clickEvent(ClickEvent.runCommand(command));
-                } else {
-                    button = button.clickEvent(ClickEvent.suggestCommand(command));
-                }
-                result = result.append(button.hoverEvent(HoverEvent.showText(LEGACY.deserialize(hover))));
             } else if (token.equalsIgnoreCase("item") && configManager.isInteractiveItemEnabled()) {
                 ItemStack item = sender.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
@@ -227,6 +227,18 @@ public final class ChatManager {
                 Component button = coloredComponent("&5[ENDER CHEST: &f" + sender.getName() + "&5]")
                         .hoverEvent(HoverEvent.showText(inventoryHover(sender, true)));
                 result = result.append(button);
+            } else if (token.equalsIgnoreCase("pet")) {
+                result = result.append(profileToken("&d[PET: &f" + sender.getName() + "&d]", petHover(sender), "/pet"));
+            } else if (token.equalsIgnoreCase("quest")) {
+                result = result.append(profileToken("&b[QUEST: &f" + sender.getName() + "&b]", questHover(sender), "/vgpetualang"));
+            } else if (token.equalsIgnoreCase("fish")) {
+                result = result.append(profileToken("&3[FISHING: &f" + sender.getName() + "&3]", fishingHover(sender), "/fish"));
+            } else if (token.equalsIgnoreCase("team")) {
+                result = result.append(profileToken("&e[TEAM: &f" + sender.getName() + "&e]", teamHover(sender), "/team info"));
+            } else if (token.equalsIgnoreCase("warp")) {
+                result = result.append(coloredComponent("&a[WARP]")
+                        .clickEvent(ClickEvent.suggestCommand("/vgwarp "))
+                        .hoverEvent(HoverEvent.showText(coloredComponent("&bKlik untuk menulis &f/vgwarp <nama>"))));
             } else if (token.startsWith("@") && configManager.isInteractiveMentionEnabled()) {
                 String name = token.substring(1);
                 Player target = Bukkit.getPlayerExact(name);
@@ -259,11 +271,39 @@ public final class ChatManager {
         return coloredComponent(lines);
     }
 
+    private Component profileToken(String label, String hover, String command) {
+        return coloredComponent(label)
+                .clickEvent(ClickEvent.suggestCommand(command))
+                .hoverEvent(HoverEvent.showText(coloredComponent(hover + "\n&eKlik untuk menulis " + command)));
+    }
+    private String petHover(Player player) {
+        return plugin.getModuleManager().getModule("pets").filter(PetsModule.class::isInstance).map(PetsModule.class::cast).map(module -> {
+            VelioraPet pet=module.getManager().activePet(player.getUniqueId());
+            if(pet==null) return "&7Tidak ada pet aktif.\n&eGunakan /pet";
+            return "&d&lPET AKTIF\n&7Jenis: &f"+pet.petId()+"\n&7HP: &c"+(int)pet.entity().getHealth()+"/&c"+(int)pet.entity().getMaxHealth()+"\n&eGunakan /pet untuk mengelola.";
+        }).orElse("&7VelioraPets tidak aktif.");
+    }
+    private String questHover(Player player) {
+        return plugin.getModuleManager().getModule("adventure").filter(AdventureModule.class::isInstance).map(AdventureModule.class::cast).map(module -> {
+            var m=module.getManager(); return "&b&lVG PETUALANG\n&7Level: &f"+m.level(player)+"\n&7Rank: &f"+m.rankPlain(player)+"\n&7Misi selesai: &f"+m.completed(player)+"\n&eGunakan /vgpetualang";
+        }).orElse("&7VGPetualang tidak aktif.");
+    }
+    private String fishingHover(Player player) {
+        return plugin.getModuleManager().getModule("fishing").filter(FishingModule.class::isInstance).map(FishingModule.class::cast).map(module -> "&3&lVELIORA FISHING\n&7Koin Fishing: &f"+module.getFishingManager().formattedCoins(player)+"\n&eGunakan /fish").orElse("&7VelioraFishing tidak aktif.");
+    }
+    private String teamHover(Player player) {
+        return plugin.getModuleManager().getModule("team").filter(TeamModule.class::isInstance).map(TeamModule.class::cast).map(module -> {
+            Team team=module.getTeamManager().getPlayerTeam(player.getUniqueId()); if(team==null)return "&7Belum memiliki team.\n&eGunakan /team create <nama>";
+            return "&e&lTEAM\n&7Nama: &f"+team.getDisplayName()+"\n&7Owner: &f"+team.getOwnerName()+"\n&7Anggota: &f"+team.getMembers().size()+"/"+team.getMaxMembers()+"\n&eGunakan /team info";
+        }).orElse("&7VelioraTeam tidak aktif.");
+    }
+
     private boolean containsShareToken(String message) {
         if (message == null || message.isBlank()) return false;
         String normalized = message.toLowerCase(Locale.ROOT);
         return normalized.contains("[item]") || normalized.contains("[inv]") || normalized.contains("[inventory]")
-                || normalized.contains("[ender]") || normalized.contains("[enderchest]");
+                || normalized.contains("[ender]") || normalized.contains("[enderchest]") || normalized.contains("[pet]")
+                || normalized.contains("[quest]") || normalized.contains("[fish]") || normalized.contains("[team]") || normalized.contains("[warp]");
     }
 
     private boolean canShareInteractive(Player player) {
@@ -310,6 +350,10 @@ public final class ChatManager {
 
     private boolean isAllowedInteractiveCommand(String command) {
         String root = command.substring(1).trim().split("\\s+", 2)[0].toLowerCase(Locale.ROOT);
+        // Semua command yang didaftarkan oleh VelioraSuite (termasuk aliasnya)
+        // boleh dipamerkan sebagai tombol. Daftar config tetap dipakai untuk
+        // command plugin lain, misalnya /shop atau /skills.
+        if (plugin.getCommand(root) != null) return true;
         for (String allowed : configManager.getInteractiveChatCommands()) {
             String normalized = allowed == null ? "" : allowed.trim().toLowerCase(Locale.ROOT);
             if (normalized.startsWith("/")) normalized = normalized.substring(1);

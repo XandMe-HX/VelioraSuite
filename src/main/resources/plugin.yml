@@ -71,6 +71,16 @@ commands:
     description: Open Veliora kits.
     usage: /kits <help|open|list|claim|preview|buy|cooldown|reload>
     aliases: [veliorakits, vkits]
+  redeem:
+    description: Tukarkan kode hadiah server.
+    usage: /redeem <kode>
+    aliases: [claimcode]
+    permission: veliorasuite.redeem.use
+  cdmanager:
+    description: Membuka GUI pembuat kode redeem.
+    usage: /cdmanager
+    aliases: [cd, codemanager]
+    permission: veliorasuite.redeem.admin
   report:
     description: Create a VelioraReport report.
     usage: /report <player|bug> <reason>
@@ -308,6 +318,12 @@ permissions:
     default: false
   veliorasuite.kits.premium.5:
     default: false
+  veliorasuite.redeem.use:
+    description: Menukarkan kode hadiah yang aktif.
+    default: true
+  veliorasuite.redeem.admin:
+    description: Membuat, menghapus, dan mengelola kode redeem.
+    default: op
   veliorasuite.security.admin:
     default: op
   veliorasuite.security.owner:

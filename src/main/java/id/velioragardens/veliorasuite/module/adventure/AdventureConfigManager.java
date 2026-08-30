@@ -114,7 +114,8 @@ public final class AdventureConfigManager {
         return ChatColor.translateAlternateColorCodes('&', output.toString());
     }
     public int dailyQuestCount() { return Math.max(1, Math.min(9, config.getInt("daily.quest-count", 5))); }
-    public int minimumOnlineMembers() { return Math.max(2, config.getInt("team.minimum-online-members", 2)); }
+    public int inactivityExpireMinutes() { return Math.max(1, Math.min(60, config.getInt("daily.inactivity-expire-minutes", 15))); }
+    public int minimumOnlineMembers() { return Math.max(1, config.getInt("team.minimum-online-members", 1)); }
     public int coordinateMin() { return config.getInt("locations.min", -2000); }
     public int coordinateMax() { return config.getInt("locations.max", 2000); }
     public String questWorld() { return config.getString("locations.world", "world"); }

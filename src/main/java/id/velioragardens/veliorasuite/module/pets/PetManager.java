@@ -15,6 +15,7 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -521,8 +522,16 @@ public final class PetManager implements Listener {
             }
             PetDefinition definition = config.pets().get(pet.petId());
             if (definition == null) continue;
+            // Saat ditunggangi, gerak hanya dikendalikan oleh PetRideTask.
+            // Jangan biarkan follow/pathfinder melawan input pemain.
+            if (pet.entity().getPassengers().stream().anyMatch(Player.class::isInstance)) {
+                if (pet.entity() instanceof Mob mob) mob.setTarget(null);
+                continue;
+            }
             follow(owner, pet, definition);
-            if (!config.stableSafeMode()) attackIfPossible(owner, pet, definition, now);
+            // Stable safe mode melindungi pet dari AI liar dan grief, bukan
+            // menonaktifkan kemampuan membela owner yang sudah dikonfigurasi.
+            attackIfPossible(owner, pet, definition, now);
         }
     }
 
@@ -705,7 +714,8 @@ public final class PetManager implements Listener {
 
     private void updatePetName(LivingEntity entity, OwnedPet owned, PetDefinition definition) {
         if (entity == null || owned == null || definition == null) return;
-        entity.setCustomName(config.color(definition.rarity().color() + "[Lv." + owned.level() + "] &f" + owned.name()));
+        String baby = definition.babyPet() ? " &d[BAYI]" : "";
+        entity.setCustomName(config.color("&8[&fLv." + owned.level() + "&8] " + definition.rarity().color() + owned.name() + baby));
         entity.setCustomNameVisible(true);
     }
 
@@ -839,7 +849,15 @@ public final class PetManager implements Listener {
     }
 
     private void stopTasks() { if (followTask != null) followTask.cancel(); if (cosmeticTask != null) cosmeticTask.cancel(); followTask = null; cosmeticTask = null; }
-    private void tryBaby(LivingEntity entity) { try { Method method = entity.getClass().getMethod("setBaby", boolean.class); method.invoke(entity, true); } catch (Exception ignored) { try { Method method = entity.getClass().getMethod("setBaby"); method.invoke(entity); } catch (Exception ignored2) { } } }
+    private void tryBaby(LivingEntity entity) {
+        if (entity instanceof Ageable ageable) {
+            ageable.setBaby();
+            ageable.setAgeLock(true);
+            return;
+        }
+        try { Method method = entity.getClass().getMethod("setBaby", boolean.class); method.invoke(entity, true); }
+        catch (Exception ignored) { try { Method method = entity.getClass().getMethod("setBaby"); method.invoke(entity); } catch (Exception ignored2) { } }
+    }
     private void setInvisible(LivingEntity entity, boolean invisible) { try { Method method = entity.getClass().getMethod("setInvisible", boolean.class); method.invoke(entity, invisible); } catch (Exception ignored) { } }
     private String timeLeft(long target) { long seconds = Math.max(0L, (target - System.currentTimeMillis()) / 1000L); return (seconds / 60L) + "m " + (seconds % 60L) + "s"; }
     private String timeSince(long past) { long seconds = Math.max(0L, (System.currentTimeMillis() - past) / 1000L); return (seconds / 60L) + "m " + (seconds % 60L) + "s"; }

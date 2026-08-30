@@ -2,6 +2,7 @@ package id.velioragardens.veliorasuite.module.fishing;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
+import id.velioragardens.veliorasuite.module.fishing.model.FishDefinition;
 import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
 import id.velioragardens.veliorasuite.module.fishing.model.FishingBagEntry;
 import id.velioragardens.veliorasuite.module.fishing.model.PlayerFishingStats;
@@ -125,6 +126,19 @@ public final class FishingManager {
     }
 
     public void openMainGui(Player player) { mainGuiManager.open(player); }
+
+    /** Gives one predictable fish item for staff visual checks; it never changes collection or economy data. */
+    public boolean giveTestFish(Player player, String fishId) {
+        FishDefinition definition = configManager.getFishDefinition(fishId);
+        if (definition == null) return false;
+        CaughtFish fish = new CaughtFish(
+                definition.id(), definition.name(), definition.rarity(), definition.minWeight(), definition.minPrice(),
+                definition.origin(), definition.region(), "Normal", 1.0D
+        );
+        giveItem(player, itemFactory.create(definition, fish));
+        return true;
+    }
+
     public void openSellGui(Player player) { sellGuiManager.open(player); }
     public void openBagGui(Player player) { bagGuiManager.open(player); }
     public void openCollectionGui(Player player) { collectionGuiManager.open(player); }

@@ -36,7 +36,7 @@ public final class WarpCommand implements CommandExecutor, TabCompleter {
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
-        if (!List.of("set", "delete", "list", "info", "alias", "reload", "help").contains(sub)) {
+        if (!List.of("set", "delete", "list", "info", "alias", "import", "reload", "help").contains(sub)) {
             if (!(sender instanceof Player player)) return true;
             manager.teleport(player, sub);
             return true;
@@ -58,6 +58,14 @@ public final class WarpCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (!manager.hasAdmin(player)) return noPermission(player);
+
+        if (sub.equals("import")) {
+            if (args.length != 2 || !args[1].equalsIgnoreCase("essentials")) { player.sendMessage(manager.color("&cGunakan /vgwarp import essentials")); return true; }
+            WarpManager.ImportResult result = manager.importEssentialsWarps();
+            if (!result.issue().isBlank()) player.sendMessage(manager.color("&e" + result.issue()));
+            else player.sendMessage(manager.color("&aImport Essentials selesai: &f" + result.added() + " &aditambah, &e" + result.skipped() + " &edilewati, &c" + result.invalid() + " &cworld tidak tersedia."));
+            return true;
+        }
 
         if (sub.equals("set")) {
             if (args.length < 2 || !manager.setWarp(player, args[1])) {
@@ -118,6 +126,7 @@ public final class WarpCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(manager.color("&f/vgwarp delete <nama> confirm"));
         sender.sendMessage(manager.color("&f/vgwarp list &8| &finfo <nama>"));
         sender.sendMessage(manager.color("&f/vgwarp alias <add|remove> <warp> <alias>"));
+        sender.sendMessage(manager.color("&f/vgwarp import essentials &7- salin warp Essentials sekali arah"));
         sender.sendMessage(manager.color("&f/vgwarp reload"));
     }
 
@@ -126,7 +135,7 @@ public final class WarpCommand implements CommandExecutor, TabCompleter {
                                       @NotNull String alias, @NotNull String[] args) {
         if (!command.getName().equalsIgnoreCase("vgwarp")) return List.of();
         if (args.length == 1) {
-            List<String> values = new ArrayList<>(List.of("set", "delete", "list", "info", "alias", "reload", "help"));
+            List<String> values = new ArrayList<>(List.of("set", "delete", "list", "info", "alias", "import", "reload", "help"));
             values.addAll(manager.warpNames());
             return values.stream().filter(value -> value.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
         }
@@ -134,6 +143,7 @@ public final class WarpCommand implements CommandExecutor, TabCompleter {
             return manager.warpNames().stream().filter(value -> value.startsWith(args[1].toLowerCase(Locale.ROOT))).toList();
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("alias")) return List.of("add", "remove");
+        if (args.length == 2 && args[0].equalsIgnoreCase("import")) return List.of("essentials");
         if (args.length == 3 && args[0].equalsIgnoreCase("alias")) return new ArrayList<>(manager.warpNames());
         if (args.length == 3 && args[0].equalsIgnoreCase("delete")) return List.of("confirm");
         return List.of();

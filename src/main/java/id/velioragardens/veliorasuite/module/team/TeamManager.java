@@ -37,6 +37,7 @@ public final class TeamManager {
     private final Set<UUID> chatSpy = ConcurrentHashMap.newKeySet();
     private TeamGuiManager guiManager;
     private final Map<UUID, Long> activityScoreCooldown = new HashMap<>();
+    private final Map<String, Long> repeatedFeedbackCooldown = new HashMap<>();
 
     public TeamManager(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -816,6 +817,12 @@ public final class TeamManager {
     }
 
     private void send(CommandSender sender, String path, String fallback, Map<String, String> placeholders) {
+        if (sender instanceof Player player && (path.equals("already-in-team") || path.equals("target-already-in-team"))) {
+            String key = player.getUniqueId() + ":" + path;
+            long now = System.currentTimeMillis();
+            if (repeatedFeedbackCooldown.getOrDefault(key, 0L) > now) return;
+            repeatedFeedbackCooldown.put(key, now + 2000L);
+        }
         sender.sendMessage(configManager.color(apply(configManager.getMessage(path, fallback), placeholders)));
     }
 

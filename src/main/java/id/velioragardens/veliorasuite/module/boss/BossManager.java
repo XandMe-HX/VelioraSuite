@@ -6,6 +6,7 @@ import id.velioragardens.veliorasuite.module.boss.model.BossDefinition;
 import id.velioragardens.veliorasuite.module.boss.model.BossRarity;
 import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
 import id.velioragardens.veliorasuite.module.boss.model.BossSpawnPoint;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -19,6 +20,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.PiglinAbstract;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -288,7 +290,10 @@ public final class BossManager implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // Boss memakai HP virtual. Hit pemain tetap harus diproses walaupun event
+    // vanilla lebih dulu dibatalkan oleh proteksi region; damage lingkungan
+    // dan hit non-player tetap tidak dapat masuk.
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDamage(EntityDamageByEntityEvent event) {
         boolean damagedBoss = activeBoss != null && event.getEntity().getUniqueId().equals(activeBoss.getUniqueId());
         boolean damagedMinion = event.getEntity().getScoreboardTags().contains("velioraboss_minion");
@@ -323,7 +328,7 @@ public final class BossManager implements Listener {
             double virtualDamage = adjustedDamage * config.virtualDamageMultiplier();
             event.setCancelled(true);
             damageActiveBoss(player, virtualDamage);
-            showHitFeedback(player, chargedMace);
+            showHitFeedback(player, chargedMace, event.getDamager() instanceof Projectile, virtualDamage);
             if (chargedMace) player.sendMessage(config.color("&8[&6VelioraBoss&8] &eMace Smash &f"
                     + maceSmashes.get(player.getUniqueId()).charges() + "&7/" + config.maceSmashCharges()));
             if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
@@ -761,17 +766,20 @@ public final class BossManager implements Listener {
     }
 
     /** Shows a real hit reaction even though damage is stored in virtual health. */
-    private void showHitFeedback(Player player, boolean mace) {
+    private void showHitFeedback(Player player, boolean mace, boolean projectile, double damage) {
         if (!isActive()) return;
         try { activeBoss.playHurtAnimation(player.getLocation().getYaw()); } catch (Exception ignored) { }
+        String weapon = mace ? "MACE SMASH" : projectile ? "BOW HIT" : "HIT";
+        player.sendActionBar(Component.text(String.format(Locale.US, "%s  -%.1f HP  |  Boss: %.0f/%.0f", weapon, damage, activeVirtualHealth, activeVirtualMaxHealth)));
         long now = System.currentTimeMillis();
         if (now - lastHitEffectAt < 80L) return;
         lastHitEffectAt = now;
         Location hit = activeBoss.getLocation().add(0.0D, Math.max(0.8D, activeBoss.getHeight() * 0.55D), 0.0D);
-        activeBoss.getWorld().spawnParticle(mace ? Particle.FLASH : Particle.DAMAGE_INDICATOR,
-                hit, mace ? 1 : 8, 0.65D, 0.75D, 0.65D, 0.04D);
-        activeBoss.getWorld().playSound(hit, mace ? Sound.ENTITY_GENERIC_EXPLODE : Sound.ENTITY_PLAYER_ATTACK_CRIT,
-                mace ? 0.65F : 0.35F, mace ? 1.45F : 1.15F);
+        Particle particle = mace ? Particle.FLASH : projectile ? Particle.CRIT : Particle.DAMAGE_INDICATOR;
+        int amount = mace ? 1 : projectile ? 14 : 8;
+        activeBoss.getWorld().spawnParticle(particle, hit, amount, 0.65D, 0.75D, 0.65D, 0.04D);
+        activeBoss.getWorld().playSound(hit, mace ? Sound.ENTITY_GENERIC_EXPLODE : projectile ? Sound.ENTITY_ARROW_HIT_PLAYER : Sound.ENTITY_PLAYER_ATTACK_CRIT,
+                mace ? 0.65F : projectile ? 0.55F : 0.35F, mace ? 1.45F : projectile ? 1.25F : 1.15F);
     }
 
     /** Sends a small orbiting aura only every two seconds and scales it down when the arena is busy. */

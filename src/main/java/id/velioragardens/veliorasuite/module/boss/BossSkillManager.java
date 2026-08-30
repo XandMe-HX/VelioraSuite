@@ -81,6 +81,12 @@ public final class BossSkillManager {
             case SHADOW_PULSE -> shadowPulse(boss);
             case HEAL_PULSE -> healPulse(boss);
             case SOUL_CAGE -> soulCage(boss);
+            case FROST_NOVA -> frostNova(boss);
+            case ARCANE_BARRAGE -> arcaneBarrage(boss);
+            case VINE_SNARE -> vineSnare(boss);
+            case METEOR_SHOWER -> meteorShower(boss);
+            case SONIC_BURST -> sonicBurst(boss);
+            case BLOOD_MARK -> bloodMark(boss);
             case RAGE_MODE -> maybeRage(boss);
         }
     }
@@ -241,6 +247,98 @@ public final class BossSkillManager {
         boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.9F, 0.75F);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (isCurrentBoss(boss)) healBoss(boss, config.healPulsePercent());
+        }, config.skillTelegraphTicks());
+    }
+
+    private void frostNova(LivingEntity boss) {
+        Location center = boss.getLocation();
+        telegraphRing(boss, center, Particle.SNOWFLAKE, config.frostNovaRadius(), 0.5D, Sound.BLOCK_GLASS_BREAK);
+        runAfterTelegraph(boss, () -> {
+            Location impact = boss.getLocation();
+            impact.getWorld().spawnParticle(Particle.SNOWFLAKE, impact.add(0.0D, 0.8D, 0.0D), 70, 3.2D, 0.7D, 3.2D, 0.04D);
+            for (Player player : nearbyPlayers(impact, config.frostNovaRadius())) {
+                player.damage(config.frostNovaDamage() * outgoingDamageMultiplier());
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 1));
+            }
+        });
+    }
+
+    private void arcaneBarrage(LivingEntity boss) {
+        List<Player> targets = nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal());
+        if (targets.isEmpty()) return;
+        Player target = targets.get(random.nextInt(targets.size()));
+        Location marked = target.getLocation().clone();
+        telegraphRing(boss, marked, Particle.ENCHANT, 1.25D, 1.0D, Sound.ENTITY_ILLUSIONER_PREPARE_MIRROR);
+        runAfterTelegraph(boss, () -> new BukkitRunnable() {
+            private int wave;
+            @Override public void run() {
+                if (!isCurrentBoss(boss) || wave++ >= 3 || !isValidDelayedTarget(target)) { cancel(); return; }
+                Location location = target.getLocation().add(0.0D, 1.0D, 0.0D);
+                location.getWorld().spawnParticle(Particle.END_ROD, location, 20, 0.55D, 0.75D, 0.55D, 0.03D);
+                location.getWorld().playSound(location, Sound.ENTITY_EVOKER_CAST_SPELL, 0.55F, 1.25F + wave * 0.08F);
+                target.damage(config.arcaneBarrageDamage() * outgoingDamageMultiplier());
+            }
+        }.runTaskTimer(plugin, 0L, 7L));
+    }
+
+    private void vineSnare(LivingEntity boss) {
+        Location center = boss.getLocation();
+        telegraphRing(boss, center, Particle.COMPOSTER, config.vineSnareRadius(), 0.25D, Sound.BLOCK_GRASS_PLACE);
+        runAfterTelegraph(boss, () -> {
+            Location impact = boss.getLocation();
+            impact.getWorld().spawnParticle(Particle.COMPOSTER, impact, 65, 3.6D, 0.45D, 3.6D, 0.03D);
+            for (Player player : nearbyPlayers(impact, config.vineSnareRadius())) {
+                player.damage(config.vineSnareDamage() * outgoingDamageMultiplier());
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 2));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 0));
+            }
+        });
+    }
+
+    private void meteorShower(LivingEntity boss) {
+        List<Player> targets = new ArrayList<>(nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal()));
+        if (targets.isEmpty()) return;
+        java.util.Collections.shuffle(targets, random);
+        for (int index = 0; index < Math.min(config.meteorCount(), targets.size()); index++) {
+            Location marked = targets.get(index).getLocation().clone();
+            telegraphRing(boss, marked, Particle.FLAME, 1.4D, 0.1D, Sound.BLOCK_FIRE_AMBIENT);
+            runAfterTelegraph(boss, () -> {
+                marked.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, marked, 1);
+                marked.getWorld().spawnParticle(Particle.LAVA, marked, 18, 1.0D, 0.25D, 1.0D, 0.03D);
+                marked.getWorld().playSound(marked, Sound.ENTITY_GENERIC_EXPLODE, 0.8F, 1.1F);
+                for (Player player : nearbyPlayers(marked, 3.0D)) player.damage(config.meteorDamage() * outgoingDamageMultiplier());
+            });
+        }
+    }
+
+    private void sonicBurst(LivingEntity boss) {
+        Location center = boss.getLocation();
+        telegraphRing(boss, center, Particle.SCULK_SOUL, config.sonicBurstRadius(), 1.0D, Sound.ENTITY_WARDEN_SONIC_CHARGE);
+        runAfterTelegraph(boss, () -> {
+            Location impact = boss.getLocation();
+            impact.getWorld().playSound(impact, Sound.ENTITY_WARDEN_SONIC_BOOM, 1.0F, 0.85F);
+            impact.getWorld().spawnParticle(Particle.SONIC_BOOM, impact.add(0.0D, 1.1D, 0.0D), 1);
+            for (Player player : nearbyPlayers(impact, config.sonicBurstRadius())) {
+                player.damage(config.sonicBurstDamage() * outgoingDamageMultiplier());
+                Vector knock = safeDirection(player.getLocation().toVector().subtract(impact.toVector())).multiply(0.50D).setY(0.22D);
+                player.setVelocity(knock);
+            }
+        });
+    }
+
+    private void bloodMark(LivingEntity boss) {
+        List<Player> targets = nearbyPlayers(boss.getLocation(), config.targetingRadiusHorizontal());
+        if (targets.isEmpty()) return;
+        Player target = targets.get(random.nextInt(targets.size()));
+        Location marked = target.getLocation().clone();
+        target.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, marked.add(0.0D, 1.0D, 0.0D), 24, 0.65D, 0.9D, 0.65D, 0.04D);
+        target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.8F, 0.85F);
+        target.sendActionBar(net.kyori.adventure.text.Component.text("BLOOD MARK - menjauh dari boss!"));
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!isCurrentBoss(boss) || !isValidDelayedTarget(target)) return;
+            target.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, target.getLocation().add(0.0D, 1.0D, 0.0D), 35, 0.7D, 0.9D, 0.7D, 0.04D);
+            target.damage(config.bloodMarkDamage() * outgoingDamageMultiplier());
+            target.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 80, 0));
         }, config.skillTelegraphTicks());
     }
 

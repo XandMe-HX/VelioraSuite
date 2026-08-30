@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -85,6 +86,9 @@ public final class AdventureDataManager {
             guild.activeProgress = Math.max(0, yaml.getInt(path + ".active.progress", 0));
             guild.activeTarget = Math.max(0, yaml.getInt(path + ".active.target", 0));
             guild.activeExpires = Math.max(0L, yaml.getLong(path + ".active.expires", 0L));
+            // Old active quests have no activity value; give them one fresh 15-minute
+            // grace window after the server first loads this version.
+            guild.activeLastActivity = Math.max(0L, yaml.getLong(path + ".active.last-activity", guild.activeQuest.isBlank() ? 0L : System.currentTimeMillis()));
             guild.activeX = yaml.getInt(path + ".active.x", 0);
             guild.activeZ = yaml.getInt(path + ".active.z", 0);
             guild.ready = yaml.getBoolean(path + ".active.ready", false);
@@ -105,6 +109,7 @@ public final class AdventureDataManager {
     }
 
     public GuildData guild(int id) { return guilds.computeIfAbsent(id, GuildData::new); }
+    public Collection<GuildData> guilds() { return List.copyOf(guilds.values()); }
 
     public void save() {
         dirty = true;
@@ -131,6 +136,7 @@ public final class AdventureDataManager {
             yaml.set(path + ".active.progress", guild.activeProgress);
             yaml.set(path + ".active.target", guild.activeTarget);
             yaml.set(path + ".active.expires", guild.activeExpires);
+            yaml.set(path + ".active.last-activity", guild.activeLastActivity);
             yaml.set(path + ".active.x", guild.activeX);
             yaml.set(path + ".active.z", guild.activeZ);
             yaml.set(path + ".active.ready", guild.ready);
@@ -174,6 +180,7 @@ public final class AdventureDataManager {
                 yaml.set(path + ".daily-date", guild.dailyDate); yaml.set(path + ".daily-quests", guild.dailyIds);
                 yaml.set(path + ".active.id", guild.activeQuest); yaml.set(path + ".active.progress", guild.activeProgress);
                 yaml.set(path + ".active.target", guild.activeTarget); yaml.set(path + ".active.expires", guild.activeExpires);
+                yaml.set(path + ".active.last-activity", guild.activeLastActivity);
                 yaml.set(path + ".active.x", guild.activeX); yaml.set(path + ".active.z", guild.activeZ);
                 yaml.set(path + ".active.ready", guild.ready); yaml.set(path + ".active.mobs-spawned", guild.mobsSpawned);
                 yaml.set(path + ".active.contributions", null);
@@ -216,6 +223,7 @@ public final class AdventureDataManager {
         private int activeProgress;
         private int activeTarget;
         private long activeExpires;
+        private long activeLastActivity;
         private int activeX;
         private int activeZ;
         private boolean ready;
@@ -232,6 +240,7 @@ public final class AdventureDataManager {
         public int activeProgress() { return activeProgress; }
         public int activeTarget() { return activeTarget; }
         public long activeExpires() { return activeExpires; }
+        public long activeLastActivity() { return activeLastActivity; }
         public int activeX() { return activeX; }
         public int activeZ() { return activeZ; }
         public boolean ready() { return ready; }
@@ -240,19 +249,21 @@ public final class AdventureDataManager {
         public void daily(String date, List<String> ids) { dailyDate = date; dailyIds.clear(); dailyIds.addAll(ids); clearActive(); }
         public void start(AdventureQuestTemplate quest, long expires, int x, int z) {
             activeQuest = quest.id(); activeProgress = 0; activeTarget = quest.amount(); activeExpires = expires;
+            activeLastActivity = System.currentTimeMillis();
             activeX = x; activeZ = z; ready = false; mobsSpawned = false; contributions.clear();
         }
         public void addProgress(UUID player, int amount) {
             if (amount <= 0 || ready) return;
             int applied = Math.min(amount, Math.max(0, activeTarget - activeProgress));
             activeProgress += applied;
+            activeLastActivity = System.currentTimeMillis();
             contributions.merge(player, applied, Integer::sum);
             ready = activeProgress >= activeTarget;
         }
         public void setMobsSpawned() { mobsSpawned = true; }
         public void complete(long rewardExp) { exp += Math.max(0L, rewardExp); completed++; clearActive(); }
         public void clearActive() {
-            activeQuest = ""; activeProgress = 0; activeTarget = 0; activeExpires = 0L; activeX = 0; activeZ = 0;
+            activeQuest = ""; activeProgress = 0; activeTarget = 0; activeExpires = 0L; activeLastActivity = 0L; activeX = 0; activeZ = 0;
             ready = false; mobsSpawned = false; contributions.clear();
         }
     }

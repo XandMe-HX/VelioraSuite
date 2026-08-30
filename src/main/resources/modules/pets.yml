@@ -10,6 +10,10 @@ settings:
   allow-aquatic-pets: false
   allow-axolotl-ground-pet: true
   allow-flying-pets: true
+  catalog:
+    # Katalog otomatis berisi mob pasif, mob defensive yang diizinkan, dan pet terbang.
+    # Boss, entity teknis, penghancur block, serta aquatic murni sengaja tidak dimasukkan.
+    auto-add-safe-mobs: true
   # Monster tidak pernah menyerang owner atau pemain lain. Mereka hanya membela
   # owner terhadap monster yang sudah menyerang / diserang oleh owner.
   allow-aggressive-pets: true
@@ -35,6 +39,9 @@ riding:
   require-adult: true
   default-adult-level: 10
   allow-ride-active-only: true
+  # Pet bayi tetap bayi permanen dan tidak bisa ditunggangi secara bawaan.
+  # Ubah ke true hanya bila memang ingin mode tunggangan bayi.
+  allow-baby-pets: false
   dismount-on-dismiss: true
   speed: 0.32
   jump-y: 0.42
@@ -385,6 +392,7 @@ messages:
   pet-ride-not-active: '%prefix% &cTidak ada pet aktif untuk ditunggangi.'
   pet-ride-not-rideable: '%prefix% &cPet ini tidak bisa ditunggangi.'
   pet-ride-not-adult: '%prefix% &cPet ini belum dewasa. Minimal level: &f%level%'
+  pet-ride-baby: '%prefix% &cPet bayi tidak bisa ditunggangi. Pilih pet dewasa.'
   pet-ride-start: '%prefix% &aKamu menaiki &f%pet%&a.'
   pet-ride-stop: '%prefix% &eKamu turun dari &f%pet%&e.'
   reload-success: '%prefix% &aVelioraPets berhasil direload.'
