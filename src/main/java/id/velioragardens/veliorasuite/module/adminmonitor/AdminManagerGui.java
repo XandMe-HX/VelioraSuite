@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -209,7 +210,10 @@ public final class AdminManagerGui implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player viewer)) return;
         if (!(event.getView().getTopInventory().getHolder() instanceof MenuHolder holder)) return;
-        if (holder.type.startsWith("editor:")) { if (holder.type.endsWith(":view") || event.getClickedInventory() != event.getView().getTopInventory()) event.setCancelled(true); return; }
+        if (holder.type.startsWith("editor:")) {
+            handleEditorClick(event, viewer, holder);
+            return;
+        }
         event.setCancelled(true);
         ItemStack clicked = event.getCurrentItem();
         if (clicked == null || !clicked.hasItemMeta()) return;
@@ -222,6 +226,10 @@ public final class AdminManagerGui implements Listener {
         if (action.equals("profile")) { if (target != null) openProfile(viewer, target); return; }
         if (action.equals("history")) { if (target != null) openHistory(viewer, target); return; }
         if (action.equals("back")) { openPlayers(viewer, 0); return; }
+        if (!monitor.canManage(viewer)) {
+            viewer.sendMessage(color("&cKamu hanya memiliki izin melihat Admin Manager."));
+            return;
+        }
         if (action.equals("server")) { openServerControls(viewer); return; }
         if (action.equals("vanish")) { toggleVanish(viewer); openPlayers(viewer, holder.page); return; }
         if (action.equals("backtp")) { Location back=backs.get(viewer.getUniqueId()); if(back==null) viewer.sendMessage(color("&cBelum ada lokasi kembali.")); else viewer.teleport(back); return; }
@@ -328,7 +336,7 @@ public final class AdminManagerGui implements Listener {
             for(Player other:Bukkit.getOnlinePlayers()) if(!other.hasPermission("veliorasuite.adminmonitor.admin")) other.hidePlayer(plugin,event.getPlayer());
         }
     }
-    @EventHandler public void onQuit(PlayerQuitEvent event) { if(vanished.contains(event.getPlayer().getUniqueId())) event.quitMessage(null); frozen.remove(event.getPlayer().getUniqueId()); }
+    @EventHandler public void onQuit(PlayerQuitEvent event) { if(vanished.contains(event.getPlayer().getUniqueId())) event.quitMessage(null); frozen.remove(event.getPlayer().getUniqueId()); backs.remove(event.getPlayer().getUniqueId()); }
     @EventHandler public void onDeath(PlayerDeathEvent event) { backs.put(event.getPlayer().getUniqueId(),event.getPlayer().getLocation().clone()); }
 
     @EventHandler public void onEditorClose(InventoryCloseEvent event) {
@@ -344,6 +352,53 @@ public final class AdminManagerGui implements Listener {
             target.getInventory().setLeggings(edited.getItem(38)); target.getInventory().setBoots(edited.getItem(39)); target.getInventory().setItemInOffHand(edited.getItem(40));
         }
         event.getPlayer().sendMessage(color("&aPerubahan inventory " + target.getName() + " disimpan live."));
+    }
+
+    /** Drag can bypass InventoryClickEvent, so every custom Admin Manager menu blocks it. */
+    @EventHandler public void onMenuDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof MenuHolder) event.setCancelled(true);
+    }
+
+    /**
+     * Safe editor semantics: an admin can replace a target slot with an item from
+     * their cursor, or right-click an empty cursor to delete. Target items are
+     * never transferred into the viewer's inventory, so this cannot become a
+     * staff item-stealing GUI.
+     */
+    private void handleEditorClick(InventoryClickEvent event, Player viewer, MenuHolder holder) {
+        event.setCancelled(true);
+        if (!monitor.canManage(viewer)) {
+            viewer.sendMessage(color("&cKamu tidak memiliki izin mengedit inventory pemain."));
+            return;
+        }
+        if (holder.type.endsWith(":view") || event.getClickedInventory() != event.getView().getTopInventory()) return;
+        int editableSlots = holder.type.startsWith("editor:ender") ? 27 : 41;
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= editableSlots || event.isShiftClick() || event.getHotbarButton() >= 0) return;
+        ItemStack cursor = event.getCursor();
+        if (cursor == null || cursor.getType().isAir()) {
+            if (event.isRightClick()) {
+                event.getView().getTopInventory().setItem(slot, null);
+                viewer.sendActionBar(net.kyori.adventure.text.Component.text("Slot target dikosongkan."));
+            } else {
+                ItemStack held = viewer.getInventory().getItemInMainHand();
+                if (held == null || held.getType().isAir()) {
+                    viewer.sendActionBar(net.kyori.adventure.text.Component.text("Pegang item di tangan lalu klik slot; klik kanan kosong untuk menghapus."));
+                    return;
+                }
+                event.getView().getTopInventory().setItem(slot, held.clone());
+                viewer.getInventory().setItemInMainHand(null);
+                viewer.sendActionBar(net.kyori.adventure.text.Component.text("Item dari tangan dipindahkan ke slot target."));
+            }
+            return;
+        }
+        ItemStack replacement = cursor.clone();
+        if (event.isRightClick()) replacement.setAmount(1);
+        event.getView().getTopInventory().setItem(slot, replacement);
+        ItemStack remaining = cursor.clone();
+        remaining.setAmount(cursor.getAmount() - replacement.getAmount());
+        viewer.setItemOnCursor(remaining.getAmount() <= 0 ? null : remaining);
+        viewer.sendActionBar(net.kyori.adventure.text.Component.text("Item target diganti secara aman."));
     }
 
     private void openServerControls(Player viewer) {
@@ -405,7 +460,7 @@ public final class AdminManagerGui implements Listener {
         Player target=Bukkit.getPlayerExact(targetName); if(target==null){viewer.sendMessage(color("&cInventory hanya dapat dibuka saat target online."));return;}
         int size=ender?27:54; String kind=ender?"ender":"inventory"; MenuHolder holder=new MenuHolder("editor:"+kind+":"+(edit?"edit":"view"),targetName,0); Inventory inv=Bukkit.createInventory(holder,size,color("&8"+(ender?"Ender Chest: ":"Inventory: ")+"&f"+targetName));holder.inventory=inv;
         if(ender) for(int i=0;i<27;i++)inv.setItem(i,target.getEnderChest().getItem(i));
-        else { for(int i=0;i<36;i++)inv.setItem(i,target.getInventory().getItem(i)); inv.setItem(36,target.getInventory().getHelmet());inv.setItem(37,target.getInventory().getChestplate());inv.setItem(38,target.getInventory().getLeggings());inv.setItem(39,target.getInventory().getBoots());inv.setItem(40,target.getInventory().getItemInOffHand()); }
+        else { for(int i=0;i<36;i++)inv.setItem(i,target.getInventory().getItem(i)); inv.setItem(36,target.getInventory().getHelmet());inv.setItem(37,target.getInventory().getChestplate());inv.setItem(38,target.getInventory().getLeggings());inv.setItem(39,target.getInventory().getBoots());inv.setItem(40,target.getInventory().getItemInOffHand()); for(int i=41;i<54;i++)inv.setItem(i,item(Material.BLACK_STAINED_GLASS_PANE,"&8Slot terkunci",List.of("&7Bukan bagian dari inventory target."),null,null)); }
         viewer.openInventory(inv);
     }
     private void inspect(Player viewer,String targetName) { Player target=Bukkit.getPlayerExact(targetName); if(target==null){viewer.sendMessage(color("&cPemain sedang offline."));return;} Location l=target.getLocation(); viewer.sendMessage(color("&8[&bInspeksi&8] &f"+target.getName()+" &7HP: &c"+(int)target.getHealth()+"&7/&c"+(int)target.getMaxHealth()+" &7Food: &e"+target.getFoodLevel()+" &7Mode: &f"+target.getGameMode()+" &7Lokasi: &f"+l.getWorld().getName()+" "+l.getBlockX()+", "+l.getBlockY()+", "+l.getBlockZ())); }

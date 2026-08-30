@@ -51,6 +51,8 @@ public final class AdminMonitorManager {
     public boolean isEnabledInConfig() { return bool("settings.enabled", true); }
     public boolean isStaff(Player player) { return player.hasPermission(str("settings.staff-permission", "veliorasuite.staff")); }
     public boolean canView(CommandSender sender) { return sender.isOp() || sender.hasPermission(str("settings.admin-permission", "veliorasuite.adminmonitor.admin")) || sender.hasPermission("veliorasuite.adminmonitor.view"); }
+    /** Viewing the dashboard must never grant moderation or inventory-edit powers. */
+    public boolean canManage(CommandSender sender) { return sender.isOp() || sender.hasPermission(str("settings.admin-permission", "veliorasuite.adminmonitor.admin")); }
     public boolean canReload(CommandSender sender) { return sender.isOp() || sender.hasPermission(str("settings.admin-permission", "veliorasuite.adminmonitor.admin")) || sender.hasPermission("veliorasuite.adminmonitor.reload"); }
 
     public void beginExistingSessions() {
