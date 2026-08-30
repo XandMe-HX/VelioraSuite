@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.boss;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import id.velioragardens.veliorasuite.module.boss.model.BossDefinition;
 import id.velioragardens.veliorasuite.module.boss.model.BossSkillType;
+import id.velioragardens.veliorasuite.core.effects.VelioraEffects.Priority;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -101,7 +102,7 @@ public final class BossSkillManager {
         if (speed != null) boss.addPotionEffect(new PotionEffect(speed, 20 * 60, 0));
         if (resistance != null) boss.addPotionEffect(new PotionEffect(resistance, 20 * 60, 0));
         healBoss(boss, config.healPulsePercent());
-        boss.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, boss.getLocation().add(0.0D, 1.0D, 0.0D), 90, 2.5D, 1.2D, 2.5D, 0.05D);
+        visual(boss.getLocation().add(0.0D, 1.0D, 0.0D), Particle.SOUL_FIRE_FLAME, 90, 2.5D, 1.2D, 2.5D, 0.05D, Priority.CRITICAL);
         boss.getWorld().playSound(boss.getLocation(), Sound.ENTITY_WARDEN_ROAR, 1.3F, 0.65F);
         if (config.playerNotificationsEnabled()) {
             String message = config.color("&c" + boss.getCustomName() + " &cmemasuki Rage Mode! &7Damage meningkat dan boss mulai memulihkan HP.");
@@ -118,7 +119,7 @@ public final class BossSkillManager {
         telegraphRing(boss, location, Particle.CRIT, 3.4D, 1.0D, Sound.BLOCK_STONE_PLACE);
         runAfterTelegraph(boss, () -> {
             Location impact = boss.getLocation();
-            impact.getWorld().spawnParticle(Particle.CLOUD, impact, 38, 2.7D, 0.35D, 2.7D, 0.04D);
+            visual(impact, Particle.CLOUD, 38, 2.7D, 0.35D, 2.7D, 0.04D, Priority.IMPORTANT);
             impact.getWorld().spawnParticle(Particle.BLOCK, impact, 26, 2.4D, 0.25D, 2.4D, 0.08D, impact.getBlock().getBlockData());
             impact.getWorld().playSound(impact, Sound.ENTITY_GENERIC_EXPLODE, 0.85F, 0.82F);
             for (Player player : nearbyPlayers(impact, 6.0D)) {
@@ -154,8 +155,8 @@ public final class BossSkillManager {
         Location target = targets.isEmpty() ? boss.getLocation().clone().add(random.nextInt(9) - 4, 0, random.nextInt(9) - 4) : targets.get(random.nextInt(targets.size())).getLocation();
         telegraphRing(boss, target, Particle.FLAME, 1.65D, 0.08D, Sound.BLOCK_FIRE_AMBIENT);
         runAfterTelegraph(boss, () -> {
-            target.getWorld().spawnParticle(Particle.EXPLOSION, target, 1);
-            target.getWorld().spawnParticle(Particle.LAVA, target, 18, 1.25D, 0.25D, 1.25D, 0.03D);
+            visual(target, Particle.EXPLOSION, 1, 0, 0, 0, 0, Priority.CRITICAL);
+            visual(target, Particle.LAVA, 18, 1.25D, 0.25D, 1.25D, 0.03D, Priority.IMPORTANT);
             target.getWorld().playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 1.0F, 1.0F);
             for (Player player : nearbyPlayers(target, 4.0D)) player.damage(config.fireBombDamage() * outgoingDamageMultiplier());
         });
@@ -178,7 +179,7 @@ public final class BossSkillManager {
         telegraphRing(boss, boss.getLocation(), Particle.SPORE_BLOSSOM_AIR, 4.0D, 0.45D, Sound.ENTITY_WITCH_AMBIENT);
         runAfterTelegraph(boss, () -> {
             Location location = boss.getLocation();
-            location.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, location, 42, 3.5D, 0.8D, 3.5D, 0.03D);
+            visual(location, Particle.HAPPY_VILLAGER, 42, 3.5D, 0.8D, 3.5D, 0.03D, Priority.IMPORTANT);
             PotionEffectType poison = PotionEffectType.getByName("POISON");
             PotionEffectType slow = PotionEffectType.getByName("SLOW");
             for (Player player : nearbyPlayers(location, 7.0D)) {
@@ -194,7 +195,7 @@ public final class BossSkillManager {
         if (targets.isEmpty()) return;
         boss.getWorld().playSound(boss.getLocation(), Sound.ENTITY_WARDEN_SONIC_CHARGE, 1.0F, 1.15F);
         for (Player player : targets) {
-            player.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, player.getLocation().add(0.0D, 1.0D, 0.0D), 18, 0.7D, 0.9D, 0.7D, 0.03D);
+            visual(player.getLocation().add(0.0D, 1.0D, 0.0D), Particle.ELECTRIC_SPARK, 18, 0.7D, 0.9D, 0.7D, 0.03D, Priority.IMPORTANT);
         }
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!isCurrentBoss(boss)) return;
@@ -210,11 +211,11 @@ public final class BossSkillManager {
     private void shadowPulse(LivingEntity boss) {
         Location center = boss.getLocation();
         center.getWorld().playSound(center, Sound.ENTITY_WITHER_AMBIENT, 1.0F, 0.55F);
-        center.getWorld().spawnParticle(Particle.PORTAL, center.clone().add(0.0D, 1.0D, 0.0D), 140, 4.0D, 1.2D, 4.0D, 0.25D);
+        visual(center.clone().add(0.0D, 1.0D, 0.0D), Particle.PORTAL, 140, 4.0D, 1.2D, 4.0D, 0.25D, Priority.CRITICAL);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!isCurrentBoss(boss)) return;
             for (Player player : nearbyPlayers(center, config.targetingRadiusHorizontal())) {
-                player.getWorld().spawnParticle(Particle.SOUL, player.getLocation(), 24, 0.8D, 0.5D, 0.8D, 0.04D);
+                visual(player.getLocation(), Particle.SOUL, 24, 0.8D, 0.5D, 0.8D, 0.04D, Priority.IMPORTANT);
                 player.damage(config.shadowPulseDamage() * outgoingDamageMultiplier());
                 Vector pull = boss.getLocation().toVector().subtract(player.getLocation().toVector());
                 if (pull.lengthSquared() > 0.01D) player.setVelocity(pull.normalize().multiply(config.shadowPulsePullStrength()).setY(config.pullAuraUpward()));
@@ -228,7 +229,7 @@ public final class BossSkillManager {
         if (targets.isEmpty()) return;
         boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, 1.0F, 0.8F);
         for (Player player : targets) {
-            player.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, player.getLocation().add(0.0D, 0.8D, 0.0D), 28, 1.2D, 0.9D, 1.2D, 0.02D);
+            visual(player.getLocation().add(0.0D, 0.8D, 0.0D), Particle.SOUL_FIRE_FLAME, 28, 1.2D, 0.9D, 1.2D, 0.02D, Priority.IMPORTANT);
         }
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!isCurrentBoss(boss)) return;
@@ -243,7 +244,7 @@ public final class BossSkillManager {
     }
 
     private void healPulse(LivingEntity boss) {
-        boss.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, boss.getLocation().add(0.0D, 1.0D, 0.0D), 55, 1.6D, 1.0D, 1.6D, 0.04D);
+        visual(boss.getLocation().add(0.0D, 1.0D, 0.0D), Particle.TOTEM_OF_UNDYING, 55, 1.6D, 1.0D, 1.6D, 0.04D, Priority.IMPORTANT);
         boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.9F, 0.75F);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (isCurrentBoss(boss)) healBoss(boss, config.healPulsePercent());
@@ -255,7 +256,7 @@ public final class BossSkillManager {
         telegraphRing(boss, center, Particle.SNOWFLAKE, config.frostNovaRadius(), 0.5D, Sound.BLOCK_GLASS_BREAK);
         runAfterTelegraph(boss, () -> {
             Location impact = boss.getLocation();
-            impact.getWorld().spawnParticle(Particle.SNOWFLAKE, impact.add(0.0D, 0.8D, 0.0D), 70, 3.2D, 0.7D, 3.2D, 0.04D);
+            visual(impact.add(0.0D, 0.8D, 0.0D), Particle.SNOWFLAKE, 70, 3.2D, 0.7D, 3.2D, 0.04D, Priority.IMPORTANT);
             for (Player player : nearbyPlayers(impact, config.frostNovaRadius())) {
                 player.damage(config.frostNovaDamage() * outgoingDamageMultiplier());
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 1));
@@ -274,7 +275,7 @@ public final class BossSkillManager {
             @Override public void run() {
                 if (!isCurrentBoss(boss) || wave++ >= 3 || !isValidDelayedTarget(target)) { cancel(); return; }
                 Location location = target.getLocation().add(0.0D, 1.0D, 0.0D);
-                location.getWorld().spawnParticle(Particle.END_ROD, location, 20, 0.55D, 0.75D, 0.55D, 0.03D);
+                visual(location, Particle.END_ROD, 20, 0.55D, 0.75D, 0.55D, 0.03D, Priority.IMPORTANT);
                 location.getWorld().playSound(location, Sound.ENTITY_EVOKER_CAST_SPELL, 0.55F, 1.25F + wave * 0.08F);
                 target.damage(config.arcaneBarrageDamage() * outgoingDamageMultiplier());
             }
@@ -286,7 +287,7 @@ public final class BossSkillManager {
         telegraphRing(boss, center, Particle.COMPOSTER, config.vineSnareRadius(), 0.25D, Sound.BLOCK_GRASS_PLACE);
         runAfterTelegraph(boss, () -> {
             Location impact = boss.getLocation();
-            impact.getWorld().spawnParticle(Particle.COMPOSTER, impact, 65, 3.6D, 0.45D, 3.6D, 0.03D);
+            visual(impact, Particle.COMPOSTER, 65, 3.6D, 0.45D, 3.6D, 0.03D, Priority.IMPORTANT);
             for (Player player : nearbyPlayers(impact, config.vineSnareRadius())) {
                 player.damage(config.vineSnareDamage() * outgoingDamageMultiplier());
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 2));
@@ -303,8 +304,8 @@ public final class BossSkillManager {
             Location marked = targets.get(index).getLocation().clone();
             telegraphRing(boss, marked, Particle.FLAME, 1.4D, 0.1D, Sound.BLOCK_FIRE_AMBIENT);
             runAfterTelegraph(boss, () -> {
-                marked.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, marked, 1);
-                marked.getWorld().spawnParticle(Particle.LAVA, marked, 18, 1.0D, 0.25D, 1.0D, 0.03D);
+                visual(marked, Particle.EXPLOSION_EMITTER, 1, 0, 0, 0, 0, Priority.CRITICAL);
+                visual(marked, Particle.LAVA, 18, 1.0D, 0.25D, 1.0D, 0.03D, Priority.IMPORTANT);
                 marked.getWorld().playSound(marked, Sound.ENTITY_GENERIC_EXPLODE, 0.8F, 1.1F);
                 for (Player player : nearbyPlayers(marked, 3.0D)) player.damage(config.meteorDamage() * outgoingDamageMultiplier());
             });
@@ -317,7 +318,7 @@ public final class BossSkillManager {
         runAfterTelegraph(boss, () -> {
             Location impact = boss.getLocation();
             impact.getWorld().playSound(impact, Sound.ENTITY_WARDEN_SONIC_BOOM, 1.0F, 0.85F);
-            impact.getWorld().spawnParticle(Particle.SONIC_BOOM, impact.add(0.0D, 1.1D, 0.0D), 1);
+            visual(impact.add(0.0D, 1.1D, 0.0D), Particle.SONIC_BOOM, 1, 0, 0, 0, 0, Priority.CRITICAL);
             for (Player player : nearbyPlayers(impact, config.sonicBurstRadius())) {
                 player.damage(config.sonicBurstDamage() * outgoingDamageMultiplier());
                 Vector knock = safeDirection(player.getLocation().toVector().subtract(impact.toVector())).multiply(0.50D).setY(0.22D);
@@ -331,12 +332,12 @@ public final class BossSkillManager {
         if (targets.isEmpty()) return;
         Player target = targets.get(random.nextInt(targets.size()));
         Location marked = target.getLocation().clone();
-        target.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, marked.add(0.0D, 1.0D, 0.0D), 24, 0.65D, 0.9D, 0.65D, 0.04D);
+        visual(marked.add(0.0D, 1.0D, 0.0D), Particle.DAMAGE_INDICATOR, 24, 0.65D, 0.9D, 0.65D, 0.04D, Priority.IMPORTANT);
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.8F, 0.85F);
         target.sendActionBar(net.kyori.adventure.text.Component.text("BLOOD MARK - menjauh dari boss!"));
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!isCurrentBoss(boss) || !isValidDelayedTarget(target)) return;
-            target.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, target.getLocation().add(0.0D, 1.0D, 0.0D), 35, 0.7D, 0.9D, 0.7D, 0.04D);
+            visual(target.getLocation().add(0.0D, 1.0D, 0.0D), Particle.SOUL_FIRE_FLAME, 35, 0.7D, 0.9D, 0.7D, 0.04D, Priority.IMPORTANT);
             target.damage(config.bloodMarkDamage() * outgoingDamageMultiplier());
             target.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 80, 0));
         }, config.skillTelegraphTicks());
@@ -380,6 +381,10 @@ public final class BossSkillManager {
 
     private Vector safeDirection(Vector vector) {
         return vector.lengthSquared() <= 0.0001D ? new Vector() : vector.normalize();
+    }
+
+    private void visual(Location location, Particle particle, int amount, double offsetX, double offsetY, double offsetZ, double extra, Priority priority) {
+        plugin.getEffects().particle(location, particle, amount, offsetX, offsetY, offsetZ, extra, priority);
     }
 
     /** Small moving rings make attacks readable without a permanent particle flood. */

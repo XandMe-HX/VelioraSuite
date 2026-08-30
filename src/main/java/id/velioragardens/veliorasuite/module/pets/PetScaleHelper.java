@@ -24,7 +24,9 @@ public final class PetScaleHelper {
     private double normalizePetScale(double scale) {
         if (scale <= 0.0D) return MIN_VISIBLE_PET_SCALE;
         if (scale < MIN_VISIBLE_PET_SCALE) return MIN_VISIBLE_PET_SCALE;
-        return Math.min(2.5D, scale);
+        // Pet level 100 must remain readable and cannot become an oversized
+        // collision/visual problem in a survival world.
+        return Math.min(2.0D, scale);
     }
 
     private Attribute attribute(String... names) {

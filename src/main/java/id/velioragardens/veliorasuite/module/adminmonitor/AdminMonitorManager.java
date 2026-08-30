@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 public final class AdminMonitorManager {
     private final VelioraSuite plugin;
@@ -44,13 +45,16 @@ public final class AdminMonitorManager {
         catch (Exception ignored) { zoneId = ZoneId.systemDefault(); }
         database = new AdminMonitorDatabase(plugin);
         database.init();
-        pruneLogs();
+        // Retention cleanup can touch a large SQLite table; never hold startup ticks for it.
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::pruneLogs);
         startAutosaveTask();
     }
 
     public boolean isEnabledInConfig() { return bool("settings.enabled", true); }
     public boolean isStaff(Player player) { return player.hasPermission(str("settings.staff-permission", "veliorasuite.staff")); }
     public boolean canView(CommandSender sender) { return sender.isOp() || sender.hasPermission(str("settings.admin-permission", "veliorasuite.adminmonitor.admin")) || sender.hasPermission("veliorasuite.adminmonitor.view"); }
+    /** Viewing the dashboard must never grant moderation or inventory-edit powers. */
+    public boolean canManage(CommandSender sender) { return sender.isOp() || sender.hasPermission(str("settings.admin-permission", "veliorasuite.adminmonitor.admin")); }
     public boolean canReload(CommandSender sender) { return sender.isOp() || sender.hasPermission(str("settings.admin-permission", "veliorasuite.adminmonitor.admin")) || sender.hasPermission("veliorasuite.adminmonitor.reload"); }
 
     public void beginExistingSessions() {
@@ -110,14 +114,23 @@ public final class AdminMonitorManager {
         }
         if (!found) sender.sendMessage(color("&8- &7Tidak ada staff yang sedang online."));
     }
-    public void sendLog(CommandSender sender, String name, LocalDate date) { sendEntries(sender, entries(date, name), "Aktivitas " + name + " pada " + date, 30); }
+    public void sendLog(CommandSender sender, String name, LocalDate date) { sendEntriesAsync(sender, () -> entries(date, name), "Aktivitas " + name + " pada " + date, 30); }
     public void sendToday(CommandSender sender, String name) {
         LocalDate today = LocalDate.now(zoneId);
-        List<Map<?, ?>> result = entries(today);
-        if (name != null) result = result.stream().filter(e -> name.equalsIgnoreCase(String.valueOf(e.get("player")))).toList();
-        sendEntries(sender, result, name == null ? "Aktivitas staff hari ini" : "Aktivitas " + name + " hari ini", 50);
+        sendEntriesAsync(sender, () -> {
+            List<Map<?, ?>> result = entries(today);
+            return name == null ? result : result.stream().filter(e -> name.equalsIgnoreCase(String.valueOf(e.get("player")))).toList();
+        }, name == null ? "Aktivitas staff hari ini" : "Aktivitas " + name + " hari ini", 50);
     }
-    public void sendDate(CommandSender sender, LocalDate date) { sendEntries(sender, entries(date), "Aktivitas staff " + date, 50); }
+    public void sendDate(CommandSender sender, LocalDate date) { sendEntriesAsync(sender, () -> entries(date), "Aktivitas staff " + date, 50); }
+    /** Database reads are intentionally async; sending Bukkit messages returns to the server thread. */
+    private void sendEntriesAsync(CommandSender sender, Supplier<List<Map<?, ?>>> query, String title, int limit) {
+        sender.sendMessage(color(prefix() + "&7Memuat log..."));
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            List<Map<?, ?>> result = query.get();
+            Bukkit.getScheduler().runTask(plugin, () -> sendEntries(sender, result, title, limit));
+        });
+    }
     private void sendEntries(CommandSender sender, List<Map<?, ?>> result, String title, int limit) {
         result = result.stream().sorted(Comparator.comparingLong(e -> -number(e.get("time")))).limit(limit).toList();
         sender.sendMessage(color(prefix() + "&b" + title + "&b:"));

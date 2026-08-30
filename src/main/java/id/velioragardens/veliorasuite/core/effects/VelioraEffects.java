@@ -12,6 +12,8 @@ import java.util.UUID;
 
 /** Low-lag particle/sound delivery: only nearby clients receive an effect. */
 public final class VelioraEffects {
+    /** Visual priority prevents ambient cosmetics from hiding important combat feedback. */
+    public enum Priority { AMBIENT, GAMEPLAY, IMPORTANT, CRITICAL }
     private final VelioraSuite plugin;
     private final Map<UUID, ParticleBudget> budgets = new HashMap<>();
     private boolean enabled;
@@ -32,12 +34,22 @@ public final class VelioraEffects {
     }
 
     public void particle(Location location, Particle type, int requested, double offsetX, double offsetY, double offsetZ, double extra) {
+        particle(location, type, requested, offsetX, offsetY, offsetZ, extra, Priority.GAMEPLAY);
+    }
+
+    public void particle(Location location, Particle type, int requested, double offsetX, double offsetY, double offsetZ, double extra, Priority priority) {
         if (!enabled || location == null || location.getWorld() == null || type == null || requested <= 0) return;
-        int count = Math.min(requested, maxBurst);
+        Priority safePriority = priority == null ? Priority.GAMEPLAY : priority;
+        int burstLimit = switch (safePriority) {
+            case CRITICAL -> maxBurst * 2;
+            case IMPORTANT -> Math.max(maxBurst, (int) Math.ceil(maxBurst * 1.35D));
+            default -> maxBurst;
+        };
+        int count = Math.min(requested, burstLimit);
         double rangeSquared = viewDistance * viewDistance;
         for (Player viewer : location.getWorld().getPlayers()) {
             if (!viewer.isOnline() || viewer.getLocation().distanceSquared(location) > rangeSquared) continue;
-            int allowed = reserve(viewer.getUniqueId(), count);
+            int allowed = reserve(viewer.getUniqueId(), count, safePriority);
             if (allowed <= 0) continue;
             double scale = lowLag ? Math.min(1.0D, allowed / (double) Math.max(1, count)) : 1.0D;
             viewer.spawnParticle(type, location, allowed, offsetX * scale, offsetY * scale, offsetZ * scale, extra);
@@ -75,11 +87,23 @@ public final class VelioraEffects {
         }
     }
 
-    private int reserve(UUID player, int wanted) {
+    private int reserve(UUID player, int wanted, Priority priority) {
         long second = System.currentTimeMillis() / 1000L;
         ParticleBudget budget = budgets.computeIfAbsent(player, ignored -> new ParticleBudget(second));
-        if (budget.second != second) { budget.second = second; budget.used = 0; }
-        int allowed = Math.max(0, Math.min(wanted, maxPerPlayerSecond - budget.used));
+        if (budget.second != second) { budget.second = second; budget.used = 0; budget.ambientUsed = 0; }
+        int totalCap = switch (priority) {
+            case AMBIENT -> Math.max(1, (int) Math.floor(maxPerPlayerSecond * 0.35D));
+            case GAMEPLAY -> Math.max(1, (int) Math.floor(maxPerPlayerSecond * 0.85D));
+            case IMPORTANT -> Math.max(1, (int) Math.floor(maxPerPlayerSecond * 0.95D));
+            case CRITICAL -> maxPerPlayerSecond;
+        };
+        int remainingTotal = Math.max(0, totalCap - budget.used);
+        int allowed = Math.min(wanted, remainingTotal);
+        if (priority == Priority.AMBIENT) {
+            int ambientCap = Math.max(1, (int) Math.floor(maxPerPlayerSecond * 0.35D));
+            allowed = Math.min(allowed, Math.max(0, ambientCap - budget.ambientUsed));
+            budget.ambientUsed += allowed;
+        }
         budget.used += allowed;
         return allowed;
     }
@@ -87,6 +111,7 @@ public final class VelioraEffects {
     private static final class ParticleBudget {
         private long second;
         private int used;
+        private int ambientUsed;
         private ParticleBudget(long second) { this.second = second; }
     }
 }

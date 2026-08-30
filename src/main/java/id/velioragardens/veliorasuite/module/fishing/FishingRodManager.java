@@ -21,6 +21,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import id.velioragardens.veliorasuite.module.fishing.model.FishingRodDefinition;
+import id.velioragardens.veliorasuite.module.fishing.model.FishRarity;
+import id.velioragardens.veliorasuite.core.effects.VelioraEffects.Priority;
 
 import java.util.List;
 
@@ -79,21 +81,57 @@ public final class FishingRodManager implements Listener {
             }
             return;
         }
-        // Tier 9-12: sayap partikel tipis di belakang badan.
-        if (tier <= 12) {
-            wings(player, particle, phase, 5, 0.58D, 1.08D);
-            return;
+        // Tier 9+ is intentionally a per-rod signature, not one shared wing effect.
+        switch (tier) {
+            case 9 -> { // Steampunk: two rotating copper gear rings.
+                ring(player, Particle.ELECTRIC_SPARK, phase, 4, 0.38D, 0.70D);
+                ring(player, Particle.ELECTRIC_SPARK, -phase, 4, 0.58D, 1.22D);
+            }
+            case 10 -> { // Fluorescent: neon double halo.
+                ring(player, Particle.GLOW, phase, 6, 0.46D, 1.02D);
+                ring(player, Particle.END_ROD, -phase * 0.7D, 4, 0.27D, 1.58D);
+            }
+            case 11 -> { // Lava: rising ember column.
+                for (int i = 0; i < 6; i++) point(player, Particle.FLAME, phase + i * 1.05D, 0.24D + i * 0.05D, 0.52D + i * 0.20D);
+            }
+            case 12 -> { // Radioactive: unstable green orbit.
+                ring(player, Particle.COMPOSTER, phase, 5, 0.62D, 1.04D);
+                particle(player.getLocation().add(0, 1.48D, 0), Particle.ELECTRIC_SPARK);
+            }
+            case 13 -> { // Obsidian: four floating shards.
+                for (int i = 0; i < 4; i++) point(player, Particle.REVERSE_PORTAL, phase + i * Math.PI / 2.0D, 0.62D, 1.15D + (i % 2) * 0.30D);
+            }
+            case 14 -> wings(player, Particle.END_ROD, phase, 5, 0.62D, 1.03D); // Chrome
+            case 15 -> { // Coral: bubbles drifting upward around the player.
+                ring(player, Particle.BUBBLE_POP, phase, 6, 0.55D, 0.70D);
+                ring(player, Particle.NAUTILUS, -phase, 3, 0.32D, 1.48D);
+            }
+            case 16 -> { // Poseidon: wide sea crown.
+                wings(player, Particle.DOLPHIN, phase, 5, 0.72D, 0.98D);
+                ring(player, Particle.NAUTILUS, phase, 5, 0.48D, 2.02D);
+            }
+            case 17 -> { // Ghostfinn: spectral fins.
+                wings(player, Particle.SOUL, phase, 6, 0.72D, 1.02D);
+                ring(player, Particle.SOUL, -phase, 4, 0.34D, 1.84D);
+            }
+            case 18 -> { // Angler: ancient luminous crown.
+                ring(player, Particle.GLOW, phase, 6, 0.45D, 2.08D);
+                particle(player.getLocation().add(0, 2.42D, 0), Particle.ELECTRIC_SPARK);
+            }
+            case 19 -> { // Ares: a fiery battle cross.
+                for (int i = 0; i < 4; i++) point(player, Particle.SOUL_FIRE_FLAME, phase + i * Math.PI / 2.0D, 0.63D, 1.10D);
+                ring(player, Particle.FLAME, -phase, 4, 0.34D, 1.72D);
+            }
+            case 20 -> { // Element: one visible orbit for each element.
+                Particle[] elements = {Particle.FLAME, Particle.BUBBLE_POP, Particle.ENCHANT, Particle.ELECTRIC_SPARK};
+                for (int i = 0; i < elements.length; i++) point(player, elements[i], phase + i * Math.PI / 2.0D, 0.68D, 1.16D);
+                ring(player, Particle.END_ROD, -phase, 4, 0.38D, 2.00D);
+            }
+            default -> { // Diamond and future highest rods: crystal constellation.
+                ring(player, Particle.END_ROD, phase, 8, 0.64D, 1.10D);
+                ring(player, Particle.ELECTRIC_SPARK, -phase, 4, 0.34D, 2.08D);
+            }
         }
-        // Tier 13-16: halo/crown di atas kepala dengan dua kilau kecil.
-        if (tier <= 16) {
-            for (int i = 0; i < 6; i++) point(player, particle, phase + i * Math.PI / 3.0D, 0.45D, 2.12D);
-            particle(player.getLocation().add(0.35D, 2.28D, 0), Particle.END_ROD);
-            particle(player.getLocation().add(-0.35D, 2.28D, 0), Particle.END_ROD);
-            return;
-        }
-        // Tier 17+: sayap malaikat + lingkaran mahkota; efek tertinggi.
-        wings(player, Particle.END_ROD, phase, 7, 0.78D, 1.04D);
-        for (int i = 0; i < 6; i++) point(player, Particle.ELECTRIC_SPARK, phase + i * Math.PI / 3.0D, 0.48D, 2.18D);
     }
 
     public void reload() {
@@ -151,7 +189,7 @@ public final class FishingRodManager implements Listener {
         if (tier < 3 || hook == null || !hook.isValid()) return;
         Particle particle = particleForTier(tier);
         double phase = (System.currentTimeMillis() % 4000L) / 4000.0D * Math.PI * 2.0D;
-        // 3-5 ring, 6-10 double spiral, 11-16 wings, 17+ crown/horns.
+        // 3-5 ring, 6-10 double spiral, 11-16 wings, then a unique hooked signature per endgame rod.
         if (tier <= 5) {
             for (int i = 0; i < 10; i++) point(player, particle, phase + i * Math.PI / 5.0D, 0.75D, 1.05D);
         } else if (tier <= 10) {
@@ -163,11 +201,72 @@ public final class FishingRodManager implements Listener {
         } else if (tier <= 16) {
             wings(player, particle, phase, 7, 0.82D, 1.12D);
         } else {
-            for (int i = 0; i < 12; i++) point(player, particle, phase + i * Math.PI / 6.0D, 0.62D, 2.05D);
-            manager.getConfigManager().getPlugin().getEffects().particle(player.getLocation().add(0.38D, 2.35D, 0), particle, 2, 0.03D, 0.18D, 0.03D, 0);
-            manager.getConfigManager().getPlugin().getEffects().particle(player.getLocation().add(-0.38D, 2.35D, 0), particle, 2, 0.03D, 0.18D, 0.03D, 0);
+            switch (tier) {
+                case 17 -> { // Abyss: a low soul-current around player and hook.
+                    ring(player, Particle.SOUL, phase, 8, 0.66D, 0.72D);
+                    ring(player, Particle.SOUL, -phase, 5, 0.38D, 1.55D);
+                }
+                case 18 -> { // Spirit: vertical sparks rather than another crown.
+                    for (int i = 0; i < 5; i++) point(player, Particle.ELECTRIC_SPARK, phase + i * Math.PI * 0.4D, 0.48D, 0.70D + i * 0.30D);
+                    ring(player, Particle.ENCHANT, -phase, 5, 0.36D, 1.95D);
+                }
+                case 19 -> { // Ares: battle-cross and ember ring.
+                    for (int i = 0; i < 4; i++) point(player, Particle.SOUL_FIRE_FLAME, phase + i * Math.PI / 2.0D, 0.70D, 1.12D);
+                    ring(player, Particle.FLAME, -phase, 6, 0.46D, 0.52D);
+                }
+                case 20 -> { // Element: four clearly separate elements circle the hooked fight.
+                    Particle[] elements = {Particle.FLAME, Particle.BUBBLE_POP, Particle.ENCHANT, Particle.ELECTRIC_SPARK};
+                    for (int i = 0; i < elements.length; i++) point(player, elements[i], phase + i * Math.PI / 2.0D, 0.74D, 1.30D);
+                    ring(player, Particle.END_ROD, -phase, 5, 0.44D, 2.02D);
+                }
+                default -> { // Diamond: bright two-level constellation.
+                    ring(player, Particle.END_ROD, phase, 9, 0.72D, 1.10D);
+                    ring(player, Particle.ELECTRIC_SPARK, -phase, 5, 0.38D, 2.12D);
+                }
+            }
         }
-        manager.getConfigManager().getPlugin().getEffects().particle(hook.getLocation(), particle, Math.min(8, 2 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
+        Particle hookParticle = switch (tier) {
+            case 17 -> Particle.SOUL;
+            case 18 -> Particle.ELECTRIC_SPARK;
+            case 19 -> Particle.FLAME;
+            case 20 -> Particle.BUBBLE_POP;
+            default -> particle;
+        };
+        manager.getConfigManager().getPlugin().getEffects().particle(hook.getLocation(), hookParticle, Math.min(10, 3 + tier / 3), 0.18D, 0.18D, 0.18D, 0.01D);
+    }
+
+    /** One short signature when a rod is cast; it never repeats in the background. */
+    public void playCastEffect(Player player, FishHook hook) {
+        int tier = getTier(player);
+        if (tier < 1 || hook == null || !hook.isValid()) return;
+        Location point = hook.getLocation();
+        manager.getConfigManager().getPlugin().getEffects().particle(point, hookParticleForTier(tier), Math.min(14, 4 + tier / 2),
+                0.20D, 0.12D, 0.20D, 0.015D, tier >= 14 ? Priority.IMPORTANT : Priority.GAMEPLAY);
+        if (tier >= 17) manager.getConfigManager().getPlugin().getEffects().ring(point, hookParticleForTier(tier), 0.42D, 8, 0.02D);
+        manager.getConfigManager().getPlugin().getEffects().sound(point, org.bukkit.Sound.ENTITY_FISHING_BOBBER_THROW,
+                0.42F, Math.min(1.85F, 0.85F + tier * 0.045F));
+    }
+
+    /** Visual payoff from the exact rod which completed the catch. */
+    public void playReelEffect(Player player, FishHook hook, FishRarity rarity) {
+        int tier = getTier(player);
+        if (tier < 1) return;
+        Location point = hook != null && hook.isValid() ? hook.getLocation() : player.getLocation().add(0.0D, 1.0D, 0.0D);
+        int count = rarity.power() >= FishRarity.LEGENDARY.power() ? 22 : 10;
+        manager.getConfigManager().getPlugin().getEffects().particle(point, hookParticleForTier(tier), count,
+                0.40D, 0.34D, 0.40D, 0.02D, rarity.power() >= FishRarity.LEGENDARY.power() ? Priority.IMPORTANT : Priority.GAMEPLAY);
+        if (tier >= 18 && rarity.power() >= FishRarity.EPIC.power()) {
+            manager.getConfigManager().getPlugin().getEffects().ring(player.getLocation().add(0.0D, 1.0D, 0.0D), hookParticleForTier(tier), 0.72D, 10, 0.03D);
+        }
+        manager.getConfigManager().getPlugin().getEffects().sound(point, org.bukkit.Sound.ENTITY_FISHING_BOBBER_RETRIEVE,
+                rarity.power() >= FishRarity.LEGENDARY.power() ? 0.85F : 0.55F, Math.min(1.9F, 1.0F + tier * 0.035F));
+    }
+
+    public void playSnapEffect(Player player, FishHook hook) {
+        int tier = getTier(player);
+        Location point = hook != null && hook.isValid() ? hook.getLocation() : player.getLocation().add(0.0D, 1.0D, 0.0D);
+        manager.getConfigManager().getPlugin().getEffects().particle(point, Particle.SMOKE, 10, 0.32D, 0.22D, 0.32D, 0.02D, Priority.IMPORTANT);
+        if (tier >= 10) manager.getConfigManager().getPlugin().getEffects().particle(point, hookParticleForTier(tier), 5, 0.18D, 0.18D, 0.18D, 0.01D, Priority.GAMEPLAY);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -285,6 +384,10 @@ public final class FishingRodManager implements Listener {
         particle(player.getLocation().add(Math.cos(angle) * radius, y, Math.sin(angle) * radius), particle);
     }
 
+    private void ring(Player player, Particle particle, double phase, int points, double radius, double y) {
+        for (int i = 0; i < points; i++) point(player, particle, phase + i * Math.PI * 2.0D / points, radius, y);
+    }
+
     private void particle(Location location, Particle particle) {
         manager.getConfigManager().getPlugin().getEffects().particle(location, particle, 1, 0, 0, 0, 0);
     }
@@ -312,6 +415,23 @@ public final class FishingRodManager implements Listener {
             // CRIT membutuhkan payload berbeda pada sebagian build Paper 1.21.11.
             case 18 -> Particle.ELECTRIC_SPARK;
             case 19 -> Particle.LAVA;
+            case 20 -> Particle.TOTEM_OF_UNDYING;
+            default -> Particle.FIREWORK;
+        };
+    }
+
+    private Particle hookParticleForTier(int tier) {
+        return switch (tier) {
+            case 1, 15, 16 -> Particle.BUBBLE_POP;
+            case 2, 4 -> Particle.HAPPY_VILLAGER;
+            case 3, 11, 19 -> Particle.FLAME;
+            case 5, 9, 18 -> Particle.ELECTRIC_SPARK;
+            case 6 -> Particle.SNOWFLAKE;
+            case 7 -> Particle.WAX_ON;
+            case 8, 13 -> Particle.REVERSE_PORTAL;
+            case 10, 14 -> Particle.END_ROD;
+            case 12 -> Particle.COMPOSTER;
+            case 17 -> Particle.SOUL;
             case 20 -> Particle.TOTEM_OF_UNDYING;
             default -> Particle.FIREWORK;
         };
@@ -353,7 +473,8 @@ public final class FishingRodManager implements Listener {
                 Component.text("+" + rod.secondsBonus() + ".0 detik • -" + rod.clickReduction() + " klik", TextColor.color(0xD6E0EB)),
                 Component.text("Luck " + rod.luckPercent() + "% • Speed " + rod.speedPercent() + "% • Max " + Math.round(rod.maxWeight()) + " Kg", TextColor.color(0x70E0C0)),
                 Component.text("Custom: " + customEnchantName(rod.tier()), TextColor.color(0xB56CFF)),
-                Component.text("Enchant: Lure " + rod.tier() + " • Luck " + rod.tier() + " • Unbreaking " + (rod.tier() + 2), TextColor.color(0x70E0C0)),
+                Component.text("Enchant Vanilla: Lure/Luck aman • Unbreaking", TextColor.color(0x70E0C0)),
+                Component.text("Bonus tier diproses oleh VelioraFishing", TextColor.color(0x8391A5)),
                 Component.text("Terikat: " + owner.getName(), TextColor.color(0x8391A5))
         ));
         meta.getPersistentDataContainer().set(tierKey, PersistentDataType.INTEGER, rod.tier());

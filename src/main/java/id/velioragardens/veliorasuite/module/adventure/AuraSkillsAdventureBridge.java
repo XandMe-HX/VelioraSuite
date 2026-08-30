@@ -6,7 +6,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
@@ -20,6 +22,7 @@ public final class AuraSkillsAdventureBridge implements Listener {
     private final VelioraSuite plugin;
     private final AdventureManager adventure;
     private boolean registered;
+    private boolean waitingForAuraSkills;
 
     public AuraSkillsAdventureBridge(VelioraSuite plugin, AdventureManager adventure) {
         this.plugin = plugin;
@@ -29,9 +32,28 @@ public final class AuraSkillsAdventureBridge implements Listener {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void enable() {
         if (!adventure.config().auraSkillsEnabled()) return;
+        Bukkit.getPluginManager().registerEvents(this, plugin);
+        registerAuraSkillsEvent();
+    }
+
+    @EventHandler
+    public void onPluginEnable(PluginEnableEvent event) {
+        if (!"AuraSkills".equalsIgnoreCase(event.getPlugin().getName()) || registered) return;
+        // PluginEnableEvent is fired while the other plugin is finishing its
+        // enable sequence. Deferring one tick makes the bridge reliable across
+        // AuraSkills releases without forcing a hard dependency.
+        Bukkit.getScheduler().runTask(plugin, this::registerAuraSkillsEvent);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void registerAuraSkillsEvent() {
+        if (registered || !adventure.config().auraSkillsEnabled()) return;
         Plugin auraSkills = Bukkit.getPluginManager().getPlugin("AuraSkills");
         if (auraSkills == null || !auraSkills.isEnabled()) {
-            plugin.getLogger().info("VelioraPetualang: AuraSkills tidak ditemukan; bridge dilewati.");
+            if (!waitingForAuraSkills) {
+                waitingForAuraSkills = true;
+                plugin.getLogger().info("VelioraPetualang: menunggu AuraSkills aktif sebelum memasang bridge.");
+            }
             return;
         }
         try {
@@ -40,6 +62,7 @@ public final class AuraSkillsAdventureBridge implements Listener {
             Bukkit.getPluginManager().registerEvent((Class<? extends Event>) rawEvent, this, EventPriority.MONITOR,
                     (listener, event) -> receive(event), plugin, true);
             registered = true;
+            waitingForAuraSkills = false;
             plugin.getLogger().info("VelioraPetualang: bridge AuraSkills aktif untuk XP skill aman.");
         } catch (ReflectiveOperationException exception) {
             plugin.getLogger().warning("VelioraPetualang: API AuraSkills tidak cocok, bridge dilewati.");
@@ -47,8 +70,9 @@ public final class AuraSkillsAdventureBridge implements Listener {
     }
 
     public void disable() {
-        if (registered) org.bukkit.event.HandlerList.unregisterAll(this);
+        org.bukkit.event.HandlerList.unregisterAll(this);
         registered = false;
+        waitingForAuraSkills = false;
     }
 
     private void receive(Event event) {

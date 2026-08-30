@@ -209,9 +209,10 @@ pets:
     icon: MILK_BUCKET
     rarity: COMMON
     scale: 0.55
+    baby: true
     price: 25000
-    rideable: true
-    adult-level: 10
+    rideable: false
+    adult-level: 100
     food: { material: WHEAT, exp: 20 }
   sheep:
     display-name: '&fSheep'
@@ -229,9 +230,10 @@ pets:
     icon: WHITE_WOOL
     rarity: COMMON
     scale: 0.55
+    baby: true
     price: 25000
-    rideable: true
-    adult-level: 10
+    rideable: false
+    adult-level: 100
     food: { material: WHEAT, exp: 20 }
   pig:
     display-name: '&dPig'
@@ -249,9 +251,10 @@ pets:
     icon: CARROT
     rarity: COMMON
     scale: 0.55
+    baby: true
     price: 25000
-    rideable: true
-    adult-level: 10
+    rideable: false
+    adult-level: 100
     food: { material: CARROT, exp: 20 }
   chicken:
     display-name: '&fChicken'
@@ -299,9 +302,10 @@ pets:
     icon: BAMBOO
     rarity: RARE
     scale: 0.55
+    baby: true
     price: 50000
-    rideable: true
-    adult-level: 10
+    rideable: false
+    adult-level: 100
     food: { material: BAMBOO, exp: 25 }
   cat:
     display-name: '&eCat'
@@ -329,9 +333,10 @@ pets:
     icon: BONE
     rarity: COMMON
     scale: 0.42
+    baby: true
     price: 25000
     rideable: false
-    adult-level: 10
+    adult-level: 100
     food: { material: BONE, exp: 20 }
   axolotl:
     display-name: '&dAxolotl'

@@ -11,20 +11,23 @@ settings:
   # VelioraSuite menjadi formatter chat utama. Matikan EssentialsChat/LPC formatter
   # apabila memakai ini, supaya satu pesan tidak terformat dua kali.
   formatter-enabled: true
-  essentials-mode: true
+  # Saat interactive chat aktif, VelioraSuite menjadi satu-satunya formatter
+  # agar hover/click tidak hilang atau dikirim dua kali oleh EssentialsChat.
+  essentials-mode: false
   use-placeholderapi: true
   team-tag-placeholder-enabled: true
   protection-enabled: true
 
-  # Interactive chat hanya untuk token profil seperti [item], [pet], dan [quest].
-  # Teks command dalam chat, termasuk [/spawn] atau bentuk [/apa pun], tidak
-  # pernah diubah menjadi tombol atau dijalankan oleh VelioraSuite.
+  # Interactive chat mendukung token profil seperti [item], [pet], dan [quest].
+  # Command dalam kurung, misalnya [/spawn] atau [/warp lobby], menjadi tombol
+  # yang hanya MENGISI chat penerima. Tidak ada command yang dijalankan otomatis.
   # Saat aktif, VelioraSuite menjadi formatter utama. Matikan EssentialsChat
   # formatter agar pesan tidak ganda atau formatnya tertimpa.
   interactive-chat:
     enabled: true
-    action: RUN_COMMAND
-    hover: '&bKlik untuk menjalankan &f%command%&b.'
+    own-chat-format: true
+    action: SUGGEST_COMMAND
+    hover: '&bKlik untuk menulis &f%command%&b ke kolom chat.'
     # [item] menampilkan item tangan dengan hover. [inv]/[inventory] dan
     # [ender]/[enderchest] membagikan isi sendiri lewat hover teks interaktif.
     # [pet], [quest], [fish], [team], dan [warp] memberi profil hover yang
@@ -36,8 +39,8 @@ settings:
     mention-enabled: true
     share-cooldown-seconds: 10
     share-max-items: 36
-    # Daftar lama untuk kompatibilitas konfigurasi. Tidak dipakai untuk membuat
-    # command chat menjadi tombol, agar perintah tidak terpicu dari chat.
+    # Daftar lama tetap disimpan untuk kompatibilitas konfigurasi. Semua command
+    # yang ditulis dalam [kurung] tetap aman karena hanya disarankan, bukan dijalankan.
     allowed-commands:
       - spawn
       - warp
@@ -74,6 +77,30 @@ settings:
       - sethome
       - delhome
       - report
+    # Kata di dalam [kurung] hanya aktif jika termasuk trigger bawaan atau
+    # ditulis di bawah ini. Ini mencegah teks biasa seperti [wkwk] berubah
+    # menjadi tombol yang membingungkan.
+    custom-triggers:
+      warp_lobby:
+        tokens: [lobby, warp lobby]
+        command: '/vgwarp lobby'
+        label: '&a[WARP LOBBY]'
+        hover: '&bKlik untuk menulis &f/vgwarp lobby'
+      daftar_pet:
+        tokens: [pet list, koleksi pet]
+        command: '/pet list'
+        label: '&d[KOLEKSI PET]'
+        hover: '&bKlik untuk menulis &f/pet list'
+      koleksi_ikan:
+        tokens: [fish collection, koleksi ikan]
+        command: '/fish collection'
+        label: '&3[KOLEKSI IKAN]'
+        hover: '&bKlik untuk menulis &f/fish collection'
+      quest_team:
+        tokens: [quest team, vg team]
+        command: '/vgteam'
+        label: '&b[QUEST TEAM]'
+        hover: '&bKlik untuk menulis &f/vgteam'
 
   cooldown:
     enabled: true

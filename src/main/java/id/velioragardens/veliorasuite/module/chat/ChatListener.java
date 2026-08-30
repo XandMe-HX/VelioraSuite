@@ -5,6 +5,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public final class ChatListener implements Listener {
 
@@ -23,7 +24,7 @@ public final class ChatListener implements Listener {
             return;
         }
 
-        if (chatManager.isInteractiveChatEnabled()) {
+        if (chatManager.isInteractiveChatEnabled() && chatManager.doesInteractiveChatOwnFormat()) {
             event.setCancelled(true);
             chatManager.broadcastInteractive(event.getPlayer(), result.message());
             return;
@@ -43,5 +44,10 @@ public final class ChatListener implements Listener {
         if (chatManager.shouldCancelCommand(event.getPlayer(), event.getMessage())) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        chatManager.clearPlayerState(event.getPlayer().getUniqueId());
     }
 }

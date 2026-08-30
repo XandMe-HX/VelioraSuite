@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import id.velioragardens.veliorasuite.core.effects.VelioraEffects.Priority;
 
 import java.util.Locale;
 import java.util.HashMap;
@@ -88,9 +89,10 @@ public final class PetRideController implements Listener {
         }
         LivingEntity entity = active.entity();
         if (!entity.getPassengers().contains(player)) entity.addPassenger(player);
-        entity.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, entity.getLocation().add(0, 0.7D, 0), 12, 0.3D, 0.3D, 0.3D, 0.02D);
+        manager.plugin().getEffects().particle(entity.getLocation().add(0, 0.7D, 0), org.bukkit.Particle.CLOUD, 12, 0.3D, 0.3D, 0.3D, 0.02D, Priority.IMPORTANT);
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_HORSE_SADDLE, 0.7F, definition.flyingPet() ? 1.35F : 1.0F);
         player.sendMessage(config.color(config.message("pet-ride-start", "%prefix% &aKamu menaiki &f%pet%&a.").replace("%pet%", owned.name())));
+        player.sendActionBar(config.color("&eGunakan arah gerak untuk mengendalikan pet. &7Tekan Shift untuk turun."));
     }
 
     private void sendInfo(Player player, String target) {

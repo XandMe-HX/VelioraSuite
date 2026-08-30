@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -31,14 +32,18 @@ import org.bukkit.NamespacedKey;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Map;
-import java.util.HashMap;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.Location;
 import org.bukkit.GameMode;
@@ -47,20 +52,30 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Animals;
 
-/** A deliberately small, confirmation-first moderation screen. It never scans worlds or profiles. */
+/** A deliberately small, confirmation-first moderation screen. It never fetches Mojang profiles. */
 public final class AdminManagerGui implements Listener {
-    private static final int PAGE_SIZE = 45;
+    // The central 7 x 4 grid keeps player heads visually tidy, with a fixed
+    // frame and controls that never move when the number of players changes.
+    private static final int PAGE_SIZE = 28;
+    private static final int[] PLAYER_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
     private final VelioraSuite plugin;
     private final AdminMonitorManager monitor;
     private final NamespacedKey actionKey;
     private final NamespacedKey targetKey;
-    private final Set<UUID> frozen = new HashSet<>();
-    private final Set<UUID> vanished = new HashSet<>();
-    private final Map<UUID, Long> mutedUntil = new HashMap<>();
+    private final Set<UUID> frozen = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> vanished = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Long> mutedUntil = new ConcurrentHashMap<>();
     private final Map<UUID, Location> backs = new HashMap<>();
     private final Map<UUID, List<String>> moderationHistory = new HashMap<>();
     private final File stateFile;
-    private boolean globalChatMuted;
+    private final AtomicBoolean stateWriteRunning = new AtomicBoolean();
+    private final AtomicReference<String> pendingStateSnapshot = new AtomicReference<>();
+    private volatile boolean globalChatMuted;
 
     public AdminManagerGui(VelioraSuite plugin, AdminMonitorManager monitor) {
         this.plugin = plugin;
@@ -81,6 +96,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("players", null, page);
         Inventory inventory = Bukkit.createInventory(holder, 54, color("&8Admin Manager &7(" + (page + 1) + "/" + pages + ")"));
         holder.inventory = inventory;
+        prepareMenu(inventory, "&8Admin Manager");
         int start = page * PAGE_SIZE;
         for (int index = start; index < Math.min(players.size(), start + PAGE_SIZE); index++) {
             OfflinePlayer target = players.get(index);
@@ -90,14 +106,14 @@ public final class AdminManagerGui implements Listener {
             lore.add(online ? "&a● Online sekarang" : "&7● Offline");
             lore.add("&7Terakhir terlihat: &f" + timeAgo(target.getLastPlayed()));
             lore.add("&7Klik untuk buka tindakan dan profil.");
-            inventory.setItem(index - start, skull(target, (online ? "&a" : "&7") + name, lore, "profile", name));
+            inventory.setItem(PLAYER_SLOTS[index - start], skull(target, (online ? "&a" : "&7") + name, lore, "profile", name));
         }
         inventory.setItem(45, item(Material.ARROW, "&e← Halaman sebelumnya", List.of("&7Klik untuk kembali."), page > 0 ? "previous" : null, null));
-        inventory.setItem(46, item(Material.RECOVERY_COMPASS, "&bTeleport Kembali", List.of("&7Kembali ke lokasi sebelum teleport", "&7atau lokasi kematian terakhir."), "backtp", null));
-        inventory.setItem(47, item(Material.REDSTONE, "&cKontrol Server", List.of("&7Chat, cuaca, waktu, difficulty", "&7dan bersihkan mob dengan konfirmasi."), "server", null));
-        inventory.setItem(48, item(Material.ENDER_EYE, vanished.contains(viewer.getUniqueId()) ? "&aVanish aktif" : "&eVanish diri", List.of("&7Menyembunyikan dirimu dari pemain biasa.", "&7Chat dimatikan saat vanish aktif."), "vanish", null));
-        inventory.setItem(49, item(Material.COMPASS, "&bPemain & Moderasi", List.of("&7Pilih kepala pemain untuk melihat profil.", "&7Semua tindakan penting memakai konfirmasi."), null, null));
+        inventory.setItem(47, item(Material.RECOVERY_COMPASS, "&bTeleport Kembali", List.of("&7Kembali ke lokasi sebelum teleport", "&7atau lokasi kematian terakhir."), "backtp", null));
+        inventory.setItem(49, item(Material.REDSTONE, "&cKontrol Server", List.of("&7Chat, cuaca, waktu, difficulty", "&7dan bersihkan mob dengan konfirmasi."), "server", null));
+        inventory.setItem(51, item(Material.ENDER_EYE, vanished.contains(viewer.getUniqueId()) ? "&aVanish aktif" : "&eVanish diri", List.of("&7Menyembunyikan dirimu dari pemain biasa.", "&7Chat dimatikan saat vanish aktif."), "vanish", null));
         inventory.setItem(53, item(Material.ARROW, "&eHalaman berikutnya →", List.of("&7Klik untuk lanjut."), page + 1 < pages ? "next" : null, null));
+        inventory.setItem(4, item(Material.BOOK, "&bDaftar Pemain", List.of("&7Pilih kepala pemain untuk membuka", "&7profil, moderasi, dan tindakan staf.", "&8Halaman " + (page + 1) + " dari " + pages), null, null));
         viewer.openInventory(inventory);
     }
 
@@ -107,6 +123,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("profile", targetName, 0);
         Inventory inventory = Bukkit.createInventory(holder, 45, color("&8Kelola: &f" + targetName));
         holder.inventory = inventory;
+        prepareMenu(inventory, "&8Kelola pemain");
         long played = 0;
         try { played = target.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20L; } catch (Exception ignored) { }
         List<String> info = List.of(
@@ -116,24 +133,25 @@ public final class AdminManagerGui implements Listener {
                 "&7Playtime: &f" + formatSeconds(played),
                 "&7UUID: &8" + target.getUniqueId());
         inventory.setItem(4, skull(target, "&f" + targetName, info, null, null));
+        // Every action sits on an even column. This leaves a clear visual gap
+        // between categories and prevents the profile screen from looking random.
         inventory.setItem(10, item(Material.ENDER_PEARL, "&bTeleport ke pemain", List.of("&7Hanya jika pemain sedang online."), "teleport", targetName));
-        inventory.setItem(11, item(Material.CHORUS_FRUIT, "&bTarik pemain ke kamu", List.of("&7Memindahkan target online ke lokasi kamu.", "&cButuh konfirmasi."), "confirm_tohere", targetName));
-        inventory.setItem(12, item(Material.CHEST, "&eEdit inventory live", List.of("&7Membuka salinan aman, lalu perubahan", "&7disalin saat GUI ditutup."), "inventory", targetName));
-        inventory.setItem(13, item(Material.ENDER_CHEST, "&5Ender Chest", List.of("&7Klik kiri: lihat saja", "&7Shift+klik: edit live aman"), "ender", targetName));
-        inventory.setItem(14, item(Material.SPYGLASS, "&bInspeksi pemain", List.of("&7HP, food, gamemode, lokasi."), "inspect", targetName));
-        inventory.setItem(15, item(Material.COMPASS, "&bTeleport ke Spawn", List.of("&7Teleport dirimu ke spawn world target."), "spawn", targetName));
-        inventory.setItem(19, item(Material.PACKED_ICE, frozen.contains(target.getUniqueId()) ? "&aLepaskan freeze" : "&eFreeze pemain", List.of("&7Mencegah berjalan, menghancurkan blok", "&7dan damage jatuh."), "freeze", targetName));
-        inventory.setItem(21, item(Material.LEATHER_BOOTS, "&eKick", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_kick", targetName));
-        inventory.setItem(23, item(Material.BARRIER, "&cBan", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_ban", targetName));
-        inventory.setItem(24, item(Material.CLOCK, "&6Tempban", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempban", targetName));
-        inventory.setItem(25, item(Material.LIME_DYE, "&aUnban", List.of("&7Menghapus ban nama pemain.", "&cButuh konfirmasi."), "confirm_unban", targetName));
-        inventory.setItem(28, item(Material.GRAY_DYE, "&eMute", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_mute", targetName));
-        inventory.setItem(29, item(Material.CLOCK, "&6Tempmute", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempmute", targetName));
-        inventory.setItem(30, item(Material.LIME_DYE, "&aUnmute", List.of("&7Membuka akses chat target.", "&cButuh konfirmasi."), "confirm_unmute", targetName));
-        inventory.setItem(31, item(Material.PAPER, "&eWarn", List.of("&7Pilih alasan peringatan."), "choose_warn", targetName));
-        inventory.setItem(33, item(Material.BOOK, "&bRiwayat Moderasi", List.of("&7Lihat maksimal 15 tindakan terakhir.", "&7Tersimpan setelah server direstart."), "history", targetName));
-        inventory.setItem(40, item(Material.ARROW, "&eKembali ke daftar", List.of("&7Tidak ada perubahan."), "back", null));
-        fillEmpty(inventory, Material.GRAY_STAINED_GLASS_PANE, "&8•");
+        inventory.setItem(12, item(Material.CHORUS_FRUIT, "&bTarik pemain ke kamu", List.of("&7Memindahkan target online ke lokasi kamu.", "&cButuh konfirmasi."), "confirm_tohere", targetName));
+        inventory.setItem(14, item(Material.CHEST, "&eEdit inventory live", List.of("&7Membuka salinan aman, lalu perubahan", "&7disalin saat GUI ditutup."), "inventory", targetName));
+        inventory.setItem(16, item(Material.ENDER_CHEST, "&5Ender Chest", List.of("&7Klik kiri: lihat saja", "&7Shift+klik: edit live aman"), "ender", targetName));
+        inventory.setItem(19, item(Material.SPYGLASS, "&bInspeksi pemain", List.of("&7HP, food, gamemode, lokasi."), "inspect", targetName));
+        inventory.setItem(21, item(Material.COMPASS, "&bTeleport ke Spawn", List.of("&7Teleport dirimu ke spawn world target."), "spawn", targetName));
+        inventory.setItem(23, item(Material.PACKED_ICE, frozen.contains(target.getUniqueId()) ? "&aLepaskan freeze" : "&eFreeze pemain", List.of("&7Mencegah berjalan, menghancurkan blok", "&7dan damage jatuh."), "freeze", targetName));
+        inventory.setItem(25, item(Material.LEATHER_BOOTS, "&eKick", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_kick", targetName));
+        inventory.setItem(28, item(Material.BARRIER, "&cBan", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_ban", targetName));
+        inventory.setItem(30, item(Material.CLOCK, "&6Tempban", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempban", targetName));
+        inventory.setItem(32, item(Material.LIME_DYE, "&aUnban", List.of("&7Menghapus ban nama pemain.", "&cButuh konfirmasi."), "confirm_unban", targetName));
+        inventory.setItem(34, item(Material.GRAY_DYE, "&eMute", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_mute", targetName));
+        inventory.setItem(36, item(Material.CLOCK, "&6Tempmute", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempmute", targetName));
+        inventory.setItem(38, item(Material.LIME_DYE, "&aUnmute", List.of("&7Membuka akses chat target.", "&cButuh konfirmasi."), "confirm_unmute", targetName));
+        inventory.setItem(40, item(Material.PAPER, "&eWarn", List.of("&7Pilih alasan peringatan."), "choose_warn", targetName));
+        inventory.setItem(42, item(Material.BOOK, "&bRiwayat Moderasi", List.of("&7Lihat maksimal 15 tindakan terakhir.", "&7Tersimpan setelah server direstart."), "history", targetName));
+        inventory.setItem(44, item(Material.ARROW, "&eKembali ke daftar", List.of("&7Tidak ada perubahan."), "back", null));
         viewer.openInventory(inventory);
     }
 
@@ -198,7 +216,10 @@ public final class AdminManagerGui implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player viewer)) return;
         if (!(event.getView().getTopInventory().getHolder() instanceof MenuHolder holder)) return;
-        if (holder.type.startsWith("editor:")) { if (holder.type.endsWith(":view") || event.getClickedInventory() != event.getView().getTopInventory()) event.setCancelled(true); return; }
+        if (holder.type.startsWith("editor:")) {
+            handleEditorClick(event, viewer, holder);
+            return;
+        }
         event.setCancelled(true);
         ItemStack clicked = event.getCurrentItem();
         if (clicked == null || !clicked.hasItemMeta()) return;
@@ -211,6 +232,10 @@ public final class AdminManagerGui implements Listener {
         if (action.equals("profile")) { if (target != null) openProfile(viewer, target); return; }
         if (action.equals("history")) { if (target != null) openHistory(viewer, target); return; }
         if (action.equals("back")) { openPlayers(viewer, 0); return; }
+        if (!monitor.canManage(viewer)) {
+            viewer.sendMessage(color("&cKamu hanya memiliki izin melihat Admin Manager."));
+            return;
+        }
         if (action.equals("server")) { openServerControls(viewer); return; }
         if (action.equals("vanish")) { toggleVanish(viewer); openPlayers(viewer, holder.page); return; }
         if (action.equals("backtp")) { Location back=backs.get(viewer.getUniqueId()); if(back==null) viewer.sendMessage(color("&cBelum ada lokasi kembali.")); else viewer.teleport(back); return; }
@@ -306,7 +331,12 @@ public final class AdminManagerGui implements Listener {
     @EventHandler(ignoreCancelled = true) public void onChat(AsyncPlayerChatEvent event) {
         UUID id=event.getPlayer().getUniqueId(); long until=mutedUntil.getOrDefault(id,0L);
         if(until>0 && (until==Long.MAX_VALUE || until>System.currentTimeMillis())) {event.setCancelled(true);event.getPlayer().sendMessage(color("&cKamu sedang dimute oleh staf."));return;}
-        if(until>0) { mutedUntil.remove(id); saveState(); }
+        if(until>0) {
+            mutedUntil.remove(id);
+            // AsyncPlayerChatEvent may run outside the server thread. Building a
+            // YAML snapshot here would race normal GUI actions, so schedule it.
+            Bukkit.getScheduler().runTask(plugin, this::saveState);
+        }
         if(vanished.contains(id)) {event.setCancelled(true);event.getPlayer().sendMessage(color("&7Chat dimatikan saat vanish aktif. Command tetap boleh."));return;}
         if(globalChatMuted && !event.getPlayer().hasPermission("veliorasuite.adminmonitor.admin")){event.setCancelled(true);event.getPlayer().sendMessage(color("&cGlobal chat sedang dimute."));}
     }
@@ -317,7 +347,7 @@ public final class AdminManagerGui implements Listener {
             for(Player other:Bukkit.getOnlinePlayers()) if(!other.hasPermission("veliorasuite.adminmonitor.admin")) other.hidePlayer(plugin,event.getPlayer());
         }
     }
-    @EventHandler public void onQuit(PlayerQuitEvent event) { if(vanished.contains(event.getPlayer().getUniqueId())) event.quitMessage(null); frozen.remove(event.getPlayer().getUniqueId()); }
+    @EventHandler public void onQuit(PlayerQuitEvent event) { if(vanished.contains(event.getPlayer().getUniqueId())) event.quitMessage(null); frozen.remove(event.getPlayer().getUniqueId()); backs.remove(event.getPlayer().getUniqueId()); }
     @EventHandler public void onDeath(PlayerDeathEvent event) { backs.put(event.getPlayer().getUniqueId(),event.getPlayer().getLocation().clone()); }
 
     @EventHandler public void onEditorClose(InventoryCloseEvent event) {
@@ -333,6 +363,53 @@ public final class AdminManagerGui implements Listener {
             target.getInventory().setLeggings(edited.getItem(38)); target.getInventory().setBoots(edited.getItem(39)); target.getInventory().setItemInOffHand(edited.getItem(40));
         }
         event.getPlayer().sendMessage(color("&aPerubahan inventory " + target.getName() + " disimpan live."));
+    }
+
+    /** Drag can bypass InventoryClickEvent, so every custom Admin Manager menu blocks it. */
+    @EventHandler public void onMenuDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof MenuHolder) event.setCancelled(true);
+    }
+
+    /**
+     * Safe editor semantics: an admin can replace a target slot with an item from
+     * their cursor, or right-click an empty cursor to delete. Target items are
+     * never transferred into the viewer's inventory, so this cannot become a
+     * staff item-stealing GUI.
+     */
+    private void handleEditorClick(InventoryClickEvent event, Player viewer, MenuHolder holder) {
+        event.setCancelled(true);
+        if (!monitor.canManage(viewer)) {
+            viewer.sendMessage(color("&cKamu tidak memiliki izin mengedit inventory pemain."));
+            return;
+        }
+        if (holder.type.endsWith(":view") || event.getClickedInventory() != event.getView().getTopInventory()) return;
+        int editableSlots = holder.type.startsWith("editor:ender") ? 27 : 41;
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= editableSlots || event.isShiftClick() || event.getHotbarButton() >= 0) return;
+        ItemStack cursor = event.getCursor();
+        if (cursor == null || cursor.getType().isAir()) {
+            if (event.isRightClick()) {
+                event.getView().getTopInventory().setItem(slot, null);
+                viewer.sendActionBar(net.kyori.adventure.text.Component.text("Slot target dikosongkan."));
+            } else {
+                ItemStack held = viewer.getInventory().getItemInMainHand();
+                if (held == null || held.getType().isAir()) {
+                    viewer.sendActionBar(net.kyori.adventure.text.Component.text("Pegang item di tangan lalu klik slot; klik kanan kosong untuk menghapus."));
+                    return;
+                }
+                event.getView().getTopInventory().setItem(slot, held.clone());
+                viewer.getInventory().setItemInMainHand(null);
+                viewer.sendActionBar(net.kyori.adventure.text.Component.text("Item dari tangan dipindahkan ke slot target."));
+            }
+            return;
+        }
+        ItemStack replacement = cursor.clone();
+        if (event.isRightClick()) replacement.setAmount(1);
+        event.getView().getTopInventory().setItem(slot, replacement);
+        ItemStack remaining = cursor.clone();
+        remaining.setAmount(cursor.getAmount() - replacement.getAmount());
+        viewer.setItemOnCursor(remaining.getAmount() <= 0 ? null : remaining);
+        viewer.sendActionBar(net.kyori.adventure.text.Component.text("Item target diganti secara aman."));
     }
 
     private void openServerControls(Player viewer) {
@@ -375,11 +452,49 @@ public final class AdminManagerGui implements Listener {
         org.bukkit.configuration.ConfigurationSection history=yaml.getConfigurationSection("history");
         if(history!=null) for(String raw:history.getKeys(false)) try { moderationHistory.put(UUID.fromString(raw), new ArrayList<>(history.getStringList(raw))); } catch(IllegalArgumentException ignored) { }
     }
+    /** Queues a complete state snapshot; disk I/O itself never runs on the server thread. */
     private void saveState() {
+        pendingStateSnapshot.set(createStateSnapshot());
+        flushStateAsync();
+    }
+
+    private String createStateSnapshot() {
         YamlConfiguration yaml=new YamlConfiguration(); yaml.set("global-chat-muted",globalChatMuted); yaml.set("vanished",vanished.stream().map(UUID::toString).toList());
         for(Map.Entry<UUID,Long> entry:mutedUntil.entrySet()) yaml.set("muted."+entry.getKey(),entry.getValue());
         for(Map.Entry<UUID,List<String>> entry:moderationHistory.entrySet()) yaml.set("history."+entry.getKey(),entry.getValue());
-        try { File parent=stateFile.getParentFile(); if(parent!=null&&!parent.exists())parent.mkdirs(); yaml.save(stateFile); } catch(IOException exception) { plugin.getLogger().warning("AdminManager: gagal menyimpan mute/vanish: "+exception.getMessage()); }
+        return yaml.saveToString();
+    }
+
+    private void flushStateAsync() {
+        if (!stateWriteRunning.compareAndSet(false, true)) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String snapshot = pendingStateSnapshot.getAndSet(null);
+            if (snapshot != null) {
+                try {
+                    File parent = stateFile.getParentFile();
+                    if (parent != null) Files.createDirectories(parent.toPath());
+                    Files.writeString(stateFile.toPath(), snapshot, StandardCharsets.UTF_8);
+                } catch (IOException exception) {
+                    plugin.getLogger().warning("AdminManager: gagal menyimpan mute/vanish: " + exception.getMessage());
+                    pendingStateSnapshot.compareAndSet(null, snapshot);
+                }
+            }
+            stateWriteRunning.set(false);
+            if (pendingStateSnapshot.get() != null) Bukkit.getScheduler().runTask(plugin, this::flushStateAsync);
+        });
+    }
+
+    /** Final synchronous save is only used during plugin shutdown, after gameplay has stopped. */
+    public void shutdown() {
+        String snapshot = createStateSnapshot();
+        pendingStateSnapshot.set(null);
+        try {
+            File parent = stateFile.getParentFile();
+            if (parent != null) Files.createDirectories(parent.toPath());
+            Files.writeString(stateFile.toPath(), snapshot, StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("AdminManager: gagal menyimpan state saat shutdown: " + exception.getMessage());
+        }
     }
 
     private void recordModeration(UUID target, String staff, String action, String reason, String duration) {
@@ -394,7 +509,7 @@ public final class AdminManagerGui implements Listener {
         Player target=Bukkit.getPlayerExact(targetName); if(target==null){viewer.sendMessage(color("&cInventory hanya dapat dibuka saat target online."));return;}
         int size=ender?27:54; String kind=ender?"ender":"inventory"; MenuHolder holder=new MenuHolder("editor:"+kind+":"+(edit?"edit":"view"),targetName,0); Inventory inv=Bukkit.createInventory(holder,size,color("&8"+(ender?"Ender Chest: ":"Inventory: ")+"&f"+targetName));holder.inventory=inv;
         if(ender) for(int i=0;i<27;i++)inv.setItem(i,target.getEnderChest().getItem(i));
-        else { for(int i=0;i<36;i++)inv.setItem(i,target.getInventory().getItem(i)); inv.setItem(36,target.getInventory().getHelmet());inv.setItem(37,target.getInventory().getChestplate());inv.setItem(38,target.getInventory().getLeggings());inv.setItem(39,target.getInventory().getBoots());inv.setItem(40,target.getInventory().getItemInOffHand()); }
+        else { for(int i=0;i<36;i++)inv.setItem(i,target.getInventory().getItem(i)); inv.setItem(36,target.getInventory().getHelmet());inv.setItem(37,target.getInventory().getChestplate());inv.setItem(38,target.getInventory().getLeggings());inv.setItem(39,target.getInventory().getBoots());inv.setItem(40,target.getInventory().getItemInOffHand()); for(int i=41;i<54;i++)inv.setItem(i,item(Material.BLACK_STAINED_GLASS_PANE,"&8Slot terkunci",List.of("&7Bukan bagian dari inventory target."),null,null)); }
         viewer.openInventory(inv);
     }
     private void inspect(Player viewer,String targetName) { Player target=Bukkit.getPlayerExact(targetName); if(target==null){viewer.sendMessage(color("&cPemain sedang offline."));return;} Location l=target.getLocation(); viewer.sendMessage(color("&8[&bInspeksi&8] &f"+target.getName()+" &7HP: &c"+(int)target.getHealth()+"&7/&c"+(int)target.getMaxHealth()+" &7Food: &e"+target.getFoodLevel()+" &7Mode: &f"+target.getGameMode()+" &7Lokasi: &f"+l.getWorld().getName()+" "+l.getBlockX()+", "+l.getBlockY()+", "+l.getBlockZ())); }
@@ -403,7 +518,11 @@ public final class AdminManagerGui implements Listener {
     private ItemStack skull(OfflinePlayer owner, String name, List<String> lore, String action, String target) {
         ItemStack stack = item(Material.PLAYER_HEAD, name, lore, action, target);
         SkullMeta skull = (SkullMeta) stack.getItemMeta();
-        skull.setOwningPlayer(owner);
+        // Do not call setOwningPlayer for offline accounts. Paper may then ask Mojang to
+        // resolve every texture in this 45-slot page, causing HTTP 429 and noisy logs.
+        // An online profile already has its signed texture in memory, so it is safe to use.
+        Player online = owner.getPlayer();
+        if (online != null) skull.setOwnerProfile(online.getPlayerProfile());
         stack.setItemMeta(skull);
         return stack;
     }
@@ -419,6 +538,14 @@ public final class AdminManagerGui implements Listener {
     }
     private void fillEmpty(Inventory inventory, Material material, String name) {
         for (int slot = 0; slot < inventory.getSize(); slot++) if (inventory.getItem(slot) == null) inventory.setItem(slot, item(material, name, List.of(), null, null));
+    }
+    private void prepareMenu(Inventory inventory, String label) {
+        fillEmpty(inventory, Material.BLACK_STAINED_GLASS_PANE, label);
+        // A restrained cyan frame makes pages readable even with a resource pack
+        // that replaces glass textures. Content is written after this method.
+        ItemStack frame = item(Material.CYAN_STAINED_GLASS_PANE, "&8•", List.of(), null, null);
+        for (int slot = 0; slot < 9; slot++) inventory.setItem(slot, frame);
+        for (int slot : new int[]{9, 17, 18, 26, 27, 35}) inventory.setItem(slot, frame);
     }
     private String displayAction(String action) {
         String kind = action.contains(":") ? action.substring(0, action.indexOf(':')) : action;

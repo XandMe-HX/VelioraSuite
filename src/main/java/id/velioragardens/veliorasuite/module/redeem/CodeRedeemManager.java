@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.redeem;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.storage.BufferedYamlWriter;
 import id.velioragardens.veliorasuite.core.storage.VelioraDatabase;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -12,7 +13,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -25,12 +25,16 @@ public final class CodeRedeemManager {
     private final Map<String, Template> templates = new LinkedHashMap<>();
     private final File file;
     private YamlConfiguration data;
+    private BufferedYamlWriter yamlWriter;
     private boolean databaseBacked;
+    private long lastAttemptPrune;
     private Object economy;
     private Class<?> economyClass;
 
     public CodeRedeemManager(VelioraSuite plugin) { this.plugin = plugin; this.file = new File(plugin.getDataFolder(), "data/redeem.yml"); seedTemplates(); }
     public void load() {
+        if (yamlWriter != null) yamlWriter.shutdown();
+        yamlWriter = null;
         VelioraDatabase database = plugin.getDatabase();
         databaseBacked = database != null && database.isAvailable();
         data = new YamlConfiguration();
@@ -45,6 +49,10 @@ public final class CodeRedeemManager {
         else {
             data = YamlConfiguration.loadConfiguration(file);
             if (databaseBacked) database.saveModuleStateNow("redeem", data.saveToString());
+        }
+        if (!databaseBacked) {
+            yamlWriter = new BufferedYamlWriter(plugin, file, data, "data/redeem.yml");
+            yamlWriter.start();
         }
         hookEconomy();
     }
@@ -82,7 +90,9 @@ public final class CodeRedeemManager {
     }
     public String delete(String raw) { String code = normalize(raw); if (code == null || !data.contains("codes." + code)) return "§cKode tidak ditemukan."; data.set("codes." + code, null); data.set("claims." + code, null); save(); return "§aKode §f" + code + " §aberhasil dihapus."; }
     public String redeem(Player player, String raw) {
-        long now = System.currentTimeMillis(); long last = attempts.getOrDefault(player.getUniqueId(), 0L);
+        long now = System.currentTimeMillis();
+        pruneAttemptCache(now);
+        long last = attempts.getOrDefault(player.getUniqueId(), 0L);
         if (now - last < 1200) return "§cTunggu sebentar sebelum mencoba kode lagi.";
         attempts.put(player.getUniqueId(), now);
         String code = normalize(raw); if (code == null || !data.getBoolean("codes." + code + ".enabled", false)) return "§cKode tidak ditemukan atau sudah tidak aktif.";
@@ -115,8 +125,23 @@ public final class CodeRedeemManager {
     private void putBase(String code, Type type, String creator) { data.set("codes." + code + ".enabled", true); data.set("codes." + code + ".type", type.name()); data.set("codes." + code + ".created-by", creator); data.set("codes." + code + ".created-at", System.currentTimeMillis()); data.set("claims." + code, new ArrayList<String>()); }
     private String normalize(String input) { if (input == null) return null; String c=input.trim().toUpperCase(Locale.ROOT); return c.matches("[A-Z0-9_-]{3,32}") ? c : null; }
     private String sanitizeCommand(String command) { if(command==null)return null; String safe=command.trim(); if(safe.startsWith("/"))safe=safe.substring(1); return safe.isBlank()||safe.contains("\n")||safe.contains("\r")||safe.contains(";") ? null : safe; }
-    private void save() { String snapshot=data.saveToString(); if (databaseBacked) plugin.getDatabase().saveModuleStateAsync("redeem", snapshot); else try { data.save(file); } catch (IOException ex) { plugin.getLogger().warning("CodeRedeem: gagal menyimpan data: " + ex.getMessage()); } }
-    private void saveNow() { if (data != null && databaseBacked) plugin.getDatabase().saveModuleStateNow("redeem", data.saveToString()); }
+    /** Persistence is async during gameplay; a redemption can never block ticks on a YAML write. */
+    private void save() {
+        if (databaseBacked) plugin.getDatabase().saveModuleStateAsync("redeem", data.saveToString());
+        else if (yamlWriter != null) { yamlWriter.markDirty(); yamlWriter.flushAsync(); }
+    }
+    private void saveNow() {
+        if (data == null) return;
+        if (databaseBacked) plugin.getDatabase().saveModuleStateNow("redeem", data.saveToString());
+        else if (yamlWriter != null) yamlWriter.shutdown();
+    }
+
+    /** Keeps the anti-spam map bounded without clearing a player's active cooldown on reconnect. */
+    private void pruneAttemptCache(long now) {
+        if (now - lastAttemptPrune < 60_000L) return;
+        lastAttemptPrune = now;
+        attempts.entrySet().removeIf(entry -> now - entry.getValue() > 300_000L);
+    }
     private void hookEconomy() { economy=null; economyClass=null; try { if (Bukkit.getPluginManager().getPlugin("Vault") == null) return; economyClass=Class.forName("net.milkbowl.vault.economy.Economy"); @SuppressWarnings({"rawtypes","unchecked"}) RegisteredServiceProvider<?> provider=Bukkit.getServicesManager().getRegistration((Class)economyClass); if(provider != null) economy=provider.getProvider(); } catch (ReflectiveOperationException ignored) {} }
     private boolean deposit(Player p, double value) { if (value<=0) return true; if(economy==null) return false; try { Method method=economyClass.getMethod("depositPlayer", OfflinePlayer.class,double.class); Object response=method.invoke(economy,p,value); Method ok=response.getClass().getMethod("transactionSuccess"); return Boolean.TRUE.equals(ok.invoke(response)); } catch (ReflectiveOperationException ex) { return false; } }
     private void seedTemplates() {
