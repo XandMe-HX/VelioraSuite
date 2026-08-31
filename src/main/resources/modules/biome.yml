@@ -5,9 +5,18 @@ settings:
 worlds: ["*"]
 cooldown-seconds: 8
 display:
-  title: '&d&lBIOME BARU'
-  subtitle: '&f{biome}'
+  # Pertama kali sebuah biome ditemukan di sesi ini, title menegaskan penemuan.
+  new-biome-title: '&d&lBIOME BARU'
+  # Kunjungan berikutnya hanya menampilkan nama biome, bukan title spam yang sama.
+  title: '&d&l{biome}'
+  subtitle: '&7Sekarang memasuki &f{biome}'
   actionbar: '&8✦ &fMemasuki &d{biome}'
+# Semua biome Minecraft tetap otomatis terdeteksi. Tambahkan nama cantik hanya
+# untuk biome yang ingin diberi nama server sendiri; selain itu nama vanilla dipakai.
+biome-names:
+  minecraft_plains: '&aPlains'
+  minecraft_forest: '&2Forest'
+  minecraft_the_void: '&5The Void'
 effects:
   particle: END_ROD
   count: 12

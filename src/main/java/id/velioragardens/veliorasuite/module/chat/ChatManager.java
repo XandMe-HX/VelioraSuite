@@ -145,6 +145,13 @@ public final class ChatManager {
             return ChatProcessResult.pass(finalMessage);
         }
 
+        // InteractiveChat owns the final Component and applies the Veliora
+        // prefix itself. Returning already-formatted text here caused the same
+        // prefix/message to be rendered a second time.
+        if (isInteractiveChatEnabled() && doesInteractiveChatOwnFormat()) {
+            return ChatProcessResult.pass(finalMessage);
+        }
+
         return ChatProcessResult.formatted(formatManager.formatPublicChat(player, finalMessage));
     }
 
