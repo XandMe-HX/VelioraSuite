@@ -42,6 +42,10 @@ public final class AdventureCommand implements CommandExecutor, TabCompleter {
             if (!(sender instanceof Player player)) return true;
             manager.claim(player); return true;
         }
+        if (args.length > 0 && (args[0].equalsIgnoreCase("profesi") || args[0].equalsIgnoreCase("profession"))) {
+            if (!(sender instanceof Player player)) return true;
+            manager.openProfessions(player); return true;
+        }
         if (!(sender instanceof Player player)) { sender.sendMessage("Command ini hanya untuk pemain."); return true; }
         manager.openMain(player); return true;
     }

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public final class PetDataManager {
     public static final int SHARED_STORAGE_SIZE = 27;
@@ -59,6 +61,8 @@ public final class PetDataManager {
             data.set(petPath + ".name", pet.name());
             data.set(petPath + ".cooldown-until", pet.cooldownUntil());
             data.set(petPath + ".last-fed", pet.lastFed());
+            data.set(petPath + ".public-ride", pet.publicRide());
+            data.set(petPath + ".trusted-riders", pet.trustedRiders().stream().map(UUID::toString).toList());
         }
         writer.markDirty();
     }
@@ -106,14 +110,21 @@ public final class PetDataManager {
                 String petPath = path + ".owned." + id;
                 long cooldown = data.contains(petPath + ".cooldown-until") ? data.getLong(petPath + ".cooldown-until", 0L) : oldGlobalCooldown;
                 long lastFed = data.getLong(petPath + ".last-fed", System.currentTimeMillis());
-                player.add(new OwnedPet(
+                OwnedPet pet = new OwnedPet(
                         id.toLowerCase(Locale.ROOT),
                         data.getInt(petPath + ".level", 1),
                         data.getInt(petPath + ".exp", 0),
                         data.getString(petPath + ".name", id),
                         cooldown,
                         lastFed
-                ));
+                );
+                pet.publicRide(data.getBoolean(petPath + ".public-ride", false));
+                Set<UUID> trusted = new LinkedHashSet<>();
+                for (String raw : data.getStringList(petPath + ".trusted-riders")) {
+                    try { trusted.add(UUID.fromString(raw)); } catch (IllegalArgumentException ignored) { }
+                }
+                pet.trustedRiders(trusted);
+                player.add(pet);
             }
         }
         return player;

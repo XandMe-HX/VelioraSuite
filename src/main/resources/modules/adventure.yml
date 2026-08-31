@@ -4,6 +4,18 @@ settings:
   enabled: true
   hide-member-commands: true
 
+# Profesi Petualang: adaptasi ringan dari konsep UJobs, tetapi terhubung ke
+# /vgpetualang dan tidak membuat listener/reward Jobs kedua yang dapat dobel.
+professions:
+  enabled: true
+  max-level: 50
+  level-exp: 100
+  xp:
+    mining: 3
+    foraging: 2
+    farming: 2
+    hunting: 2
+
 # XP AuraSkills ikut mengisi level/rank Petualang. Fighting sengaja mati supaya
 # pukul-pukul mob tidak dapat menjadi jalan pintas menaikkan Petualang.
 integrations:

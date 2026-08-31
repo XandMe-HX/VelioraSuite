@@ -1,0 +1,12 @@
+# Pemilih alat otomatis yang aman dan tanpa NMS. Hanya hotbar yang diperiksa;
+# item tidak dipindah, tidak dihapus, dan tidak menyentuh inventory pemain lain.
+settings:
+  enabled: true
+  require-permission: true
+  switch-cooldown-ticks: 2
+messages:
+  prefix: '&7[&eVELIORA &6TOOLS&7] '
+  enabled: '&aAutoTool diaktifkan.'
+  disabled: '&cAutoTool dimatikan.'
+  status: '&fStatus AutoTool: {status}&f.'
+  reloaded: '&aKonfigurasi AutoTool direload.'

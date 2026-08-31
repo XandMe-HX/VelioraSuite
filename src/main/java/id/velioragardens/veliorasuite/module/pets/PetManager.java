@@ -119,6 +119,14 @@ public final class PetManager implements Listener {
     public RedProtectCompat redProtectCompat() { return redProtect; }
     public PlayerPetData playerData(UUID uuid) { return data.get(uuid); }
     public VelioraPet activePet(UUID uuid) { return activePets.get(uuid); }
+    /** Finds only currently managed pets; this never scans world entities. */
+    public VelioraPet activePetByEntity(UUID entityUuid) {
+        if (entityUuid == null) return null;
+        for (VelioraPet active : activePets.values()) {
+            if (active != null && active.entity() != null && entityUuid.equals(active.entity().getUniqueId())) return active;
+        }
+        return null;
+    }
     /** Snapshot used by low-frequency maintenance; never scan every world. */
     public List<LivingEntity> activePetEntities() {
         List<LivingEntity> entities = new ArrayList<>();

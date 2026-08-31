@@ -11,6 +11,7 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.OfflinePlayer;
@@ -94,6 +95,8 @@ public final class AdventureManager implements Listener {
                 "&7Cara membuat team, menerima misi,", "&7menyelesaikan, dan menyetor hadiah.", "", "&eKlik untuk dikirim ke chat."), "guide", ""));
         inventory.setItem(15, item(Material.CHEST, "&bSetor dan Riwayat", List.of(
                 "&7Setor misi yang sudah selesai", "&7dan lihat progress guild.", "", "&eKlik untuk membuka."), "submit", ""));
+        inventory.setItem(17, item(Material.DIAMOND_PICKAXE, "&6Profesi Petualang", List.of(
+                "&7Penambang, Penebang, Petani,", "&7Pemburu, dan Nelayan.", "", "&eKlik untuk melihat perkembangan."), "professions", ""));
         inventory.setItem(22, profileItem(player));
         player.openInventory(inventory);
     }
@@ -166,6 +169,23 @@ public final class AdventureManager implements Listener {
         player.openInventory(inventory);
     }
 
+    public void openProfessions(Player player) {
+        Inventory inventory = Bukkit.createInventory(new AdventureHolder("professions"), 27, config.color("&8Profesi Petualang"));
+        fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
+        int[] slots = {10, 11, 13, 15, 16};
+        for (int i = 0; i < AdventureProfession.values().length; i++) {
+            AdventureProfession profession = AdventureProfession.values()[i];
+            long exp = professionExp(player, profession);
+            int level = professionLevel(exp);
+            long current = exp % config.professionLevelExp();
+            inventory.setItem(slots[i], item(profession.icon(), profession.color() + profession.display(), List.of(
+                    "&7Level: &f" + level, "&7Pengalaman: &f" + exp,
+                    "&7Menuju level berikutnya: &f" + current + "/" + config.professionLevelExp(), "", "&8Progres dihitung dari aktivitas alami."), "none", ""));
+        }
+        inventory.setItem(22, item(Material.ARROW, "&cKembali", List.of("&7Kembali ke menu utama."), "main", ""));
+        player.openInventory(inventory);
+    }
+
     public boolean accept(Player player, String questId) {
         Team team = requireReadyTeam(player, true);
         if (team == null) return false;
@@ -234,7 +254,7 @@ public final class AdventureManager implements Listener {
         return true;
     }
 
-    public void addFishingProgress(Player player, int amount) { progress(player, AdventureQuestType.FISH, "ANY", amount); }
+    public void addFishingProgress(Player player, int amount) { awardProfession(player, AdventureProfession.FISHER, amount); progress(player, AdventureQuestType.FISH, "ANY", amount); }
     public void addBossProgress(Player player, int amount) { progress(player, AdventureQuestType.BOSS, "ANY", amount); }
     public void addExperience(Player player, long amount) {
         if (player == null || amount <= 0) return;
@@ -309,6 +329,7 @@ public final class AdventureManager implements Listener {
         Team team = team(player);
         if (event.getEntity().getScoreboardTags().contains("veliora_adventure_mob")
                 && (team == null || !event.getEntity().getScoreboardTags().contains("veliora_adventure_team_" + team.getId()))) return;
+        awardProfession(player, AdventureProfession.HUNTER, config.professionKillExp());
         progress(player, AdventureQuestType.KILL, event.getEntityType().name(), 1);
     }
 
@@ -325,8 +346,12 @@ public final class AdventureManager implements Listener {
     public void onBreak(BlockBreakEvent event) {
         String key = blockKey(event.getBlock().getLocation());
         if (placedBlocks.remove(key)) return;
-        progress(event.getPlayer(), AdventureQuestType.BREAK, event.getBlock().getType().name(), 1);
-        progress(event.getPlayer(), AdventureQuestType.FARM, event.getBlock().getType().name(), 1);
+        Material type = event.getBlock().getType();
+        if (Tag.LOGS.isTagged(type)) awardProfession(event.getPlayer(), AdventureProfession.FORAGER, config.professionForagingExp());
+        else if (type.name().endsWith("_ORE") || type == Material.ANCIENT_DEBRIS) awardProfession(event.getPlayer(), AdventureProfession.MINER, config.professionMiningExp());
+        else if (isCrop(type)) awardProfession(event.getPlayer(), AdventureProfession.FARMER, config.professionFarmingExp());
+        progress(event.getPlayer(), AdventureQuestType.BREAK, type.name(), 1);
+        progress(event.getPlayer(), AdventureQuestType.FARM, type.name(), 1);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -358,6 +383,7 @@ public final class AdventureManager implements Listener {
             case "main" -> openMain(player);
             case "daily" -> openDaily(player);
             case "submit" -> openSubmit(player);
+            case "professions" -> openProfessions(player);
             case "guide" -> sendGuide(player);
             case "accept" -> { if (quest != null && accept(player, quest)) openSubmit(player); }
             case "claim" -> { if (claim(player)) openSubmit(player); }
@@ -397,6 +423,20 @@ public final class AdventureManager implements Listener {
         window.amount += accepted;
         return accepted >= Math.max(1, requested);
     }
+
+    public long professionExp(Player player, AdventureProfession profession) { return profile(player).professionExp(profession); }
+    public int professionLevel(long exp) { return Math.min(config.professionMaxLevel(), 1 + (int) (Math.max(0L, exp) / config.professionLevelExp())); }
+    private void awardProfession(Player player, AdventureProfession profession, long amount) {
+        if (player == null || amount <= 0L || !config.professionsEnabled()) return;
+        AdventureDataManager.PlayerData profile = profile(player);
+        long before = profile.professionExp(profession);
+        profile.addProfessionExp(profession, amount);
+        data.save();
+        if (professionLevel(before) < professionLevel(profile.professionExp(profession))) {
+            player.sendMessage(config.prefix() + config.color("&6Profesi &f" + profession.display() + " &6naik ke level &f" + professionLevel(profile.professionExp(profession)) + "&6!"));
+        }
+    }
+    private boolean isCrop(Material type) { return switch (type) { case WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART, COCOA, MELON, PUMPKIN -> true; default -> false; }; }
 
     private AdventureDataManager.GuildData daily(Team team) {
         AdventureDataManager.GuildData guild = data.guild(team.getId());

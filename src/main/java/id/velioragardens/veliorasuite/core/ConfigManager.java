@@ -17,6 +17,8 @@ public final class ConfigManager {
 
     private static final List<String> MODULE_CONFIGS = List.of(
             "adminmonitor",
+            "autotool",
+            "deathlaugh",
             "guide",
             "menu",
             "loginsecurity",

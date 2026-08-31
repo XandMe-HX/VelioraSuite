@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.EnumMap;
 
 public final class AdventureDataManager {
     private final VelioraSuite plugin;
@@ -66,7 +67,8 @@ public final class AdventureDataManager {
                     yaml.getString(path + ".name", "Unknown"),
                     Math.max(0L, yaml.getLong(path + ".exp", 0L)),
                     Math.max(0, yaml.getInt(path + ".completed", 0)),
-                    yaml.getString(path + ".custom-rank", "")
+                    yaml.getString(path + ".custom-rank", ""),
+                    professions(path)
             ));
         } catch (IllegalArgumentException ignored) { }
     }
@@ -103,7 +105,7 @@ public final class AdventureDataManager {
 
     public PlayerData player(UUID uuid, String name) {
         String safeName = name == null || name.isBlank() ? "Unknown" : name;
-        PlayerData data = players.computeIfAbsent(uuid, key -> new PlayerData(key, safeName, 0L, 0, ""));
+        PlayerData data = players.computeIfAbsent(uuid, key -> new PlayerData(key, safeName, 0L, 0, "", new EnumMap<>(AdventureProfession.class)));
         if (name != null && !name.isBlank()) data.name = name;
         return data;
     }
@@ -115,6 +117,14 @@ public final class AdventureDataManager {
         dirty = true;
     }
 
+    private Map<AdventureProfession, Long> professions(String path) {
+        Map<AdventureProfession, Long> result = new EnumMap<>(AdventureProfession.class);
+        for (AdventureProfession profession : AdventureProfession.values()) {
+            result.put(profession, Math.max(0L, yaml.getLong(path + ".professions." + profession.name(), 0L)));
+        }
+        return result;
+    }
+
     public void flush() {
         if (!dirty || yaml == null || file == null) return;
         yaml.set("players", null);
@@ -124,6 +134,7 @@ public final class AdventureDataManager {
             yaml.set(path + ".exp", data.exp);
             yaml.set(path + ".completed", data.completed);
             yaml.set(path + ".custom-rank", data.customRank);
+            for (AdventureProfession profession : AdventureProfession.values()) yaml.set(path + ".professions." + profession.name(), data.professionExp(profession));
         }
         yaml.set("guilds", null);
         for (GuildData guild : guilds.values()) {
@@ -172,6 +183,7 @@ public final class AdventureDataManager {
                 String path = "players." + data.uuid;
                 yaml.set(path + ".name", data.name); yaml.set(path + ".exp", data.exp);
                 yaml.set(path + ".completed", data.completed); yaml.set(path + ".custom-rank", data.customRank);
+                for (AdventureProfession profession : AdventureProfession.values()) yaml.set(path + ".professions." + profession.name(), data.professionExp(profession));
             }
             yaml.set("guilds", null);
             for (GuildData guild : guilds.values()) {
@@ -199,10 +211,13 @@ public final class AdventureDataManager {
         private long exp;
         private int completed;
         private String customRank;
+        private final Map<AdventureProfession, Long> professions;
 
-        private PlayerData(UUID uuid, String name, long exp, int completed, String customRank) {
+        private PlayerData(UUID uuid, String name, long exp, int completed, String customRank, Map<AdventureProfession, Long> professions) {
             this.uuid = uuid; this.name = name; this.exp = exp; this.completed = completed;
             this.customRank = customRank == null ? "" : customRank;
+            this.professions = new EnumMap<>(AdventureProfession.class);
+            this.professions.putAll(professions);
         }
         public long exp() { return exp; }
         public int completed() { return completed; }
@@ -211,6 +226,8 @@ public final class AdventureDataManager {
         public void setExp(long value) { exp = Math.max(0L, value); }
         public void complete() { completed++; }
         public void customRank(String value) { customRank = value == null ? "" : value.trim(); }
+        public long professionExp(AdventureProfession profession) { return professions.getOrDefault(profession, 0L); }
+        public void addProfessionExp(AdventureProfession profession, long value) { professions.merge(profession, Math.max(0L, value), Long::sum); }
     }
 
     public static final class GuildData {

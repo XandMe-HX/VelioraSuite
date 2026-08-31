@@ -140,6 +140,13 @@ public final class AdventureConfigManager {
     public boolean auraSkillEnabled(String skill) { return config.getBoolean("integrations.auraskills.skills." + skill.toLowerCase(java.util.Locale.ROOT), false); }
     public double auraSkillsRatio() { return Math.max(0.0D, Math.min(1.0D, config.getDouble("integrations.auraskills.xp-to-adventure-ratio", 0.15D))); }
     public double auraSkillsMinimumXp() { return Math.max(0.0D, config.getDouble("integrations.auraskills.minimum-source-xp", 1.0D)); }
+    public boolean professionsEnabled() { return config.getBoolean("professions.enabled", true); }
+    public int professionMaxLevel() { return Math.max(1, Math.min(100, config.getInt("professions.max-level", 50))); }
+    public long professionLevelExp() { return Math.max(10L, config.getLong("professions.level-exp", 100L)); }
+    public long professionMiningExp() { return Math.max(0L, config.getLong("professions.xp.mining", 3L)); }
+    public long professionForagingExp() { return Math.max(0L, config.getLong("professions.xp.foraging", 2L)); }
+    public long professionFarmingExp() { return Math.max(0L, config.getLong("professions.xp.farming", 2L)); }
+    public long professionKillExp() { return Math.max(0L, config.getLong("professions.xp.hunting", 2L)); }
     public String mainTitle() { return color(config.getString("gui.main-title", "&8Guild Petualang")); }
     public String questsTitle() { return color(config.getString("gui.quests-title", "&8Misi Hari Ini")); }
     public String submitTitle() { return color(config.getString("gui.submit-title", "&8Setor dan Riwayat")); }

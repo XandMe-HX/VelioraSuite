@@ -126,12 +126,27 @@ public final class PetCommand implements CommandExecutor, TabCompleter {
             return result;
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("summon") || args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("feed") || args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("ride"))) {
+            if (args[0].equalsIgnoreCase("ride")) {
+                for (String option : List.of("public", "private", "list", "trust", "untrust")) if (option.startsWith(args[1].toLowerCase(Locale.ROOT))) result.add(option);
+                return result;
+            }
             if (sender instanceof Player player) {
                 String lower = args[1].toLowerCase(Locale.ROOT);
                 if ("active".startsWith(lower)) result.add("active");
                 for (String id : manager.playerData(player.getUniqueId()).owned().keySet()) if (id.startsWith(lower)) result.add(id);
                 if (args[0].equalsIgnoreCase("feed")) addAmountTabs(result, lower);
             }
+            return result;
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("ride") && List.of("public", "private", "list", "trust", "untrust").contains(args[1].toLowerCase(Locale.ROOT)) && sender instanceof Player player) {
+            String lower = args[2].toLowerCase(Locale.ROOT);
+            if ("active".startsWith(lower)) result.add("active");
+            for (String id : manager.playerData(player.getUniqueId()).owned().keySet()) if (id.startsWith(lower)) result.add(id);
+            return result;
+        }
+        if (args.length == 4 && args[0].equalsIgnoreCase("ride") && (args[1].equalsIgnoreCase("trust") || args[1].equalsIgnoreCase("untrust"))) {
+            String lower = args[3].toLowerCase(Locale.ROOT);
+            for (Player player : Bukkit.getOnlinePlayers()) if (player.getName().toLowerCase(Locale.ROOT).startsWith(lower)) result.add(player.getName());
             return result;
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("feed")) {

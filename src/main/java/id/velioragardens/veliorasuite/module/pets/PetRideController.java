@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 public final class PetRideController implements Listener {
     private final PetManager manager;
@@ -35,9 +36,14 @@ public final class PetRideController implements Listener {
         if (args.length < 2) return;
         String root = args[0].toLowerCase(Locale.ROOT);
         if (!root.equals("pet") && !root.equals("pets") && !root.equals("vpet") && !root.equals("vpets")) return;
-        if (args[1].equalsIgnoreCase("ride")) {
+        if (args[1].equalsIgnoreCase("ride") && args.length == 2) {
             event.setCancelled(true);
             startRide(event.getPlayer());
+            return;
+        }
+        if (args[1].equalsIgnoreCase("ride") && args.length >= 3) {
+            event.setCancelled(true);
+            manageAccess(event.getPlayer(), args);
             return;
         }
         if (args[1].equalsIgnoreCase("info")) {
@@ -50,27 +56,35 @@ public final class PetRideController implements Listener {
     public void onInteract(PlayerInteractAtEntityEvent event) {
         Entity clicked = event.getRightClicked();
         if (!clicked.getScoreboardTags().contains("veliorapets_pet")) return;
-        VelioraPet active = manager.activePet(event.getPlayer().getUniqueId());
-        if (active == null || !active.entity().getUniqueId().equals(clicked.getUniqueId())) return;
+        VelioraPet active = manager.activePetByEntity(clicked.getUniqueId());
+        if (active == null) return;
         event.setCancelled(true);
         if (clicked.getPassengers().contains(event.getPlayer())) return;
-        startRide(event.getPlayer());
+        startRide(event.getPlayer(), active);
     }
 
     public void startRide(Player player) {
+        startRide(player, manager.activePet(player.getUniqueId()));
+    }
+
+    private void startRide(Player player, VelioraPet active) {
         if (!config.ridingEnabled()) return;
         long now = System.currentTimeMillis();
         long last = lastRideAttempt.getOrDefault(player.getUniqueId(), 0L);
         if (now - last < 1200L) return;
         lastRideAttempt.put(player.getUniqueId(), now);
-        VelioraPet active = manager.activePet(player.getUniqueId());
         if (active == null || active.entity().isDead()) {
             player.sendMessage(config.color(config.message("pet-ride-not-active", "%prefix% &cTidak ada pet aktif untuk ditunggangi.")));
             return;
         }
         PetDefinition definition = config.pets().get(active.petId());
-        OwnedPet owned = manager.playerData(player.getUniqueId()).get(active.petId());
+        OwnedPet owned = manager.playerData(active.ownerUuid()).get(active.petId());
         if (definition == null || owned == null) return;
+        boolean owner = player.getUniqueId().equals(active.ownerUuid());
+        if (!owner && !owned.publicRide() && !owned.trustedRiders().contains(player.getUniqueId())) {
+            player.sendMessage(config.color("%prefix% &cPet ini hanya dapat ditunggangi pemilik atau rider tepercaya.".replace("%prefix%", config.prefix())));
+            return;
+        }
         if (!definition.rideable() || !config.rideableRarity(definition.rarity())) {
             player.sendMessage(config.color(config.message("pet-ride-not-rideable", "%prefix% &cPet ini tidak bisa ditunggangi.")));
             return;
@@ -93,6 +107,54 @@ public final class PetRideController implements Listener {
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_HORSE_SADDLE, 0.7F, definition.flyingPet() ? 1.35F : 1.0F);
         player.sendMessage(config.color(config.message("pet-ride-start", "%prefix% &aKamu menaiki &f%pet%&a.").replace("%pet%", owned.name())));
         player.sendActionBar(config.color("&eGunakan arah gerak untuk mengendalikan pet. &7Tekan Shift untuk turun."));
+    }
+
+    private void manageAccess(Player owner, String[] args) {
+        String action = args[2].toLowerCase(Locale.ROOT);
+        String petId = args.length >= 4 ? args[3].toLowerCase(Locale.ROOT) : "active";
+        VelioraPet active = manager.activePet(owner.getUniqueId());
+        if (petId.equals("active") && active != null) petId = active.petId();
+        OwnedPet pet = manager.playerData(owner.getUniqueId()).get(petId);
+        if (pet == null) {
+            owner.sendMessage(config.color(config.prefix() + "&cPet tidak ditemukan. Gunakan ID pet atau panggil pet terlebih dahulu."));
+            return;
+        }
+        if (action.equals("public")) {
+            pet.publicRide(true);
+            manager.data().save(owner.getUniqueId());
+            owner.sendMessage(config.color(config.prefix() + "&aTunggangan &f" + pet.name() + " &aterbuka untuk semua pemain."));
+            return;
+        }
+        if (action.equals("private")) {
+            pet.publicRide(false);
+            manager.data().save(owner.getUniqueId());
+            owner.sendMessage(config.color(config.prefix() + "&eTunggangan &f" + pet.name() + " &ehanya untuk pemilik dan rider tepercaya."));
+            return;
+        }
+        if ((action.equals("trust") || action.equals("untrust")) && args.length >= 5) {
+            Player target = owner.getServer().getPlayerExact(args[4]);
+            if (target == null) { owner.sendMessage(config.color(config.prefix() + "&cPemain harus sedang online.")); return; }
+            if (target.getUniqueId().equals(owner.getUniqueId())) { owner.sendMessage(config.color(config.prefix() + "&eKamu sudah selalu bisa menunggangi pet sendiri.")); return; }
+            boolean changed = action.equals("trust") ? pet.trustRider(target.getUniqueId()) : pet.untrustRider(target.getUniqueId());
+            if (!changed) {
+                owner.sendMessage(config.color(config.prefix() + (action.equals("trust") ? "&eRider sudah terdaftar atau batasnya 20 orang." : "&ePemain itu bukan rider tepercaya.")));
+                return;
+            }
+            manager.data().save(owner.getUniqueId());
+            owner.sendMessage(config.color(config.prefix() + (action.equals("trust") ? "&a" : "&e") + target.getName() + " &7" + (action.equals("trust") ? "ditambahkan sebagai rider tepercaya." : "dihapus dari rider tepercaya.")));
+            return;
+        }
+        if (action.equals("list")) {
+            List<String> riders = pet.trustedRiders().stream().map(uuid -> {
+                Player online = owner.getServer().getPlayer(uuid);
+                return online == null ? uuid.toString().substring(0, 8) : online.getName();
+            }).toList();
+            owner.sendMessage(config.color(config.prefix() + "&7Akses tunggangan &f" + pet.name() + "&7: " + (pet.publicRide() ? "&aPublik" : "&ePrivat") + " &8| &f" + (riders.isEmpty() ? "Tidak ada rider tepercaya" : String.join(", ", riders))));
+            return;
+        }
+        owner.sendMessage(config.color(config.prefix() + "&e/pet ride &8- &7naik pet aktif"));
+        owner.sendMessage(config.color(config.prefix() + "&e/pet ride <public|private|list> [pet]"));
+        owner.sendMessage(config.color(config.prefix() + "&e/pet ride <trust|untrust> <pet|active> <pemain-online>"));
     }
 
     private void sendInfo(Player player, String target) {
@@ -118,6 +180,7 @@ public final class PetRideController implements Listener {
         player.sendMessage(config.color("&7Level/EXP: &f" + owned.level() + " / " + owned.exp()));
         player.sendMessage(config.color("&7Food: &f" + definition.foodMaterial().name() + " (+" + definition.feedExp() + " EXP)"));
         player.sendMessage(config.color("&7Rideable: &f" + (definition.rideable() ? "Yes" : "No")));
+        if (definition.rideable()) player.sendMessage(config.color("&7Akses ride: " + (owned.publicRide() ? "&aPublik" : "&ePrivat") + " &8| &f" + owned.trustedRiders().size() + " &7rider tepercaya"));
         player.sendMessage(config.color("&7Adult Level: &f" + definition.adultLevel()));
         player.sendMessage(config.color("&7Status Dewasa: &f" + (adult ? "Dewasa" : "Belum dewasa")));
         player.sendMessage(config.color("&7Active: &f" + (active ? "yes" : "no")));
