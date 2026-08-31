@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.adventure;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import org.bukkit.Bukkit;
@@ -570,7 +571,9 @@ public final class AdventureManager implements Listener {
         if (quest != null && !quest.isBlank()) meta.getPersistentDataContainer().set(questKey, PersistentDataType.STRING, quest);
         item.setItemMeta(meta); return item;
     }
-    private void fill(Inventory inventory, Material material) { ItemStack filler = item(material, " ", List.of(), "none", ""); for (int slot = 0; slot < inventory.getSize(); slot++) inventory.setItem(slot, filler); }
+    private void fill(Inventory inventory, Material material) {
+        GuiLayout.decorateMenu(inventory, material, Material.GRAY_STAINED_GLASS_PANE);
+    }
     private void sendGuide(Player player) {
         long now = System.currentTimeMillis(), allowed = guideCooldowns.getOrDefault(player.getUniqueId(), 0L);
         if (allowed > now) { send(player, "guide-cooldown", "&ePanduan bisa dibuka lagi dalam &f%seconds% detik&e.", "%seconds%", String.valueOf((allowed - now + 999) / 1000)); return; }

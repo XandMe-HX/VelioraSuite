@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.pets;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import id.velioragardens.veliorasuite.module.pets.model.OwnedPet;
 import id.velioragardens.veliorasuite.module.pets.model.PetDefinition;
 import id.velioragardens.veliorasuite.module.pets.model.PlayerPetData;
@@ -296,7 +297,7 @@ public final class PetGuiManager implements Listener {
         PetMenuHolder holder = new PetMenuHolder(type, petId, null, false, page);
         Inventory inventory = Bukkit.createInventory(holder, size, config.color(title));
         holder.inventory = inventory;
-        for (int slot = 0; slot < size; slot++) inventory.setItem(slot, item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of(), null, null));
+        GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.PURPLE_STAINED_GLASS_PANE);
         return inventory;
     }
 

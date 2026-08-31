@@ -1,5 +1,6 @@
 package id.velioragardens.veliorasuite.module.team;
 
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import id.velioragardens.veliorasuite.module.team.model.TeamMember;
 import id.velioragardens.veliorasuite.util.SafePlayerHead;
@@ -109,7 +110,7 @@ public final class TeamGuiManager implements Listener {
         }
     }
 
-    private void fill(Inventory inventory) { ItemStack pane = item(Material.GRAY_STAINED_GLASS_PANE, " ", List.of()); for (int slot = 0; slot < inventory.getSize(); slot++) inventory.setItem(slot, pane); }
+    private void fill(Inventory inventory) { GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.LIGHT_BLUE_STAINED_GLASS_PANE); }
     private ItemStack item(Material material, String name, List<String> lore) { ItemStack item = new ItemStack(material); ItemMeta meta = item.getItemMeta(); meta.setDisplayName(name); meta.setLore(lore); item.setItemMeta(meta); return item; }
     private String roleColor(String role) { return switch (role) { case "OWNER" -> "§6OWNER"; case "ADMIN" -> "§cADMIN"; default -> "§aMEMBER"; }; }
     private static final class Holder implements InventoryHolder { private final String page; private final UUID owner; private final int currentPage; private Inventory inventory; private Holder(String page, UUID owner) { this(page, owner, 0); } private Holder(String page, UUID owner, int currentPage) { this.page = page; this.owner = owner; this.currentPage = currentPage; } @Override public Inventory getInventory() { return inventory; } }

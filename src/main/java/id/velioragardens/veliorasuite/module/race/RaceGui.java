@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.race;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -18,7 +19,7 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.List;
 import java.util.Locale;
 
-/** Empty-slot menus intentionally avoid decorative panes, which the server resource pack remaps. */
+/** Race menus share the Suite chest layout while selection remains confirmation-first. */
 public final class RaceGui implements Listener {
     private final VelioraSuite plugin;
     private final RaceManager manager;
@@ -171,7 +172,11 @@ public final class RaceGui implements Listener {
     private String formName(String form) { return switch (form.toUpperCase(Locale.ROOT)) { case "CHILD" -> "Mode Bocil"; case "TALL" -> "Dewasa Tinggi"; default -> "Dewasa Normal"; }; }
     private ItemStack raceIcon(String race, Material material, boolean changing) { RaceInfo info = RaceInfo.valueOf(race); return icon(material, info.color + "&l" + info.title, List.of("&7" + info.tagline, "", "&eKlik untuk melihat detail."), (changing ? "change_detail:" : "detail:") + race); }
     private String duration(long millis) { long minutes = Math.max(1L, (millis + 59_999L) / 60_000L); long days = minutes / 1_440L; long hours = (minutes % 1_440L) / 60L; long mins = minutes % 60L; return days > 0 ? days + "h " + hours + "j" : hours > 0 ? hours + "j " + mins + "m" : mins + "m"; }
-    private Inventory menu(String type, int size, String title) { return org.bukkit.Bukkit.createInventory(new Holder(type), size, title); }
+    private Inventory menu(String type, int size, String title) {
+        Inventory inventory = org.bukkit.Bukkit.createInventory(new Holder(type), size, title);
+        GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.PURPLE_STAINED_GLASS_PANE);
+        return inventory;
+    }
     private ItemStack icon(Material material, String name, List<String> lore, String action) { ItemStack item = new ItemStack(material); ItemMeta meta = item.getItemMeta(); meta.setDisplayName(color(name)); meta.setLore(lore.stream().map(this::color).toList()); if (action != null) meta.getPersistentDataContainer().set(actionKey, PersistentDataType.STRING, action); item.setItemMeta(meta); return item; }
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value); }
     private record Holder(String type) implements InventoryHolder { @Override public Inventory getInventory() { return null; } }
