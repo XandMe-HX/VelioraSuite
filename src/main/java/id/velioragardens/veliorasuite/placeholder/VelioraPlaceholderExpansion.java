@@ -33,6 +33,7 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
             case "fishing_coins" -> String.valueOf(fishingCoins(player));
             case "fishing_coins_formatted" -> fishingCoinsFormatted(player);
             case "race", "ras" -> race(player) == null ? "BELUM_MEMILIH" : race(player).race(player.getUniqueId());
+            case "race_display", "ras_display" -> raceDisplay(player);
             case "race_form", "ras_bentuk" -> race(player) == null || !race(player).selected(player.getUniqueId()) ? "-" : race(player).form(player.getUniqueId());
             case "race_scale", "ras_skala" -> race(player) == null || !race(player).selected(player.getUniqueId()) ? "1.00" : String.format(java.util.Locale.ROOT, "%.2f", race(player).scaleFor(race(player).form(player.getUniqueId())));
             case "race_change_available", "ras_ganti_tersedia" -> String.valueOf(race(player) != null && race(player).selected(player.getUniqueId()) && race(player).changeRemaining(player.getUniqueId()) == 0L);
@@ -91,6 +92,20 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
     private id.velioragardens.veliorasuite.module.race.RaceManager race(Player player) {
         RaceModule module = module("race", RaceModule.class);
         return module == null || !module.isEnabled() ? null : module.getManager();
+    }
+
+    private String raceDisplay(Player player) {
+        id.velioragardens.veliorasuite.module.race.RaceManager manager = race(player);
+        if (manager == null || !manager.selected(player.getUniqueId())) return "&8[&7BELUM MEMILIH&8]";
+        return switch (manager.race(player.getUniqueId()).toUpperCase(Locale.ROOT)) {
+            case "HUMAN" -> "&8[&f&lHUMAN&8]";
+            case "ELF" -> "&8[&a&lELF&8]";
+            case "DWARF" -> "&8[&6&lDWARF&8]";
+            case "BEASTMAN" -> "&8[&e&lBEASTMAN&8]";
+            case "DEMON" -> "&8[&c&lDEMON&8]";
+            case "ANGEL" -> "&8[&b&lANGEL&8]";
+            default -> "&8[&7" + manager.race(player.getUniqueId()) + "&8]";
+        };
     }
 
     private String duration(long millis) {
