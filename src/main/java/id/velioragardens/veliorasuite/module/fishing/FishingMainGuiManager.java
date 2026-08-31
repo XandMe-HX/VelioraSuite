@@ -1,5 +1,6 @@
 package id.velioragardens.veliorasuite.module.fishing;
 
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -87,12 +88,7 @@ public final class FishingMainGuiManager implements Listener {
     }
 
     private void frame(Inventory inventory) {
-        ItemStack pane = item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of());
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            int row = slot / 9;
-            int column = slot % 9;
-            if (row == 0 || row == 3 || column == 0 || column == 8) inventory.setItem(slot, pane);
-        }
+        GuiLayout.decorateMenu(inventory);
     }
 
     private static final class Holder implements InventoryHolder {
