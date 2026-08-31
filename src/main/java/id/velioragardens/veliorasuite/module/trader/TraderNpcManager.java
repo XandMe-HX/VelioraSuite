@@ -78,6 +78,10 @@ public final class TraderNpcManager implements Listener {
     public void removeNear(Location origin) {
         remove();
         if (origin == null || origin.getWorld() == null) return;
+        // Persistent NPCs can be saved while their chunk is inactive. Load only
+        // the known trader chunk before querying it so an old trader is not
+        // missed and duplicated after a restart or a forced respawn.
+        origin.getChunk().load(true);
         for (Entity entity : origin.getWorld().getNearbyEntities(origin, 24.0D, 12.0D, 24.0D)) {
             if (entity.getScoreboardTags().contains("velioratrader_npc") || entity.getScoreboardTags().contains("velioratrader_companion")) {
                 entity.remove();

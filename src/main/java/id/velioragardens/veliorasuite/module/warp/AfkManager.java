@@ -44,6 +44,7 @@ public final class AfkManager implements Listener, CommandExecutor {
     }
 
     public void start() {
+        cleanupOrphanMarkers();
         for (Player player : Bukkit.getOnlinePlayers()) touch(player);
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             long now = System.currentTimeMillis();
@@ -65,6 +66,7 @@ public final class AfkManager implements Listener, CommandExecutor {
     public void stop() {
         if (taskId >= 0) Bukkit.getScheduler().cancelTask(taskId);
         markers.values().forEach(marker -> { if (marker != null && marker.isValid()) marker.remove(); });
+        cleanupOrphanMarkers();
         markers.clear(); afk.clear(); manualAfk.clear(); lastActivity.clear(); lastReward.clear();
     }
 
@@ -153,5 +155,14 @@ public final class AfkManager implements Listener, CommandExecutor {
         afk.remove(player.getUniqueId()); manualAfk.remove(player.getUniqueId()); lastActivity.remove(player.getUniqueId()); lastReward.remove(player.getUniqueId());
         TextDisplay marker = markers.remove(player.getUniqueId());
         if (marker != null && marker.isValid()) marker.remove();
+    }
+
+    /** Removes only Suite-owned AFK labels left after an interrupted reload. */
+    private void cleanupOrphanMarkers() {
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (org.bukkit.entity.Entity entity : new java.util.ArrayList<>(world.getEntities())) {
+                if (entity.getScoreboardTags().contains("veliora_afk_marker")) entity.remove();
+            }
+        }
     }
 }
