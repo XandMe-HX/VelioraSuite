@@ -148,6 +148,7 @@ public final class PetGuiManager implements Listener {
                     pet.babyPet() ? "&dMode: &fBAYI permanen" : "&aMode: &fDewasa, tumbuh tiap 10 level",
                     "&7Makanan: &f" + prettyMaterial(pet.foodMaterial()),
                     pet.rideable() ? "&eTunggangan: &fLevel " + pet.adultLevel() : "&8Tidak bisa ditunggangi",
+                    pet.rideable() ? "&7Akses ride: " + (owned.publicRide() ? "&aPublik" : "&ePrivat") + " &8(" + owned.trustedRiders().size() + " tepercaya)" : "&8Akses ride: tidak tersedia",
                     "&8━━━━━━━━━━━━━━━━━━━━", "&aKlik untuk memanggil pet ini."), "summon", pet.id()));
         }
         if (ownedPets.isEmpty()) inventory.setItem(22, item(Material.BARRIER, "&cBelum punya pet", List.of("&7Beli di toko atau gunakan gacha dahulu."), null, null));
