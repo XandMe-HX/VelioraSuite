@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.adminmonitor;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import org.bukkit.BanList;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -163,6 +164,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("confirm:" + action, target, 0);
         Inventory inventory = Bukkit.createInventory(holder, 27, color("&4Konfirmasi tindakan"));
         holder.inventory = inventory;
+        prepareMenu(inventory, "&4Konfirmasi tindakan");
         inventory.setItem(11, item(Material.LIME_WOOL, "&aYa, lanjutkan", List.of("&7Tindakan: &f" + displayAction(action), "&7Target: &f" + target), "execute_" + action, target));
         inventory.setItem(15, item(Material.RED_WOOL, "&cBatal", List.of("&7Kembali tanpa perubahan."), "profile", target));
         viewer.openInventory(inventory);
@@ -172,6 +174,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("reason:" + kind, target, 0);
         Inventory inventory = Bukkit.createInventory(holder, 27, color("&8Pilih alasan: &f" + displayAction(kind)));
         holder.inventory = inventory;
+        prepareMenu(inventory, "&8Pilih alasan");
         String[] reasons = {"CHEAT", "XRAY", "BUG_ABUSE", "MOD_ABUSE", "RUSUH", "SPAM", "STAFF"};
         String[] labels = {"&cCheat", "&6X-Ray", "&eMenyalahgunakan Bug", "&dMenyalahgunakan Mod", "&4Merusuh", "&bSpam", "&7Keputusan Staf"};
         Material[] icons = {Material.DIAMOND_SWORD, Material.DEEPSLATE_DIAMOND_ORE, Material.TRIPWIRE_HOOK, Material.REDSTONE, Material.TNT, Material.WRITABLE_BOOK, Material.PAPER};
@@ -186,6 +189,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("duration:" + kind, target, 0);
         Inventory inventory = Bukkit.createInventory(holder, 27, color("&8Pilih durasi: &f" + displayAction(kind)));
         holder.inventory = inventory;
+        prepareMenu(inventory, "&8Pilih durasi");
         inventory.setItem(11, item(Material.CLOCK, "&e1 Jam", List.of("&7Alasan: &f" + reasonText(reason), "&7Lanjut ke konfirmasi akhir."), "confirm_" + kind + ":" + reason + ":1h", target));
         inventory.setItem(13, item(Material.CLOCK, "&61 Hari", List.of("&7Alasan: &f" + reasonText(reason), "&7Lanjut ke konfirmasi akhir."), "confirm_" + kind + ":" + reason + ":1d", target));
         inventory.setItem(15, item(Material.CLOCK, "&c7 Hari", List.of("&7Alasan: &f" + reasonText(reason), "&7Lanjut ke konfirmasi akhir."), "confirm_" + kind + ":" + reason + ":7d", target));
@@ -197,18 +201,20 @@ public final class AdminManagerGui implements Listener {
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
         List<String> entries = moderationHistory.getOrDefault(target.getUniqueId(), List.of());
         MenuHolder holder = new MenuHolder("history", targetName, 0);
-        Inventory inventory = Bukkit.createInventory(holder, 27, color("&8Riwayat: &f" + targetName));
+        Inventory inventory = Bukkit.createInventory(holder, 54, color("&8Riwayat: &f" + targetName));
         holder.inventory = inventory;
+        prepareMenu(inventory, "&8Riwayat Moderasi");
         if (entries.isEmpty()) {
             inventory.setItem(13, item(Material.PAPER, "&7Belum ada riwayat", List.of("&7Tindakan baru akan tercatat di sini."), null, null));
         } else {
+            int[] historySlots = {10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34};
             int slot = 0;
             for (String entry : entries) {
-                if (slot >= 18) break;
-                inventory.setItem(slot++, item(Material.WRITTEN_BOOK, "&eTindakan staf", List.of("&7" + entry), null, null));
+                if (slot >= historySlots.length) break;
+                inventory.setItem(historySlots[slot++], item(Material.WRITTEN_BOOK, "&eTindakan staf", List.of("&7" + entry), null, null));
             }
         }
-        inventory.setItem(22, item(Material.ARROW, "&eKembali", List.of("&7Kembali ke profil pemain."), "profile", targetName));
+        inventory.setItem(49, item(Material.ARROW, "&eKembali", List.of("&7Kembali ke profil pemain."), "profile", targetName));
         viewer.openInventory(inventory);
     }
 
@@ -416,6 +422,7 @@ public final class AdminManagerGui implements Listener {
         MenuHolder holder = new MenuHolder("server", null, 0);
         Inventory inv = Bukkit.createInventory(holder, 54, color("&8Admin Manager &7| Server"));
         holder.inventory = inv;
+        prepareMenu(inv, "&8Kontrol Server");
         inv.setItem(4, item(Material.COMPARATOR, "&bKontrol Server", List.of("&7Susunan: chat • world • difficulty • pembersihan.", "&7Semua tindakan berisiko meminta konfirmasi."), null, null));
         inv.setItem(10, item(Material.PAPER, globalChatMuted ? "&cBuka Global Chat" : "&eMute Global Chat", List.of("&7Status: " + (globalChatMuted ? "&cDimute" : "&aAktif"), "&7Klik untuk mengubah status."), "chatmute", null));
         inv.setItem(12, item(Material.FEATHER, "&fBersihkan Chat", List.of("&7Mengirim baris kosong tanpa broadcast."), "silentclear", null));
@@ -544,9 +551,7 @@ public final class AdminManagerGui implements Listener {
         for (int slot = 0; slot < inventory.getSize(); slot++) if (inventory.getItem(slot) == null) inventory.setItem(slot, item(material, name, List.of(), null, null));
     }
     private void prepareMenu(Inventory inventory, String label) {
-        // Leave unused slots empty. This server's resource pack remaps stained
-        // glass panes to decorative models, so filler panes look like random GUI
-        // controls and obscure the actual staff actions.
+        GuiLayout.decorateMenu(inventory);
     }
     private String displayAction(String action) {
         String kind = action.contains(":") ? action.substring(0, action.indexOf(':')) : action;
