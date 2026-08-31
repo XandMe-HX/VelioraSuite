@@ -133,20 +133,20 @@ public final class AdminManagerGui implements Listener {
                 "&7Playtime: &f" + formatSeconds(played),
                 "&7UUID: &8" + target.getUniqueId());
         inventory.setItem(4, skull(target, "&f" + targetName, info, null, null));
-        inventory.setItem(1, item(Material.COMPASS, "&bTeleport & Inspeksi", List.of("&7Kontrol posisi dan informasi pemain."), null, null));
-        inventory.setItem(19, item(Material.CHEST, "&eInventory & Status", List.of("&7Kelola inventory, Ender Chest, dan freeze."), null, null));
-        inventory.setItem(37, item(Material.IRON_SWORD, "&cModerasi", List.of("&7Semua tindakan berisiko meminta konfirmasi."), null, null));
+        inventory.setItem(1, item(Material.COMPASS, "&bI. Navigasi & Inspeksi", List.of("&7Baris kedua: teleport dan informasi target."), null, null));
+        inventory.setItem(19, item(Material.CHEST, "&eII. Inventory & Status", List.of("&7Baris ketiga: inventory, Ender Chest, dan freeze."), null, null));
+        inventory.setItem(37, item(Material.IRON_SWORD, "&cIII. Moderasi", List.of("&7Baris terakhir: semua tindakan meminta konfirmasi."), null, null));
 
         // Posisi tetap per kategori. Tidak ada pane dekorasi karena resource pack
         // dapat mengubah pane menjadi model acak dan membuat GUI membingungkan.
         inventory.setItem(10, item(Material.ENDER_PEARL, "&bTeleport ke pemain", List.of("&7Hanya jika pemain sedang online."), "teleport", targetName));
-        inventory.setItem(11, item(Material.CHORUS_FRUIT, "&bTarik pemain ke kamu", List.of("&7Memindahkan target online ke lokasi kamu.", "&cButuh konfirmasi."), "confirm_tohere", targetName));
-        inventory.setItem(12, item(Material.COMPASS, "&bTeleport ke Spawn", List.of("&7Teleport dirimu ke spawn world target."), "spawn", targetName));
-        inventory.setItem(13, item(Material.SPYGLASS, "&bInspeksi pemain", List.of("&7HP, food, gamemode, lokasi."), "inspect", targetName));
+        inventory.setItem(12, item(Material.CHORUS_FRUIT, "&bTarik pemain ke kamu", List.of("&7Memindahkan target online ke lokasi kamu.", "&cButuh konfirmasi."), "confirm_tohere", targetName));
+        inventory.setItem(14, item(Material.COMPASS, "&bTeleport ke Spawn", List.of("&7Teleport dirimu ke spawn world target."), "spawn", targetName));
+        inventory.setItem(16, item(Material.SPYGLASS, "&bInspeksi pemain", List.of("&7HP, food, gamemode, lokasi."), "inspect", targetName));
         inventory.setItem(28, item(Material.CHEST, "&eEdit inventory live", List.of("&7Membuka salinan aman, lalu perubahan", "&7disalin saat GUI ditutup."), "inventory", targetName));
-        inventory.setItem(29, item(Material.ENDER_CHEST, "&5Ender Chest", List.of("&7Klik kiri: lihat saja", "&7Shift+klik: edit live aman"), "ender", targetName));
-        inventory.setItem(30, item(Material.PACKED_ICE, frozen.contains(target.getUniqueId()) ? "&aLepaskan freeze" : "&eFreeze pemain", List.of("&7Mencegah berjalan, menghancurkan blok", "&7dan damage jatuh."), "freeze", targetName));
-        inventory.setItem(31, item(Material.BOOK, "&bRiwayat Moderasi", List.of("&7Lihat maksimal 15 tindakan terakhir.", "&7Tersimpan setelah server direstart."), "history", targetName));
+        inventory.setItem(30, item(Material.ENDER_CHEST, "&5Ender Chest", List.of("&7Klik kiri: lihat saja", "&7Shift+klik: edit live aman"), "ender", targetName));
+        inventory.setItem(32, item(Material.PACKED_ICE, frozen.contains(target.getUniqueId()) ? "&aLepaskan freeze" : "&eFreeze pemain", List.of("&7Mencegah berjalan, menghancurkan blok", "&7dan damage jatuh."), "freeze", targetName));
+        inventory.setItem(34, item(Material.BOOK, "&bRiwayat Moderasi", List.of("&7Lihat maksimal 15 tindakan terakhir.", "&7Tersimpan setelah server direstart."), "history", targetName));
         inventory.setItem(46, item(Material.LEATHER_BOOTS, "&eKick", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_kick", targetName));
         inventory.setItem(47, item(Material.BARRIER, "&cBan", List.of("&7Pilih alasan, lalu konfirmasi."), "choose_ban", targetName));
         inventory.setItem(48, item(Material.CLOCK, "&6Tempban", List.of("&7Pilih alasan dan durasi.", "&cButuh konfirmasi."), "choose_tempban", targetName));
@@ -413,21 +413,25 @@ public final class AdminManagerGui implements Listener {
     }
 
     private void openServerControls(Player viewer) {
-        MenuHolder holder=new MenuHolder("server",null,0); Inventory inv=Bukkit.createInventory(holder,45,color("&8Admin Manager &7| Server"));holder.inventory=inv;
-        inv.setItem(10,item(Material.PAPER,globalChatMuted?"&cBuka Global Chat":"&eMute Global Chat",List.of("&7Status: "+(globalChatMuted?"&cDimute":"&aAktif"),"&7Klik untuk mengubah status."),"chatmute",null));
-        inv.setItem(11,item(Material.FEATHER,"&fBersihkan Chat",List.of("&7Mengirim baris kosong tanpa broadcast."),"silentclear",null));
-        inv.setItem(12,item(Material.SUNFLOWER,"&eWaktu Siang",List.of("&7Mengubah waktu world kamu ke siang."),"day",null));
-        inv.setItem(13,item(Material.CLOCK,"&9Waktu Malam",List.of("&7Mengubah waktu world kamu ke malam."),"night",null));
-        inv.setItem(14,item(Material.WATER_BUCKET,"&bCuaca Cerah",List.of("&7Menghentikan hujan dan petir."),"clearweather",null));
-        inv.setItem(15,item(Material.LIGHTNING_ROD,"&7Hujan",List.of("&7Mengaktifkan hujan di world kamu."),"storm",null));
-        inv.setItem(16,item(Material.LIME_DYE,"&aDifficulty Easy",List.of("&7Atur difficulty world ini."),"easy",null));
-        inv.setItem(17,item(Material.YELLOW_DYE,"&eDifficulty Normal",List.of("&7Atur difficulty world ini."),"normal",null));
-        inv.setItem(18,item(Material.RED_DYE,"&cDifficulty Hard",List.of("&7Atur difficulty world ini."),"hard",null));
-        inv.setItem(24,item(Material.COMPARATOR,"&bStatus World",List.of("&7Entity world ini: &f"+viewer.getWorld().getEntities().size(),"&7Player online: &f"+Bukkit.getOnlinePlayers().size(),"&7Tidak melakukan scan berulang."),null,null));
-        inv.setItem(28,item(Material.TNT,"&cBersihkan Semua Mob",List.of("&7Hanya world saat ini.","&cButuh konfirmasi."),"confirm_killall",null));
-        inv.setItem(29,item(Material.IRON_SWORD,"&6Bersihkan Mob Hostile",List.of("&7Hanya monster, bukan pet/player.","&cButuh konfirmasi."),"confirm_killhostile",null));
-        inv.setItem(30,item(Material.WHEAT,"&aBersihkan Mob Passive",List.of("&7Hanya hewan, bukan player.","&cButuh konfirmasi."),"confirm_killpassive",null));
-        inv.setItem(40,item(Material.ARROW,"&eKembali",List.of("&7Kembali ke daftar pemain."),"server_back",null)); viewer.openInventory(inv);
+        MenuHolder holder = new MenuHolder("server", null, 0);
+        Inventory inv = Bukkit.createInventory(holder, 54, color("&8Admin Manager &7| Server"));
+        holder.inventory = inv;
+        inv.setItem(4, item(Material.COMPARATOR, "&bKontrol Server", List.of("&7Susunan: chat • world • difficulty • pembersihan.", "&7Semua tindakan berisiko meminta konfirmasi."), null, null));
+        inv.setItem(10, item(Material.PAPER, globalChatMuted ? "&cBuka Global Chat" : "&eMute Global Chat", List.of("&7Status: " + (globalChatMuted ? "&cDimute" : "&aAktif"), "&7Klik untuk mengubah status."), "chatmute", null));
+        inv.setItem(12, item(Material.FEATHER, "&fBersihkan Chat", List.of("&7Mengirim baris kosong tanpa broadcast."), "silentclear", null));
+        inv.setItem(14, item(Material.SUNFLOWER, "&eWaktu Siang", List.of("&7Mengubah waktu world kamu ke siang."), "day", null));
+        inv.setItem(16, item(Material.CLOCK, "&9Waktu Malam", List.of("&7Mengubah waktu world kamu ke malam."), "night", null));
+        inv.setItem(19, item(Material.WATER_BUCKET, "&bCuaca Cerah", List.of("&7Menghentikan hujan dan petir."), "clearweather", null));
+        inv.setItem(21, item(Material.LIGHTNING_ROD, "&7Hujan", List.of("&7Mengaktifkan hujan di world kamu."), "storm", null));
+        inv.setItem(23, item(Material.LIME_DYE, "&aDifficulty Easy", List.of("&7Atur difficulty world ini."), "easy", null));
+        inv.setItem(25, item(Material.YELLOW_DYE, "&eDifficulty Normal", List.of("&7Atur difficulty world ini."), "normal", null));
+        inv.setItem(27, item(Material.RED_DYE, "&cDifficulty Hard", List.of("&7Atur difficulty world ini."), "hard", null));
+        inv.setItem(31, item(Material.COMPARATOR, "&bStatus World", List.of("&7Entity world ini: &f" + viewer.getWorld().getEntities().size(), "&7Player online: &f" + Bukkit.getOnlinePlayers().size(), "&7Tidak melakukan scan berulang."), null, null));
+        inv.setItem(37, item(Material.TNT, "&cBersihkan Semua Mob", List.of("&7Hanya world saat ini.", "&cButuh konfirmasi."), "confirm_killall", null));
+        inv.setItem(40, item(Material.IRON_SWORD, "&6Bersihkan Mob Hostile", List.of("&7Hanya monster, bukan pet/player.", "&cButuh konfirmasi."), "confirm_killhostile", null));
+        inv.setItem(43, item(Material.WHEAT, "&aBersihkan Mob Passive", List.of("&7Hanya hewan, bukan player.", "&cButuh konfirmasi."), "confirm_killpassive", null));
+        inv.setItem(49, item(Material.ARROW, "&eKembali ke Daftar Pemain", List.of("&7Tidak ada perubahan."), "server_back", null));
+        viewer.openInventory(inv);
     }
     private void toggleVanish(Player player) {
         boolean enabled=!vanished.contains(player.getUniqueId());

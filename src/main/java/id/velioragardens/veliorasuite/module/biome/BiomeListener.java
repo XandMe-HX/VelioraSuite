@@ -22,6 +22,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,16 +34,17 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
     private final Map<UUID, String> biomes = new HashMap<>();
     private final Map<UUID, Long> announced = new HashMap<>();
     private final Map<UUID, Boolean> toggles = new HashMap<>();
+    private final Map<UUID, java.util.Set<String>> discovered = new HashMap<>();
     private FileConfiguration config;
     private BukkitTask task;
 
     public BiomeListener(VelioraSuite plugin) { this.plugin = plugin; }
     public void load() { config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/biome.yml")); }
     public void start() { stop(); task = Bukkit.getScheduler().runTaskTimer(plugin, this::checkPlayers, 20L, 20L); }
-    public void stop() { if (task != null) { task.cancel(); task = null; } biomes.clear(); announced.clear(); toggles.clear(); }
+    public void stop() { if (task != null) { task.cancel(); task = null; } biomes.clear(); announced.clear(); toggles.clear(); discovered.clear(); }
 
     @EventHandler public void join(PlayerJoinEvent event) { Bukkit.getScheduler().runTaskLater(plugin, () -> announceJoin(event.getPlayer()), 40L); }
-    @EventHandler public void quit(PlayerQuitEvent event) { UUID id = event.getPlayer().getUniqueId(); biomes.remove(id); announced.remove(id); toggles.remove(id); }
+    @EventHandler public void quit(PlayerQuitEvent event) { UUID id = event.getPlayer().getUniqueId(); biomes.remove(id); announced.remove(id); toggles.remove(id); discovered.remove(id); }
 
     private void announceJoin(Player player) {
         if (!player.isOnline() || !enabled(player)) return;
@@ -63,13 +65,21 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
         long now = System.currentTimeMillis(); long cooldown = Math.max(0, config.getLong("cooldown-seconds", 8)) * 1000L;
         if (!bypassCooldown && now - announced.getOrDefault(player.getUniqueId(), 0L) < cooldown) return;
         announced.put(player.getUniqueId(), now);
-        String name = friendly(biome);
-        player.sendTitle(color(config.getString("display.title", "&d&lBIOME BARU")), color(config.getString("display.subtitle", "&f{biome}").replace("{biome}", name)), 8, 45, 12);
+        String name = configuredName(biome);
+        boolean firstDiscovery = discovered.computeIfAbsent(player.getUniqueId(), ignored -> new HashSet<>()).add(biome);
+        String titleKey = firstDiscovery ? "display.new-biome-title" : "display.title";
+        String title = config.getString(titleKey, firstDiscovery ? "&d&lBIOME BARU" : "&d&l{biome}");
+        String subtitle = config.getString("display.subtitle", "&7Sekarang memasuki &f{biome}");
+        player.sendTitle(color(title.replace("{biome}", name)), color(subtitle.replace("{biome}", name)), 8, 45, 12);
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(color(config.getString("display.actionbar", "&8✦ &fMemasuki &d{biome}").replace("{biome}", name))));
         player.getWorld().spawnParticle(parseParticle(config.getString("effects.particle", "END_ROD")), player.getLocation().add(0, 1, 0), Math.max(1, config.getInt("effects.count", 12)), .45, .65, .45, .01);
         player.playSound(player.getLocation(), parseSound(config.getString("effects.sound", "BLOCK_AMETHYST_BLOCK_CHIME")), .45f, 1.35f);
     }
     private String key(Player player) { return player.getLocation().getBlock().getBiome().getKey().toString(); }
+    private String configuredName(String biome) {
+        String configured = config.getString("biome-names." + biome.replace('.', '_').replace(':', '_'));
+        return configured == null || configured.isBlank() ? friendly(biome) : color(configured);
+    }
     private String friendly(String biome) { String raw = biome.replaceFirst("^[^:]+:", "").replace('_', ' '); StringBuilder out = new StringBuilder(); for (String word : raw.split(" ")) if (!word.isEmpty()) out.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(' '); return out.toString().trim(); }
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value == null ? "" : value); }
     private Particle parseParticle(String value) { try { return Particle.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Particle.END_ROD; } }

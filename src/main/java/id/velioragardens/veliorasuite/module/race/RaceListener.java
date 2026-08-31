@@ -78,7 +78,15 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
                 if (!args[2].equalsIgnoreCase("on") && !args[2].equalsIgnoreCase("off")) { sender.sendMessage("§e/race admin enforce <on|off>"); return true; }
                 boolean enabled = args[2].equalsIgnoreCase("on");
                 manager.setEnforcementEnabled(enabled);
-                sender.sendMessage(enabled ? "§aPenguncian pilihan ras aktif. Player baru yang belum memilih akan diarahkan ke GUI." : "§ePenguncian pilihan ras dimatikan.");
+                if (enabled) {
+                    int prompted = 0;
+                    for (Player online : Bukkit.getOnlinePlayers()) {
+                        if (!pending(online)) continue;
+                        prompted++;
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> { if (online.isOnline() && pending(online)) gui.openGuide(online); }, 10L);
+                    }
+                    sender.sendMessage("§aPenguncian pilihan ras aktif. §f" + prompted + " §apemain online yang belum memilih langsung diarahkan ke GUI.");
+                } else sender.sendMessage("§ePenguncian pilihan ras dimatikan.");
                 return true;
             }
             sender.sendMessage("§e/race admin reset <player> §7- Reset data ras player.");
