@@ -59,10 +59,14 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
     }
     private boolean enabled(Player player) {
         if (!config.getBoolean("settings.enabled", true) || !toggles.getOrDefault(player.getUniqueId(), true)) return false;
-        return config.getStringList("worlds").stream().anyMatch(world -> world.equals("*") || world.equalsIgnoreCase(player.getWorld().getName()));
+        List<String> worlds = config.contains("worlds") ? config.getStringList("worlds") : config.getStringList("enabled-worlds");
+        return worlds.stream().anyMatch(world -> world.equals("*") || world.equalsIgnoreCase(player.getWorld().getName()));
+    }
+    private long cooldownSeconds() {
+        return Math.max(0L, config.contains("cooldown-seconds") ? config.getLong("cooldown-seconds", 8L) : config.getLong("cooldown.duration", 8L));
     }
     private void announce(Player player, String biome, boolean bypassCooldown) {
-        long now = System.currentTimeMillis(); long cooldown = Math.max(0, config.getLong("cooldown-seconds", 8)) * 1000L;
+        long now = System.currentTimeMillis(); long cooldown = cooldownSeconds() * 1000L;
         if (!bypassCooldown && now - announced.getOrDefault(player.getUniqueId(), 0L) < cooldown) return;
         announced.put(player.getUniqueId(), now);
         String name = configuredName(biome);
@@ -70,17 +74,35 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
         String titleKey = firstDiscovery ? "display.new-biome-title" : "display.title";
         String title = config.getString(titleKey, firstDiscovery ? "&d&lBIOME BARU" : "&d&l{biome}");
         String subtitle = config.getString("display.subtitle", "&7Sekarang memasuki &f{biome}");
-        player.sendTitle(color(title.replace("{biome}", name)), color(subtitle.replace("{biome}", name)), 8, 45, 12);
+        player.sendTitle(color(title.replace("{biome}", name)), color(subtitle.replace("{biome}", name)),
+                Math.max(0, config.getInt("display.fade-in-ticks", 8)), Math.max(20, config.getInt("display.stay-ticks", 45)), Math.max(0, config.getInt("display.fade-out-ticks", 12)));
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(color(config.getString("display.actionbar", "&8✦ &fMemasuki &d{biome}").replace("{biome}", name))));
-        player.getWorld().spawnParticle(parseParticle(config.getString("effects.particle", "END_ROD")), player.getLocation().add(0, 1, 0), Math.max(1, config.getInt("effects.count", 12)), .45, .65, .45, .01);
-        player.playSound(player.getLocation(), parseSound(config.getString("effects.sound", "BLOCK_AMETHYST_BLOCK_CHIME")), .45f, 1.35f);
+        if (config.getBoolean("effects.particles-enabled", true)) player.getWorld().spawnParticle(parseParticle(config.getString("effects.particle", "END_ROD")), player.getLocation().add(0, 1, 0), Math.max(1, config.getInt("effects.count", 12)), .45, .65, .45, .01);
+        // Kompatibel dengan konfigurasi BiomeAnnouncer lama: animation.sound.*.
+        boolean soundEnabled = config.contains("effects.sound-enabled") ? config.getBoolean("effects.sound-enabled") : config.getBoolean("animation.sound.enabled", true);
+        if (soundEnabled) {
+            String sound = config.getString("effects.sound", "BLOCK_AMETHYST_BLOCK_CHIME");
+            float volume = (float) config.getDouble("effects.sound-volume", config.getDouble("animation.sound.volume", .45D));
+            float pitch = (float) config.getDouble("effects.sound-pitch", config.getDouble("animation.sound.pitch", 1.35D));
+            player.playSound(player.getLocation(), parseSound(sound), Math.max(0.0F, volume), Math.max(0.5F, Math.min(2.0F, pitch)));
+        }
     }
     private String key(Player player) { return player.getLocation().getBlock().getBiome().getKey().toString(); }
     private String configuredName(String biome) {
-        String configured = config.getString("biome-names." + biome.replace('.', '_').replace(':', '_'));
+        String configured = config.getString("biome-names." + biomeConfigKey(biome));
         return configured == null || configured.isBlank() ? friendly(biome) : color(configured);
     }
-    private String friendly(String biome) { String raw = biome.replaceFirst("^[^:]+:", "").replace('_', ' '); StringBuilder out = new StringBuilder(); for (String word : raw.split(" ")) if (!word.isEmpty()) out.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(' '); return out.toString().trim(); }
+    private String biomeConfigKey(String biome) { return biome.replace('/', '_').replace('.', '_').replace(':', '_'); }
+    /** Terra may include a category path; the final segment is the displayed biome name. */
+    private String friendly(String biome) {
+        String raw = biome.replaceFirst("^[^:]+:", "");
+        int slash = raw.lastIndexOf('/');
+        if (slash >= 0 && slash + 1 < raw.length()) raw = raw.substring(slash + 1);
+        raw = raw.replace('_', ' ');
+        StringBuilder out = new StringBuilder();
+        for (String word : raw.split(" ")) if (!word.isEmpty()) out.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(' ');
+        return out.toString().trim();
+    }
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value == null ? "" : value); }
     private Particle parseParticle(String value) { try { return Particle.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Particle.END_ROD; } }
     private Sound parseSound(String value) { try { return Sound.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Sound.BLOCK_AMETHYST_BLOCK_CHIME; } }
