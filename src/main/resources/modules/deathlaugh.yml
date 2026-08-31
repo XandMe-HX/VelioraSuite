@@ -1,0 +1,8 @@
+# Efek suara ringan saat pemain mati. Tidak membuat entity, packet loop, atau task berulang.
+settings:
+  enabled: true
+  sound: ENTITY_RAVAGER_CELEBRATE
+  volume: 0.8
+  pitch: 1.0
+  radius: 64
+  same-world-only: true
