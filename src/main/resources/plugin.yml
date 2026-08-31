@@ -19,6 +19,11 @@ softdepend:
   - floodgate
 
 commands:
+  autotool:
+    description: Mengaktifkan pemilih alat otomatis Veliora.
+    usage: /autotool [on|off|status|reload]
+    aliases: [vautotool]
+    permission: veliorasuite.autotool.use
   menu:
     description: Membuka menu utama Veliora Gardens.
     usage: /menu
@@ -257,6 +262,11 @@ commands:
     permission: veliorasuite.home.admin
 
 permissions:
+  veliorasuite.autotool.use:
+    description: Menggunakan pemilih alat otomatis Veliora.
+    default: true
+  veliorasuite.autotool.reload:
+    default: op
   veliorasuite.race.use:
     default: true
   veliorasuite.race.admin:

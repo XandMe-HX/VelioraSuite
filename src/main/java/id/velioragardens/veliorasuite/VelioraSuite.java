@@ -12,6 +12,7 @@ import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
 import id.velioragardens.veliorasuite.module.biome.BiomeModule;
 import id.velioragardens.veliorasuite.module.adminmonitor.AdminMonitorModule;
 import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
+import id.velioragardens.veliorasuite.module.autotool.AutoToolModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
 import id.velioragardens.veliorasuite.module.chat.ChatModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
@@ -103,6 +104,7 @@ public final class VelioraSuite extends JavaPlugin {
     }
 
     private void registerModules() {
+        moduleManager.register(new AutoToolModule(this));
         moduleManager.register(new AdminMonitorModule(this));
         moduleManager.register(new GuideModule(this));
         moduleManager.register(new MenuModule(this));
