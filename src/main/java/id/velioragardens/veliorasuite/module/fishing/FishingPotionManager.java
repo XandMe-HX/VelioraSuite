@@ -1,5 +1,6 @@
 package id.velioragardens.veliorasuite.module.fishing;
 
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
@@ -34,6 +35,7 @@ public final class FishingPotionManager implements Listener {
 
     public void open(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 27, TITLE);
+        GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.LIGHT_BLUE_STAINED_GLASS_PANE);
         inventory.setItem(11, potion(player, "luck", Material.POTION, "Luck Potion", "Rare chance +50%"));
         inventory.setItem(13, potion(player, "mutation", Material.SPLASH_POTION, "Mutation Potion", "Mutation chance x2"));
         inventory.setItem(15, potion(player, "lure", Material.LINGERING_POTION, "Lure Speed Potion", "Waktu tunggu -25%"));
