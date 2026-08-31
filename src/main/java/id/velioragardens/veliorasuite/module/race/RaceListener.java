@@ -64,7 +64,7 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
         if (manager.selected(player.getUniqueId())) { Bukkit.getScheduler().runTaskLater(plugin, () -> { gui.applySavedScale(player); benefits.applyPassive(player); }, 10L); return; }
         if (pending(player)) Bukkit.getScheduler().runTaskLater(plugin, () -> gui.openGuide(player), 30L);
     }
-    @EventHandler public void quit(PlayerQuitEvent event) { reminders.remove(event.getPlayer().getUniqueId()); manager.clearDraft(event.getPlayer().getUniqueId()); benefits.clearPassive(event.getPlayer()); }
+    @EventHandler public void quit(PlayerQuitEvent event) { reminders.remove(event.getPlayer().getUniqueId()); manager.clearDraft(event.getPlayer().getUniqueId()); benefits.forget(event.getPlayer()); }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length >= 1 && args[0].equalsIgnoreCase("admin")) {

@@ -1,5 +1,6 @@
 package id.velioragardens.veliorasuite.module.trader;
 
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import id.velioragardens.veliorasuite.module.trader.model.TraderTradeItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -7,7 +8,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -36,7 +39,10 @@ public final class TraderGuiManager implements Listener {
     }
 
     public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, configManager.color(configManager.getGuiTitle()));
+        Holder holder = new Holder();
+        Inventory inventory = Bukkit.createInventory(holder, 54, configManager.color(configManager.getGuiTitle()));
+        holder.inventory = inventory;
+        GuiLayout.decorateMenu(inventory);
         Map<Integer, String> map = new HashMap<>();
         List<Integer> slots = List.of(10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43);
         List<TraderTradeItem> activeItems = traderManager.getActiveItems();
@@ -60,7 +66,10 @@ public final class TraderGuiManager implements Listener {
     }
 
     private void openSell(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, configManager.color("&1Veliora &bTrader Sell"));
+        Holder holder = new Holder();
+        Inventory inventory = Bukkit.createInventory(holder, 54, configManager.color("&1Veliora &bTrader Sell"));
+        holder.inventory = inventory;
+        GuiLayout.decorateMenu(inventory);
         Map<Integer, String> map = new HashMap<>(); int slot = 10;
         for (Map.Entry<Material, Double> entry : configManager.getSellPrices().entrySet()) {
             while (slot % 9 == 0 || slot % 9 == 8) slot++;
@@ -76,9 +85,8 @@ public final class TraderGuiManager implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
+        if (!(event.getView().getTopInventory().getHolder() instanceof Holder)) return;
         boolean sell = sellMenus.contains(player.getUniqueId());
-        if (!event.getView().getTitle().equals(configManager.color(configManager.getGuiTitle()))
-                && !event.getView().getTitle().equals(configManager.color("&1Veliora &bTrader Sell"))) return;
         event.setCancelled(true);
         if (event.getRawSlot() == 49) {
             player.closeInventory();
@@ -96,6 +104,12 @@ public final class TraderGuiManager implements Listener {
         if (itemId == null) return;
         if (sell) { sellAll(player, Material.matchMaterial(itemId)); openSell(player); return; }
         if (!traderManager.beginBuy(player, itemId)) open(player);
+    }
+
+    /** Dragging can bypass click handling, so catalogue menus never accept items. */
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof Holder) event.setCancelled(true);
     }
 
     private void sellAll(Player player, Material material) {
@@ -133,4 +147,9 @@ public final class TraderGuiManager implements Listener {
         return item;
     }
     private ItemStack button(Material material,String name,List<String> lore){ItemStack item=new ItemStack(material);ItemMeta meta=item.getItemMeta();meta.setDisplayName(configManager.color(name));meta.setLore(lore.stream().map(configManager::color).toList());item.setItemMeta(meta);return item;}
+
+    private static final class Holder implements InventoryHolder {
+        private Inventory inventory;
+        @Override public Inventory getInventory() { return inventory; }
+    }
 }

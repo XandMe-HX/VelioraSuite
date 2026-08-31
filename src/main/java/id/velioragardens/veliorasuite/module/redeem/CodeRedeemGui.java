@@ -1,10 +1,12 @@
 package id.velioragardens.veliorasuite.module.redeem;
 
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -38,15 +40,16 @@ public final class CodeRedeemGui implements Listener {
     }
     private void openTemplates(Player player) {
         Inventory inv=menu("templates", TEMPLATES); fill(inv);
-        int slot=0; for(CodeRedeemManager.Template t:manager.templates().values()) { if(slot>=18)break; Material m=t.items.isEmpty()?Material.PAPER:t.items.getFirst().getType(); List<String> lore=new ArrayList<>(); lore.add("§7"+t.items.size()+" item hadiah"); if(t.money>0) lore.add("§6Bonus uang: $"+(long)t.money); lore.add("§eKlik untuk memilih"); inv.setItem(slot++,icon(m,"§a"+t.name,lore.toArray(String[]::new))); }
-        inv.setItem(22,icon(Material.ARROW,"§eKembali","§7Kembali ke pengelola kode.")); player.openInventory(inv);
+        int[] slots={10,11,12,13,14,15,16,19,20,21}; int index=0;
+        for(CodeRedeemManager.Template t:manager.templates().values()) { if(index>=slots.length)break; Material m=t.items.isEmpty()?Material.PAPER:t.items.getFirst().getType(); List<String> lore=new ArrayList<>(); lore.add("§7"+t.items.size()+" item hadiah"); if(t.money>0) lore.add("§6Bonus uang: $"+(long)t.money); lore.add("§eKlik untuk memilih"); inv.setItem(slots[index++],icon(m,"§a"+t.name,lore.toArray(String[]::new))); }
+        inv.setItem(26,icon(Material.ARROW,"§eKembali","§7Kembali ke pengelola kode.")); player.openInventory(inv);
     }
     private void openPreview(Player player) {
         CodeRedeemManager.Draft draft=manager.draft(player); if(draft==null){player.sendMessage("§cBelum ada hadiah yang dipilih.");return;}
         Inventory inv=menu("preview", PREVIEW); fill(inv);
         if(draft.type()==CodeRedeemManager.Type.MONEY) inv.setItem(13,icon(Material.EMERALD,"§aHadiah Uang","§6$"+(long)draft.money(),"§7Setelah siap: §f/cd set <kode>"));
         else if(draft.type()==CodeRedeemManager.Type.ITEM) inv.setItem(13,draft.item().clone());
-        else { CodeRedeemManager.Template t=manager.templates().get(draft.template()); int i=0; for(ItemStack item:t.items) inv.setItem(i++,item.clone()); if(t.money>0)inv.setItem(22,icon(Material.EMERALD,"§aBonus Uang","§6$"+(long)t.money)); }
+        else { CodeRedeemManager.Template t=manager.templates().get(draft.template()); int[] slots={10,11,12,13,14,15,16,19,20,21}; int i=0; for(ItemStack item:t.items) { if(i>=slots.length) break; inv.setItem(slots[i++],item.clone()); } if(t.money>0)inv.setItem(22,icon(Material.EMERALD,"§aBonus Uang","§6$"+(long)t.money)); }
         inv.setItem(26,icon(Material.ARROW,"§eKembali","§7Kembali ke pengelola kode.")); player.openInventory(inv);
     }
     @EventHandler public void onClick(InventoryClickEvent event) {
@@ -61,14 +64,15 @@ public final class CodeRedeemGui implements Listener {
                 case 23 -> openPreview(player); case 25 -> {manager.clearDraft(player);player.sendMessage("§ePilihan hadiah dibatalkan.");openMain(player);} default -> {}
             }
         } else if(type.equals("templates")) {
-            if(s==22){openMain(player);return;} if(s>=0&&s<18){int i=0; for(CodeRedeemManager.Template t:manager.templates().values()){if(i++==s){manager.setDraft(player,new CodeRedeemManager.Draft(CodeRedeemManager.Type.TEMPLATE,0,t.id,null));player.sendMessage("§aTemplate §e"+t.name+" §adipilih. Ketik §f/cd set <kode>§a.");openMain(player);return;}}}
+            if(s==26){openMain(player);return;} int[] slots={10,11,12,13,14,15,16,19,20,21}; for(int index=0;index<slots.length;index++){if(s!=slots[index])continue;int i=0; for(CodeRedeemManager.Template t:manager.templates().values()){if(i++==index){manager.setDraft(player,new CodeRedeemManager.Draft(CodeRedeemManager.Type.TEMPLATE,0,t.id,null));player.sendMessage("§aTemplate §e"+t.name+" §adipilih. Ketik §f/cd set <kode>§a.");openMain(player);return;}}}
         } else if(type.equals("preview") && s==26) openMain(player);
     }
+    @EventHandler public void onDrag(InventoryDragEvent event) { if(event.getView().getTopInventory().getHolder() instanceof MenuHolder)event.setCancelled(true); }
     /** Drafts are only GUI convenience state and must not accumulate for offline players. */
     @EventHandler public void onQuit(PlayerQuitEvent event) { manager.clearDraft(event.getPlayer()); }
     private void selectMoney(Player player,double amount){manager.setDraft(player,new CodeRedeemManager.Draft(CodeRedeemManager.Type.MONEY,amount,null,null));player.sendMessage("§aHadiah uang §6$"+(long)amount+" §adipilih. Ketik §f/cd set <kode>§a.");openMain(player);}
     private ItemStack status(Player player){CodeRedeemManager.Draft d=manager.draft(player); if(d==null)return icon(Material.GRAY_DYE,"§7Belum Ada Hadiah Dipilih","§7Pilih uang, template, atau item di tangan."); String text=d.type()==CodeRedeemManager.Type.MONEY?"Uang $"+(long)d.money():d.type()==CodeRedeemManager.Type.ITEM?"Item: "+d.item().getType().name():"Template: "+manager.templates().get(d.template()).name;return icon(Material.LIME_DYE,"§aPilihan Siap","§f"+text,"§7Ketik: §f/cd set <kode>");}
-    private void fill(Inventory inv){for(int i=0;i<inv.getSize();i++)inv.setItem(i,icon(Material.BLACK_STAINED_GLASS_PANE," "));}
+    private void fill(Inventory inv){GuiLayout.decorateMenu(inv);}
     private Inventory menu(String type, String title) { return org.bukkit.Bukkit.createInventory(new MenuHolder(type), 27, title); }
     private ItemStack icon(Material material,String name,String...lore){ItemStack item=new ItemStack(material);ItemMeta meta=item.getItemMeta();meta.setDisplayName(name);meta.setLore(List.of(lore));item.setItemMeta(meta);return item;}
     private static final class MenuHolder implements InventoryHolder {

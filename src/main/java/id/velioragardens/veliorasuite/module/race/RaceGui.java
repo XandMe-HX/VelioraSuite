@@ -1,6 +1,7 @@
 package id.velioragardens.veliorasuite.module.race;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -18,7 +19,7 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.List;
 import java.util.Locale;
 
-/** Empty-slot menus intentionally avoid decorative panes, which the server resource pack remaps. */
+/** Race menus share the Suite chest layout while selection remains confirmation-first. */
 public final class RaceGui implements Listener {
     private final VelioraSuite plugin;
     private final RaceManager manager;
@@ -48,7 +49,7 @@ public final class RaceGui implements Listener {
         openRaces(player, true);
     }
     private void openRaces(Player player, boolean changing) {
-        Inventory inventory = menu("races", 27, "§8Pilih Ras §7| 6 Ras Utama");
+        Inventory inventory = menu("races", 27, "§8Pilih Ras §7| 10 Ras");
         List<String> info = changing ? List.of("&7Pilih ras baru untuk melihat detail.", "&7Biaya: &6$" + String.format("%,.0f", manager.changeCost()), "&7Cooldown setelah berhasil: &f7 hari", "", "&eKlik tidak langsung memotong uang.") : List.of("&7Klik ras untuk melihat benefit dan kelemahannya.", "&7Klik tidak langsung mengunci pilihan.");
         inventory.setItem(4, icon(Material.BOOK, changing ? "&6Ganti Ras" : "&bPilih satu ras", info, null));
         inventory.setItem(10, raceIcon("HUMAN", Material.PLAYER_HEAD, changing));
@@ -57,7 +58,11 @@ public final class RaceGui implements Listener {
         inventory.setItem(14, raceIcon("BEASTMAN", Material.RABBIT_FOOT, changing));
         inventory.setItem(15, raceIcon("DEMON", Material.BLAZE_ROD, changing));
         inventory.setItem(16, raceIcon("ANGEL", Material.FEATHER, changing));
-        inventory.setItem(22, icon(Material.ARROW, "&eKembali ke panduan", List.of("&7Baca ulang aturan pemilihan ras."), "guide"));
+        inventory.setItem(19, raceIcon("GOBLIN", Material.GOLD_NUGGET, changing));
+        inventory.setItem(20, raceIcon("ORC", Material.IRON_AXE, changing));
+        inventory.setItem(21, raceIcon("VAMPIRE", Material.REDSTONE, changing));
+        inventory.setItem(22, raceIcon("DRAGONKIN", Material.DRAGON_BREATH, changing));
+        inventory.setItem(26, icon(Material.ARROW, "&eKembali ke panduan", List.of("&7Baca ulang aturan pemilihan ras."), "guide"));
         player.openInventory(inventory);
     }
     private void openDetail(Player player, String race) {
@@ -171,17 +176,25 @@ public final class RaceGui implements Listener {
     private String formName(String form) { return switch (form.toUpperCase(Locale.ROOT)) { case "CHILD" -> "Mode Bocil"; case "TALL" -> "Dewasa Tinggi"; default -> "Dewasa Normal"; }; }
     private ItemStack raceIcon(String race, Material material, boolean changing) { RaceInfo info = RaceInfo.valueOf(race); return icon(material, info.color + "&l" + info.title, List.of("&7" + info.tagline, "", "&eKlik untuk melihat detail."), (changing ? "change_detail:" : "detail:") + race); }
     private String duration(long millis) { long minutes = Math.max(1L, (millis + 59_999L) / 60_000L); long days = minutes / 1_440L; long hours = (minutes % 1_440L) / 60L; long mins = minutes % 60L; return days > 0 ? days + "h " + hours + "j" : hours > 0 ? hours + "j " + mins + "m" : mins + "m"; }
-    private Inventory menu(String type, int size, String title) { return org.bukkit.Bukkit.createInventory(new Holder(type), size, title); }
+    private Inventory menu(String type, int size, String title) {
+        Inventory inventory = org.bukkit.Bukkit.createInventory(new Holder(type), size, title);
+        GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.PURPLE_STAINED_GLASS_PANE);
+        return inventory;
+    }
     private ItemStack icon(Material material, String name, List<String> lore, String action) { ItemStack item = new ItemStack(material); ItemMeta meta = item.getItemMeta(); meta.setDisplayName(color(name)); meta.setLore(lore.stream().map(this::color).toList()); if (action != null) meta.getPersistentDataContainer().set(actionKey, PersistentDataType.STRING, action); item.setItemMeta(meta); return item; }
     private String color(String value) { return ChatColor.translateAlternateColorCodes('&', value); }
     private record Holder(String type) implements InventoryHolder { @Override public Inventory getInventory() { return null; } }
     private enum RaceInfo {
-        HUMAN("Human", "&f", Material.PLAYER_HEAD, "Seimbang dan cepat berkembang", List.of("&aBenefit", "&7• Semua XP yang didapat &f+16%", "", "&cKelemahan", "&7• Tidak memiliki spesialisasi elemen.")),
-        ELF("Elf", "&a", Material.BOW, "Pemanah dan penjelajah hutan", List.of("&aBenefit", "&7• Speed &f+10%", "&7• Damage bow &f+16%", "&7• XP eksplorasi &f+10%", "", "&cKelemahan", "&7• Defense &f-8%")),
-        DWARF("Dwarf", "&6", Material.IRON_PICKAXE, "Penambang dan penjaga tangguh", List.of("&aBenefit", "&7• Mining XP &f+24%", "&7• Tahan knockback", "&7• Durability alat hemat &f16%", "", "&cKelemahan", "&7• Speed &f-8%")),
-        BEASTMAN("Beastman", "&e", Material.RABBIT_FOOT, "Petarung cepat dan lincah", List.of("&aBenefit", "&7• Sprint speed &f+14%", "&7• Damage melee &f+12%", "&7• Fall damage &f-30%", "", "&cKelemahan", "&7• Damage bow &f-8%")),
-        DEMON("Demon", "&c", Material.BLAZE_ROD, "Pejuang api dan malam", List.of("&aBenefit", "&7• Fire resistance", "&7• Damage malam &f+16%", "", "&cKelemahan", "&7• Damage diterima siang &f+10%")),
-        ANGEL("Angel", "&b", Material.FEATHER, "Pelindung cahaya dan penjelajah", List.of("&aBenefit", "&7• Tidak menerima fall damage", "&7• Regen ringan siang hari", "&7• Semua XP yang didapat &f+10%", "", "&cKelemahan", "&7• Damage melee malam &f-8%"));
+        HUMAN("Human", "&f", Material.PLAYER_HEAD, "Seimbang dan cepat berkembang", List.of("&aBenefit", "&7• Semua XP &f+24%", "&7• Reward quest &f+15%", "", "&cKonsekuensi", "&7• Tidak punya kekuatan spesialis.")),
+        ELF("Elf", "&a", Material.BOW, "Pemanah dan penjelajah hutan", List.of("&aBenefit", "&7• Speed &f+15%", "&7• Damage bow &f+24%", "", "&cKonsekuensi", "&7• Defense &f-12%")),
+        DWARF("Dwarf", "&6", Material.IRON_PICKAXE, "Penambang dan penjaga tangguh", List.of("&aBenefit", "&7• Mining XP &f+36%", "&7• Tahan knockback", "&7• Durability hemat &f24%", "", "&cKonsekuensi", "&7• Speed &f-12%")),
+        BEASTMAN("Beastman", "&e", Material.RABBIT_FOOT, "Petarung cepat dan lincah", List.of("&aBenefit", "&7• Sprint speed &f+21%", "&7• Damage melee &f+18%", "&7• Fall damage &f-45%", "", "&cKonsekuensi", "&7• Damage bow &f-12%")),
+        DEMON("Demon", "&c", Material.BLAZE_ROD, "Pejuang api dan malam", List.of("&aBenefit", "&7• Kebal api dan lava", "&7• Damage malam &f+24%", "", "&cKonsekuensi", "&7• Damage diterima siang &f+15%")),
+        ANGEL("Angel", "&b", Material.FEATHER, "Pelindung cahaya dan penjelajah", List.of("&aBenefit", "&7• Tidak menerima fall damage", "&7• Regen siang hari", "&7• Semua XP &f+15%", "", "&cKonsekuensi", "&7• Damage melee malam &f-12%")),
+        GOBLIN("Goblin", "&2", Material.GOLD_NUGGET, "Penambang kecil yang sangat hemat", List.of("&aBenefit", "&7• Mining XP &f+30%", "&7• Durability hemat &f24%", "", "&cKonsekuensi", "&7• Max health &f-4 hati")),
+        ORC("Orc", "&4", Material.IRON_AXE, "Petarung garis depan", List.of("&aBenefit", "&7• Max health &f+4 hati", "&7• Tahan knockback", "&7• Damage melee &f+21%", "", "&cKonsekuensi", "&7• Speed &f-18%")),
+        VAMPIRE("Vampire", "&5", Material.REDSTONE, "Pemburu malam yang bertahan hidup", List.of("&aBenefit", "&7• Regen dan night vision malam", "&7• Lifesteal mob &f3 hati / 8 dtk", "", "&cKonsekuensi", "&7• Speed siang &f-15%", "&7• Tidak mendapat regen siang")),
+        DRAGONKIN("Dragonkin", "&6", Material.DRAGON_BREATH, "Petarung bersisik keturunan naga", List.of("&aBenefit", "&7• Damage ke mob &f+18%", "&7• Api/lava aman &f12 dtk / 45 dtk", "", "&cKonsekuensi", "&7• Hunger naik &f+23%"));
         private final String title, color, tagline; private final Material material; private final List<String> lore;
         RaceInfo(String title, String color, Material material, String tagline, List<String> lore) { this.title=title; this.color=color; this.material=material; this.tagline=tagline; this.lore=lore; }
         List<String> lore() { return lore; }

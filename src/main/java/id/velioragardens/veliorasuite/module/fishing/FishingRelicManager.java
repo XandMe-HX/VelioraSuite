@@ -1,5 +1,6 @@
 package id.velioragardens.veliorasuite.module.fishing;
 
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import id.velioragardens.veliorasuite.module.fishing.model.CaughtFish;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -61,11 +62,12 @@ public final class FishingRelicManager implements Listener {
 
     public void openGuide(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 27, manager.getConfigManager().color("&8Fishing Relic Guide"));
+        GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.PURPLE_STAINED_GLASS_PANE);
         inventory.setItem(10, create("ENCHANT"));
         inventory.setItem(12, create("TWISTED"));
         inventory.setItem(14, create("EXALTED"));
         inventory.setItem(16, guideItem());
-        inventory.setItem(22, new ItemStack(Material.BARRIER));
+        inventory.setItem(26, guideCloseItem());
         player.openInventory(inventory);
     }
 
@@ -73,7 +75,7 @@ public final class FishingRelicManager implements Listener {
     public void onGuideClick(InventoryClickEvent event) {
         if (!event.getView().getTitle().equals(manager.getConfigManager().color("&8Fishing Relic Guide"))) return;
         event.setCancelled(true);
-        if (event.getRawSlot() == 22 && event.getWhoClicked() instanceof Player player) player.closeInventory();
+        if (event.getRawSlot() == 26 && event.getWhoClicked() instanceof Player player) player.closeInventory();
     }
 
     @EventHandler
@@ -142,6 +144,15 @@ public final class FishingRelicManager implements Listener {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(manager.getConfigManager().color("&bCara Memasang"));
         meta.setLore(List.of("&71. Taruh Veliora Fishing Rod di kiri.", "&72. Taruh satu Relic di kanan.", "&73. Ambil hasil enchant di anvil.").stream().map(manager.getConfigManager()::color).toList());
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack guideCloseItem() {
+        ItemStack item = new ItemStack(Material.BARRIER);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(manager.getConfigManager().color("&cTutup Panduan"));
+        meta.setLore(List.of(manager.getConfigManager().color("&7Kembali ke menu Fishing.")));
         item.setItemMeta(meta);
         return item;
     }

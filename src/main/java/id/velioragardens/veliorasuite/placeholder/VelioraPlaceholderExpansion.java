@@ -96,7 +96,7 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
 
     private String raceDisplay(Player player) {
         id.velioragardens.veliorasuite.module.race.RaceManager manager = race(player);
-        if (manager == null || !manager.selected(player.getUniqueId())) return "&8[&7BELUM MEMILIH&8]";
+        if (manager == null || !manager.selected(player.getUniqueId())) return "&8[&f&lHUMAN&8]";
         return switch (manager.race(player.getUniqueId()).toUpperCase(Locale.ROOT)) {
             case "HUMAN" -> "&8[&f&lHUMAN&8]";
             case "ELF" -> "&8[&a&lELF&8]";
@@ -104,6 +104,10 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
             case "BEASTMAN" -> "&8[&e&lBEASTMAN&8]";
             case "DEMON" -> "&8[&c&lDEMON&8]";
             case "ANGEL" -> "&8[&b&lANGEL&8]";
+            case "GOBLIN" -> "&8[&2&lGOBLIN&8]";
+            case "ORC" -> "&8[&4&lORC&8]";
+            case "VAMPIRE" -> "&8[&5&lVAMPIRE&8]";
+            case "DRAGONKIN" -> "&8[&6&lDRAGONKIN&8]";
             default -> "&8[&7" + manager.race(player.getUniqueId()) + "&8]";
         };
     }

@@ -1,6 +1,8 @@
 package id.velioragardens.veliorasuite.module.adventure;
 
 import id.velioragardens.veliorasuite.VelioraSuite;
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
+import id.velioragardens.veliorasuite.module.race.RaceModule;
 import id.velioragardens.veliorasuite.module.team.TeamModule;
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import org.bukkit.Bukkit;
@@ -208,11 +210,16 @@ public final class AdventureManager implements Listener {
             AdventureDataManager.PlayerData profile = data.player(entry.getKey(), name);
             int oldLevel = member == null ? 0 : level(member);
             AdventureRank oldRank = member == null ? null : standardRank(member);
-            profile.addExp(quest.playerExp()); profile.complete();
+            double raceMultiplier = plugin.getModuleManager().getModule("race")
+                    .filter(RaceModule.class::isInstance).map(RaceModule.class::cast)
+                    .map(module -> module.getManager().questRewardMultiplier(entry.getKey())).orElse(1.0D);
+            int rewardedExp = (int) Math.ceil(quest.playerExp() * raceMultiplier);
+            int rewardedMoney = (int) Math.ceil(quest.money() * raceMultiplier);
+            profile.addExp(rewardedExp); profile.complete();
             if (member != null) {
-                deposit(member, quest.money());
+                deposit(member, rewardedMoney);
                 send(member, "quest-reward", "&aMisi selesai! Hadiah: &f$%money% &7+ &b%exp% Guild EXP.",
-                        "%money%", String.valueOf(quest.money()), "%exp%", String.valueOf(quest.playerExp()));
+                        "%money%", String.valueOf(rewardedMoney), "%exp%", String.valueOf(rewardedExp));
                 member.playSound(member.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1F, 1F);
                 member.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, member.getLocation().add(0.0D, 1.0D, 0.0D), 24, 0.5D, 0.7D, 0.5D, 0.025D);
                 showProgressCelebration(member, oldLevel, oldRank);
@@ -570,7 +577,9 @@ public final class AdventureManager implements Listener {
         if (quest != null && !quest.isBlank()) meta.getPersistentDataContainer().set(questKey, PersistentDataType.STRING, quest);
         item.setItemMeta(meta); return item;
     }
-    private void fill(Inventory inventory, Material material) { ItemStack filler = item(material, " ", List.of(), "none", ""); for (int slot = 0; slot < inventory.getSize(); slot++) inventory.setItem(slot, filler); }
+    private void fill(Inventory inventory, Material material) {
+        GuiLayout.decorateMenu(inventory, material, Material.GRAY_STAINED_GLASS_PANE);
+    }
     private void sendGuide(Player player) {
         long now = System.currentTimeMillis(), allowed = guideCooldowns.getOrDefault(player.getUniqueId(), 0L);
         if (allowed > now) { send(player, "guide-cooldown", "&ePanduan bisa dibuka lagi dalam &f%seconds% detik&e.", "%seconds%", String.valueOf((allowed - now + 999) / 1000)); return; }

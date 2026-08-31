@@ -1,5 +1,6 @@
 package id.velioragardens.veliorasuite.module.fishing;
 
+import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
@@ -152,6 +153,7 @@ public final class FishingRodManager implements Listener {
             return;
         }
         Inventory inventory = Bukkit.createInventory(null, 54, quests ? QUEST_TITLE : SHOP_TITLE);
+        GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, quests ? Material.PURPLE_STAINED_GLASS_PANE : Material.LIGHT_BLUE_STAINED_GLASS_PANE);
         int[] slots = rodSlots();
         List<FishingRodDefinition> shown = shownRods(quests);
         for (int i = 0; i < shown.size() && i < slots.length; i++) inventory.setItem(slots[i], createShopItem(player, shown.get(i)));

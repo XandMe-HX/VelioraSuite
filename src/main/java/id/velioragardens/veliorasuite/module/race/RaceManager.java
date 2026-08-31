@@ -38,12 +38,18 @@ public final class RaceManager {
     public long nextChangeAt(UUID uuid) { return data.getLong("players." + uuid + ".last-changed-at", data.getLong("players." + uuid + ".selected-at", 0L)) + changeCooldownMillis(); }
     public long changeRemaining(UUID uuid) { return Math.max(0L, nextChangeAt(uuid) - System.currentTimeMillis()); }
     public boolean canChange(UUID uuid) { return selected(uuid) && changeRemaining(uuid) == 0L; }
+    /** Quest rewards are intentionally limited to Human and Angel so race bonuses stay readable. */
+    public double questRewardMultiplier(UUID uuid) {
+        if (!selected(uuid)) return 1.0D;
+        return switch (race(uuid)) { case "HUMAN", "ANGEL" -> 1.15D; default -> 1.0D; };
+    }
     public void setEnforcementEnabled(boolean enabled) {
         config.set("settings.enforce-selection", enabled);
         try { config.save(configFile); } catch (Exception exception) { plugin.getLogger().warning("Gagal menyimpan pengaturan race: " + exception.getMessage()); }
     }
     public boolean selected(UUID uuid) { return data.contains("players." + uuid + ".race"); }
-    public String race(UUID uuid) { return data.getString("players." + uuid + ".race", "BELUM_MEMILIH").toUpperCase(Locale.ROOT); }
+    /** Unselected players display as Human, but receive no race bonus until confirmation. */
+    public String race(UUID uuid) { return data.getString("players." + uuid + ".race", "HUMAN").toUpperCase(Locale.ROOT); }
     public String form(UUID uuid) { return data.getString("players." + uuid + ".form", "ADULT").toUpperCase(Locale.ROOT); }
     public double scaleFor(String form) {
         String key = switch (form.toUpperCase(Locale.ROOT)) {
