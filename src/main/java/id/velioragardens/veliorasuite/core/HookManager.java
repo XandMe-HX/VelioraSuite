@@ -26,6 +26,7 @@ public final class HookManager implements Listener {
             "Geyser-Spigot",
             "floodgate",
             "ExcellentCrates",
+            "AggressiveAnimals",
             "VelioraWar",
             "VelioraGacha",
             "VelioraFTB"

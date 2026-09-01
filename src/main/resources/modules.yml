@@ -6,6 +6,7 @@ modules:
   guide: true
   menu: true
   loginsecurity: true
+  mobpanic: true
   team: true
   kits: true
   report: true

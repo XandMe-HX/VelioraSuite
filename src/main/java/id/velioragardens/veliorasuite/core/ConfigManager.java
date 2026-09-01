@@ -22,6 +22,7 @@ public final class ConfigManager {
             "guide",
             "menu",
             "loginsecurity",
+            "mobpanic",
             "team",
             "kits",
             "report",
