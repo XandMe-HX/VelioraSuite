@@ -12,6 +12,7 @@ modules:
   race: true
   announcement: true
   biome: true
+  gacha: true
   fishing: true
   trader: true
   boss: true

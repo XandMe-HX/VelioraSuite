@@ -17,6 +17,7 @@ import id.velioragardens.veliorasuite.module.deathlaugh.DeathLaughModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
 import id.velioragardens.veliorasuite.module.chat.ChatModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
+import id.velioragardens.veliorasuite.module.gacha.GachaModule;
 import id.velioragardens.veliorasuite.module.guide.GuideModule;
 import id.velioragardens.veliorasuite.module.kits.KitsModule;
 import id.velioragardens.veliorasuite.module.loginsecurity.LoginSecurityModule;
@@ -112,6 +113,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new MenuModule(this));
         moduleManager.register(new AnnouncementModule(this));
         moduleManager.register(new BiomeModule(this));
+        moduleManager.register(new GachaModule(this));
         moduleManager.register(new LoginSecurityModule(this));
         moduleManager.register(new TeamModule(this));
         moduleManager.register(new KitsModule(this));

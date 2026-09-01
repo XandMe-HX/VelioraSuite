@@ -28,6 +28,7 @@ public final class ConfigManager {
             "race",
             "announcement",
             "biome",
+            "gacha",
             "fishing",
             "boss",
             "security",
