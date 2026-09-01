@@ -9,7 +9,7 @@ settings:
 scale:
   child: 0.55
   adult: 1.00
-  tall: 1.15
+  tall: 1.20
 
 # Pilihan pertama gratis. Perubahan berikutnya memakai saldo ekonomi melalui Vault.
 change:
