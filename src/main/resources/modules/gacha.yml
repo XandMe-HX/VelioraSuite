@@ -4,9 +4,9 @@ settings:
   enabled: true
   default-key-price: 500
   automatic-discovery: true
-  # Hanya key virtual yang boleh dijual; ini mencegah key menjadi item fisik
-  # yang bisa tercecer atau dipindahkan oleh hopper.
-  require-virtual-keys: true
+  # false = key fisik dan virtual sama-sama boleh dijual. Ubah true jika
+  # suatu saat kamu ingin membatasi toko hanya ke virtual key.
+  require-virtual-keys: false
   purchase-cooldown-millis: 900
   title: '&8Veliora &dGacha Key Shop'
 

@@ -32,11 +32,12 @@ final class ExcellentCratesBridge {
                 String keyId = keyOverrides.getOrDefault(crateId.toLowerCase(Locale.ROOT), crateId);
                 Object key = call(keyManager, "getKeyById", String.class, keyId);
                 if (key == null) continue;
-                if (requireVirtualKeys && !(call(key, "isVirtual") instanceof Boolean virtual && virtual)) continue;
+                boolean virtualKey = call(key, "isVirtual") instanceof Boolean virtual && virtual;
+                if (requireVirtualKeys && !virtualKey) continue;
                 String name = text(call(crate, "getName"));
                 Object icon = call(crate, "getItemStack");
                 ItemStack item = icon instanceof ItemStack stack ? stack.clone() : null;
-                offers.add(new GachaOffer(crateId, keyId, name.isBlank() ? crateId : name, item, Math.max(0L, prices.getOrDefault(crateId.toLowerCase(Locale.ROOT), defaultPrice))));
+                offers.add(new GachaOffer(crateId, keyId, name.isBlank() ? crateId : name, item, Math.max(0L, prices.getOrDefault(crateId.toLowerCase(Locale.ROOT), defaultPrice)), virtualKey));
             }
             return offers;
         } catch (ReflectiveOperationException exception) {

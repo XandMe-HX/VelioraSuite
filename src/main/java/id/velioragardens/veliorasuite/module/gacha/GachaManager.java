@@ -167,7 +167,7 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
         lore.add(color("&7Crate ID: &f" + offer.crateId()));
         lore.add(color("&7Key ID: &f" + offer.keyId()));
         lore.add(color("&7Harga 1 key: &e" + money(offer.price())));
-        lore.add(color("&7Key disimpan aman sebagai virtual key."));
+        lore.add(color(offer.virtualKey() ? "&7Tipe key: &bVirtual &8(tersimpan di ExcellentCrates)" : "&7Tipe key: &eFisik &8(masuk ke inventory)"));
         lore.add(color("&8━━━━━━━━━━━━━━━━━━━━"));
         if (action != null) lore.add(color("&aKlik untuk membeli key ini."));
         meta.setLore(lore);
