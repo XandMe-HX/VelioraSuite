@@ -32,11 +32,13 @@ public final class RaceGui implements Listener {
         this.plugin = plugin; this.manager = manager; this.benefits = benefits; this.economy = new RaceEconomyHook(plugin); this.actionKey = new NamespacedKey(plugin, "race_gui_action"); this.scaleHelper = new RaceScaleHelper(plugin);
     }
     public void openGuide(Player player) {
-        Inventory inventory = menu("guide", 27, "§8Pilih Ras §7| Panduan");
-        inventory.setItem(4, icon(Material.WRITTEN_BOOK, "&d&lPanduan Ras", List.of("&7Pilih ras untuk menentukan gaya bermainmu.", "&7Ras memberi benefit dan kelemahan yang seimbang.", "", "&ePilihan pertama gratis.", "&cRas belum dipilih sampai konfirmasi akhir."), "guide_continue"));
-        inventory.setItem(13, icon(Material.BOOK, "&bAlur pemilihan", List.of("&71. Baca info ras", "&72. Pilih bentuk tubuh", "&73. Konfirmasi pilihan akhir", "", "&eKlik buku ungu untuk mulai."), null));
-        inventory.setItem(22, icon(Material.BARRIER, "&cBelum ingin memilih", List.of("&7Kamu dapat membuka lagi dengan &f/race&7."), "close"));
-        player.sendMessage("§d[Ras] §fBaca panduan dahulu, lalu pilih ras yang paling cocok dengan gaya mainmu.");
+        Inventory inventory = menu("guide", 54, "§8Pilih Ras §7| Panduan");
+        inventory.setItem(4, icon(Material.WRITTEN_BOOK, "&d&lPANDUAN RAS", List.of("&7Pilih ras untuk menentukan gaya bermainmu.", "&7Pilihan pertama gratis dan tidak langsung terkunci."), null));
+        inventory.setItem(11, icon(Material.BOOK, "&b&l01 &fBaca Benefit", List.of("&7Setiap ras memiliki keunggulan", "&7dan konsekuensi yang seimbang."), null));
+        inventory.setItem(13, icon(Material.ARMOR_STAND, "&e&l02 &fPilih Bentuk", List.of("&7Pilih Bocil, Dewasa Normal,", "&7atau Dewasa Tinggi."), null));
+        inventory.setItem(15, icon(Material.WRITABLE_BOOK, "&a&l03 &fKonfirmasi", List.of("&7Ras baru tersimpan setelah", "&7tombol konfirmasi hijau ditekan."), null));
+        inventory.setItem(31, icon(Material.LIME_DYE, "&a&lMULAI PILIH RAS", List.of("&7Buka daftar 10 ras Veliora.", "", "&eKlik untuk melanjutkan."), "guide_continue"));
+        inventory.setItem(49, icon(Material.BARRIER, "&cTutup Sementara", List.of("&7Kamu dapat membuka menu ini lagi", "&7dengan perintah &f/race&7."), "close"));
         player.openInventory(inventory);
     }
     private void openRaces(Player player) {
@@ -49,20 +51,20 @@ public final class RaceGui implements Listener {
         openRaces(player, true);
     }
     private void openRaces(Player player, boolean changing) {
-        Inventory inventory = menu("races", 27, "§8Pilih Ras §7| 10 Ras");
+        Inventory inventory = menu("races", 54, "§8Pilih Ras §7| 10 Ras");
         List<String> info = changing ? List.of("&7Pilih ras baru untuk melihat detail.", "&7Biaya: &6$" + String.format("%,.0f", manager.changeCost()), "&7Cooldown setelah berhasil: &f7 hari", "", "&eKlik tidak langsung memotong uang.") : List.of("&7Klik ras untuk melihat benefit dan kelemahannya.", "&7Klik tidak langsung mengunci pilihan.");
-        inventory.setItem(4, icon(Material.BOOK, changing ? "&6Ganti Ras" : "&bPilih satu ras", info, null));
-        inventory.setItem(10, raceIcon("HUMAN", Material.PLAYER_HEAD, changing));
-        inventory.setItem(11, raceIcon("ELF", Material.BOW, changing));
-        inventory.setItem(12, raceIcon("DWARF", Material.IRON_PICKAXE, changing));
+        inventory.setItem(4, icon(Material.BOOK, changing ? "&6&lGANTI RAS" : "&b&lPILIH SATU RAS", info, null));
+        inventory.setItem(11, raceIcon("HUMAN", Material.PLAYER_HEAD, changing));
+        inventory.setItem(12, raceIcon("ELF", Material.BOW, changing));
+        inventory.setItem(13, raceIcon("DWARF", Material.IRON_PICKAXE, changing));
         inventory.setItem(14, raceIcon("BEASTMAN", Material.RABBIT_FOOT, changing));
         inventory.setItem(15, raceIcon("DEMON", Material.BLAZE_ROD, changing));
-        inventory.setItem(16, raceIcon("ANGEL", Material.FEATHER, changing));
-        inventory.setItem(19, raceIcon("GOBLIN", Material.GOLD_NUGGET, changing));
-        inventory.setItem(20, raceIcon("ORC", Material.IRON_AXE, changing));
-        inventory.setItem(21, raceIcon("VAMPIRE", Material.REDSTONE, changing));
-        inventory.setItem(22, raceIcon("DRAGONKIN", Material.DRAGON_BREATH, changing));
-        inventory.setItem(26, icon(Material.ARROW, "&eKembali ke panduan", List.of("&7Baca ulang aturan pemilihan ras."), "guide"));
+        inventory.setItem(20, raceIcon("ANGEL", Material.FEATHER, changing));
+        inventory.setItem(21, raceIcon("GOBLIN", Material.GOLD_NUGGET, changing));
+        inventory.setItem(22, raceIcon("ORC", Material.IRON_AXE, changing));
+        inventory.setItem(23, raceIcon("VAMPIRE", Material.REDSTONE, changing));
+        inventory.setItem(24, raceIcon("DRAGONKIN", Material.DRAGON_BREATH, changing));
+        inventory.setItem(49, icon(Material.ARROW, "&eKembali ke Panduan", List.of("&7Baca ulang aturan pemilihan ras."), "guide"));
         player.openInventory(inventory);
     }
     private void openDetail(Player player, String race) {
@@ -70,10 +72,11 @@ public final class RaceGui implements Listener {
     }
     private void openDetail(Player player, String race, boolean changing) {
         RaceInfo info = RaceInfo.valueOf(race);
-        Inventory inventory = menu("detail:" + race, 27, "§8Detail Ras §7| " + info.title);
-        inventory.setItem(4, icon(info.material, info.color + "&l" + info.title, info.lore(), null));
-        inventory.setItem(11, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke daftar ras."), changing ? "change_races" : "races"));
-        inventory.setItem(15, icon(Material.LIME_DYE, changing ? "&aGanti ke " + info.title : "&aPilih " + info.title, changing ? List.of("&7Uang belum dipotong.", "&7Pilih bentuk lalu konfirmasi perubahan.") : List.of("&7Pilihan belum permanen.", "&7Berikutnya kamu memilih bentuk player."), (changing ? "change_draft:" : "draft:") + race));
+        Inventory inventory = menu("detail:" + race, 54, "§8Detail Ras §7| " + info.title);
+        inventory.setItem(4, icon(info.material, info.color + "&l" + info.title.toUpperCase(Locale.ROOT), List.of("&7Baca seluruh benefit sebelum memilih."), null));
+        inventory.setItem(22, icon(info.material, info.color + "&l" + info.title, info.lore(), null));
+        inventory.setItem(48, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke daftar ras."), changing ? "change_races" : "races"));
+        inventory.setItem(50, icon(Material.LIME_DYE, changing ? "&a&lGANTI KE " + info.title.toUpperCase(Locale.ROOT) : "&a&lPILIH " + info.title.toUpperCase(Locale.ROOT), changing ? List.of("&7Uang belum dipotong.", "&7Pilih bentuk lalu konfirmasi perubahan.") : List.of("&7Pilihan belum permanen.", "&7Berikutnya kamu memilih bentuk player."), (changing ? "change_draft:" : "draft:") + race));
         player.openInventory(inventory);
     }
     private void draft(Player player, String race) {
@@ -88,12 +91,12 @@ public final class RaceGui implements Listener {
     }
     private void openForms(Player player, String race, boolean changing) {
         RaceInfo info = RaceInfo.valueOf(race);
-        Inventory inventory = menu("form:" + race, 27, "§8Bentuk Tubuh §7| " + info.title);
-        inventory.setItem(4, icon(info.material, info.color + "&l" + info.title, List.of("&7Ras masih pilihan sementara.", "&7Pilih bentuk yang nyaman dilihat."), null));
-        inventory.setItem(10, formIcon(Material.SMALL_AMETHYST_BUD, "&d&lMode Bocil", "&7Skala: &f55%", "&7Tubuh kecil; hanya tampilan.", race, "CHILD", changing));
-        inventory.setItem(13, formIcon(Material.ARMOR_STAND, "&a&lDewasa Normal", "&7Skala: &f100%", "&7Ukuran Minecraft standar.", race, "ADULT", changing));
-        inventory.setItem(16, formIcon(Material.END_ROD, "&b&lDewasa Tinggi", "&7Skala: &f115%", "&7Sedikit lebih tinggi, tetap aman.", race, "TALL", changing));
-        inventory.setItem(22, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke detail ras."), (changing ? "change_detail:" : "detail:") + race));
+        Inventory inventory = menu("form:" + race, 54, "§8Bentuk Tubuh §7| " + info.title);
+        inventory.setItem(4, icon(info.material, info.color + "&l" + info.title.toUpperCase(Locale.ROOT), List.of("&7Ras masih pilihan sementara.", "&7Pilih bentuk yang nyaman dilihat."), null));
+        inventory.setItem(20, formIcon(Material.SMALL_AMETHYST_BUD, "&d&lMODE BOCIL", "&7Skala: &f55%", "&7Tubuh kecil; hanya tampilan.", race, "CHILD", changing));
+        inventory.setItem(22, formIcon(Material.ARMOR_STAND, "&a&lDEWASA NORMAL", "&7Skala: &f100%", "&7Ukuran Minecraft standar.", race, "ADULT", changing));
+        inventory.setItem(24, formIcon(Material.END_ROD, "&b&lDEWASA TINGGI", "&7Skala: &f115%", "&7Sedikit lebih tinggi, tetap aman.", race, "TALL", changing));
+        inventory.setItem(49, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke detail ras."), (changing ? "change_detail:" : "detail:") + race));
         player.openInventory(inventory);
     }
     private ItemStack formIcon(Material material, String name, String scale, String description, String race, String form, boolean changing) {
@@ -105,12 +108,12 @@ public final class RaceGui implements Listener {
     private void openConfirm(Player player, String race, String form, boolean changing) {
         RaceInfo info = RaceInfo.valueOf(race);
         String formName = formName(form);
-        Inventory inventory = menu("confirm:" + race + ":" + form, 27, "§8Konfirmasi Ras");
-        inventory.setItem(4, icon(info.material, info.color + "&l" + info.title, List.of("&7Ras pilihanmu."), null));
+        Inventory inventory = menu("confirm:" + race + ":" + form, 54, "§8Konfirmasi Ras");
+        inventory.setItem(4, icon(info.material, info.color + "&l" + info.title.toUpperCase(Locale.ROOT), List.of("&7Ras pilihanmu."), null));
         List<String> summary = changing ? List.of("&7Ras baru: " + info.color + info.title, "&7Bentuk: &f" + formName, "&7Skala: &f" + (int) (manager.scaleFor(form) * 100) + "%", "", "&6Biaya: &f$" + String.format("%,.0f", manager.changeCost()), "&cUang hanya dipotong saat tombol hijau ditekan.") : List.of("&7Ras: " + info.color + info.title, "&7Bentuk: &f" + formName, "&7Skala: &f" + (int) (manager.scaleFor(form) * 100) + "%", "", "&cSetelah dikonfirmasi, perubahan", "&cmengikuti aturan biaya/cooldown tahap berikutnya.");
-        inventory.setItem(13, icon(Material.WRITABLE_BOOK, "&fRingkasan Pilihan", summary, null));
-        inventory.setItem(11, icon(Material.ARROW, "&eUbah Bentuk", List.of("&7Kembali tanpa menyimpan pilihan."), (changing ? "change_form:" : "form:") + race));
-        inventory.setItem(15, icon(Material.LIME_DYE, changing ? "&a&lBayar dan Ganti Ras" : "&a&lKonfirmasi Pilihan", changing ? List.of("&7Potong &f$" + String.format("%,.0f", manager.changeCost()) + " &7hanya jika transaksi sukses.", "&7Cooldown berikutnya: &f7 hari.") : List.of("&7Simpan ras dan bentuk tubuh sekarang.", "&aTidak bisa dipilih ulang bebas."), (changing ? "change_complete:" : "complete:") + race + ":" + form));
+        inventory.setItem(22, icon(Material.WRITABLE_BOOK, "&fRINGKASAN PILIHAN", summary, null));
+        inventory.setItem(48, icon(Material.ARROW, "&eUbah Bentuk", List.of("&7Kembali tanpa menyimpan pilihan."), (changing ? "change_form:" : "form:") + race));
+        inventory.setItem(50, icon(Material.LIME_DYE, changing ? "&a&lBAYAR DAN GANTI RAS" : "&a&lKONFIRMASI PILIHAN", changing ? List.of("&7Potong &f$" + String.format("%,.0f", manager.changeCost()) + " &7hanya jika transaksi sukses.", "&7Cooldown berikutnya: &f7 hari.") : List.of("&7Simpan ras dan bentuk tubuh sekarang.", "&aTidak bisa dipilih ulang bebas."), (changing ? "change_complete:" : "complete:") + race + ":" + form));
         player.openInventory(inventory);
     }
     private void complete(Player player, String race, String form) {
