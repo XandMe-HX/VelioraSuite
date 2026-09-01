@@ -17,8 +17,14 @@ softdepend:
   - GSit
   - Geyser-Spigot
   - floodgate
+  - ExcellentCrates
 
 commands:
+  gacha:
+    description: Membuka toko key ExcellentCrates Veliora.
+    usage: /gacha [reload|status]
+    aliases: [keyshop, keys]
+    permission: veliorasuite.gacha.use
   autotool:
     description: Mengaktifkan pemilih alat otomatis Veliora.
     usage: /autotool [on|off|status|reload]
@@ -395,6 +401,10 @@ permissions:
     default: op
   veliorasuite.adventure.use:
     default: true
+  veliorasuite.gacha.use:
+    default: true
+  veliorasuite.gacha.admin:
+    default: op
   veliorasuite.adventure.admin:
     default: op
   veliorasuite.guard.admin:

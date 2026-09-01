@@ -1,0 +1,31 @@
+# Panic herd kompatibel dengan AggressiveAnimals. Tidak menggunakan NMS atau
+# menambah task berulang; hanya bekerja ketika animal herd benar-benar diserang.
+settings:
+  enabled: true
+  radius: 16
+  max-animals-per-trigger: 24
+  cooldown-millis: 1800
+  delay-ticks: 1
+  flee-speed: 0.42
+  speed-duration-ticks: 45
+  speed-amplifier: 1
+  affect-tamed: false
+  affect-named: false
+  particle: CLOUD
+  particle-count: 5
+  sound: ENTITY_HORSE_AMBIENT
+  sound-volume: 0.35
+  sound-pitch: 1.35
+
+# Hanya hewan ini yang menjadi herd. Tambahkan jenis baru dengan nama Bukkit
+# EntityType, misalnya GOAT atau LLAMA.
+herd-types:
+  - HORSE
+  - MULE
+  - DONKEY
+  - CAMEL
+  - PIG
+  - CHICKEN
+  - COW
+  - SHEEP
+  - RABBIT

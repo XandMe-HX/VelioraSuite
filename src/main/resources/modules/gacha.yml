@@ -1,0 +1,45 @@
+# Toko key otomatis untuk ExcellentCrates. ID crate/key dibaca langsung dari
+# ExcellentCrates; nama/icon crate boleh diubah bebas lewat editor crate-nya.
+settings:
+  enabled: true
+  default-key-price: 500
+  automatic-discovery: true
+  # false = key fisik dan virtual sama-sama boleh dijual. Ubah true jika
+  # suatu saat kamu ingin membatasi toko hanya ke virtual key.
+  require-virtual-keys: false
+  purchase-cooldown-millis: 900
+  title: '&8Veliora &dGacha Key Shop'
+
+# Kosong = tampilkan semua crate yang key-nya ditemukan. Isi ID bila ingin
+# membatasi urutan: ['1', '2', '3', '4', '5'].
+enabled-crates: []
+
+# Normalnya crate ID 1 memakai key ID 1. Isi bagian ini hanya bila berbeda.
+# key-overrides:
+#   '1': 'shinjuro_key'
+key-overrides: {}
+
+# Harga khusus opsional. Yang tidak ditulis memakai default-key-price.
+prices: {}
+
+# Gradient bisa kamu ganti sendiri memakai warna hex. Warna crate di GUI
+# dibuat bergiliran otomatis dari daftar ini.
+gradients:
+  - from: '#FF53C9'
+    to: '#9D6CFF'
+  - from: '#FFB347'
+    to: '#FF6B9D'
+  - from: '#4DEEEA'
+    to: '#4F8CFF'
+  - from: '#A8FF78'
+    to: '#30C67C'
+  - from: '#FFE66D'
+    to: '#FF9F43'
+
+messages:
+  prefix: '&8[&dVELIORA &5GACHA&8] '
+  no-crates: '&cTidak ada crate dengan key valid yang bisa dijual. Cek ID crate/key ExcellentCrates.'
+  no-economy: '&cVault Economy belum aktif; pembelian key ditolak aman.'
+  not-enough-money: '&cUangmu tidak cukup. Butuh &f%price%&c.'
+  success: '&aKamu membeli 1 key &f%crate% &aseharga &e%price%&a.'
+  failed: '&cKey gagal diberikan; uangmu tidak dipotong.'

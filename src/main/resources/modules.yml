@@ -6,12 +6,14 @@ modules:
   guide: true
   menu: true
   loginsecurity: true
+  mobpanic: true
   team: true
   kits: true
   report: true
   race: true
   announcement: true
   biome: true
+  gacha: true
   fishing: true
   trader: true
   boss: true
