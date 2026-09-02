@@ -1,0 +1,4 @@
+# Combat tag visual untuk PvP. Tidak menghukum logout dan tidak mengganggu combat plugin lain.
+settings:
+  enabled: true
+  duration-seconds: 15

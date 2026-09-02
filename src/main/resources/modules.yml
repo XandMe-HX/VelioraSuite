@@ -20,6 +20,7 @@ modules:
   pets: true
   security: true
   chat: true
+  combattag: true
   warp: true
   adventure: true
   notifications: true
