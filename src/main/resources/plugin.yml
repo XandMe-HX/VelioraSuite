@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.5.0
+version: 1.5.3
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
@@ -20,10 +20,10 @@ softdepend:
   - ExcellentCrates
 
 commands:
-  gacha:
-    description: Membuka toko key ExcellentCrates Veliora.
-    usage: /gacha [reload|status]
-    aliases: [keyshop, keys]
+  keyshop:
+    description: Membuka toko physical key ExcellentCrates Veliora.
+    usage: /keyshop [reload|status]
+    aliases: [key, keys]
     permission: veliorasuite.gacha.use
   autotool:
     description: Mengaktifkan pemilih alat otomatis Veliora.

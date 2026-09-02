@@ -14,6 +14,9 @@ display:
   fade-in-ticks: 8
   stay-ticks: 45
   fade-out-ticks: 12
+  typing:
+    enabled: true
+    interval-ticks: 2 # satu karakter setiap 0,1 detik
 # Semua biome Minecraft tetap otomatis terdeteksi. Tambahkan nama cantik hanya
 # untuk biome yang ingin diberi nama server sendiri; selain itu nama vanilla dipakai.
 biome-names:
@@ -21,8 +24,7 @@ biome-names:
   minecraft_forest: '&2Forest'
   minecraft_the_void: '&5The Void'
 effects:
-  # Tetap satu title instan per perubahan biome; tidak menjalankan task animasi
-  # per pemain sehingga aman saat banyak pemain berpindah bersamaan.
+  # Animasi lama otomatis dibatalkan saat pemain pindah biome lagi atau logout.
   particles-enabled: true
   particle: END_ROD
   count: 12

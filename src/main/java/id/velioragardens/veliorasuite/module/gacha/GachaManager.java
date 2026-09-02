@@ -54,10 +54,36 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     }
 
     public void load() {
-        config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/gacha.yml"));
+        File file = new File(plugin.getDataFolder(), "modules/gacha.yml");
+        config = YamlConfiguration.loadConfiguration(file);
+        migrateConfig(file);
         Plugin crates = Bukkit.getPluginManager().getPlugin("ExcellentCrates");
         bridge = new ExcellentCratesBridge(crates);
         refreshOffers();
+    }
+
+    private void migrateConfig(File file) {
+        boolean changed = false;
+        if (config.contains("settings.require-virtual-keys")) {
+            config.set("settings.require-virtual-keys", null);
+            changed = true;
+        }
+        if (!config.contains("settings.physical-keys-only")) {
+            config.set("settings.physical-keys-only", true);
+            changed = true;
+        }
+        if ("&8Veliora &dGacha Key Shop".equals(config.getString("settings.title"))) {
+            config.set("settings.title", "&8Veliora &dPhysical Key Shop");
+            changed = true;
+        }
+        if ("&8[&dVELIORA &5GACHA&8] ".equals(config.getString("messages.prefix"))) {
+            config.set("messages.prefix", "&8[&dVELIORA &5KEYSHOP&8] ");
+            changed = true;
+        }
+        if (changed) {
+            try { config.save(file); }
+            catch (java.io.IOException exception) { plugin.getLogger().warning("Gagal memigrasikan modules/gacha.yml: " + exception.getMessage()); }
+        }
     }
 
     public boolean enabled() { return config != null && config.getBoolean("settings.enabled", true); }
@@ -66,7 +92,7 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
         if (bridge == null || !bridge.available()) { offers = List.of(); return; }
         Map<String, String> overrides = strings("key-overrides");
         Map<String, Long> prices = longs("prices");
-        List<GachaOffer> found = new ArrayList<>(bridge.discover(overrides, prices, Math.max(0L, config.getLong("settings.default-key-price", 500L)), config.getBoolean("settings.require-virtual-keys", true)));
+        List<GachaOffer> found = new ArrayList<>(bridge.discover(overrides, prices, Math.max(0L, config.getLong("settings.default-key-price", 500L)), config.getBoolean("settings.physical-keys-only", true)));
         List<String> selected = config.getStringList("enabled-crates");
         if (!selected.isEmpty()) {
             Map<String, Integer> order = new HashMap<>();
@@ -81,7 +107,7 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
         if (!(sender instanceof Player player)) { sender.sendMessage("Hanya player."); return true; }
         String action = args.length == 0 ? "open" : args[0].toLowerCase(Locale.ROOT);
         if (action.equals("reload") && player.hasPermission("veliorasuite.gacha.admin")) {
-            load(); player.sendMessage(color(prefix() + "&aGacha key shop direload. &7Crate valid: &f" + offers.size())); return true;
+            load(); player.sendMessage(color(prefix() + "&aKey shop direload. &7Physical key valid: &f" + offers.size())); return true;
         }
         if (action.equals("status") && player.hasPermission("veliorasuite.gacha.admin")) {
             player.sendMessage(color(prefix() + "&7ExcellentCrates: " + (bridge != null && bridge.available() ? "&aaktif" : "&cmati") + " &8| &7Crate valid: &f" + offers.size())); return true;
@@ -123,7 +149,7 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
         holder.inventory = inventory;
         GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.PURPLE_STAINED_GLASS_PANE);
         inventory.setItem(13, crateItem(offer, indexOf(offer), null));
-        inventory.setItem(11, item(Material.LIME_WOOL, "&a&lBELI 1 KEY", List.of("&7Harga: &e" + money(offer.price()), "&7Key diberikan sebagai &fvirtual key&7.", "&eKlik untuk konfirmasi."), "buy:" + offer.crateId()));
+        inventory.setItem(11, item(Material.LIME_WOOL, "&a&lBELI 1 KEY", List.of("&7Harga: &e" + money(offer.price()), "&7Physical key masuk langsung ke inventory.", "&eKlik untuk konfirmasi."), "buy:" + offer.crateId()));
         inventory.setItem(15, item(Material.RED_WOOL, "&c&lBATAL", List.of("&7Kembali ke daftar crate."), "back"));
         player.openInventory(inventory);
     }
@@ -131,13 +157,22 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     private void purchase(Player player, String crateId) {
         GachaOffer offer = offer(crateId);
         if (offer == null || bridge == null || !bridge.available()) { player.sendMessage(color(prefix() + message("failed", "&cKey gagal diberikan; uangmu tidak dipotong."))); return; }
+        if (!bridge.isPhysical(offer.keyId())) { player.sendMessage(color(prefix()+"&cKey ini virtual atau tidak valid. Pembelian dibatalkan.")); return; }
+        if (!bridge.hasInventorySpace(player,offer.keyId())) { player.sendMessage(color(prefix()+message("inventory-full","&cInventory penuh. Kosongkan minimal satu slot sebelum membeli key."))); return; }
         long now = System.currentTimeMillis();
         if (!purchasing.add(player.getUniqueId()) || now - lastPurchase.getOrDefault(player.getUniqueId(), 0L) < Math.max(250L, config.getLong("settings.purchase-cooldown-millis", 900L))) return;
         try {
             if (!economyReady()) { player.sendMessage(color(prefix() + message("no-economy", "&cVault Economy belum aktif."))); return; }
             if (!hasMoney(player, offer.price())) { player.sendMessage(color(prefix() + message("not-enough-money", "&cUangmu tidak cukup. Butuh &f%price%&c.").replace("%price%", money(offer.price())))); return; }
-            if (!withdraw(player, offer.price())) { player.sendMessage(color(prefix() + message("failed", "&cTransaksi gagal; uangmu aman."))); return; }
-            if (!bridge.giveKey(player, offer.keyId())) { deposit(player, offer.price()); player.sendMessage(color(prefix() + message("failed", "&cKey gagal diberikan; uangmu tidak dipotong."))); return; }
+            int before = bridge.keyAmount(player, offer.keyId());
+            if (before < 0 || !bridge.giveKey(player, offer.keyId())) { player.sendMessage(color(prefix() + message("failed", "&cKey gagal diberikan; uangmu tidak dipotong."))); return; }
+            int after = bridge.keyAmount(player, offer.keyId());
+            if (after <= before) { player.sendMessage(color(prefix() + message("failed", "&cKey tidak terverifikasi; uangmu tidak dipotong."))); return; }
+            if (!withdraw(player, offer.price())) {
+                if (!bridge.takeKey(player, offer.keyId())) plugin.getLogger().severe("Keyshop gagal rollback 1 key '" + offer.keyId() + "' milik " + player.getName() + "; uang pemain tidak dipotong.");
+                player.sendMessage(color(prefix() + message("failed", "&cTransaksi gagal; uangmu aman.")));
+                return;
+            }
             lastPurchase.put(player.getUniqueId(), now);
             player.sendMessage(color(prefix() + message("success", "&aKamu membeli 1 key &f%crate% &aseharga &e%price%&a.").replace("%crate%", offer.displayName()).replace("%price%", money(offer.price()))));
             player.closeInventory();
@@ -181,7 +216,7 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     }
     private GachaOffer offer(String id) { return offers.stream().filter(offer -> offer.crateId().equalsIgnoreCase(id)).findFirst().orElse(null); }
     private int indexOf(GachaOffer offer) { return Math.max(0, offers.indexOf(offer)); }
-    private String prefix() { return config.getString("messages.prefix", "&8[&dVELIORA &5GACHA&8] "); }
+    private String prefix() { return config.getString("messages.prefix", "&8[&dVELIORA &5KEYSHOP&8] "); }
     private String message(String path, String fallback) { return config.getString("messages." + path, fallback); }
     private String money(long amount) { return String.format(Locale.US, "%,d", amount).replace(',', '.'); }
     private String color(String text) { return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text); }
@@ -208,7 +243,6 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     private boolean economyReady() { return economy() != null; }
     private boolean hasMoney(Player player, long amount) { try { Object economy = economy(); return economy != null && (boolean) economy.getClass().getMethod("has", OfflinePlayer.class, double.class).invoke(economy, player, (double) amount); } catch (ReflectiveOperationException ignored) { return false; } }
     private boolean withdraw(Player player, long amount) { return transaction(player, amount, "withdrawPlayer"); }
-    private void deposit(Player player, long amount) { transaction(player, amount, "depositPlayer"); }
     private boolean transaction(Player player, long amount, String method) { try { Object economy = economy(); if (economy == null) return false; Object response = economy.getClass().getMethod(method, OfflinePlayer.class, double.class).invoke(economy, player, (double) amount); Field field = response.getClass().getField("transactionSuccess"); return field.getBoolean(response); } catch (ReflectiveOperationException ignored) { return false; } }
 
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) { return args.length == 1 && sender.hasPermission("veliorasuite.gacha.admin") ? List.of("reload", "status") : List.of(); }

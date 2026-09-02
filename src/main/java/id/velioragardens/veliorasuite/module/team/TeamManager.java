@@ -366,7 +366,7 @@ public final class TeamManager {
         if (!team.isOwner(player.getUniqueId())) { send(player, "only-owner", "%prefix% &cHanya owner team yang bisa melakukan ini.", Map.of()); return; }
         if (value == null || value.isBlank() || value.length() > 48) { send(player, "invalid-team-text", "%prefix% &cTeks tidak valid atau terlalu panjang.", Map.of()); return; }
         if (type.equals("description")) team.setDescription(value);
-        else if (type.equals("tag")) team.setTag(value.replace("&", ""));
+        else if (type.equals("tag")) team.setTag(safeTag(value));
         else if (type.equals("color") && value.matches("&[0-9a-fk-orA-FK-OR]")) team.setColor(value.toLowerCase(Locale.ROOT));
         else { send(player, "invalid-team-text", "%prefix% &cNilai tidak valid.", Map.of()); return; }
         dataManager.saveTeam(team);
@@ -534,7 +534,7 @@ public final class TeamManager {
         Team team = getTeamOrMessage(sender, teamName); if (team == null) return;
         if (value == null || value.isBlank() || value.length() > 48) { send(sender, "invalid-team-text", "%prefix% &cTeks tidak valid atau terlalu panjang.", Map.of()); return; }
         if (type.equals("description")) team.setDescription(value);
-        else if (type.equals("tag")) team.setTag(value.replace("&", ""));
+        else if (type.equals("tag")) team.setTag(safeTag(value));
         else if (type.equals("color") && value.matches("&[0-9a-fk-orA-FK-OR]")) team.setColor(value.toLowerCase(Locale.ROOT));
         else { send(sender, "invalid-team-text", "%prefix% &cNilai tidak valid.", Map.of()); return; }
         dataManager.saveTeam(team); send(sender, "team-text-updated", "%prefix% &aPengaturan team berhasil diperbarui.", teamPlaceholders(team, Map.of()));
@@ -845,6 +845,11 @@ public final class TeamManager {
             return String.valueOf((long) price);
         }
         return String.format(Locale.US, "%.2f", price);
+    }
+
+    /** Team tags are player data, never formatting instructions. */
+    private String safeTag(String value) {
+        return value == null ? "" : value.replaceAll("<[^>]*>", "").replace("&", "").replace("%", "").trim();
     }
 
     private String now() {

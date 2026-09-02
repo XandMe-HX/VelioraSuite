@@ -16,6 +16,7 @@ import id.velioragardens.veliorasuite.module.autotool.AutoToolModule;
 import id.velioragardens.veliorasuite.module.deathlaugh.DeathLaughModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
 import id.velioragardens.veliorasuite.module.chat.ChatModule;
+import id.velioragardens.veliorasuite.module.combattag.CombatTagModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import id.velioragardens.veliorasuite.module.gacha.GachaModule;
 import id.velioragardens.veliorasuite.module.guide.GuideModule;
@@ -123,6 +124,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new ReportModule(this));
         moduleManager.register(new RaceModule(this));
         moduleManager.register(new ChatModule(this));
+        moduleManager.register(new CombatTagModule(this));
         moduleManager.register(new NotificationModule(this));
         moduleManager.register(new GuardClaimModule(this));
         moduleManager.register(new HomeModule(this));
