@@ -294,7 +294,7 @@ settings:
       gacha:
         triggers: ['gacha', 'key', 'kunci', 'crate', 'buka crate', 'kunci gacha', 'pet gacha']
         lines:
-          - '&fInfo gacha/key cek &b/vproduct&f atau tanya staff kalau key belum masuk.'
+          - '&fBeli physical crate key lewat &b/keyshop&f. Key langsung masuk inventory.'
           - '&7Pegang key lalu klik crate yang sesuai warnanya.'
       pet:
         triggers: ['pet', 'pets', 'cara pet', 'pet kecil', 'pet ga jalan', 'pet tidak jalan', 'pet ride', 'naik pet', 'pet makan', 'pet feed', 'pet gacha', 'pet summon']

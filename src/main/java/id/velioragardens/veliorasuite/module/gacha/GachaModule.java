@@ -22,7 +22,7 @@ public final class GachaModule implements VelioraModule {
 
     @Override public void enable() {
         enabled = manager != null && manager.enabled();
-        PluginCommand command = plugin.getCommand("gacha");
+        PluginCommand command = plugin.getCommand("keyshop");
         if (!enabled) {
             if (command != null) command.setExecutor(new DisabledCommand(plugin, "Gacha"));
             return;
@@ -34,7 +34,7 @@ public final class GachaModule implements VelioraModule {
     @Override public void disable() {
         enabled = false;
         if (manager != null) HandlerList.unregisterAll(manager);
-        PluginCommand command = plugin.getCommand("gacha");
+        PluginCommand command = plugin.getCommand("keyshop");
         if (command != null) command.setExecutor(new DisabledCommand(plugin, "Gacha"));
     }
 

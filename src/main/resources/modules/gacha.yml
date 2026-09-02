@@ -4,11 +4,10 @@ settings:
   enabled: true
   default-key-price: 500
   automatic-discovery: true
-  # false = key fisik dan virtual sama-sama boleh dijual. Ubah true jika
-  # suatu saat kamu ingin membatasi toko hanya ke virtual key.
-  require-virtual-keys: false
+  # Key virtual tidak pernah dijual oleh Veliora keyshop.
+  physical-keys-only: true
   purchase-cooldown-millis: 900
-  title: '&8Veliora &dGacha Key Shop'
+  title: '&8Veliora &dPhysical Key Shop'
 
 # Kosong = tampilkan semua crate yang key-nya ditemukan. Isi ID bila ingin
 # membatasi urutan: ['1', '2', '3', '4', '5'].
@@ -37,9 +36,10 @@ gradients:
     to: '#FF9F43'
 
 messages:
-  prefix: '&8[&dVELIORA &5GACHA&8] '
+  prefix: '&8[&dVELIORA &5KEYSHOP&8] '
   no-crates: '&cTidak ada crate dengan key valid yang bisa dijual. Cek ID crate/key ExcellentCrates.'
   no-economy: '&cVault Economy belum aktif; pembelian key ditolak aman.'
   not-enough-money: '&cUangmu tidak cukup. Butuh &f%price%&c.'
   success: '&aKamu membeli 1 key &f%crate% &aseharga &e%price%&a.'
   failed: '&cKey gagal diberikan; uangmu tidak dipotong.'
+  inventory-full: '&cInventory penuh. Kosongkan minimal satu slot sebelum membeli key.'
