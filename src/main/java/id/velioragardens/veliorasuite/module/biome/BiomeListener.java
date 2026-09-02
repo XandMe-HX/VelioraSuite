@@ -134,7 +134,11 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
         String out=value;
         String codes="0123456789abcdefklmnor";
         String[] tags={"black","dark_blue","dark_green","dark_aqua","dark_red","dark_purple","gold","gray","dark_gray","blue","green","aqua","red","light_purple","yellow","white","obfuscated","bold","strikethrough","underlined","italic","reset"};
-        for(int i=0;i<codes.length();i++){out=out.replace("&"+codes.charAt(i),"<"+tags[i]+">").replace("&"+Character.toUpperCase(codes.charAt(i)),"<"+tags[i]+">");}
+        for(int i=0;i<codes.length();i++){
+            String tag="<"+tags[i]+">";
+            char lower=codes.charAt(i),upper=Character.toUpperCase(lower);
+            out=out.replace("&"+lower,tag).replace("&"+upper,tag).replace("§"+lower,tag).replace("§"+upper,tag);
+        }
         return out;
     }
     private Particle parseParticle(String value) { try { return Particle.valueOf(value.toUpperCase(Locale.ROOT)); } catch (Exception ignored) { return Particle.END_ROD; } }
