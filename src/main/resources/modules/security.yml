@@ -109,7 +109,10 @@ settings:
     alert-cooldown-seconds: 10
   xray-enforcement:
     enabled: true
-    config-version: 2
+    config-version: 3
+    # HIGH saja tetap belum cukup. Ban langsung hanya saat HIGH/EXTREME juga
+    # dibuktikan pemain mencoba menambang ore honeypot yang hanya terlihat kliennya.
+    ban-confirmed-high: true
     # 1: blindness/title/sound, 2: quarantine + kick, 3: ban 5 hari.
     # Semua tahap menyimpan bukti. Honeypot hanya dipasang saat skor sudah HIGH.
     strike-cooldown-minutes: 2
@@ -120,6 +123,7 @@ settings:
     appeal-contact: 'WhatsApp Owner'
     honeypot:
       enabled: true
+      confirmed-hits: 2
       # Hanya dikirim ke pemain yang sudah HIGH dan sedang di bawah tanah.
       lifetime-seconds: 20
       # Satu sentuhan baru dapat menindak jika skor lain juga sangat tinggi; selain itu perlu dua sentuhan.

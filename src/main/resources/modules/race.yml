@@ -15,3 +15,7 @@ scale:
 change:
   cost: 100000
   cooldown-days: 7
+
+# Hanya mengubah tinggi/bentuk, tanpa mengganti ras atau benefit.
+form-change:
+  cooldown-days: 2

@@ -664,7 +664,28 @@ public final class SecurityManager {
         saveXrayEvidence(player, report, "HONEYPOT_HIT_" + hits);
         notifyXrayOwners(player.getName(), "&cHoneypot tersentuh &7(" + hits + "/2). Bukti disimpan.", report);
         int highScore = Math.max(100, configManager.config().getInt("settings.xray-enforcement.honeypot.hit-plus-high-score", 180));
-        if (hits >= 2 || honeypot.reportScore() >= highScore) handleExtremeXray(player, report);
+        boolean confirmed = hits >= Math.max(2, configManager.config().getInt("settings.xray-enforcement.honeypot.confirmed-hits", 2))
+                || (hits >= 1 && honeypot.reportScore() >= highScore && (report.level().equals("HIGH") || report.level().equals("EXTREME")));
+        if (confirmed && configManager.config().getBoolean("settings.xray-enforcement.ban-confirmed-high", true)) {
+            banConfirmedXray(player, report, hits);
+        } else if (confirmed) handleExtremeXray(player, report);
+    }
+
+    private void banConfirmedXray(Player player, OreReport report, int hits) {
+        if (!configManager.isXrayEnforcementEnabled() || configManager.hasBypass(player)) return;
+        UUID uuid = player.getUniqueId();
+        if (xrayWarnings.getOrDefault(uuid, 0) >= 3) return;
+        xrayWarnings.put(uuid, 3);
+        xrayLastAction.put(uuid, System.currentTimeMillis());
+        oreNames.put(uuid, player.getName());
+        String quarantineId = quarantineSuspiciousGain(player, report);
+        int days = configManager.getXrayFirstBanDays();
+        saveXrayEvidence(player, report, "CONFIRMED_HIGH_HONEYPOT hits=" + hits + " quarantine=" + quarantineId);
+        notifyXrayOwners(player.getName(), "&4Xray HIGH terkonfirmasi &7oleh honeypot - auto-ban &f" + days + " hari&7.", report);
+        saveXrayState();
+        banManager.banPlayerTemporarily(uuid, player.getName(),
+                "Xray HIGH terkonfirmasi honeypot. Banding: " + configManager.getXrayAppealContact(),
+                BanSource.AUTO_XRAY, days * 24L * 60L * 60L * 1000L);
     }
 
     private void clearHoneypot(Player player) {

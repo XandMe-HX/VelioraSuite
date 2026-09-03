@@ -122,6 +122,7 @@ public final class AfkManager implements Listener, CommandExecutor {
     private void setAfk(Player player, boolean state, boolean notify) {
         if (state) {
             if (!afk.add(player.getUniqueId())) return;
+            setTabNameTagVisible(player, false);
             TextDisplay marker = player.getWorld().spawn(markerLocation(player), TextDisplay.class, display -> {
                 display.text(Component.text("AFK", NamedTextColor.YELLOW));
                 display.setBillboard(Display.Billboard.CENTER);
@@ -135,10 +136,27 @@ public final class AfkManager implements Listener, CommandExecutor {
             if (notify) player.sendMessage(warps.color(warps.message("afk-on", "%prefix% &eKamu sekarang AFK.")));
         } else {
             if (!afk.remove(player.getUniqueId())) return;
+            setTabNameTagVisible(player, true);
             TextDisplay marker = markers.remove(player.getUniqueId());
             if (marker != null && marker.isValid()) marker.remove();
             touch(player);
             if (notify) player.sendMessage(warps.color(warps.message("afk-off", "%prefix% &aKamu tidak lagi AFK.")));
+        }
+    }
+
+    /** TAB owns the normal nametag; hide only that layer while Suite displays AFK. */
+    private void setTabNameTagVisible(Player player, boolean visible) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("TAB")) return;
+        try {
+            Class<?> apiType = Class.forName("me.neznamy.tab.api.TabAPI");
+            Object api = apiType.getMethod("getInstance").invoke(null);
+            Object tabPlayer = apiType.getMethod("getPlayer", UUID.class).invoke(api, player.getUniqueId());
+            if (tabPlayer == null) return;
+            Object manager = apiType.getMethod("getNameTagManager").invoke(api);
+            Class<?> tabPlayerType = Class.forName("me.neznamy.tab.api.TabPlayer");
+            manager.getClass().getMethod(visible ? "showNameTag" : "hideNameTag", tabPlayerType).invoke(manager, tabPlayer);
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            plugin.getLogger().fine("TAB nametag AFK hook tidak tersedia: " + exception.getMessage());
         }
     }
 
@@ -186,6 +204,7 @@ public final class AfkManager implements Listener, CommandExecutor {
     }
 
     private void clear(Player player) {
+        setTabNameTagVisible(player, true);
         afk.remove(player.getUniqueId()); manualAfk.remove(player.getUniqueId()); lastActivity.remove(player.getUniqueId()); lastReward.remove(player.getUniqueId());
         TextDisplay marker = markers.remove(player.getUniqueId());
         if (marker != null && marker.isValid()) marker.remove();

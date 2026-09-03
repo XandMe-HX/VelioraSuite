@@ -38,6 +38,9 @@ public final class RaceManager {
     public long nextChangeAt(UUID uuid) { return data.getLong("players." + uuid + ".last-changed-at", data.getLong("players." + uuid + ".selected-at", 0L)) + changeCooldownMillis(); }
     public long changeRemaining(UUID uuid) { return Math.max(0L, nextChangeAt(uuid) - System.currentTimeMillis()); }
     public boolean canChange(UUID uuid) { return selected(uuid) && changeRemaining(uuid) == 0L; }
+    public long formCooldownMillis() { return Math.max(0L, config.getLong("form-change.cooldown-days", 2L)) * 86_400_000L; }
+    public long formChangeRemaining(UUID uuid) { return Math.max(0L, data.getLong("players." + uuid + ".last-form-changed-at", 0L) + formCooldownMillis() - System.currentTimeMillis()); }
+    public boolean canChangeForm(UUID uuid) { return selected(uuid) && formChangeRemaining(uuid) == 0L; }
     /** Quest rewards are intentionally limited to Human and Angel so race bonuses stay readable. */
     public double questRewardMultiplier(UUID uuid) {
         if (!selected(uuid)) return 1.0D;
@@ -77,6 +80,12 @@ public final class RaceManager {
         data.set("players." + uuid + ".form", form.toUpperCase(Locale.ROOT));
         data.set("players." + uuid + ".last-changed-at", System.currentTimeMillis());
         clearDraft(uuid);
+        writer.markDirty();
+        writer.flushAsync();
+    }
+    public void changeForm(UUID uuid, String form) {
+        data.set("players." + uuid + ".form", form.toUpperCase(Locale.ROOT));
+        data.set("players." + uuid + ".last-form-changed-at", System.currentTimeMillis());
         writer.markDirty();
         writer.flushAsync();
     }
