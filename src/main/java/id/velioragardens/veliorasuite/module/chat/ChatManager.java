@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
 import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
 import id.velioragardens.veliorasuite.module.fishing.FishingModule;
 import id.velioragardens.veliorasuite.module.pets.PetsModule;
@@ -21,14 +22,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.Duration;
 
 public final class ChatManager {
 
     private static final Pattern INTERACTIVE_TOKEN = Pattern.compile("\\[([^\\[\\]\\r\\n]{1,120})\\]", Pattern.CASE_INSENSITIVE);
+    private static final Pattern RAW_MENTION = Pattern.compile("(?<![A-Za-z0-9_])@([A-Za-z0-9_]{3,16})(?![A-Za-z0-9_])", Pattern.CASE_INSENSITIVE);
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final VelioraSuite plugin;
@@ -40,6 +44,7 @@ public final class ChatManager {
     private final ChatFormatManager formatManager;
     private final Map<UUID, Long> autoReplyCooldowns = new ConcurrentHashMap<>();
     private final Map<UUID, Long> interactiveShareCooldowns = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> mentionNotificationCooldowns = new ConcurrentHashMap<>();
     private Map<String, ChatConfigManager.AutoReplyEntry> autoReplies = Map.of();
     private Map<String, ChatConfigManager.InteractiveTrigger> interactiveTriggers = Map.of();
 
@@ -68,6 +73,7 @@ public final class ChatManager {
         commandCooldownManager.clear();
         autoReplyCooldowns.clear();
         interactiveShareCooldowns.clear();
+        mentionNotificationCooldowns.clear();
         filterManager.clear();
     }
 
@@ -76,6 +82,7 @@ public final class ChatManager {
         commandCooldownManager.clear();
         autoReplyCooldowns.clear();
         interactiveShareCooldowns.clear();
+        mentionNotificationCooldowns.clear();
         filterManager.clear();
     }
 
@@ -85,6 +92,7 @@ public final class ChatManager {
         commandCooldownManager.clear(playerId);
         autoReplyCooldowns.remove(playerId);
         interactiveShareCooldowns.remove(playerId);
+        mentionNotificationCooldowns.remove(playerId);
         filterManager.clear(playerId);
     }
 
@@ -136,6 +144,7 @@ public final class ChatManager {
         }
 
         scheduleAutoReply(player, finalMessage);
+        scheduleMentionNotifications(player, finalMessage);
 
         if (configManager.isCooldownEnabled() && configManager.isProtectionEnabled() && !player.hasPermission(configManager.getBypassCooldownPermission()) && !hasAdminPermission(player)) {
             cooldownManager.setCooldown(player.getUniqueId(), configManager.getCooldownSeconds());
@@ -153,6 +162,38 @@ public final class ChatManager {
         }
 
         return ChatProcessResult.formatted(formatManager.formatPublicChat(player, finalMessage));
+    }
+
+    private void scheduleMentionNotifications(Player sender, String message) {
+        if (!configManager.isInteractiveMentionEnabled() || message == null || message.isBlank()) return;
+        Matcher matcher = RAW_MENTION.matcher(message);
+        Set<UUID> targets = new java.util.LinkedHashSet<>();
+        while (matcher.find()) {
+            Player target = Bukkit.getPlayerExact(matcher.group(1));
+            if (target != null && target.isOnline() && !target.getUniqueId().equals(sender.getUniqueId())) targets.add(target.getUniqueId());
+        }
+        if (targets.isEmpty()) return;
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            long now = System.currentTimeMillis();
+            long cooldown = configManager.getMentionNotificationCooldownSeconds() * 1000L;
+            for (UUID id : targets) {
+                Player target = Bukkit.getPlayer(id);
+                if (target == null || !target.isOnline() || now - mentionNotificationCooldowns.getOrDefault(id, 0L) < cooldown) continue;
+                mentionNotificationCooldowns.put(id, now);
+                Map<String,String> replacements = Map.of("%sender%", sender.getName(), "%target%", target.getName());
+                Component title = coloredComponent(replace(configManager.getMentionTitle(), replacements));
+                Component subtitle = coloredComponent(replace(configManager.getMentionSubtitle(), replacements));
+                target.showTitle(Title.title(title, subtitle, Title.Times.times(Duration.ofMillis(150), Duration.ofMillis(1800), Duration.ofMillis(350))));
+                target.sendActionBar(coloredComponent(replace(configManager.getMentionActionbar(), replacements)));
+                target.playSound(target.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.75F, 1.35F);
+            }
+        });
+    }
+
+    private String replace(String input, Map<String,String> values) {
+        String output = input == null ? "" : input;
+        for (Map.Entry<String,String> entry : values.entrySet()) output = output.replace(entry.getKey(), entry.getValue());
+        return output;
     }
 
     public boolean shouldCancelCommand(Player player, String commandLine) {

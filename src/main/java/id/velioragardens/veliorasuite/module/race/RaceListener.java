@@ -7,6 +7,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -67,12 +68,14 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
     @EventHandler public void quit(PlayerQuitEvent event) { reminders.remove(event.getPlayer().getUniqueId()); manager.clearDraft(event.getPlayer().getUniqueId()); benefits.forget(event.getPlayer()); }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length >= 2 && args[0].equalsIgnoreCase("reset")) {
+            if (!sender.hasPermission("veliorasuite.race.admin")) { sender.sendMessage("§cKhusus admin."); return true; }
+            return resetPlayer(sender, args[1]);
+        }
         if (args.length >= 1 && args[0].equalsIgnoreCase("admin")) {
             if (!sender.hasPermission("veliorasuite.race.admin")) { sender.sendMessage("§cKhusus admin."); return true; }
             if (args.length >= 3 && args[1].equalsIgnoreCase("reset")) {
-                Player target = Bukkit.getPlayerExact(args[2]);
-                if (target == null) { sender.sendMessage("§cPemain harus online untuk reset aman di fase ini."); return true; }
-                manager.reset(target.getUniqueId()); gui.resetScale(target); benefits.clearPassive(target); sender.sendMessage("§aData ras " + target.getName() + " direset dan skala dikembalikan normal."); return true;
+                return resetPlayer(sender, args[2]);
             }
             if (args.length >= 3 && args[1].equalsIgnoreCase("enforce")) {
                 if (!args[2].equalsIgnoreCase("on") && !args[2].equalsIgnoreCase("off")) { sender.sendMessage("§e/race admin enforce <on|off>"); return true; }
@@ -101,11 +104,26 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
         return true;
     }
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1 && sender.hasPermission("veliorasuite.race.admin")) return List.of("change", "admin", "status");
+        if (args.length == 1 && sender.hasPermission("veliorasuite.race.admin")) return List.of("change", "reset", "admin", "status");
         if (args.length == 1) return List.of("change", "status");
         if (args.length == 2 && args[0].equalsIgnoreCase("admin")) return List.of("reset", "enforce");
         if (args.length == 3 && args[0].equalsIgnoreCase("admin") && args[1].equalsIgnoreCase("enforce")) return List.of("on", "off");
+        if (args.length == 2 && args[0].equalsIgnoreCase("reset")) return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         return List.of();
+    }
+    private boolean resetPlayer(CommandSender sender, String name) {
+        Player online = Bukkit.getPlayerExact(name);
+        OfflinePlayer target = online;
+        if (target == null) target = java.util.Arrays.stream(Bukkit.getOfflinePlayers()).filter(player -> player.getName() != null && player.getName().equalsIgnoreCase(name)).findFirst().orElse(null);
+        if (target == null) { sender.sendMessage("§cPemain tidak ditemukan. Pemain harus pernah masuk server."); return true; }
+        manager.reset(target.getUniqueId());
+        if (online != null) {
+            gui.resetScale(online); benefits.clearPassive(online); manager.clearDraft(online.getUniqueId());
+            online.sendMessage("§ePilihan rasmu direset oleh admin. Silakan pilih ras kembali.");
+            if (manager.enforcementEnabled()) Bukkit.getScheduler().runTaskLater(plugin, () -> { if (online.isOnline()) gui.openGuide(online); }, 5L);
+        }
+        sender.sendMessage("§aData ras " + (target.getName() == null ? target.getUniqueId() : target.getName()) + " direset" + (online == null ? " (offline)." : " dan efek lama dibersihkan."));
+        return true;
     }
     private void sendStatus(Player player) {
         player.sendMessage("§8§m--------------------------------");

@@ -37,6 +37,10 @@ settings:
     inventory-sharing-enabled: true
     ender-sharing-enabled: true
     mention-enabled: true
+    mention-notification-cooldown-seconds: 3
+    mention-title: '&e&lKAMU DI-MENTION'
+    mention-subtitle: '&f%sender% &7memanggilmu di chat'
+    mention-actionbar: '&e@%target% &8• &fLihat pesan dari %sender%'
     share-cooldown-seconds: 10
     share-max-items: 36
     # Daftar lama tetap disimpan untuk kompatibilitas konfigurasi. Semua command
