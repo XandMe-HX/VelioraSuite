@@ -80,6 +80,19 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
             config.set("messages.prefix", "&8[&dVELIORA &5KEYSHOP&8] ");
             changed = true;
         }
+        if (!config.contains("settings.use-give-command")) {
+            config.set("settings.use-give-command", true);
+            config.set("settings.give-command", "crate key give %player% %key% 1");
+            for (int id = 1; id <= 5; id++) {
+                String path = "manual-offers." + id + ".";
+                config.set(path + "enabled", true);
+                config.set(path + "key-id", String.valueOf(id));
+                config.set(path + "name", "&dKEY " + id);
+                config.set(path + "icon", "TRIPWIRE_HOOK");
+                config.set(path + "price", config.getLong("settings.default-key-price", 500L));
+            }
+            changed = true;
+        }
         if (changed) {
             try { config.save(file); }
             catch (java.io.IOException exception) { plugin.getLogger().warning("Gagal memigrasikan modules/gacha.yml: " + exception.getMessage()); }
