@@ -139,14 +139,15 @@ final class RaceBenefits implements Listener {
         if (race.equals("ANGEL") && event.getCause() == EntityDamageEvent.DamageCause.FALL) { event.setCancelled(true); return; }
         if (race.equals("BEASTMAN") && event.getCause() == EntityDamageEvent.DamageCause.FALL) event.setDamage(event.getDamage() * 0.55D);
         if (race.equals("DEMON") && isDay(player)) event.setDamage(event.getDamage() * 1.15D);
-        if (race.equals("DEMON") && (event.getCause() == EntityDamageEvent.DamageCause.FIRE || event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK || event.getCause() == EntityDamageEvent.DamageCause.LAVA || event.getCause() == EntityDamageEvent.DamageCause.HOT_FLOOR)) event.setCancelled(true);
+        if (race.equals("DEMON") && event.getCause() == EntityDamageEvent.DamageCause.LAVA) event.setDamage(event.getDamage() * 0.65D);
+        if (race.equals("DEMON") && (event.getCause() == EntityDamageEvent.DamageCause.FIRE || event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK || event.getCause() == EntityDamageEvent.DamageCause.HOT_FLOOR)) event.setCancelled(true);
         if (race.equals("DRAGONKIN") && isFire(event.getCause())) {
+            event.setDamage(event.getDamage() * 0.70D);
             long now = System.currentTimeMillis();
-            if (now >= dragonLavaCooldown.getOrDefault(player.getUniqueId(), 0L)) {
+            if (event.getCause() == EntityDamageEvent.DamageCause.LAVA && now >= dragonLavaCooldown.getOrDefault(player.getUniqueId(), 0L)) {
                 dragonLavaCooldown.put(player.getUniqueId(), now + 45_000L);
-                player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 240, 0, true, false, true));
-                event.setCancelled(true);
-                player.sendActionBar(net.kyori.adventure.text.Component.text("Sisik naga melindungimu dari api selama 12 detik."));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 80, 0, true, false, true));
+                player.sendActionBar(net.kyori.adventure.text.Component.text("Sisik naga mengeras selama 4 detik."));
             }
         }
     }
@@ -161,7 +162,7 @@ final class RaceBenefits implements Listener {
         if (race.equals("DEMON") && isNight(player)) event.setDamage(event.getDamage() * 1.24D);
         if (race.equals("ANGEL") && !bow && isNight(player)) event.setDamage(event.getDamage() * 0.88D);
         if (race.equals("ORC") && !bow) event.setDamage(event.getDamage() * 1.21D);
-        if (race.equals("DRAGONKIN") && event.getEntity() instanceof org.bukkit.entity.Monster) event.setDamage(event.getDamage() * 1.18D);
+        if (race.equals("DRAGONKIN") && event.getEntity() instanceof org.bukkit.entity.Monster) event.setDamage(event.getDamage() * 1.12D);
         if (race.equals("VAMPIRE") && event.getEntity() instanceof org.bukkit.entity.Monster) {
             long now = System.currentTimeMillis();
             if (now >= vampireLifestealCooldown.getOrDefault(player.getUniqueId(), 0L)) {
@@ -187,7 +188,7 @@ final class RaceBenefits implements Listener {
     }
     @EventHandler(ignoreCancelled = true) public void hunger(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player player) || !manager.selected(player.getUniqueId()) || !race(player).equals("DRAGONKIN")) return;
-        if (event.getFoodLevel() < player.getFoodLevel() && ThreadLocalRandom.current().nextInt(100) < 23) event.setFoodLevel(Math.max(0, event.getFoodLevel() - 1));
+        if (event.getFoodLevel() < player.getFoodLevel() && ThreadLocalRandom.current().nextInt(100) < 15) event.setFoodLevel(Math.max(0, event.getFoodLevel() - 1));
     }
     private boolean isFire(EntityDamageEvent.DamageCause cause) { return cause == EntityDamageEvent.DamageCause.FIRE || cause == EntityDamageEvent.DamageCause.FIRE_TICK || cause == EntityDamageEvent.DamageCause.LAVA || cause == EntityDamageEvent.DamageCause.HOT_FLOOR; }
 }
