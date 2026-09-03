@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.5.4
+version: 1.6.0
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
@@ -99,7 +99,7 @@ commands:
     aliases: [vreport]
   race:
     description: Pilih dan lihat ras Veliora.
-    usage: /race [status|admin]
+    usage: /race [status|change|reset <player>|admin]
     aliases: [ras, vrace]
     permission: veliorasuite.race.use
   reports:

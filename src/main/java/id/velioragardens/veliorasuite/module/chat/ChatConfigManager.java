@@ -47,6 +47,10 @@ public final class ChatConfigManager {
     public boolean isInteractiveInventoryEnabled() { return getBoolean("settings.interactive-chat.inventory-sharing-enabled", true); }
     public boolean isInteractiveEnderEnabled() { return getBoolean("settings.interactive-chat.ender-sharing-enabled", true); }
     public boolean isInteractiveMentionEnabled() { return getBoolean("settings.interactive-chat.mention-enabled", true); }
+    public int getMentionNotificationCooldownSeconds() { return Math.max(0, getInt("settings.interactive-chat.mention-notification-cooldown-seconds", 3)); }
+    public String getMentionTitle() { return getString("settings.interactive-chat.mention-title", "&e&lKAMU DI-MENTION"); }
+    public String getMentionSubtitle() { return getString("settings.interactive-chat.mention-subtitle", "&f%sender% &7memanggilmu di chat"); }
+    public String getMentionActionbar() { return getString("settings.interactive-chat.mention-actionbar", "&e@%target% &8• &fLihat pesan dari %sender%"); }
     public int getInteractiveShareCooldownSeconds() { return Math.max(0, getInt("settings.interactive-chat.share-cooldown-seconds", 10)); }
     public int getInteractiveShareMaxItems() { return Math.max(1, Math.min(54, getInt("settings.interactive-chat.share-max-items", 36))); }
     public Map<String, InteractiveTrigger> getInteractiveTriggers() {
