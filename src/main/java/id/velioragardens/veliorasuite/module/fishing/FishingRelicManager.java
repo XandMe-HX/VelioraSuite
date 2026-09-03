@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -87,20 +88,40 @@ public final class FishingRelicManager implements Listener {
         ItemStack result = rod.clone();
         if (!apply(result, type, selectedEnchant(type, relic))) return;
         event.setResult(result);
-        event.getView().setRepairCost(1);
+        // Custom result must not depend on creative/OP level bypass. The click handler below
+        // performs the transaction server-side so Geyser's anvil UI receives the same result.
+        event.getView().setRepairCost(0);
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onTakeAnvil(InventoryClickEvent event) {
         if (event.getInventory().getType() != org.bukkit.event.inventory.InventoryType.ANVIL || event.getRawSlot() != 2) return;
-        if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()
-                || !event.getCurrentItem().getItemMeta().getPersistentDataContainer().has(enchantKey, PersistentDataType.STRING)) return;
-        if (event.getWhoClicked() instanceof Player player) {
-            Bukkit.getScheduler().runTask(manager.getConfigManager().getPlugin(), () -> {
-                player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 1.2F);
-                player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix() + "&aRelic berhasil diterapkan melalui anvil."));
-            });
-        }
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        ItemStack rod = event.getInventory().getItem(0);
+        ItemStack relic = event.getInventory().getItem(1);
+        String type = relicType(relic);
+        if (type == null || !isFishingRod(rod)) return;
+        ItemStack result = rod.clone();
+        result.setAmount(1);
+        if (!apply(result, type, selectedEnchant(type, relic))) return;
+
+        event.setCancelled(true);
+        event.getInventory().setItem(0, decrement(rod));
+        event.getInventory().setItem(1, decrement(relic));
+        event.getInventory().setItem(2, null);
+        java.util.Map<Integer, ItemStack> overflow = player.getInventory().addItem(result);
+        overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+        player.updateInventory();
+        player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 1.2F);
+        player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
+                + "&aRelic berhasil diterapkan ke Fishing Rod."));
+    }
+
+    private ItemStack decrement(ItemStack source) {
+        if (source == null || source.getAmount() <= 1) return null;
+        ItemStack remaining = source.clone();
+        remaining.setAmount(source.getAmount() - 1);
+        return remaining;
     }
 
     private ItemStack create(String type) {

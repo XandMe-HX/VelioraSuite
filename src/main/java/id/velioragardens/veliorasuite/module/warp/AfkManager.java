@@ -37,6 +37,7 @@ public final class AfkManager implements Listener, CommandExecutor {
     private final Set<UUID> manualAfk = new HashSet<>();
     private final Map<UUID, Long> lastReward = new HashMap<>();
     private int taskId = -1;
+    private boolean essentialsAvailable;
 
     public AfkManager(VelioraSuite plugin, WarpManager warps) {
         this.plugin = plugin;
@@ -45,22 +46,26 @@ public final class AfkManager implements Listener, CommandExecutor {
 
     public void start() {
         cleanupOrphanMarkers();
+        essentialsAvailable = Bukkit.getPluginManager().isPluginEnabled("Essentials");
         for (Player player : Bukkit.getOnlinePlayers()) touch(player);
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             long now = System.currentTimeMillis();
             long timeout = warps.afkTimeoutSeconds() * 1000L;
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (!afk.contains(player.getUniqueId()) && timeout > 0
+                Boolean essentialsAfk = essentialsAfk(player);
+                if (essentialsAfk != null && essentialsAfk != afk.contains(player.getUniqueId())) {
+                    setAfk(player, essentialsAfk, false);
+                } else if (essentialsAfk == null && !afk.contains(player.getUniqueId()) && timeout > 0
                         && now - lastActivity.getOrDefault(player.getUniqueId(), now) >= timeout) setAfk(player, true);
-                if (manualAfk.contains(player.getUniqueId()) && inAfkArea(player)
+                if (afk.contains(player.getUniqueId()) && inAfkArea(player)
                         && warps.afkRewardsEnabled() && now - lastReward.getOrDefault(player.getUniqueId(), now) >= 60_000L) {
                     reward(player);
                     lastReward.put(player.getUniqueId(), now);
                 }
                 TextDisplay marker = markers.get(player.getUniqueId());
-                if (marker != null && marker.isValid()) marker.teleport(markerLocation(player));
+                if (marker != null && marker.isValid() && marker.getVehicle() != player) player.addPassenger(marker);
             }
-        }, 20L, 10L);
+        }, 20L, 20L);
     }
 
     public void stop() {
@@ -74,6 +79,14 @@ public final class AfkManager implements Listener, CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Command ini hanya untuk pemain."); return true; }
+        if (essentialsAvailable) {
+            Bukkit.dispatchCommand(player, "essentials:afk");
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Boolean state = essentialsAfk(player);
+                if (state != null) setAfk(player, state, false);
+            }, 1L);
+            return true;
+        }
         boolean enable = !afk.contains(player.getUniqueId());
         if (enable) manualAfk.add(player.getUniqueId()); else manualAfk.remove(player.getUniqueId());
         setAfk(player, enable);
@@ -95,13 +108,18 @@ public final class AfkManager implements Listener, CommandExecutor {
 
     private void activate(Player player) {
         touch(player);
+        // EssentialsX owns automatic AFK transitions when present. Mirroring it here avoids
+        // two plugins rapidly toggling the same player on movement, vehicle, or GSit packets.
+        if (essentialsAvailable) return;
         // Manual AFK is allowed to chat and walk around its designated AFK area.
         if (afk.contains(player.getUniqueId()) && !(manualAfk.contains(player.getUniqueId()) && inAfkArea(player))) setAfk(player, false);
     }
 
     private void touch(Player player) { lastActivity.put(player.getUniqueId(), System.currentTimeMillis()); }
 
-    private void setAfk(Player player, boolean state) {
+    private void setAfk(Player player, boolean state) { setAfk(player, state, true); }
+
+    private void setAfk(Player player, boolean state, boolean notify) {
         if (state) {
             if (!afk.add(player.getUniqueId())) return;
             TextDisplay marker = player.getWorld().spawn(markerLocation(player), TextDisplay.class, display -> {
@@ -113,13 +131,29 @@ public final class AfkManager implements Listener, CommandExecutor {
                 display.addScoreboardTag("veliora_afk_marker");
             });
             markers.put(player.getUniqueId(), marker);
-            player.sendMessage(warps.color(warps.message("afk-on", "%prefix% &eKamu sekarang AFK.")));
+            player.addPassenger(marker);
+            if (notify) player.sendMessage(warps.color(warps.message("afk-on", "%prefix% &eKamu sekarang AFK.")));
         } else {
             if (!afk.remove(player.getUniqueId())) return;
             TextDisplay marker = markers.remove(player.getUniqueId());
             if (marker != null && marker.isValid()) marker.remove();
             touch(player);
-            player.sendMessage(warps.color(warps.message("afk-off", "%prefix% &aKamu tidak lagi AFK.")));
+            if (notify) player.sendMessage(warps.color(warps.message("afk-off", "%prefix% &aKamu tidak lagi AFK.")));
+        }
+    }
+
+    /** Reads EssentialsX as the authoritative AFK state without a hard dependency. */
+    private Boolean essentialsAfk(Player player) {
+        if (!essentialsAvailable) return null;
+        try {
+            org.bukkit.plugin.Plugin hook = Bukkit.getPluginManager().getPlugin("Essentials");
+            if (hook == null || !hook.isEnabled()) return null;
+            Object user = hook.getClass().getMethod("getUser", UUID.class).invoke(hook, player.getUniqueId());
+            if (user == null) return false;
+            Object value = user.getClass().getMethod("isAfk").invoke(user);
+            return value instanceof Boolean result ? result : false;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return null;
         }
     }
 
