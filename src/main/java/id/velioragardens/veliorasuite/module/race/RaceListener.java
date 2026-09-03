@@ -99,7 +99,7 @@ public final class RaceListener implements Listener, CommandExecutor, TabComplet
         if (manager.selected(player.getUniqueId())) {
             if (args.length >= 1 && args[0].equalsIgnoreCase("status")) { sendStatus(player); return true; }
             if (args.length >= 1 && args[0].equalsIgnoreCase("change")) { gui.openChange(player); return true; }
-            sendStatus(player);
+            gui.openProfile(player);
         } else gui.openGuide(player);
         return true;
     }

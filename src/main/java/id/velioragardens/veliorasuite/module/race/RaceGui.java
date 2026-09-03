@@ -31,6 +31,37 @@ public final class RaceGui implements Listener {
     public RaceGui(VelioraSuite plugin, RaceManager manager, RaceBenefits benefits) {
         this.plugin = plugin; this.manager = manager; this.benefits = benefits; this.economy = new RaceEconomyHook(plugin); this.actionKey = new NamespacedKey(plugin, "race_gui_action"); this.scaleHelper = new RaceScaleHelper(plugin);
     }
+    public void openProfile(Player player) {
+        if (!manager.selected(player.getUniqueId())) { openGuide(player); return; }
+        RaceInfo race = RaceInfo.valueOf(manager.race(player.getUniqueId()));
+        String form = manager.form(player.getUniqueId());
+        Inventory inventory = menu("profile", 45, "§8Ras Saya §7| " + race.title);
+        inventory.setItem(4, icon(race.material, race.color + "&l" + race.title.toUpperCase(Locale.ROOT), List.of(
+                "&7Bentuk aktif: &f" + formName(form), "&7Skala: &f" + (int) (manager.scaleFor(form) * 100) + "%"), null));
+        inventory.setItem(20, icon(Material.NAME_TAG, "&d&lGANTI RAS", List.of(
+                "&7Ganti ras beserta benefitnya.", "&7Biaya: &6$" + String.format("%,.0f", manager.changeCost()), "", "&eKlik untuk melanjutkan."), "profile_change_race"));
+        long remaining = manager.formChangeRemaining(player.getUniqueId());
+        inventory.setItem(24, icon(Material.ARMOR_STAND, "&b&lUBAH BENTUK TUBUH", List.of(
+                "&7Mode Bocil, Normal, atau Tinggi.", "&7Tidak mengubah ras maupun benefit.",
+                remaining > 0L ? "&cTersedia dalam " + duration(remaining) : "&aTersedia sekarang.", "", "&eKlik untuk memilih."), "profile_change_form"));
+        inventory.setItem(40, icon(Material.BARRIER, "&cTutup", List.of("&7Tutup menu ras."), "close"));
+        player.openInventory(inventory);
+    }
+
+    private void openBodyForms(Player player) {
+        long remaining = manager.formChangeRemaining(player.getUniqueId());
+        if (remaining > 0L && !player.hasPermission("veliorasuite.race.bypasschange")) {
+            player.sendMessage("§cBentuk tubuh dapat diubah lagi dalam §e" + duration(remaining) + "§c."); return;
+        }
+        String race = manager.race(player.getUniqueId());
+        RaceInfo info = RaceInfo.valueOf(race);
+        Inventory inventory = menu("body-form", 45, "§8Ubah Bentuk §7| " + info.title);
+        inventory.setItem(20, formIcon(Material.SMALL_AMETHYST_BUD, "&d&lMODE BOCIL", "&7Skala: &f55%", "&7Hanya mengubah tampilan tubuh.", race, "CHILD", false, true));
+        inventory.setItem(22, formIcon(Material.ARMOR_STAND, "&a&lDEWASA NORMAL", "&7Skala: &f100%", "&7Ukuran Minecraft standar.", race, "ADULT", false, true));
+        inventory.setItem(24, formIcon(Material.END_ROD, "&b&lDEWASA TINGGI", "&7Skala: &f115%", "&7Sedikit lebih tinggi.", race, "TALL", false, true));
+        inventory.setItem(40, icon(Material.ARROW, "&eKembali", List.of("&7Kembali ke menu ras."), "profile"));
+        player.openInventory(inventory);
+    }
     public void openGuide(Player player) {
         Inventory inventory = menu("guide", 54, "§8Pilih Ras §7| Panduan");
         inventory.setItem(4, icon(Material.WRITTEN_BOOK, "&d&lPANDUAN RAS", List.of("&7Pilih ras untuk menentukan gaya bermainmu.", "&7Pilihan pertama gratis dan tidak langsung terkunci."), null));
@@ -100,7 +131,10 @@ public final class RaceGui implements Listener {
         player.openInventory(inventory);
     }
     private ItemStack formIcon(Material material, String name, String scale, String description, String race, String form, boolean changing) {
-        return icon(material, name, List.of(scale, description, "", "&eKlik untuk membuka konfirmasi."), (changing ? "change_confirm:" : "confirm:") + race + ":" + form);
+        return formIcon(material, name, scale, description, race, form, changing, false);
+    }
+    private ItemStack formIcon(Material material, String name, String scale, String description, String race, String form, boolean changing, boolean bodyOnly) {
+        return icon(material, name, List.of(scale, description, "", "&eKlik untuk memilih."), bodyOnly ? "body_complete:" + form : (changing ? "change_confirm:" : "confirm:") + race + ":" + form);
     }
     private void openConfirm(Player player, String race, String form) {
         openConfirm(player, race, form, false);
@@ -150,6 +184,16 @@ public final class RaceGui implements Listener {
         ItemStack item = event.getCurrentItem(); if (item == null || !item.hasItemMeta()) return;
         String action = item.getItemMeta().getPersistentDataContainer().get(actionKey, PersistentDataType.STRING); if (action == null) return;
         if (action.equals("guide_continue")) { openRaces(player); return; }
+        if (action.equals("profile")) { openProfile(player); return; }
+        if (action.equals("profile_change_race")) { openChange(player); return; }
+        if (action.equals("profile_change_form")) { openBodyForms(player); return; }
+        if (action.startsWith("body_complete:")) {
+            String form = action.substring("body_complete:".length());
+            if (!manager.canChangeForm(player.getUniqueId()) && !player.hasPermission("veliorasuite.race.bypasschange")) { openProfile(player); return; }
+            manager.changeForm(player.getUniqueId(), form); scaleHelper.apply(player, manager.scaleFor(form));
+            player.closeInventory(); player.sendMessage("§a[Ras] §fBentuk tubuh diubah menjadi §b" + formName(form) + "§f. Dapat diubah lagi dalam 2 hari.");
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.7F, 1.25F); return;
+        }
         if (action.equals("guide")) { openGuide(player); return; }
         if (action.equals("races")) { openRaces(player); return; }
         if (action.equals("change_races")) { openRaces(player, true); return; }

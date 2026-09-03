@@ -87,17 +87,21 @@ public final class AdventureManager implements Listener {
     public AdventureConfigManager config() { return config; }
 
     public void openMain(Player player) {
-        Inventory inventory = Bukkit.createInventory(new AdventureHolder("main"), 27, config.mainTitle());
+        if (!ensureTeam(player, true)) return;
+        Inventory inventory = Bukkit.createInventory(new AdventureHolder("main"), 45, config.mainTitle());
         fill(inventory, Material.GREEN_STAINED_GLASS_PANE);
-        inventory.setItem(11, item(Material.WRITABLE_BOOK, "&aMisi Hari Ini", List.of(
+        inventory.setItem(10, item(Material.WRITABLE_BOOK, "&aMisi Hari Ini", List.of(
                 "&7Lihat lima misi Guild Petualang", "&7yang tersedia hari ini.", "", "&eKlik untuk membuka."), "daily", ""));
-        inventory.setItem(13, item(Material.BOOK, "&ePanduan Guild", List.of(
+        inventory.setItem(12, item(Material.BOOK, "&ePanduan Team Petualang", List.of(
                 "&7Cara membuat team, menerima misi,", "&7menyelesaikan, dan menyetor hadiah.", "", "&eKlik untuk dikirim ke chat."), "guide", ""));
-        inventory.setItem(15, item(Material.CHEST, "&bSetor dan Riwayat", List.of(
+        inventory.setItem(14, item(Material.CHEST, "&bSetor dan Riwayat", List.of(
                 "&7Setor misi yang sudah selesai", "&7dan lihat progress guild.", "", "&eKlik untuk membuka."), "submit", ""));
-        inventory.setItem(17, item(Material.DIAMOND_PICKAXE, "&6Profesi Petualang", List.of(
+        inventory.setItem(16, item(Material.DIAMOND_PICKAXE, "&6Profesi Petualang", List.of(
                 "&7Penambang, Penebang, Petani,", "&7Pemburu, dan Nelayan.", "", "&eKlik untuk melihat perkembangan."), "professions", ""));
-        inventory.setItem(22, profileItem(player));
+        inventory.setItem(29, profileItem(player));
+        Team team = team(player);
+        inventory.setItem(33, item(Material.PLAYER_HEAD, "&bTeam: &f" + team.getDisplayName(), List.of(
+                "&7Quest, progres, dan Guild EXP", "&7tersimpan untuk team ini.", "", "&aTeam aktif dan siap bermain."), "none", ""));
         player.openInventory(inventory);
     }
 
@@ -170,6 +174,7 @@ public final class AdventureManager implements Listener {
     }
 
     public void openProfessions(Player player) {
+        if (!ensureTeam(player, true)) return;
         Inventory inventory = Bukkit.createInventory(new AdventureHolder("professions"), 27, config.color("&8Profesi Petualang"));
         fill(inventory, Material.GRAY_STAINED_GLASS_PANE);
         int[] slots = {10, 11, 13, 15, 16};
@@ -258,13 +263,14 @@ public final class AdventureManager implements Listener {
     public void addBossProgress(Player player, int amount) { progress(player, AdventureQuestType.BOSS, "ANY", amount); }
     public void addExperience(Player player, long amount) {
         if (player == null || amount <= 0) return;
+        if (!ensureTeam(player, false)) return;
         int oldLevel = level(player);
         AdventureRank oldRank = standardRank(player);
         profile(player).addExp(amount);
         data.save();
         showProgressCelebration(player, oldLevel, oldRank);
     }
-    public long exp(Player player) { return profile(player).exp(); }
+    public long exp(Player player) { ensureTeam(player, false); return profile(player).exp(); }
     public int completed(Player player) { return profile(player).completed(); }
     public int level(Player player) {
         long exp = exp(player), used = 0L;
@@ -428,6 +434,7 @@ public final class AdventureManager implements Listener {
     public int professionLevel(long exp) { return Math.min(config.professionMaxLevel(), 1 + (int) (Math.max(0L, exp) / config.professionLevelExp())); }
     private void awardProfession(Player player, AdventureProfession profession, long amount) {
         if (player == null || amount <= 0L || !config.professionsEnabled()) return;
+        if (!ensureTeam(player, false)) return;
         AdventureDataManager.PlayerData profile = profile(player);
         long before = profile.professionExp(profession);
         profile.addProfessionExp(profession, amount);
@@ -435,6 +442,23 @@ public final class AdventureManager implements Listener {
         if (professionLevel(before) < professionLevel(profile.professionExp(profession))) {
             player.sendMessage(config.prefix() + config.color("&6Profesi &f" + profession.display() + " &6naik ke level &f" + professionLevel(profile.professionExp(profession)) + "&6!"));
         }
+    }
+
+    /** Adventure progression belongs to an actual Veliora Team. Orphan player tiers are reset once. */
+    private boolean ensureTeam(Player player, boolean showLockedMenu) {
+        if (team(player) != null) return true;
+        AdventureDataManager.PlayerData profile = profile(player);
+        if (profile.exp() > 0L || !profile.customRank().isBlank()) {
+            profile.setExp(0L);
+            profile.customRank("");
+            data.save();
+            player.sendMessage(config.prefix() + config.color("&eTier petualang direset karena kamu tidak memiliki team."));
+        }
+        if (showLockedMenu) {
+            send(player, "team-required", "&cBuat atau gabung Veliora Team sebelum membuka quest petualang.");
+            openTeam(player);
+        }
+        return false;
     }
     private boolean isCrop(Material type) { return switch (type) { case WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART, COCOA, MELON, PUMPKIN -> true; default -> false; }; }
 
