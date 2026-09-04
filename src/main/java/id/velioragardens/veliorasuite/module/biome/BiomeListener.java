@@ -35,6 +35,8 @@ import java.time.Duration;
 public final class BiomeListener implements Listener, CommandExecutor, TabCompleter {
     private final VelioraSuite plugin;
     private final Map<UUID, String> biomes = new HashMap<>();
+    private final Map<UUID, String> pendingBiomes = new HashMap<>();
+    private final Map<UUID, Long> pendingSince = new HashMap<>();
     private final Map<UUID, Long> announced = new HashMap<>();
     private final Map<UUID, Boolean> toggles = new HashMap<>();
     private final Map<UUID, java.util.Set<String>> discovered = new HashMap<>();
@@ -45,21 +47,28 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
 
     public BiomeListener(VelioraSuite plugin) { this.plugin = plugin; }
     public void load() { config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/biome.yml")); }
-    public void start() { stop(); task = Bukkit.getScheduler().runTaskTimer(plugin, this::checkPlayers, 20L, 20L); }
-    public void stop() { if (task != null) { task.cancel(); task = null; } animations.values().forEach(BukkitTask::cancel); animations.clear(); biomes.clear(); announced.clear(); toggles.clear(); discovered.clear(); }
+    public void start() { stop(); task = Bukkit.getScheduler().runTaskTimer(plugin, this::checkPlayers, 20L, 10L); }
+    public void stop() { if (task != null) { task.cancel(); task = null; } animations.values().forEach(BukkitTask::cancel); animations.clear(); biomes.clear(); pendingBiomes.clear(); pendingSince.clear(); announced.clear(); toggles.clear(); discovered.clear(); }
 
     @EventHandler public void join(PlayerJoinEvent event) { Bukkit.getScheduler().runTaskLater(plugin, () -> announceJoin(event.getPlayer()), 40L); }
-    @EventHandler public void quit(PlayerQuitEvent event) { UUID id = event.getPlayer().getUniqueId(); biomes.remove(id); announced.remove(id); toggles.remove(id); discovered.remove(id); BukkitTask animation=animations.remove(id); if(animation!=null)animation.cancel(); }
+    @EventHandler public void quit(PlayerQuitEvent event) { UUID id = event.getPlayer().getUniqueId(); biomes.remove(id); pendingBiomes.remove(id); pendingSince.remove(id); announced.remove(id); toggles.remove(id); discovered.remove(id); BukkitTask animation=animations.remove(id); if(animation!=null)animation.cancel(); }
 
     private void announceJoin(Player player) {
         if (!player.isOnline() || !enabled(player)) return;
-        String biome = key(player); biomes.put(player.getUniqueId(), biome); announce(player, biome, true);
+        String biome = key(player); biomes.put(player.getUniqueId(), biome);
+        if (config.getBoolean("display.announce-on-join", false)) announce(player, biome, true);
     }
     private void checkPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!enabled(player)) { biomes.remove(player.getUniqueId()); continue; }
-            String biome = key(player); String previous = biomes.put(player.getUniqueId(), biome);
-            if (previous != null && !previous.equals(biome)) announce(player, biome, false);
+            UUID uuid = player.getUniqueId(); String biome = key(player); String previous = biomes.get(uuid);
+            if (previous == null) { biomes.put(uuid, biome); continue; }
+            if (previous.equals(biome)) { pendingBiomes.remove(uuid); pendingSince.remove(uuid); continue; }
+            long now = System.currentTimeMillis();
+            if (!biome.equals(pendingBiomes.get(uuid))) { pendingBiomes.put(uuid, biome); pendingSince.put(uuid, now); continue; }
+            long settle = Math.max(1L, config.getLong("anti-spam.minimum-biome-stay-seconds", 5L)) * 1000L;
+            if (now - pendingSince.getOrDefault(uuid, now) < settle) continue;
+            biomes.put(uuid, biome); pendingBiomes.remove(uuid); pendingSince.remove(uuid); announce(player, biome, false);
         }
     }
     private boolean enabled(Player player) {
@@ -76,6 +85,7 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
         announced.put(player.getUniqueId(), now);
         String name = configuredName(biome);
         boolean firstDiscovery = discovered.computeIfAbsent(player.getUniqueId(), ignored -> new HashSet<>()).add(biome);
+        if (!firstDiscovery && config.getBoolean("anti-spam.only-first-discovery", true)) return;
         String titleKey = firstDiscovery ? "display.new-biome-title" : "display.title";
         String title = config.getString(titleKey, firstDiscovery ? "&d&lBIOME BARU" : "&d&l{biome}");
         String subtitle = config.getString("display.subtitle", "&7Sekarang memasuki &f{biome}");

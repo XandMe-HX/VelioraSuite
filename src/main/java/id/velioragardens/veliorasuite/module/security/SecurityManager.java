@@ -197,8 +197,8 @@ public final class SecurityManager {
         OreReport fiveMinuteReport = report(uuid, 5);
         OreReport report = strongest(fiveMinuteReport, report(uuid, 15), report(uuid, 60));
         if (!report.level().equals("NORMAL")) addOreAlert(player, report);
-        if (report.level().equals("HIGH")) armHoneypot(player, report);
-        if (fiveMinuteReport.level().equals("EXTREME")) handleExtremeXray(player, fiveMinuteReport);
+        // OreWatch is evidence only: never manufacture fake ore or auto-ban from mining totals.
+        if (fiveMinuteReport.level().equals("EXTREME")) saveXrayEvidence(player, fiveMinuteReport, "EXTREME_REVIEW_REQUIRED");
     }
 
     public void scheduleOreDigest(Player player, long delayTicks) {
@@ -524,7 +524,7 @@ public final class SecurityManager {
 
     private void sendOreReport(CommandSender sender, OreReport report) {
         sender.sendMessage(color("&8[&cVelioraOreWatch&8] &f" + report.name() + " &7UUID &f" + report.uuid()));
-        String action = report.level().equals("EXTREME") ? "Enforcement bertahap otomatis" : "Review admin";
+        String action = "Review admin (tidak auto-ban dari jumlah ore)";
         sender.sendMessage(color("&7Waktu: &f" + formatTime(report.latestTime()) + " WIB &8| &7Window: &f"
                 + report.window() + "m &8| &7Level: &e" + report.level() + " &8| &7Action: &f" + action));
         sender.sendMessage(color("&7Diamond: &f" + report.diamond() + " &7Debris: &f" + report.debris()
@@ -559,7 +559,10 @@ public final class SecurityManager {
             else if (ore.contains("EMERALD_ORE")) emerald++;
         }
         double rareRatio = (diamond + debris + emerald) / (double) Math.max(1, total);
-        boolean caveLikely = (total >= 30 && rareRatio < 0.18D) || caveDiscoveries >= Math.max(3, (diamond + debris + emerald) / 2);
+        int rare = diamond + debris + emerald;
+        double visibleRareRatio = caveDiscoveries / (double) Math.max(1, rare);
+        boolean caveLikely = (total >= 20 && rareRatio < 0.22D) || caveDiscoveries >= 3
+                || (rare >= 4 && visibleRareRatio >= 0.30D);
         String level = level(minutes, diamond, debris, gold, iron, emerald, total, fastTransitions, preciseTransitions, caveLikely);
         int score = diamond * 3 + debris * 10 + emerald * 4 + gold + iron / 2
                 + fastTransitions * 18 + preciseTransitions * 14 - (caveLikely ? 20 : 0);

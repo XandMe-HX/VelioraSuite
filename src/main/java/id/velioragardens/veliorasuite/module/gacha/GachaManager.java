@@ -80,6 +80,19 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
             config.set("messages.prefix", "&8[&dVELIORA &5KEYSHOP&8] ");
             changed = true;
         }
+        if (!config.contains("settings.use-give-command")) {
+            config.set("settings.use-give-command", true);
+            config.set("settings.give-command", "crate key give %player% %key% 1");
+            for (int id = 1; id <= 5; id++) {
+                String path = "manual-offers." + id + ".";
+                config.set(path + "enabled", true);
+                config.set(path + "key-id", String.valueOf(id));
+                config.set(path + "name", "&dKEY " + id);
+                config.set(path + "icon", "TRIPWIRE_HOOK");
+                config.set(path + "price", config.getLong("settings.default-key-price", 500L));
+            }
+            changed = true;
+        }
         if (changed) {
             try { config.save(file); }
             catch (java.io.IOException exception) { plugin.getLogger().warning("Gagal memigrasikan modules/gacha.yml: " + exception.getMessage()); }
@@ -89,6 +102,8 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     public boolean enabled() { return config != null && config.getBoolean("settings.enabled", true); }
 
     private void refreshOffers() {
+        List<GachaOffer> manual = manualOffers();
+        if (!manual.isEmpty()) { offers = List.copyOf(manual); return; }
         if (bridge == null || !bridge.available()) { offers = List.of(); return; }
         Map<String, String> overrides = strings("key-overrides");
         Map<String, Long> prices = longs("prices");
@@ -101,6 +116,23 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
             found.sort(Comparator.comparingInt(offer -> order.get(offer.crateId().toLowerCase(Locale.ROOT))));
         } else found.sort(Comparator.comparing(GachaOffer::crateId, String.CASE_INSENSITIVE_ORDER));
         offers = List.copyOf(found);
+    }
+
+    private List<GachaOffer> manualOffers() {
+        if (!config.isConfigurationSection("manual-offers")) return List.of();
+        List<GachaOffer> result = new ArrayList<>();
+        long defaultPrice = Math.max(0L, config.getLong("settings.default-key-price", 500L));
+        for (String id : config.getConfigurationSection("manual-offers").getKeys(false)) {
+            String path = "manual-offers." + id + ".";
+            if (!config.getBoolean(path + "enabled", true)) continue;
+            String key = config.getString(path + "key-id", id);
+            String name = config.getString(path + "name", id + " Key");
+            Material material;
+            try { material = Material.valueOf(config.getString(path + "icon", "TRIPWIRE_HOOK").toUpperCase(Locale.ROOT)); }
+            catch (RuntimeException ignored) { material = Material.TRIPWIRE_HOOK; }
+            result.add(new GachaOffer(id, key, name, new ItemStack(material), Math.max(0L, config.getLong(path + "price", defaultPrice)), false));
+        }
+        return result;
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -165,7 +197,14 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
             if (!economyReady()) { player.sendMessage(color(prefix() + message("no-economy", "&cVault Economy belum aktif."))); return; }
             if (!hasMoney(player, offer.price())) { player.sendMessage(color(prefix() + message("not-enough-money", "&cUangmu tidak cukup. Butuh &f%price%&c.").replace("%price%", money(offer.price())))); return; }
             int before = bridge.keyAmount(player, offer.keyId());
-            if (before < 0 || !bridge.giveKey(player, offer.keyId())) { player.sendMessage(color(prefix() + message("failed", "&cKey gagal diberikan; uangmu tidak dipotong."))); return; }
+            boolean commandMode = config.getBoolean("settings.use-give-command", true);
+            boolean given;
+            if (commandMode) {
+                String give = config.getString("settings.give-command", "crate key give %player% %key% 1")
+                        .replace("%player%", player.getName()).replace("%key%", offer.keyId()).replace("%crate%", offer.crateId());
+                given = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), give.startsWith("/") ? give.substring(1) : give);
+            } else given = bridge.giveKey(player, offer.keyId());
+            if (before < 0 || !given) { player.sendMessage(color(prefix() + message("failed", "&cKey gagal diberikan; uangmu tidak dipotong."))); return; }
             int after = bridge.keyAmount(player, offer.keyId());
             if (after <= before) { player.sendMessage(color(prefix() + message("failed", "&cKey tidak terverifikasi; uangmu tidak dipotong."))); return; }
             if (!withdraw(player, offer.price())) {

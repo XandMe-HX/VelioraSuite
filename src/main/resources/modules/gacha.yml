@@ -4,6 +4,9 @@ settings:
   enabled: true
   default-key-price: 500
   automatic-discovery: true
+  # Lebih tahan perubahan API ExcellentCrates: pemberian key dilakukan sebagai console.
+  use-give-command: true
+  give-command: 'crate key give %player% %key% 1'
   # Key virtual tidak pernah dijual oleh Veliora keyshop.
   physical-keys-only: true
   purchase-cooldown-millis: 900
@@ -20,6 +23,15 @@ key-overrides: {}
 
 # Harga khusus opsional. Yang tidak ditulis memakai default-key-price.
 prices: {}
+
+# Daftar ini membuat /keyshop tetap rapi tanpa menebak ID dari nama crate.
+# Ubah ID, nama, icon, dan harga sesuai folder ExcellentCrates milikmu.
+manual-offers:
+  '1': { enabled: true, key-id: '1', name: '&bSHIN KEY', icon: TRIPWIRE_HOOK, price: 500 }
+  '2': { enabled: true, key-id: '2', name: '&dTEN KEY', icon: TRIPWIRE_HOOK, price: 500 }
+  '3': { enabled: true, key-id: '3', name: '&6VELIORA KEY', icon: TRIPWIRE_HOOK, price: 500 }
+  '4': { enabled: true, key-id: '4', name: '&cMYTHIC KEY', icon: TRIPWIRE_HOOK, price: 500 }
+  '5': { enabled: true, key-id: '5', name: '&5LEGEND KEY', icon: TRIPWIRE_HOOK, price: 500 }
 
 # Gradient bisa kamu ganti sendiri memakai warna hex. Warna crate di GUI
 # dibuat bergiliran otomatis dari daftar ini.

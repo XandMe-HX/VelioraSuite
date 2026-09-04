@@ -3,8 +3,14 @@
 settings:
   enabled: true
 worlds: ["*"]
-cooldown-seconds: 8
+cooldown-seconds: 30
+anti-spam:
+  # Perbatasan biome sering berubah tiap 1-2 blok. Biome harus stabil dahulu.
+  minimum-biome-stay-seconds: 5
+  # Satu biome hanya diumumkan sekali selama sesi login pemain.
+  only-first-discovery: true
 display:
+  announce-on-join: false
   # Pertama kali sebuah biome ditemukan di sesi ini, title menegaskan penemuan.
   new-biome-title: '&d&lBIOME BARU'
   # Kunjungan berikutnya hanya menampilkan nama biome, bukan title spam yang sama.
