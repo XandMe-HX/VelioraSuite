@@ -27,12 +27,15 @@ public final class TeamDataManager {
     private File file;
     private FileConfiguration data;
     private BufferedYamlWriter writer;
+    private boolean ready;
+    public boolean isReady() { return ready; }
 
     public TeamDataManager(VelioraSuite plugin) {
         this.plugin = plugin;
     }
 
     public void load() {
+        ready = false;
         plugin.createFolder("data");
         this.file = new File(plugin.getDataFolder(), "data/teams.yml");
 
@@ -48,7 +51,8 @@ public final class TeamDataManager {
         }
 
         try {
-            this.data = YamlConfiguration.loadConfiguration(file);
+            this.data = new YamlConfiguration();
+            this.data.load(file);
             if (!data.contains("last-id")) {
                 data.set("last-id", 0);
             }
@@ -59,6 +63,7 @@ public final class TeamDataManager {
             save();
             writer = new BufferedYamlWriter(plugin, file, data, "data/teams.yml");
             writer.start();
+            ready = true;
         } catch (Exception exception) {
             plugin.getLogger().severe("VelioraTeam: data/teams.yml rusak atau gagal dibaca. Fallback data kosong. Error: " + exception.getMessage());
             this.data = new YamlConfiguration();
@@ -93,6 +98,11 @@ public final class TeamDataManager {
             return;
         }
 
+        java.util.Set<UUID> previousMembers = new java.util.HashSet<>();
+        ConfigurationSection oldMembers = data.getConfigurationSection("teams." + team.getId() + ".members");
+        if (oldMembers != null) for (String id : oldMembers.getKeys(false)) {
+            try { previousMembers.add(UUID.fromString(id)); } catch (IllegalArgumentException ignored) { }
+        }
         teamsByName.put(normalize(team.getName()), team);
         String path = "teams." + team.getId();
         data.set(path + ".name", team.getName());
@@ -129,6 +139,8 @@ public final class TeamDataManager {
         }
 
         save();
+        previousMembers.removeAll(team.getMembers().keySet());
+        previousMembers.forEach(this::resetDepartedTier);
     }
 
     public boolean renameTeam(Team team, String newName) {
@@ -148,6 +160,15 @@ public final class TeamDataManager {
         teamsByName.remove(normalize(team.getName()));
         data.set("teams." + team.getId(), null);
         save();
+        team.getMembers().keySet().forEach(this::resetDepartedTier);
+    }
+
+    private void resetDepartedTier(UUID uuid) {
+        plugin.getModuleManager().getModule("adventure")
+                .filter(id.velioragardens.veliorasuite.module.adventure.AdventureModule.class::isInstance)
+                .map(id.velioragardens.veliorasuite.module.adventure.AdventureModule.class::cast)
+                .filter(module -> module.isEnabled() && module.getManager() != null)
+                .ifPresent(module -> module.getManager().resetTierWithoutTeam(uuid));
     }
 
     public Team getTeam(String name) {

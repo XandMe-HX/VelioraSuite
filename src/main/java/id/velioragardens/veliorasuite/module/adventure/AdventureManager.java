@@ -292,6 +292,7 @@ public final class AdventureManager implements Listener {
     }
     public AdventureRank standardRank(Player player) { return config.rankFor(exp(player)); }
     public String rank(Player player) {
+        ensureTeam(player, false);
         String custom = profile(player).customRank();
         return custom.isBlank() ? config.rankDisplay(standardRank(player)) : config.color(custom);
     }
@@ -447,18 +448,33 @@ public final class AdventureManager implements Listener {
     /** Adventure progression belongs to an actual Veliora Team. Orphan player tiers are reset once. */
     private boolean ensureTeam(Player player, boolean showLockedMenu) {
         if (team(player) != null) return true;
-        AdventureDataManager.PlayerData profile = profile(player);
-        if (profile.exp() > 0L || !profile.customRank().isBlank()) {
-            profile.setExp(0L);
-            profile.customRank("");
-            data.save();
-            player.sendMessage(config.prefix() + config.color("&eTier petualang direset karena kamu tidak memiliki team."));
-        }
+        resetTierWithoutTeam(player.getUniqueId());
         if (showLockedMenu) {
             send(player, "team-required", "&cBuat atau gabung Veliora Team sebelum membuka quest petualang.");
             openTeam(player);
         }
         return false;
+    }
+
+    public void resetTierWithoutTeam(UUID uuid) {
+        TeamModule module = plugin.getModuleManager().getModule("team")
+                .filter(TeamModule.class::isInstance).map(TeamModule.class::cast).orElse(null);
+        if (module == null || !module.isEnabled() || module.getTeamManager() == null) return;
+        var teams = module.getTeamManager().getDataManager();
+        if (!teams.isReady() || teams.getTeamByPlayer(uuid) != null) return;
+        if (data.resetTier(uuid)) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null) player.sendMessage(config.prefix() + config.color("&eTier petualang kembali ke F karena kamu tidak memiliki team."));
+        }
+    }
+
+    public void reconcileTeamTiers() {
+        for (UUID uuid : data.playerIds()) resetTierWithoutTeam(uuid);
+    }
+
+    @EventHandler
+    public void onTeamTierJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+        resetTierWithoutTeam(event.getPlayer().getUniqueId());
     }
     private boolean isCrop(Material type) { return switch (type) { case WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART, COCOA, MELON, PUMPKIN -> true; default -> false; }; }
 

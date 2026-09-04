@@ -29,6 +29,9 @@ public final class AdventureModule implements VelioraModule {
         plugin.getServer().getPluginManager().registerEvents(manager, plugin);
         auraSkillsBridge = new AuraSkillsAdventureBridge(plugin, manager);
         auraSkillsBridge.enable();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (enabled) manager.reconcileTeamTiers();
+        });
     }
     @Override public void disable() {
         enabled = false;
