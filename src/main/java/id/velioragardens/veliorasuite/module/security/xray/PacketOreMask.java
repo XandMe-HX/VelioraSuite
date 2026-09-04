@@ -20,15 +20,21 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /** Own packet-only HIDE implementation. No Paper internal code or live-world access. */
 public final class PacketOreMask extends PacketListenerAbstract implements AutoCloseable, Listener {
     private final VelioraSuite plugin;
     private final Set<String> worlds;
     private final Set<String> worldNames;
+    private final Map<String, Integer> heightsByName;
+    private final Map<String, Integer> heightsByKey = new ConcurrentHashMap<>();
     private final int maxColumns, maxPerPlayer, maxOres;
     private final Map<User, View> views = new ConcurrentHashMap<>();
     private final Map<Integer, State> states = new ConcurrentHashMap<>();
+    // Fast direct lookup for common state IDs, like Paper's state-indexed lookup tables.
+    // Overflow stays supported rather than assuming a fixed Minecraft registry size.
+    private final AtomicReferenceArray<State> stateTable = new AtomicReferenceArray<>(65536);
     private final AtomicInteger columns = new AtomicInteger();
     private final AtomicLong masked = new AtomicLong(), skipped = new AtomicLong(), errors = new AtomicLong();
     private final AtomicLong lastWarning = new AtomicLong();
@@ -72,10 +78,18 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
         super(PacketListenerPriority.HIGH);
         this.plugin = plugin;
         worldNames = Set.copyOf(config.getStringList("world-names"));
+        heightsByName = new HashMap<>();
+        for (String name : worldNames) {
+            int fallback = name.equals("world_nether") ? 128 : name.equals("world") ? 320 : 512;
+            heightsByName.put(name, config.getInt("max-block-height." + name, fallback));
+        }
         worlds = ConcurrentHashMap.newKeySet();
         // Resolve actual dimension keys on the main thread; packet handlers never access Bukkit worlds.
         plugin.getServer().getWorlds().stream().filter(w -> worldNames.contains(w.getName()))
-                .forEach(w -> worlds.add(w.getKey().toString()));
+                .forEach(w -> {
+                    worlds.add(w.getKey().toString());
+                    heightsByKey.put(w.getKey().toString(), heightsByName.get(w.getName()));
+                });
         maxColumns = Math.max(16, Math.min(8192, config.getInt("max-cached-columns", 2048)));
         maxPerPlayer = Math.max(16, Math.min(1024, config.getInt("max-columns-per-player", 512)));
         maxOres = Math.max(64, Math.min(4096, config.getInt("max-ores-per-column", 2048)));
@@ -84,7 +98,11 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     }
 
     private State state(int id) {
-        return states.computeIfAbsent(id, value -> {
+        if (id >= 0 && id < stateTable.length()) {
+            State cached = stateTable.get(id);
+            if (cached != null) return cached;
+        }
+        State result = states.computeIfAbsent(id, value -> {
             String name = WrappedBlockState.getByGlobalId(value).getType().getName().replace("minecraft:", "");
             boolean ore = ORES.contains(name);
             String replacement = name.startsWith("deepslate_") ? "deepslate"
@@ -92,9 +110,14 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
             return new State(ore || COVER.contains(name), ore,
                     ore ? WrappedBlockState.getByString("minecraft:" + replacement).getGlobalId() : value);
         });
+        if (id >= 0 && id < stateTable.length()) stateTable.compareAndSet(id, null, result);
+        return result;
     }
     @EventHandler public void worldLoaded(WorldLoadEvent event) {
-        if (worldNames.contains(event.getWorld().getName())) worlds.add(event.getWorld().getKey().toString());
+        if (worldNames.contains(event.getWorld().getName())) {
+            heightsByKey.put(event.getWorld().getKey().toString(), heightsByName.get(event.getWorld().getName()));
+            worlds.add(event.getWorld().getKey().toString());
+        }
     }
 
     @Override public void onPacketSend(PacketSendEvent event) {
@@ -117,6 +140,7 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
                 if (type == PacketType.Play.Server.UNLOAD_CHUNK) {
                     var packet = new WrapperPlayServerUnloadChunk(event);
                     if (view.chunks.remove(key(packet.getChunkX(), packet.getChunkZ())) != null) columns.decrementAndGet();
+                    reconcileBorders(event, view, packet.getChunkX(), packet.getChunkZ());
                 } else if (type == PacketType.Play.Server.CHUNK_DATA) chunk(event, view);
                 else if (type == PacketType.Play.Server.BLOCK_CHANGE) block(event, view);
                 else if (type == PacketType.Play.Server.MULTI_BLOCK_CHANGE) multi(event, view);
@@ -151,9 +175,20 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
         }
         BaseChunk[] sections = column.getChunks();
         int height = sections.length * 16;
-        if (height < 16 || height > 512) { skipped.incrementAndGet(); return; }
-        OreColumn snapshot = new OreColumn(event.getUser().getMinWorldHeight(), height);
-        for (int s = 0; s < sections.length; s++) {
+        if (height < 16 || height > 512) {
+            if (view.chunks.remove(key) != null) columns.decrementAndGet();
+            reconcileBorders(event, view, column.getX(), column.getZ());
+            skipped.incrementAndGet(); return;
+        }
+        int minY = event.getUser().getMinWorldHeight();
+        int scanHeight = OreNeighborhood.scanHeight(minY, height, heightsByKey.getOrDefault(view.world, 512));
+        if (scanHeight == 0) {
+            if (view.chunks.remove(key) != null) columns.decrementAndGet();
+            reconcileBorders(event, view, column.getX(), column.getZ());
+            skipped.incrementAndGet(); return;
+        }
+        OreColumn snapshot = new OreColumn(minY, scanHeight);
+        for (int s = 0; s < scanHeight / 16; s++) {
             BaseChunk section = sections[s];
             if (section == null || section.isEmpty()) continue;
             for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
@@ -163,6 +198,7 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
                 if (snapshot.ores.size() > maxOres) {
                     // A replacement chunk itself restores old client masking.
                     if (view.chunks.remove(key) != null) columns.decrementAndGet();
+                    reconcileBorders(event, view, column.getX(), column.getZ());
                     skipped.incrementAndGet();
                     return;
                 }
@@ -176,7 +212,8 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
         for (var ore : snapshot.ores.entrySet()) {
             int i = ore.getKey(), x = i & 15, z = (i >> 4) & 15, y = (i >> 8) + snapshot.minY;
             int original = ore.getValue();
-            int visible = snapshot.visibleState(x, y, z, original, state(original).replacement);
+            int visible = OreNeighborhood.visible(view.chunks, column.getX() * 16 + x, y,
+                    column.getZ() * 16 + z, original, state(original).replacement);
             if (visible != original) {
                 int relativeY = y - snapshot.minY;
                 sections[relativeY >> 4].set(x, relativeY & 15, z, visible);
@@ -185,6 +222,7 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
             }
         }
         if (changed) event.markForReEncode(true);
+        reconcileBorders(event, view, column.getX(), column.getZ());
     }
 
     private void block(PacketSendEvent event, View view) {
@@ -226,18 +264,26 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     private int visible(View view, int x, int y, int z, int id) {
         OreColumn chunk = view.chunks.get(key(x >> 4, z >> 4));
         if (chunk == null || !chunk.contains(x & 15, y, z & 15)) return id;
-        return chunk.visibleState(x & 15, y, z & 15, id, state(id).replacement);
+        return OreNeighborhood.visible(view.chunks, x, y, z, id, state(id).replacement);
     }
 
     private void reveal(PacketSendEvent event, View view, List<Vector3i> positions) {
         Map<Vector3i, Integer> revealed = new HashMap<>();
         for (Vector3i p : positions) {
-            OreColumn chunk = view.chunks.get(key(p.getX() >> 4, p.getZ() >> 4));
-            if (chunk == null) continue;
-            chunk.revealAround(p.getX() & 15, p.getY(), p.getZ() & 15).forEach((i, id) ->
-                    revealed.put(new Vector3i((p.getX() & ~15) + (i & 15), chunk.minY + (i >> 8),
-                            (p.getZ() & ~15) + ((i >> 4) & 15)), id));
+            OreNeighborhood.revealAround(view.chunks, p.getX(), p.getY(), p.getZ()).forEach((pos, id) ->
+                    revealed.put(new Vector3i(pos.x(), pos.y(), pos.z()), id));
         }
+        afterSend(event, view, revealed);
+    }
+
+    private void reconcileBorders(PacketSendEvent event, View view, int cx, int cz) {
+        Map<Vector3i, Integer> changed = new HashMap<>();
+        OreNeighborhood.borders(view.chunks, cx, cz, id -> state(id).replacement).forEach((p, id) ->
+                changed.put(new Vector3i(p.x(), p.y(), p.z()), id));
+        afterSend(event, view, changed);
+    }
+
+    private void afterSend(PacketSendEvent event, View view, Map<Vector3i, Integer> revealed) {
         User recipient = event.getUser();
         if (!revealed.isEmpty()) event.getTasksAfterSend().add(() -> {
             if (!closed && views.get(recipient) == view) sendChanges(recipient, revealed);
@@ -294,5 +340,6 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
         });
         plugin.getLogger().info(status());
         views.clear(); columns.set(0); states.clear();
+        for (int i = 0; i < stateTable.length(); i++) stateTable.set(i, null);
     }
 }
