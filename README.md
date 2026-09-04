@@ -2,6 +2,14 @@
 
 VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
+## OreMask eksperimental (1.6.5)
+
+Penyamaran ore melalui packet buatan Suite, bukan mengaktifkan Anti-Xray Paper.
+**Default nonaktif; belum diuji live Java/Bedrock maupun performanya.** Memerlukan
+PacketEvents 2.13.0. World target: `world`, `world_nether`. Tidak melakukan ban.
+Gunakan `/voremask` untuk status admin. Baca [aktivasi, batas perlindungan dan checklist uji](docs/ore-mask.md)
+sebelum menyalakannya. Jangan gunakan bersamaan dengan obfuscator Paper.
+
 Author / owner name yang dipakai di source, config, guide, command, dan dokumentasi: **XandMe**.
 
 ## Status Module

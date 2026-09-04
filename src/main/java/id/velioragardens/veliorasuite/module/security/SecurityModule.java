@@ -13,6 +13,7 @@ public final class SecurityModule implements VelioraModule {
     private SecurityListener listener;
     private CombatGuardManager combatGuard;
     private boolean enabled;
+    private AutoCloseable oreMask;
 
     public SecurityModule(VelioraSuite plugin) {
         this.plugin = plugin;
@@ -35,6 +36,22 @@ public final class SecurityModule implements VelioraModule {
     @Override
     public void enable() {
         enabled = true;
+        plugin.saveResourceIfNotExists("modules/ore-mask.yml");
+        PluginCommand maskStatus = plugin.getCommand("voremask");
+        if (maskStatus != null) maskStatus.setExecutor((sender, command, label, args) -> {
+            sender.sendMessage(oreMask == null ? "OreMask inactive. Configure modules/ore-mask.yml, install PacketEvents 2.13.0, then restart."
+                    : oreMask.toString());
+            return true;
+        });
+        if (plugin.getServer().getPluginManager().isPluginEnabled("packetevents")) {
+            try {
+                oreMask = id.velioragardens.veliorasuite.module.security.xray.PacketOreMask.start(plugin);
+            } catch (RuntimeException | LinkageError failure) {
+                plugin.getLogger().warning("OreMask could not start: " + failure.getMessage());
+            }
+        } else {
+            plugin.getLogger().info("OreMask inactive: optional PacketEvents dependency not installed.");
+        }
         registerCommand();
         listener = new SecurityListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
@@ -49,6 +66,11 @@ public final class SecurityModule implements VelioraModule {
     @Override
     public void disable() {
         enabled = false;
+        if (oreMask != null) {
+            try { oreMask.close(); }
+            catch (Exception failure) { plugin.getLogger().warning("OreMask stop: " + failure.getMessage()); }
+            oreMask = null;
+        }
         if (listener != null) {
             HandlerList.unregisterAll(listener);
             listener = null;

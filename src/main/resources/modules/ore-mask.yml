@@ -1,0 +1,25 @@
+# VelioraSuite's OWN packet-only ore masking, NOT Paper Anti-Xray settings.
+# Experimental: test on a staging server with Java AND Geyser first.
+# Requires PacketEvents 2.13.0. Restart required after changing this file.
+# Disable Paper anti-xray in defaults AND per-world overrides; never stack masks.
+enabled: false
+
+# World names (resolved to real dimension keys at startup/world load).
+# boss/lobby/war_world are deliberately absent.
+world-names:
+  - world
+  - world_nether
+
+# Hard limits. No active masked snapshot is evicted (would break ore reveal).
+# If full, NEW chunks pass through UNPROTECTED with a rate-limited warning.
+# Each recipient has their own snapshot. Tune only after measuring heap/TPS.
+max-cached-columns: 2048
+max-columns-per-player: 512
+max-ores-per-column: 2048
+
+# Safety limitations of this experimental implementation:
+# - chunk edge ores are not masked; unknown neighbors count as exposed.
+# - only known full opaque terrain blocks count as cover; fluids/glass do not.
+# - no bans, fake bait ores, real block edits, forced chunk loads, or tick scanning.
+# - already-connected players must reconnect after module enable.
+# - custom dimensions exceeding 512 blocks height pass through unprotected.

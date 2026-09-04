@@ -1,11 +1,12 @@
 name: VelioraSuite
-version: 1.6.4
+version: 1.6.5
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
 description: Clean modular plugin suite for Veliora Gardens.
 
 softdepend:
+  - packetevents
   - Vault
   - PlaceholderAPI
   - LuckPerms
@@ -20,6 +21,10 @@ softdepend:
   - ExcellentCrates
 
 commands:
+  voremask:
+    description: Status experimental packet ore masking (admin only).
+    usage: /voremask
+    permission: veliorasuite.security.admin
   keyshop:
     description: Membuka toko physical key ExcellentCrates Veliora.
     usage: /keyshop [reload|status]
