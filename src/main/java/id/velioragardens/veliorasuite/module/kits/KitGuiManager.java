@@ -36,24 +36,27 @@ public final class KitGuiManager {
         holder.setInventory(inventory);
 
         fillInventory(inventory);
-        decorateInventory(inventory, holder);
+        decorateInventory(inventory, holder, premium);
 
         int index=0;
-        for (Kit kit : configManager.getEnabledKits()) {
+        java.util.Set<Integer> used = new java.util.HashSet<>();
+        for (Kit kit : configManager.getEnabledKits().stream()
+                .sorted(java.util.Comparator.comparingInt(Kit::getPremiumLevel).thenComparing(Kit::getId)).toList()) {
             if((kit.getPremiumLevel()>0)!=premium)continue;
             KitGuiItem guiItem = kit.getGuiItem();
-            int slot = premium ? 20+index++ : kit.getId().equals("build") ? 22 : kit.getId().equals("starter") ? 20 : kit.getId().equals("food") ? 24 : guiItem.getSlot();
+            int slot = KitMenuLayout.slot(kit.getId(), premium, premium ? 20+index++ : guiItem.getSlot(), used);
 
             if (slot < 0 || slot >= inventory.getSize()) {
                 continue;
             }
 
             inventory.setItem(slot, buildKitIcon(player, kit));
+            used.add(slot);
             holder.setKit(slot, kit.getId());
         }
         if(premium) {
-            inventory.setItem(7,item(Material.ARROW,"&eKEMBALI",List.of("&7Kembali ke kit umum.")));
-            holder.setAction(7,"main");
+            inventory.setItem(48,item(Material.ARROW,"&e&lKEMBALI",List.of("&7Kembali ke kit umum.")));
+            holder.setAction(48,"main");
         }
 
         player.openInventory(inventory);
@@ -89,15 +92,20 @@ public final class KitGuiManager {
         return item;
     }
 
-    private void decorateInventory(Inventory inventory, KitsGuiHolder holder) {
+    private void decorateInventory(Inventory inventory, KitsGuiHolder holder, boolean premium) {
         ItemStack header = item(Material.NETHER_STAR, "&b&lVELIORA KITS", List.of(
                 "&7Pilih kit sesuai kebutuhanmu.",
-                "&8Klik kiri &7untuk claim • &8Klik kanan &7untuk preview.",
-                "&8Shift + klik &7untuk membeli kit one-time."
+                "&7Klik kit untuk melihat isi dan harganya.",
+                "&7Ambil melalui tombol konfirmasi di preview."
         ));
         inventory.setItem(4, header);
-        inventory.setItem(1, item(Material.GRASS_BLOCK, "&a&lSURVIVAL", List.of("&7Starter, Food, dan Build Kit.")));
-        inventory.setItem(7, item(Material.AMETHYST_SHARD, "&d&lPREMIUM", List.of("&7Kit rank Premium I sampai V.")));
+        if (!premium) {
+            inventory.setItem(31, item(Material.NETHERITE_CHESTPLATE, "&d&lKIT PREMIUM", List.of(
+                    "&7Buka pilihan Premium I sampai V.",
+                    "&7Pengambilan sesuai izin rank premium.",
+                    "&eKlik untuk melihat semua kit premium.")));
+            holder.setAction(31, "premium");
+        }
         inventory.setItem(45, item(Material.CLOCK, "&e&lINFO", List.of(
                 "&7Hijau berkilau: siap diambil.",
                 "&cMerah: masih cooldown atau terkunci.",
@@ -106,7 +114,6 @@ public final class KitGuiManager {
         inventory.setItem(49, item(Material.BOOK, "&b&lBANTUAN", List.of("&7Klik untuk melihat command dan cara pakai.")));
         inventory.setItem(53, item(Material.BARRIER, "&c&lTUTUP", List.of("&7Tutup menu kit.")));
         holder.setAction(49, "help");
-        holder.setAction(7, "premium");
         holder.setAction(53, "close");
     }
 
