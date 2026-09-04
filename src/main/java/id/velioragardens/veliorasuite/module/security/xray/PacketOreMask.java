@@ -53,7 +53,7 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     private static final class View {
         final String world;
         final Map<Long, OreColumn> chunks = new HashMap<>();
-        boolean failed;
+        volatile boolean failed;
         View(String world) { this.world = world; }
     }
     private record State(boolean solid, boolean ore, int replacement) {}
@@ -61,7 +61,10 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     public static AutoCloseable start(VelioraSuite plugin) {
         plugin.saveResourceIfNotExists("modules/ore-mask.yml");
         YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/ore-mask.yml"));
-        if (!config.getBoolean("enabled", false)) return null;
+        if (!config.getBoolean("enabled", true)) {
+            plugin.getLogger().warning("OreMask disabled in modules/ore-mask.yml. OreWatch reports do NOT hide ores. Use /voremask enable, then restart.");
+            return null;
+        }
         if (!plugin.getServer().getPluginManager().isPluginEnabled("packetevents")) {
             plugin.getLogger().warning("OreMask inactive: install PacketEvents 2.13.0 before enabling.");
             return null;
@@ -314,7 +317,9 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     }
     public String status() {
         return "OreMask experimental: players=" + views.size() + ", columns=" + columns.get()
-                + "/" + maxColumns + ", masked=" + masked.get() + ", unprotected-chunks=" + skipped.get() + ", errors=" + errors.get();
+                + "/" + maxColumns + ", masked=" + masked.get() + ", unprotected-chunks=" + skipped.get() + ", errors=" + errors.get()
+                + ", worlds=" + worlds + ", failed-sessions=" + views.values().stream().filter(view -> view.failed).count()
+                + ". No OP bypass. Cave-exposed ores stay visible; masked is packet operations, NOT mined ore count.";
     }
     @Override public String toString() { return status(); }
     private static void restoreUser(User user, Map<Long, OreColumn> chunks) {

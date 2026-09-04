@@ -87,7 +87,7 @@ public final class SecurityListener implements Listener {
         if (event.isCancelled()) manager.rollbackSpawnerPlace(event.getPlayer(), event.getBlockPlaced());
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         manager.handleSpawnerBreak(event.getBlock());
         manager.trackMiningBreak(event.getPlayer(), event.getBlock());

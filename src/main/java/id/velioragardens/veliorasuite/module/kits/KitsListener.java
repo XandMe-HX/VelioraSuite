@@ -26,6 +26,17 @@ public final class KitsListener implements Listener {
             return;
         }
 
+        Object opened = event.getView().getTopInventory().getHolder();
+        if (!(opened instanceof KitPreviewManager.PreviewHolder)
+                && !(opened instanceof KitGuiManager.KitsGuiHolder)) return;
+        event.setCancelled(true);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline() && player.getOpenInventory().getTopInventory().getHolder() == opened)
+                handleClick(event, player);
+        });
+    }
+
+    private void handleClick(InventoryClickEvent event, Player player) {
         if (event.getView().getTopInventory().getHolder() instanceof KitPreviewManager.PreviewHolder previewHolder) {
             event.setCancelled(true);
             if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getView().getTopInventory().getSize()) return;

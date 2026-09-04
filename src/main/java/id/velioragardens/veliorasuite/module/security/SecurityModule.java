@@ -39,8 +39,23 @@ public final class SecurityModule implements VelioraModule {
         plugin.saveResourceIfNotExists("modules/ore-mask.yml");
         PluginCommand maskStatus = plugin.getCommand("voremask");
         if (maskStatus != null) maskStatus.setExecutor((sender, command, label, args) -> {
+            if (!sender.hasPermission("veliorasuite.security.admin")) return true;
+            if (args.length == 1 && (args[0].equalsIgnoreCase("enable") || args[0].equalsIgnoreCase("disable"))) {
+                java.io.File file = new java.io.File(plugin.getDataFolder(), "modules/ore-mask.yml");
+                try {
+                    var config = new org.bukkit.configuration.file.YamlConfiguration();
+                    config.load(file);
+                    config.set("enabled", args[0].equalsIgnoreCase("enable"));
+                    config.save(file);
+                    sender.sendMessage("OreMask setting saved. Restart server, then reconnect all players. Disable Paper Anti-Xray before enabling this mask.");
+                } catch (Exception failure) {
+                    sender.sendMessage("OreMask configuration could not be saved: " + failure.getMessage());
+                }
+                return true;
+            }
             sender.sendMessage(oreMask == null ? "OreMask inactive. Configure modules/ore-mask.yml, install PacketEvents 2.13.0, then restart."
                     : oreMask.toString());
+            sender.sendMessage("OreWatch and OreMask are separate. /voremask enable saves activation. Admins are recorded by OreWatch; /vxray exempt still excludes players.");
             return true;
         });
         if (plugin.getServer().getPluginManager().isPluginEnabled("packetevents")) {

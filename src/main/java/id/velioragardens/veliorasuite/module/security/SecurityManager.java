@@ -51,7 +51,7 @@ public final class SecurityManager {
     private final Map<UUID, List<OreRecord>> oreRecords = new HashMap<>();
     private final Map<UUID, List<MiningRecord>> miningRecords = new HashMap<>();
     private final Map<UUID, String> oreNames = new HashMap<>();
-    private final Set<String> placedOre = new HashSet<>();
+    private final Set<String> placedOre = new java.util.LinkedHashSet<>();
     private final Set<String> exemptOreNames = new HashSet<>();
     private final List<OreReport> oreAlerts = new ArrayList<>();
     private final Map<String, Long> alertCooldown = new HashMap<>();
@@ -144,7 +144,11 @@ public final class SecurityManager {
     public void trackOrePlace(Player player, Block block) {
         if (block == null || !isOre(block.getType())) return;
         placedOre.add(locationKey(block.getLocation()));
-        if (placedOre.size() > 10000) placedOre.clear();
+        if (placedOre.size() > 10000) {
+            var oldest = placedOre.iterator();
+            oldest.next();
+            oldest.remove();
+        }
     }
 
     public void trackMiningBreak(Player player, Block block) {
@@ -167,10 +171,16 @@ public final class SecurityManager {
         if (player == null || block == null || !isOre(block.getType())) return;
         if (player.hasMetadata("velioraftb_vein_secondary")) return;
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
-        if (configManager.hasBypass(player) || exemptOreNames.contains(player.getName().toLowerCase(Locale.ROOT))) return;
+        // Admin bypass protects against enforcement, not read-only evidence collection.
+        if (exemptOreNames.contains(player.getName().toLowerCase(Locale.ROOT))) return;
         if (placedOre.remove(locationKey(block.getLocation()))) return;
 
         UUID uuid = player.getUniqueId();
+        // Repeated synthetic break events must not count the same ore coordinates twice.
+        long duplicateSince = System.currentTimeMillis() - 60L * 60_000L;
+        if (oreRecords.getOrDefault(uuid, List.of()).stream().anyMatch(record ->
+                record.time() >= duplicateSince && record.world().equals(block.getWorld().getName())
+                && record.x() == block.getX() && record.y() == block.getY() && record.z() == block.getZ())) return;
         oreNames.put(uuid, player.getName());
         ItemStack tool = player.getInventory().getItemInMainHand();
         int fortune = tool.getEnchantments().entrySet().stream()
@@ -187,7 +197,19 @@ public final class SecurityManager {
         double pathEfficiency = previousRare == null ? 0.0D : Math.min(1.0D, transitionDistance / Math.max(1.0D, breaksBetween));
         boolean fastTransition = transitionDistance >= 24.0D && transitionSeconds < Math.max(12.0D, transitionDistance * 0.70D);
         boolean preciseTransition = transitionDistance >= 16.0D && breaksBetween >= 4L && pathEfficiency >= 0.78D;
-        boolean exposedToCave = exposedFaces(block) >= 2;
+        boolean rareOre = block.getType().name().contains("DIAMOND_ORE")
+                || block.getType() == Material.ANCIENT_DEBRIS || block.getType().name().contains("EMERALD_ORE");
+        boolean exposedToCave = rareOre && id.velioragardens.veliorasuite.module.security.xray.CaveSpace.near((dx, dy, dz) -> {
+            int x = block.getX() + dx, y = block.getY() + dy, z = block.getZ() + dz;
+            if (y < block.getWorld().getMinHeight() || y >= block.getWorld().getMaxHeight()
+                    || !block.getWorld().isChunkLoaded(x >> 4, z >> 4)) return false;
+            Material material = block.getWorld().getBlockAt(x, y, z).getType();
+            return material.isAir() || material == Material.WATER;
+        });
+        if (!rareOre || exposedToCave || (previousRare != null && previousRare.exposedToCave())) {
+            fastTransition = false;
+            preciseTransition = false;
+        }
         oreRecords.computeIfAbsent(uuid, ignored -> new ArrayList<>()).add(new OreRecord(
                 System.currentTimeMillis(), block.getType().name(), location.getWorld().getName(),
                 location.getBlockX(), location.getBlockY(), location.getBlockZ(),
@@ -549,7 +571,8 @@ public final class SecurityManager {
             total++;
             if (record.fastTransition()) fastTransitions++;
             if (record.preciseTransition()) preciseTransitions++;
-            if (record.exposedToCave()) caveDiscoveries++;
+            if (record.exposedToCave() && (record.ore().contains("DIAMOND_ORE")
+                    || record.ore().equals("ANCIENT_DEBRIS") || record.ore().contains("EMERALD_ORE"))) caveDiscoveries++;
             if (latest == null || record.time() > latest.time()) latest = record;
             String ore = record.ore();
             if (ore.contains("DIAMOND_ORE")) diamond++;
@@ -561,8 +584,7 @@ public final class SecurityManager {
         double rareRatio = (diamond + debris + emerald) / (double) Math.max(1, total);
         int rare = diamond + debris + emerald;
         double visibleRareRatio = caveDiscoveries / (double) Math.max(1, rare);
-        boolean caveLikely = (total >= 20 && rareRatio < 0.22D) || caveDiscoveries >= 3
-                || (rare >= 4 && visibleRareRatio >= 0.30D);
+        boolean caveLikely = rare >= 4 && visibleRareRatio >= 0.60D;
         String level = level(minutes, diamond, debris, gold, iron, emerald, total, fastTransitions, preciseTransitions, caveLikely);
         int score = diamond * 3 + debris * 10 + emerald * 4 + gold + iron / 2
                 + fastTransitions * 18 + preciseTransitions * 14 - (caveLikely ? 20 : 0);
@@ -598,7 +620,8 @@ public final class SecurityManager {
         // is always one record. A broad cave vein is softened by the rare/total ratio.
         boolean rareExtreme = debris >= 12 * factor || diamond >= 55 * factor;
         boolean directPattern = rareRatio >= 0.18D || debris >= 16 * factor || diamond >= 80 * factor;
-        boolean navigationPattern = fastTransitions + preciseTransitions >= 3;
+        boolean navigationPattern = Math.max(fastTransitions, preciseTransitions) >= 3;
+        if (caveLikely && !navigationPattern) return "NORMAL";
         if ((rareExtreme && directPattern && !caveLikely) || (navigationPattern && (diamond >= 25 * factor || debris >= 5 * factor))) return "EXTREME";
         if (debris >= 9 * factor || diamond >= 40 * factor || emerald >= 15 * factor
                 || gold >= 75 * factor || iron >= 150 * factor) return "HIGH";
@@ -841,7 +864,7 @@ public final class SecurityManager {
 
     private boolean isOre(Material material) {
         String name = material.name();
-        return name.contains("DIAMOND_ORE") || name.equals("ANCIENT_DEBRIS") || name.contains("GOLD_ORE") || name.contains("IRON_ORE") || name.contains("EMERALD_ORE") || name.contains("LAPIS_ORE") || name.contains("REDSTONE_ORE") || name.contains("COAL_ORE") || name.contains("COPPER_ORE");
+        return name.endsWith("_ORE") || name.equals("ANCIENT_DEBRIS");
     }
 
     private String locationKey(Location location) {
