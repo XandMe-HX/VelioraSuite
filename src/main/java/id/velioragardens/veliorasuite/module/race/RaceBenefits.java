@@ -177,10 +177,6 @@ final class RaceBenefits implements Listener {
         if (!manager.selected(player.getUniqueId())) return;
         long now = System.currentTimeMillis();
         if (now - passiveRefreshCooldown.getOrDefault(player.getUniqueId(), 0L) >= 5_000L) { applyPassive(player); passiveRefreshCooldown.put(player.getUniqueId(), now); }
-        if (race(player).equals("ANGEL") && isDay(player) && now - angelRegenCooldown.getOrDefault(player.getUniqueId(), 0L) >= 5_000L) {
-            angelRegenCooldown.put(player.getUniqueId(), now);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0, true, false, true));
-        }
         if (race(player).equals("VAMPIRE") && isNight(player)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 220, 0, true, false, true));
             if (now - vampireRegenCooldown.getOrDefault(player.getUniqueId(), 0L) >= 5_000L) { vampireRegenCooldown.put(player.getUniqueId(), now); player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1, true, false, true)); }

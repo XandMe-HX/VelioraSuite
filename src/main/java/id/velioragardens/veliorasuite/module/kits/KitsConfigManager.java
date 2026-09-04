@@ -41,6 +41,7 @@ public final class KitsConfigManager {
         this.config = YamlConfiguration.loadConfiguration(file);
         migrateKitsV2(file);
         migrateKitsV3(file);
+        migrateKitsV4(file);
         loadKits();
     }
 
@@ -277,6 +278,20 @@ public final class KitsConfigManager {
         } catch (Exception exception) {
             plugin.getLogger().warning("VelioraKits: gagal migrasi config v3: " + exception.getMessage());
         }
+    }
+    private void migrateKitsV4(File file) {
+        if(config.getInt("settings.config-version",0)>=4)return;
+        try {
+            java.nio.file.Files.copy(file.toPath(),new File(file.getParentFile(),"kits.pre-v4-"+System.currentTimeMillis()+".yml").toPath());
+            for(int i=1;i<=5;i++) if(config.isConfigurationSection("kits.premium_"+i)) {
+                config.set("kits.premium_"+i+".buy.price",5000D+(i-1)*2500D);
+                config.set("kits.premium_"+i+".gui.lore",List.of("&7Khusus rank Premium "+i,"&7Pertama gratis; berikutnya &f%price%","&eKlik untuk preview dan konfirmasi."));
+            }
+            config.set("kits.food.items",List.of(Map.of("material","COOKED_CHICKEN","amount",64),Map.of("material","CARROT","amount",64)));
+            config.set("kits.food.gui.lore",List.of("&7Cooked Chicken x64","&7Carrot x64","&aGratis &8• &7Cooldown: %cooldown%"));
+            config.set("settings.config-version",4);
+            config.save(file);
+        } catch(Exception e) { plugin.getLogger().warning("Migrasi kits v4 gagal: "+e.getMessage()); }
     }
 
     private void copyDefaultSection(YamlConfiguration defaults, String path) {

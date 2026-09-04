@@ -28,16 +28,21 @@ public final class KitGuiManager {
     }
 
     public void open(Player player) {
+        open(player, false);
+    }
+    public void open(Player player, boolean premium) {
         KitsGuiHolder holder = new KitsGuiHolder();
-        Inventory inventory = Bukkit.createInventory(holder, configManager.getGuiSize(), configManager.getGuiTitle());
+        Inventory inventory = Bukkit.createInventory(holder, 54, premium ? configManager.color("&8Veliora Kits | Premium") : configManager.getGuiTitle());
         holder.setInventory(inventory);
 
         fillInventory(inventory);
         decorateInventory(inventory, holder);
 
+        int index=0;
         for (Kit kit : configManager.getEnabledKits()) {
+            if((kit.getPremiumLevel()>0)!=premium)continue;
             KitGuiItem guiItem = kit.getGuiItem();
-            int slot = guiItem.getSlot();
+            int slot = premium ? 20+index++ : kit.getId().equals("build") ? 22 : kit.getId().equals("starter") ? 20 : kit.getId().equals("food") ? 24 : guiItem.getSlot();
 
             if (slot < 0 || slot >= inventory.getSize()) {
                 continue;
@@ -45,6 +50,10 @@ public final class KitGuiManager {
 
             inventory.setItem(slot, buildKitIcon(player, kit));
             holder.setKit(slot, kit.getId());
+        }
+        if(premium) {
+            inventory.setItem(7,item(Material.ARROW,"&eKEMBALI",List.of("&7Kembali ke kit umum.")));
+            holder.setAction(7,"main");
         }
 
         player.openInventory(inventory);
@@ -89,7 +98,7 @@ public final class KitGuiManager {
         inventory.setItem(4, header);
         inventory.setItem(1, item(Material.GRASS_BLOCK, "&a&lSURVIVAL", List.of("&7Starter, Food, dan Build Kit.")));
         inventory.setItem(7, item(Material.AMETHYST_SHARD, "&d&lPREMIUM", List.of("&7Kit rank Premium I sampai V.")));
-        inventory.setItem(46, item(Material.CLOCK, "&e&lINFO", List.of(
+        inventory.setItem(45, item(Material.CLOCK, "&e&lINFO", List.of(
                 "&7Hijau berkilau: siap diambil.",
                 "&cMerah: masih cooldown atau terkunci.",
                 "&fKlik kanan kit untuk melihat isi."
@@ -97,6 +106,7 @@ public final class KitGuiManager {
         inventory.setItem(49, item(Material.BOOK, "&b&lBANTUAN", List.of("&7Klik untuk melihat command dan cara pakai.")));
         inventory.setItem(53, item(Material.BARRIER, "&c&lTUTUP", List.of("&7Tutup menu kit.")));
         holder.setAction(49, "help");
+        holder.setAction(7, "premium");
         holder.setAction(53, "close");
     }
 

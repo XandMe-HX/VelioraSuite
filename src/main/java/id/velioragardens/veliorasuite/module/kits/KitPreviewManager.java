@@ -35,7 +35,7 @@ public final class KitPreviewManager {
                 "&8Tekan tombol hijau untuk mengambil kit."
         )));
 
-        int slot = 9;
+        int slot = 9 + Math.max(0,(9-Math.min(9,kit.getItems().size()))/2);
         for (ItemStack kitItem : kit.getItems()) {
             if (slot >= size - 9) {
                 break;

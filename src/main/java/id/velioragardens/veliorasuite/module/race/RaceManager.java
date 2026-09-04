@@ -31,9 +31,18 @@ public final class RaceManager {
         writer = new BufferedYamlWriter(plugin, dataFile, data, "data/races.yml");
         writer.start();
     }
-    public void reloadConfig() { config = YamlConfiguration.loadConfiguration(configFile); }
+    public void reloadConfig() {
+        config = YamlConfiguration.loadConfiguration(configFile);
+        if(!config.getBoolean("migrations.change-price-20k",false)) {
+            if(configFile.isFile()) try { java.nio.file.Files.copy(configFile.toPath(),new File(configFile.getParentFile(),"race.pre-20k-"+System.currentTimeMillis()+".yml").toPath()); }
+            catch(java.io.IOException e) { plugin.getLogger().warning("Backup race gagal; migrasi harga ditunda."); return; }
+            config.set("change.cost",20000D);
+            config.set("migrations.change-price-20k",true);
+            try { config.save(configFile); } catch(java.io.IOException e) { plugin.getLogger().warning("Gagal menyimpan harga race: "+e.getMessage()); }
+        }
+    }
     public boolean enforcementEnabled() { return config.getBoolean("settings.enforce-selection", false); }
-    public double changeCost() { return Math.max(0D, config.getDouble("change.cost", 100000D)); }
+    public double changeCost() { return Math.max(0D, config.getDouble("change.cost", 20000D)); }
     public long changeCooldownMillis() { return Math.max(0L, config.getLong("change.cooldown-days", 7L)) * 86_400_000L; }
     public long nextChangeAt(UUID uuid) { return data.getLong("players." + uuid + ".last-changed-at", data.getLong("players." + uuid + ".selected-at", 0L)) + changeCooldownMillis(); }
     public long changeRemaining(UUID uuid) { return Math.max(0L, nextChangeAt(uuid) - System.currentTimeMillis()); }

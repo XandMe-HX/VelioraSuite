@@ -13,7 +13,7 @@ scale:
 
 # Pilihan pertama gratis. Perubahan berikutnya memakai saldo ekonomi melalui Vault.
 change:
-  cost: 100000
+  cost: 20000
   cooldown-days: 7
 
 # Hanya mengubah tinggi/bentuk, tanpa mengganti ras atau benefit.

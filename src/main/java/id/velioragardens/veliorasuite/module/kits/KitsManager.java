@@ -56,6 +56,7 @@ public final class KitsManager {
         }
         guiManager.open(player);
     }
+    public void openPremiumGui(Player player) { guiManager.open(player,true); }
 
     public void sendHelp(CommandSender sender) {
         List<String> help = configManager.getMessageList("help", List.of(
