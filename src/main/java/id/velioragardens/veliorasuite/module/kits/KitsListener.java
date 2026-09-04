@@ -49,6 +49,8 @@ public final class KitsListener implements Listener {
         }
 
         String action = holder.getAction(event.getRawSlot());
+        if("premium".equals(action)) { kitsManager.openPremiumGui(player); return; }
+        if("main".equals(action)) { kitsManager.openGui(player); return; }
         if ("close".equals(action)) {
             player.closeInventory();
             return;

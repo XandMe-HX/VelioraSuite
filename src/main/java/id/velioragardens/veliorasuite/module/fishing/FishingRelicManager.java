@@ -49,6 +49,7 @@ public final class FishingRelicManager implements Listener {
             case EPIC -> 0.025D;
             default -> 0.0025D;
         };
+        chance *= 1 + PatientAnglerHook.enchantBonus(player,"relic_seeker");
         if (ThreadLocalRandom.current().nextDouble() > chance) return;
 
         String type = fish.rarity().power() >= 6 && ThreadLocalRandom.current().nextDouble() < 0.18D
@@ -79,7 +80,7 @@ public final class FishingRelicManager implements Listener {
         if (event.getRawSlot() == 26 && event.getWhoClicked() instanceof Player player) player.closeInventory();
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         ItemStack rod = event.getInventory().getFirstItem();
         ItemStack relic = event.getInventory().getSecondItem();
@@ -91,6 +92,18 @@ public final class FishingRelicManager implements Listener {
         // Custom result must not depend on creative/OP level bypass. The click handler below
         // performs the transaction server-side so Geyser's anvil UI receives the same result.
         event.getView().setRepairCost(0);
+        // Invalid vanilla combinations overwrite cost AFTER PrepareAnvilEvent with -1.
+        // Restore only the same, still-valid recipe next tick, never a stale result.
+        ItemStack expectedRod = rod.clone();
+        ItemStack expectedRelic = relic.clone();
+        Bukkit.getScheduler().runTask(manager.getConfigManager().getPlugin(), () -> {
+            if (event.getView().getPlayer().getOpenInventory() != event.getView()) return;
+            if (!expectedRod.equals(event.getInventory().getFirstItem())
+                    || !expectedRelic.equals(event.getInventory().getSecondItem())) return;
+            event.getInventory().setResult(result.clone());
+            event.getView().setRepairCost(0);
+            if (event.getView().getPlayer() instanceof Player viewer) viewer.updateInventory();
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -106,11 +119,15 @@ public final class FishingRelicManager implements Listener {
         if (!apply(result, type, selectedEnchant(type, relic))) return;
 
         event.setCancelled(true);
+        if (!event.isLeftClick() && !event.isRightClick()) return;
+        if (player.getInventory().firstEmpty() == -1) {
+            player.sendMessage(manager.getConfigManager().color("&cKosongkan satu slot inventory dahulu. Relic belum dipakai."));
+            return;
+        }
         event.getInventory().setItem(0, decrement(rod));
         event.getInventory().setItem(1, decrement(relic));
         event.getInventory().setItem(2, null);
-        java.util.Map<Integer, ItemStack> overflow = player.getInventory().addItem(result);
-        overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+        player.getInventory().addItem(result);
         player.updateInventory();
         player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 1.2F);
         player.sendMessage(manager.getConfigManager().color(manager.getConfigManager().getPrefix()
@@ -180,7 +197,8 @@ public final class FishingRelicManager implements Listener {
 
     private String relicType(ItemStack item) {
         if (item == null || item.getType().isAir() || !item.hasItemMeta()) return null;
-        return item.getItemMeta().getPersistentDataContainer().get(relicKey, PersistentDataType.STRING);
+        String type = item.getItemMeta().getPersistentDataContainer().get(relicKey, PersistentDataType.STRING);
+        return type != null && java.util.Set.of("ENCHANT", "TWISTED", "EXALTED").contains(type) ? type : null;
     }
 
     private String selectedEnchant(String type, ItemStack relic) {

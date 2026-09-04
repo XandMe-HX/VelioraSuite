@@ -66,6 +66,7 @@ public final class BossManager implements Listener {
     private final Random random = new Random();
     private final Set<Integer> sentWarnings = new HashSet<>();
     private final Map<UUID, MaceSmashState> maceSmashes = new HashMap<>();
+    private long lastContactAttack;
     private final Map<UUID, List<Long>> invalidReachHits = new HashMap<>();
     private final Map<UUID, Long> bossDamageLocks = new HashMap<>();
     // Feedback needs a per-player limiter. A global limiter made one player's hit
@@ -326,19 +327,20 @@ public final class BossManager implements Listener {
 
             AttackKind attack = attackKind(event.getDamager(), player);
             boolean mace = attack == AttackKind.MACE;
-            boolean chargedMace = mace && isMaceSmash(player) && consumeMaceSmashCharge(player);
+            boolean chargedMace = mace && isMaceSmash(player);
             double adjustedDamage = event.getFinalDamage();
-            if (chargedMace) adjustedDamage = Math.min(config.maceMaxDamagePerHit(), adjustedDamage * config.maceDamageMultiplier());
             double virtualDamage = adjustedDamage * config.virtualDamageMultiplier();
-            event.setCancelled(true);
+            event.setCancelled(false);
+            // Keep a successful native hit for arrow collision and mace smash response.
+            // The full damage above is credited to virtual HP; native HP is only a carrier.
+            event.setDamage(0.001D);
             damageActiveBoss(player, virtualDamage);
             showHitFeedback(player, attack, chargedMace, virtualDamage);
-            if (chargedMace) player.sendMessage(config.color("&8[&6VelioraBoss&8] &eMace Smash &f"
-                    + maceSmashes.get(player.getUniqueId()).charges() + "&7/" + config.maceSmashCharges()));
             if (activeBoss instanceof Mob mob && targetManager.isValidCurrentTarget(player, activeBoss.getLocation(), arenaCenter)) mob.setTarget(player);
             return;
         }
         if (damagerBoss) {
+            if(!event.isCancelled())lastContactAttack=System.currentTimeMillis();
             double damage = activeDefinition == null ? event.getDamage() : activeDefinition.damage();
             event.setDamage(damage * skillManager.outgoingDamageMultiplier());
         }
@@ -461,10 +463,12 @@ public final class BossManager implements Listener {
             return;
         }
         if (isActive()) {
+            if(activeBoss.getHealth()>0)activeBoss.setHealth(NATIVE_BOSS_HEALTH);
             lastKnownLocation = activeBoss.getLocation();
             enforceArena();
             // FIX 3: Always retarget every tick to keep boss in combat state (immune to EAR deactivation)
             retarget(false);
+            contactAttack();
             bossBarManager.tick(activeDefinition, activeBoss, activeVirtualHealth, activeVirtualMaxHealth, despawnAt);
             emitAura();
             if (System.currentTimeMillis() >= despawnAt) stopActive(true);
@@ -569,6 +573,13 @@ public final class BossManager implements Listener {
         }
     }
 
+    private void contactAttack() {
+        if(!(activeBoss instanceof Mob mob) || !(mob.getTarget() instanceof Player target) || activeDefinition==null)return;
+        if(System.currentTimeMillis()-lastContactAttack<1500 || !targetManager.isValidCurrentTarget(target,activeBoss.getLocation(),arenaCenter) || target.isInvulnerable() || !mob.hasLineOfSight(target))return;
+        if(!mob.getBoundingBox().expand(.6).overlaps(target.getBoundingBox()))return;
+        lastContactAttack=System.currentTimeMillis();
+        target.damage(activeDefinition.damage()*skillManager.outgoingDamageMultiplier(),mob);
+    }
     private void retarget(boolean force) {
         if (!config.targetingEnabled() || !(activeBoss instanceof Mob mob)) return;
         long now = System.currentTimeMillis();

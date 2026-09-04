@@ -148,7 +148,7 @@ public final class ChatConfigManager {
     public String getBypassCooldownPermission() { return getString("permissions.bypass-cooldown", "veliorasuite.chat.bypasscooldown"); }
     public String getBypassFilterPermission() { return getString("permissions.bypass-filter", "veliorasuite.chat.bypassfilter"); }
     public String getBypassCommandCooldownPermission() { return getString("permissions.bypass-command-cooldown", "veliorasuite.chat.bypasscommandcooldown"); }
-    public String getPublicChatFormat() { return getString("formats.public-chat", "&7%luckperms_prefix%&f%player%&7: &f%message%"); }
+    public String getPublicChatFormat() { String f=getString("formats.public-chat", "&7%luckperms_prefix%&f%player%&7: &f%message%"); int at=f.indexOf("%message%"); String prefix=at<0?f:f.substring(0,at); return prefix.replace("[","&8[").replace("]","&8]")+(at<0?"":f.substring(at)); }
     public String getTeamTagEmpty() { return getString("formats.team-tag-empty", ""); }
     public String getLuckPermsPrefixEmpty() { return getString("formats.luckperms-prefix-empty", ""); }
     public String getMessage(String path, String fallback) { return getString("messages." + path, fallback).replace("%prefix%", getPrefix()); }

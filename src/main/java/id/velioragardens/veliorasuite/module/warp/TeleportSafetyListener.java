@@ -96,7 +96,7 @@ public final class TeleportSafetyListener implements Listener {
         // Movement only cancels a pending countdown. Once the player arrives,
         // blindness may remain briefly but their movement must never be locked
         // or trigger another teleport attempt.
-        warps.cancelPendingIfMoved(event.getPlayer(), event.getTo());
+        // Walking must not cancel a pending warp.
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

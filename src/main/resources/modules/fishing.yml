@@ -71,6 +71,8 @@ settings:
   catch-message-min-rarity: NONE
 
   rods:
+    # Multiplies coin prices for paid rods; set 1 to use raw item prices.
+    price-multiplier: 3.0
     enabled: true
     bypass-permission: 'veliorasuite.fishing.rods.bypass'
     # Harga memakai Koin Fishing, bukan Vault. Semua angka dapat diubah.

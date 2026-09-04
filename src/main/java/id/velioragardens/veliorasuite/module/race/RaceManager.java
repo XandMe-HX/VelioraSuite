@@ -31,14 +31,30 @@ public final class RaceManager {
         writer = new BufferedYamlWriter(plugin, dataFile, data, "data/races.yml");
         writer.start();
     }
-    public void reloadConfig() { config = YamlConfiguration.loadConfiguration(configFile); }
+    public void reloadConfig() {
+        config = YamlConfiguration.loadConfiguration(configFile);
+        if(!config.getBoolean("migrations.forms-v2",false)) {
+            if(configFile.isFile())try { java.nio.file.Files.copy(configFile.toPath(),new File(configFile.getParentFile(),"race.pre-forms-v2-"+System.currentTimeMillis()+".yml").toPath()); }
+            catch(java.io.IOException e) { plugin.getLogger().warning("Backup bentuk race gagal; migrasi ditunda."); return; }
+            config.set("scale.child",.75D); config.set("scale.adult",1.0D); config.set("scale.tall",1.05D);
+            config.set("form-change.cooldown-days",3); config.set("migrations.forms-v2",true);
+            try { config.save(configFile); } catch(java.io.IOException e) { plugin.getLogger().warning("Gagal menyimpan bentuk race: "+e.getMessage()); }
+        }
+        if(!config.getBoolean("migrations.change-price-20k",false)) {
+            if(configFile.isFile()) try { java.nio.file.Files.copy(configFile.toPath(),new File(configFile.getParentFile(),"race.pre-20k-"+System.currentTimeMillis()+".yml").toPath()); }
+            catch(java.io.IOException e) { plugin.getLogger().warning("Backup race gagal; migrasi harga ditunda."); return; }
+            config.set("change.cost",20000D);
+            config.set("migrations.change-price-20k",true);
+            try { config.save(configFile); } catch(java.io.IOException e) { plugin.getLogger().warning("Gagal menyimpan harga race: "+e.getMessage()); }
+        }
+    }
     public boolean enforcementEnabled() { return config.getBoolean("settings.enforce-selection", false); }
-    public double changeCost() { return Math.max(0D, config.getDouble("change.cost", 100000D)); }
+    public double changeCost() { return Math.max(0D, config.getDouble("change.cost", 20000D)); }
     public long changeCooldownMillis() { return Math.max(0L, config.getLong("change.cooldown-days", 7L)) * 86_400_000L; }
     public long nextChangeAt(UUID uuid) { return data.getLong("players." + uuid + ".last-changed-at", data.getLong("players." + uuid + ".selected-at", 0L)) + changeCooldownMillis(); }
     public long changeRemaining(UUID uuid) { return Math.max(0L, nextChangeAt(uuid) - System.currentTimeMillis()); }
     public boolean canChange(UUID uuid) { return selected(uuid) && changeRemaining(uuid) == 0L; }
-    public long formCooldownMillis() { return Math.max(0L, config.getLong("form-change.cooldown-days", 2L)) * 86_400_000L; }
+    public long formCooldownMillis() { return Math.max(0L, config.getLong("form-change.cooldown-days", 3L)) * 86_400_000L; }
     public long formChangeRemaining(UUID uuid) { return Math.max(0L, data.getLong("players." + uuid + ".last-form-changed-at", 0L) + formCooldownMillis() - System.currentTimeMillis()); }
     public boolean canChangeForm(UUID uuid) { return selected(uuid) && formChangeRemaining(uuid) == 0L; }
     /** Quest rewards are intentionally limited to Human and Angel so race bonuses stay readable. */

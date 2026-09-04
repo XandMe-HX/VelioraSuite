@@ -369,11 +369,13 @@ public final class FishingRodManager implements Listener {
                 Component.text("Aura", TextColor.color(0x55D6FF)),
                 Component.text(" " + rod.aura(), TextColor.color(0xB8C4D2)),
                 Component.text(""),
-                Component.text(bypass ? " Admin bypass aktif" : " Syarat: " + rod.requiredCatches() + " tangkapan", TextColor.color(bypass ? 0x70E090 : 0xE6CE79)),
-                Component.text(bypass ? " Gratis untuk admin" : rod.questRod() ? " Rod misi khusus" : " Harga: " + manager.getConfigManager().formatCoins(rod.price()) + " Koin", TextColor.color(bypass ? 0x70E090 : 0xE6CE79)),
+                Component.text("Misi: tangkap " + rod.requiredCatches() + " ikan (" + Math.min(catches,rod.requiredCatches()) + "/" + rod.requiredCatches() + ")", TextColor.color(0xE6CE79)),
+                Component.text(rod.tier()<=1 ? "Rod awal: tanpa syarat tier" : "Misi: buka rod tier " + (rod.tier()-1) + (manager.getRodDataManager().highest(player.getUniqueId(),maxTier())>=rod.tier()-1 ? " [SELESAI]" : " [BELUM]"),TextColor.color(0x70E0C0)),
+                Component.text(" Biaya unlock: " + manager.getConfigManager().formatCoins(rod.price()) + " Koin", TextColor.color(0xE6CE79)),
+                Component.text(bypass ? "Admin bypass aktif: syarat tidak diwajibkan pada akunmu" : "Progres dihitung otomatis dari tangkapan berhasil",TextColor.color(0x8391A5)),
                 Component.text(" Kamu: " + catches + " tangkapan", TextColor.color(0x8391A5)),
                 Component.text(""),
-                Component.text("Klik untuk membeli", TextColor.color(0xFFFFFF))
+                Component.text(rod.questRod() ? "Klik untuk menyelesaikan syarat dan mengambil rod" : "Klik untuk membeli", TextColor.color(0xFFFFFF))
         );
         meta.lore(lore);
         applyRodEnchantments(meta, rod.tier());

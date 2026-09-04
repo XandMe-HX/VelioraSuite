@@ -107,7 +107,7 @@ public final class FishingConfigManager {
             if (rod == null) continue;
             int tier = Math.max(1, rod.getInt("tier", result.size() + 1));
             result.add(new FishingRodDefinition(tier, rod.getString("name", key), rod.getString("gradient-from", "#55D6FF"),
-                    rod.getString("gradient-to", "#3E7BFA"), Math.max(0, rod.getInt("price", 0)),
+                    rod.getString("gradient-to", "#3E7BFA"), (int)Math.min(Integer.MAX_VALUE,Math.max(0,rod.getInt("price",0))*Math.max(1D,Math.min(100D,config.getDouble("settings.rods.price-multiplier",3D)))),
                     Math.max(0, rod.getInt("required-catches", 0)), Math.max(0, rod.getInt("seconds-bonus", 0)),
                     Math.max(0, rod.getInt("click-reduction", 0)), rod.getString("aura", "Aura fishing."),
                     Math.max(0, rod.getInt("luck", 0)), Math.max(1.0D, rod.getDouble("max-weight", 10.0D)),

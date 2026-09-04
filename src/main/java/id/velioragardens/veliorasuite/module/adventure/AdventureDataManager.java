@@ -112,6 +112,16 @@ public final class AdventureDataManager {
 
     public GuildData guild(int id) { return guilds.computeIfAbsent(id, GuildData::new); }
     public Collection<GuildData> guilds() { return List.copyOf(guilds.values()); }
+    public java.util.Set<UUID> playerIds() { return java.util.Set.copyOf(players.keySet()); }
+
+    public boolean resetTier(UUID uuid) {
+        PlayerData profile = players.get(uuid);
+        if (profile == null || (profile.exp() == 0 && profile.customRank().isBlank())) return false;
+        profile.setExp(0);
+        profile.customRank("");
+        save();
+        return true;
+    }
 
     public void save() {
         dirty = true;

@@ -60,13 +60,16 @@ public final class FishGenerator {
         FishingRodDefinition rod = configManager.getRodDefinition(tier);
         int luckBonus = TraderFishingHook.getFishingLuckBonus(player) + (rod == null ? 0 : rod.luckPercent());
         if (potionActive(player, "luck")) luckBonus += 50;
+        double patience = PatientAnglerHook.bonus(player);
+        double deep = PatientAnglerHook.enchantBonus(player,"deepwater_pact");
+        double secret = PatientAnglerHook.enchantBonus(player,"secret_whisper");
         double total = 0.0D;
-        for (Map.Entry<FishRarity, Double> entry : configManager.getRarityChances().entrySet()) total += adjustedChance(entry.getKey(), gatedChance(entry.getKey(), entry.getValue(), tier), luckBonus);
+        for (Map.Entry<FishRarity, Double> entry : configManager.getRarityChances().entrySet()) total += waveTwoWeight(entry.getKey(), patientWeight(entry.getKey(), adjustedChance(entry.getKey(), gatedChance(entry.getKey(), entry.getValue(), tier), luckBonus), patience),deep,secret);
         if (total <= 0.0D) return FishRarity.COMMON;
         double roll = random.nextDouble() * total;
         double current = 0.0D;
         for (Map.Entry<FishRarity, Double> entry : configManager.getRarityChances().entrySet()) {
-            current += adjustedChance(entry.getKey(), gatedChance(entry.getKey(), entry.getValue(), tier), luckBonus);
+            current += waveTwoWeight(entry.getKey(), patientWeight(entry.getKey(), adjustedChance(entry.getKey(), gatedChance(entry.getKey(), entry.getValue(), tier), luckBonus), patience),deep,secret);
             if (roll <= current) return entry.getKey();
         }
         return FishRarity.COMMON;
@@ -76,6 +79,18 @@ public final class FishGenerator {
         if (rarity == FishRarity.SECRET && tier < 16) return 0.0D;
         if (rarity == FishRarity.MITOLOGI && tier < 8) return chance * 0.1D;
         return chance;
+    }
+    static double patientWeight(FishRarity rarity, double weight, double bonus) {
+        if (rarity.power() < FishRarity.ORNAMENTAL.power() || weight <= 0) return weight;
+        double limited = Double.isFinite(bonus) ? Math.clamp(bonus, 0, .10) : 0;
+        if (rarity.power() >= FishRarity.MITOLOGI.power()) limited *= .25;
+        return weight * (1 + limited);
+    }
+    static double waveTwoWeight(FishRarity rarity,double weight,double deep,double secret) {
+        if(weight<=0 || rarity.power()<FishRarity.ORNAMENTAL.power()) return weight;
+        double bonus=Double.isFinite(deep)?Math.clamp(deep,0,.06):0;
+        if(rarity==FishRarity.SECRET && Double.isFinite(secret)) bonus+=Math.clamp(secret,0,.03);
+        return weight*(1+bonus);
     }
 
     private int rodTier(Player player) {
