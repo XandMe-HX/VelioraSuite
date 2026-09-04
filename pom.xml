@@ -6,7 +6,7 @@
 
     <groupId>id.velioragardens</groupId>
     <artifactId>VelioraSuite</artifactId>
-    <version>1.6.9</version>
+    <version>1.6.10</version>
     <packaging>jar</packaging>
 
     <name>VelioraSuite</name>

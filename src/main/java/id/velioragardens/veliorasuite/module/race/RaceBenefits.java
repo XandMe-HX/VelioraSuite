@@ -139,16 +139,16 @@ final class RaceBenefits implements Listener {
         if (race.equals("ANGEL") && event.getCause() == EntityDamageEvent.DamageCause.FALL) { event.setCancelled(true); return; }
         if (race.equals("BEASTMAN") && event.getCause() == EntityDamageEvent.DamageCause.FALL) event.setDamage(event.getDamage() * 0.55D);
         if (race.equals("DEMON") && isDay(player)) event.setDamage(event.getDamage() * 1.15D);
-        if (race.equals("DEMON") && event.getCause() == EntityDamageEvent.DamageCause.LAVA) event.setDamage(event.getDamage() * 0.65D);
-        if (race.equals("DEMON") && (event.getCause() == EntityDamageEvent.DamageCause.FIRE || event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK || event.getCause() == EntityDamageEvent.DamageCause.HOT_FLOOR)) event.setCancelled(true);
-        if (race.equals("DRAGONKIN") && isFire(event.getCause())) {
-            event.setDamage(event.getDamage() * 0.70D);
-            long now = System.currentTimeMillis();
-            if (event.getCause() == EntityDamageEvent.DamageCause.LAVA && now >= dragonLavaCooldown.getOrDefault(player.getUniqueId(), 0L)) {
-                dragonLavaCooldown.put(player.getUniqueId(), now + 45_000L);
-                player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 80, 0, true, false, true));
-                player.sendActionBar(net.kyori.adventure.text.Component.text("Sisik naga mengeras selama 4 detik."));
+        if ((race.equals("DEMON") || race.equals("DRAGONKIN")) && isFire(event.getCause())) {
+            long now=System.currentTimeMillis();
+            org.bukkit.NamespacedKey key=new org.bukkit.NamespacedKey("veliorasuite","race_heat_ready");
+            long ready=player.getPersistentDataContainer().getOrDefault(key,org.bukkit.persistence.PersistentDataType.LONG,0L);
+            if(now>=ready) {
+                ready=now+300000L;
+                player.getPersistentDataContainer().set(key,org.bukkit.persistence.PersistentDataType.LONG,ready);
+                player.sendActionBar(net.kyori.adventure.text.Component.text("Perlindungan panas aktif 5 detik; cooldown 5 menit."));
             }
+            if(now<ready-295000L)event.setDamage(event.getDamage()*(race.equals("DEMON")?.65D:.70D));
         }
     }
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true) public void attack(EntityDamageByEntityEvent event) {

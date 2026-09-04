@@ -25,5 +25,9 @@ class KitsDefaultsTest {
         assertNotNull(stream);
         var config=YamlConfiguration.loadConfiguration(new InputStreamReader(stream,StandardCharsets.UTF_8));
         assertEquals(20000,config.getInt("change.cost"));
+        assertEquals(3,config.getInt("form-change.cooldown-days"));
+        assertEquals(.75,config.getDouble("scale.child"));
+        assertEquals(1.0,config.getDouble("scale.adult"));
+        assertEquals(1.05,config.getDouble("scale.tall"));
     }
 }

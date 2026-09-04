@@ -7,9 +7,9 @@ settings:
 
 # Menggunakan Attribute SCALE bawaan Paper; tidak memakai packet/NMS atau task berulang.
 scale:
-  child: 0.55
+  child: 0.75
   adult: 1.00
-  tall: 1.20
+  tall: 1.05
 
 # Pilihan pertama gratis. Perubahan berikutnya memakai saldo ekonomi melalui Vault.
 change:
@@ -18,4 +18,4 @@ change:
 
 # Hanya mengubah tinggi/bentuk, tanpa mengganti ras atau benefit.
 form-change:
-  cooldown-days: 2
+  cooldown-days: 3
