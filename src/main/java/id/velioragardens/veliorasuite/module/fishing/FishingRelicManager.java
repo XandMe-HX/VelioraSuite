@@ -49,6 +49,7 @@ public final class FishingRelicManager implements Listener {
             case EPIC -> 0.025D;
             default -> 0.0025D;
         };
+        chance *= 1 + PatientAnglerHook.enchantBonus(player,"relic_seeker");
         if (ThreadLocalRandom.current().nextDouble() > chance) return;
 
         String type = fish.rarity().power() >= 6 && ThreadLocalRandom.current().nextDouble() < 0.18D
