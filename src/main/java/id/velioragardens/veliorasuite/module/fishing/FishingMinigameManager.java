@@ -62,6 +62,7 @@ public final class FishingMinigameManager implements Listener {
                 || random.nextDouble() * 100.0D > manager.getConfigManager().getMinigameTriggerChance();
         if (skipMinigame) {
             manager.giveGeneratedFish(player, generatedFish);
+            PatientAnglerHook.success(player, generatedFish.fish().rarity().power() >= FishRarity.ORNAMENTAL.power());
             return;
         }
         start(player, generatedFish, event.getHook());
@@ -123,6 +124,7 @@ public final class FishingMinigameManager implements Listener {
         session.cancelTask();
         manager.getRodManager().playReelEffect(player, session.hook, session.generatedFish.fish().rarity());
         manager.giveGeneratedFish(player, session.generatedFish);
+        PatientAnglerHook.success(player, session.generatedFish.fish().rarity().power() >= FishRarity.ORNAMENTAL.power());
     }
 
     private void fail(Player player) {

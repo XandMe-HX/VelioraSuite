@@ -2,6 +2,10 @@
 
 VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
+1.6.7 adds the optional VelioraEnchant 1.4.0 Patient Angler fishing hook. Only
+successful catches advance the streak. Rare weights gain at most 10% relatively;
+Mitologi/Secret at most 2.5%, without bypassing rod tier gates or adding extra fish.
+
 ## OreMask eksperimental (1.6.6)
 
 Penyamaran ore melalui packet buatan Suite, bukan mengaktifkan Anti-Xray Paper.
