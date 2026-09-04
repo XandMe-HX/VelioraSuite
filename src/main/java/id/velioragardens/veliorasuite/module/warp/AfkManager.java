@@ -37,7 +37,10 @@ public final class AfkManager implements Listener, CommandExecutor {
     private final Set<UUID> manualAfk = new HashSet<>();
     private final Map<UUID, Long> lastReward = new HashMap<>();
     private int taskId = -1;
+    private int markerTaskId = -1;
+    private boolean running;
     private boolean essentialsAvailable;
+    private boolean essentialsOwnsState;
 
     public AfkManager(VelioraSuite plugin, WarpManager warps) {
         this.plugin = plugin;
@@ -45,14 +48,18 @@ public final class AfkManager implements Listener, CommandExecutor {
     }
 
     public void start() {
+        running = true;
         cleanupOrphanMarkers();
         essentialsAvailable = Bukkit.getPluginManager().isPluginEnabled("Essentials");
+        essentialsOwnsState = essentialsAvailable;
+        hookEssentialsEvents();
         for (Player player : Bukkit.getOnlinePlayers()) touch(player);
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             long now = System.currentTimeMillis();
             long timeout = warps.afkTimeoutSeconds() * 1000L;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Boolean essentialsAfk = essentialsAfk(player);
+                essentialsOwnsState = essentialsAfk != null;
                 if (essentialsAfk != null && essentialsAfk != afk.contains(player.getUniqueId())) {
                     setAfk(player, essentialsAfk, false);
                 } else if (essentialsAfk == null && !afk.contains(player.getUniqueId()) && timeout > 0
@@ -63,13 +70,30 @@ public final class AfkManager implements Listener, CommandExecutor {
                     lastReward.put(player.getUniqueId(), now);
                 }
                 TextDisplay marker = markers.get(player.getUniqueId());
-                if (marker != null && marker.isValid() && marker.getVehicle() != player) player.addPassenger(marker);
+                if (afk.contains(player.getUniqueId()) && (marker == null || !marker.isValid())) {
+                    long rewardTime = lastReward.getOrDefault(player.getUniqueId(), now);
+                    afk.remove(player.getUniqueId());
+                    setAfk(player, true, false);
+                    lastReward.put(player.getUniqueId(), rewardTime);
+                }
             }
         }, 20L, 20L);
+        markerTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            for (var entry : markers.entrySet()) {
+                Player player = Bukkit.getPlayer(entry.getKey());
+                TextDisplay marker = entry.getValue();
+                if (player == null || !player.isOnline() || !marker.isValid()) continue;
+                Location target = markerLocation(player);
+                if (!marker.getWorld().equals(target.getWorld())
+                        || marker.getLocation().distanceSquared(target) > 0.0001D) marker.teleport(target);
+            }
+        }, 2L, 2L);
     }
 
     public void stop() {
+        running = false;
         if (taskId >= 0) Bukkit.getScheduler().cancelTask(taskId);
+        if (markerTaskId >= 0) Bukkit.getScheduler().cancelTask(markerTaskId);
         markers.values().forEach(marker -> { if (marker != null && marker.isValid()) marker.remove(); });
         cleanupOrphanMarkers();
         markers.clear(); afk.clear(); manualAfk.clear(); lastActivity.clear(); lastReward.clear();
@@ -110,7 +134,7 @@ public final class AfkManager implements Listener, CommandExecutor {
         touch(player);
         // EssentialsX owns automatic AFK transitions when present. Mirroring it here avoids
         // two plugins rapidly toggling the same player on movement, vehicle, or GSit packets.
-        if (essentialsAvailable) return;
+        if (essentialsOwnsState) return;
         // Manual AFK is allowed to chat and walk around its designated AFK area.
         if (afk.contains(player.getUniqueId()) && !(manualAfk.contains(player.getUniqueId()) && inAfkArea(player))) setAfk(player, false);
     }
@@ -122,21 +146,22 @@ public final class AfkManager implements Listener, CommandExecutor {
     private void setAfk(Player player, boolean state, boolean notify) {
         if (state) {
             if (!afk.add(player.getUniqueId())) return;
-            setTabNameTagVisible(player, false);
+            lastReward.put(player.getUniqueId(), System.currentTimeMillis());
             TextDisplay marker = player.getWorld().spawn(markerLocation(player), TextDisplay.class, display -> {
                 display.text(Component.text("AFK", NamedTextColor.YELLOW));
                 display.setBillboard(Display.Billboard.CENTER);
                 display.setSeeThrough(true);
                 display.setShadowed(true);
                 display.setPersistent(false);
+                display.setTeleportDuration(2);
                 display.addScoreboardTag("veliora_afk_marker");
             });
             markers.put(player.getUniqueId(), marker);
-            player.addPassenger(marker);
             if (notify) player.sendMessage(warps.color(warps.message("afk-on", "%prefix% &eKamu sekarang AFK.")));
         } else {
             if (!afk.remove(player.getUniqueId())) return;
-            setTabNameTagVisible(player, true);
+            manualAfk.remove(player.getUniqueId());
+            lastReward.remove(player.getUniqueId());
             TextDisplay marker = markers.remove(player.getUniqueId());
             if (marker != null && marker.isValid()) marker.remove();
             touch(player);
@@ -144,19 +169,28 @@ public final class AfkManager implements Listener, CommandExecutor {
         }
     }
 
-    /** TAB owns the normal nametag; hide only that layer while Suite displays AFK. */
-    private void setTabNameTagVisible(Player player, boolean visible) {
-        if (!Bukkit.getPluginManager().isPluginEnabled("TAB")) return;
+    /** Essentials remains authoritative; mirror only after its cancellable event completes. */
+    private void hookEssentialsEvents() {
+        if (!essentialsAvailable) return;
         try {
-            Class<?> apiType = Class.forName("me.neznamy.tab.api.TabAPI");
-            Object api = apiType.getMethod("getInstance").invoke(null);
-            Object tabPlayer = apiType.getMethod("getPlayer", UUID.class).invoke(api, player.getUniqueId());
-            if (tabPlayer == null) return;
-            Object manager = apiType.getMethod("getNameTagManager").invoke(api);
-            Class<?> tabPlayerType = Class.forName("me.neznamy.tab.api.TabPlayer");
-            manager.getClass().getMethod(visible ? "showNameTag" : "hideNameTag", tabPlayerType).invoke(manager, tabPlayer);
+            Class<? extends org.bukkit.event.Event> type = Class.forName("net.ess3.api.events.AfkStatusChangeEvent")
+                    .asSubclass(org.bukkit.event.Event.class);
+            Bukkit.getPluginManager().registerEvent(type, this, org.bukkit.event.EventPriority.MONITOR,
+                    (listener, event) -> {
+                        try {
+                            Object affected = type.getMethod("getAffected").invoke(event);
+                            Object base = affected.getClass().getMethod("getBase").invoke(affected);
+                            if (base instanceof Player player) Bukkit.getScheduler().runTask(plugin, () -> {
+                                if (!running || !player.isOnline()) return;
+                                Boolean state = essentialsAfk(player);
+                                if (state != null) setAfk(player, state, false);
+                            });
+                        } catch (ReflectiveOperationException failure) {
+                            // One-second reconciliation remains available with older Essentials.
+                        }
+                    }, plugin, true);
         } catch (ReflectiveOperationException | LinkageError exception) {
-            plugin.getLogger().fine("TAB nametag AFK hook tidak tersedia: " + exception.getMessage());
+            plugin.getLogger().warning("Essentials AFK event hook unavailable; using one-second reconciliation.");
         }
     }
 
@@ -187,7 +221,7 @@ public final class AfkManager implements Listener, CommandExecutor {
 
     private Location markerLocation(Player player) {
         // Keep the AFK label above the current player pose instead of floating at a fixed old height.
-        return player.getLocation().clone().add(0, player.isSneaking() ? 2.15D : 2.75D, 0);
+        return player.getLocation().clone().add(0, player.getHeight() + 1.0D, 0);
     }
 
     private void reward(Player player) {
@@ -204,7 +238,6 @@ public final class AfkManager implements Listener, CommandExecutor {
     }
 
     private void clear(Player player) {
-        setTabNameTagVisible(player, true);
         afk.remove(player.getUniqueId()); manualAfk.remove(player.getUniqueId()); lastActivity.remove(player.getUniqueId()); lastReward.remove(player.getUniqueId());
         TextDisplay marker = markers.remove(player.getUniqueId());
         if (marker != null && marker.isValid()) marker.remove();
