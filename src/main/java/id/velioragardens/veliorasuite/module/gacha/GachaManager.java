@@ -47,13 +47,16 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     private FileConfiguration config;
     private ExcellentCratesBridge bridge;
     private List<GachaOffer> offers = List.of();
+    private final TemplateKeyShop templateShop;
 
     public GachaManager(VelioraSuite plugin) {
         this.plugin = plugin;
+        this.templateShop = new TemplateKeyShop(plugin);
         this.offerKey = new org.bukkit.NamespacedKey(plugin, "gacha_offer");
     }
 
     public void load() {
+        templateShop.reload();
         File file = new File(plugin.getDataFolder(), "modules/gacha.yml");
         config = YamlConfiguration.loadConfiguration(file);
         migrateConfig(file);
@@ -100,6 +103,8 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     }
 
     public boolean enabled() { return config != null && config.getBoolean("settings.enabled", true); }
+    public void enableTemplates() { templateShop.enable(); }
+    public void disableTemplates() { templateShop.disable(); }
 
     private void refreshOffers() {
         List<GachaOffer> manual = manualOffers();
@@ -138,6 +143,10 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Hanya player."); return true; }
         String action = args.length == 0 ? "open" : args[0].toLowerCase(Locale.ROOT);
+        if (action.equals("admin") || action.equals("edit")) {
+            if (!player.hasPermission("veliorasuite.gacha.admin")) { player.sendMessage("§cKhusus admin."); return true; }
+            templateShop.open(player, true); return true;
+        }
         if (action.equals("reload") && player.hasPermission("veliorasuite.gacha.admin")) {
             load(); player.sendMessage(color(prefix() + "&aKey shop direload. &7Physical key valid: &f" + offers.size())); return true;
         }
@@ -145,11 +154,11 @@ public final class GachaManager implements Listener, CommandExecutor, TabComplet
             player.sendMessage(color(prefix() + "&7ExcellentCrates: " + (bridge != null && bridge.available() ? "&aaktif" : "&cmati") + " &8| &7Crate valid: &f" + offers.size())); return true;
         }
         if (!player.hasPermission("veliorasuite.gacha.use")) { player.sendMessage(color(prefix() + "&cKamu tidak punya izin.")); return true; }
-        open(player, 0);
+        templateShop.open(player, false);
         return true;
     }
 
-    public void open(Player player) { open(player, 0); }
+    public void open(Player player) { templateShop.open(player, false); }
     private void open(Player player, int page) {
         refreshOffers();
         if (offers.isEmpty()) {

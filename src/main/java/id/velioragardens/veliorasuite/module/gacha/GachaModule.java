@@ -28,12 +28,13 @@ public final class GachaModule implements VelioraModule {
             return;
         }
         if (command != null) { command.setExecutor(manager); command.setTabCompleter(manager); }
+        manager.enableTemplates();
         if (manager != null) plugin.getServer().getPluginManager().registerEvents(manager, plugin);
     }
 
     @Override public void disable() {
         enabled = false;
-        if (manager != null) HandlerList.unregisterAll(manager);
+        if (manager != null) { HandlerList.unregisterAll(manager); manager.disableTemplates(); }
         PluginCommand command = plugin.getCommand("keyshop");
         if (command != null) command.setExecutor(new DisabledCommand(plugin, "Gacha"));
     }
