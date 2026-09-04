@@ -10,6 +10,13 @@ world-names:
   - world
   - world_nether
 
+# Exclusive Y ceiling, rounded down to a section boundary (16 blocks), as in Paper.
+# Blocks above this limit are deliberately NOT protected. Full Overworld retained;
+# Nether scanning stops at its usual bedrock roof instead of scanning empty sky.
+max-block-height:
+  world: 320
+  world_nether: 128
+
 # Hard limits. No active masked snapshot is evicted (would break ore reveal).
 # If full, NEW chunks pass through UNPROTECTED with a rate-limited warning.
 # Each recipient has their own snapshot. Tune only after measuring heap/TPS.
@@ -18,7 +25,7 @@ max-columns-per-player: 512
 max-ores-per-column: 2048
 
 # Safety limitations of this experimental implementation:
-# - chunk edge ores are not masked; unknown neighbors count as exposed.
+# - chunk edges are masked when neighboring snapshots exist; unknown neighbors count as exposed.
 # - only known full opaque terrain blocks count as cover; fluids/glass do not.
 # - no bans, fake bait ores, real block edits, forced chunk loads, or tick scanning.
 # - already-connected players must reconnect after module enable.

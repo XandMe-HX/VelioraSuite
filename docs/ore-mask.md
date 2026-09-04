@@ -7,6 +7,20 @@ Paper's [Anti-Xray design](https://docs.papermc.io/paper/anti-xray/) and
 were references; no Paper internal implementation was copied.
 PacketEvents is an external provided dependency, not bundled into the Suite JAR.
 
+### 1.6.6: adapted Paper design elements
+
+- Six-face exposure now crosses horizontal chunk boundaries using available recipient snapshots.
+  Neighbor arrival, replacement and unload reconcile the adjacent ore borders.
+- Common block-state IDs use a direct indexed table after first resolution, avoiding
+  repeated map lookups in the inner scan. Unknown IDs still have a fallback lookup.
+- Per-world `max-block-height` follows a section-aligned exclusive Y ceiling. Defaults:
+  Overworld 320, Nether 128. Above-ceiling blocks are deliberately unprotected.
+
+This is an independent adaptation of those design elements, **not a transplanted Paper
+engine**. Paper reads loaded server neighbors and schedules its own internal packet
+processing. Suite still uses PacketEvents recipient snapshots and does not copy Paper's
+NMS classes, executor, packed-buffer implementation or exact solidity registry logic.
+
 ## Status and safe activation
 
 **Not production-certified. No live Paper/Geyser or performance benchmark has been run.**
@@ -44,14 +58,15 @@ evidence of network compatibility or low CPU usage.
 
 ## Known protection/performance limits
 
-- Horizontal chunk edge ores and top/bottom boundary ores are intentionally exposed.
-  This implementation is **not equivalent in coverage to Paper**.
+- Horizontal edges are masked only when the required neighboring snapshots are available.
+  Until then, they are exposed. Hiding them later cannot erase coordinates a client already
+  cached. Top/bottom scan-boundary ores remain exposed. This is **not equivalent to Paper's coverage**.
 - Exposed cave ores remain visible to Xray. This mode cannot prevent seed-based ore prediction.
 - Custom columns taller than 512 blocks and ore-dense columns above the cap pass through.
 - Cache is per recipient, not shared. Memory scales with players and view distance,
   bounded by configured column/ore limits. Bitsets plus sparse ore entries are retained;
   decoded packet sections are temporary. Defaults are not a measured memory guarantee.
-- Every accepted nonempty chunk section is inspected once per outgoing recipient packet.
+- Every accepted nonempty chunk section below the height ceiling is inspected once per outgoing recipient packet.
   There is no asynchronous worker or hard per-tick CPU budget; rapid travel can cost CPU.
   Do not claim this is lighter than Paper without profiling.
 - Other plugins rewriting/cancelling packets after this listener, fake-block plugins,
@@ -66,6 +81,10 @@ evidence of network compatibility or low CPU usage.
   hidden; naturally exposed ores, underwater ores and lava-exposed ores remain normal.
 - Mine each of six neighboring faces; the correct ore appears immediately.
 - Test Y=-64/0/16, negative X/Z, section edges and chunk edges; no ghost blocks.
+- Test neighbor chunk arrival, full replacement with a cave, and unload at each horizontal
+  edge; hidden ores should reveal when the neighbor becomes unknown or transparent.
+- Existing `ore-mask.yml` is preserved. Add `max-block-height` manually if needed;
+  defaults are 320 for `world`, 128 for `world_nether`, and 512 for other names.
 - TNT, beds in Nether, pistons, FTB, custom enchant block breaks, FAWE edits, cancelled
   claim breaks and redstone ore updates do not leave stone disguises behind.
 - Move lobby → world → Nether → war → world; death/respawn, reconnect and chunk unload.
