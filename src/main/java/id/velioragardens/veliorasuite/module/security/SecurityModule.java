@@ -40,7 +40,11 @@ public final class SecurityModule implements VelioraModule {
         PluginCommand maskStatus = plugin.getCommand("voremask");
         if (maskStatus != null) maskStatus.setExecutor((sender, command, label, args) -> {
             if (!sender.hasPermission("veliorasuite.security.admin")) return true;
-            if (args.length == 1 && (args[0].equalsIgnoreCase("enable") || args[0].equalsIgnoreCase("disable"))) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("disable")) {
+                sender.sendMessage("OreMask dibuat selalu aktif untuk melindungi world. Gunakan /voremask untuk melihat statusnya.");
+                return true;
+            }
+            if (args.length == 1 && args[0].equalsIgnoreCase("enable")) {
                 java.io.File file = new java.io.File(plugin.getDataFolder(), "modules/ore-mask.yml");
                 try {
                     var config = new org.bukkit.configuration.file.YamlConfiguration();
@@ -53,9 +57,9 @@ public final class SecurityModule implements VelioraModule {
                 }
                 return true;
             }
-            sender.sendMessage(oreMask == null ? "OreMask inactive. Configure modules/ore-mask.yml, install PacketEvents 2.13.0, then restart."
+            sender.sendMessage(oreMask == null ? "OreMask belum aktif: pastikan PacketEvents 2.13.0 terpasang, lalu restart server."
                     : oreMask.toString());
-            sender.sendMessage("OreWatch and OreMask are separate. /voremask enable saves activation. Admins are recorded by OreWatch; /vxray exempt still excludes players.");
+            sender.sendMessage("OreWatch dan OreMask terpisah. OreMask otomatis aktif; /vxray exempt hanya memengaruhi pemeriksaan OreWatch.");
             return true;
         });
         if (plugin.getServer().getPluginManager().isPluginEnabled("packetevents")) {
