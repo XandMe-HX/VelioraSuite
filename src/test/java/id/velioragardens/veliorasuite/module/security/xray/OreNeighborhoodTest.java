@@ -28,11 +28,11 @@ class OreNeighborhoodTest {
             assertEquals(1, OreNeighborhood.visible(c, e[2], -20, e[3], 99, 1));
         }
     }
-    @Test void unknownNeighborExposesInsteadOfInventingCover() {
+    @Test void unknownNeighborStillUsesSafeDisguise() {
         var c = pair(1, 0);
         ore(c, 15, -20, 8);
         c.remove(OreNeighborhood.key(1, 0));
-        assertEquals(99, OreNeighborhood.visible(c, 15, -20, 8, 99, 1));
+        assertEquals(1, OreNeighborhood.visible(c, 15, -20, 8, 99, 1));
     }
     @Test void miningAcrossPositiveBoundaryRevealsExactlyOnce() {
         var c = pair(1, 0);
@@ -61,19 +61,19 @@ class OreNeighborhoodTest {
                 OreNeighborhood.borders(c, 1, 0, id -> 1));
         assertTrue(OreNeighborhood.borders(c, 1, 0, id -> 1).isEmpty());
     }
-    @Test void unloadingNeighborRestoresFacingOre() {
+    @Test void unloadingNeighborDoesNotExposeDistantOre() {
         var c = pair(1, 0);
         ore(c, 15, -20, 8);
         OreNeighborhood.visible(c, 15, -20, 8, 99, 1);
         c.remove(OreNeighborhood.key(1, 0));
-        assertEquals(Map.of(new OreNeighborhood.Position(15, -20, 8), 99), OreNeighborhood.borders(c, 1, 0, id -> 1));
+        assertTrue(OreNeighborhood.borders(c, 1, 0, id -> 1).isEmpty());
     }
-    @Test void replacingNeighborWithCaveRestoresOre() {
+    @Test void replacingNeighborWithCaveDoesNotExposeDistantOre() {
         var c = pair(1, 0);
         ore(c, 15, -20, 8);
         OreNeighborhood.visible(c, 15, -20, 8, 99, 1);
         c.put(OreNeighborhood.key(1, 0), new OreColumn(-64, 384));
-        assertEquals(99, OreNeighborhood.borders(c, 1, 0, id -> 1).get(new OreNeighborhood.Position(15, -20, 8)));
+        assertFalse(OreNeighborhood.borders(c, 1, 0, id -> 1).containsKey(new OreNeighborhood.Position(15, -20, 8)));
     }
     @Test void cornerNeedsTwoNeighborsButNotDiagonal() {
         var c = pair(1, 0);

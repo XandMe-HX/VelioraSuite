@@ -10,6 +10,8 @@ final class OreColumn {
     final int height;
     final BitSet opaque;
     final Map<Integer, Integer> ores = new HashMap<>();
+    /** The terrain state sent in place of each ore, chosen from its local surroundings. */
+    final Map<Integer, Integer> disguises = new HashMap<>();
     final BitSet hidden = new BitSet();
 
     OreColumn(int minY, int height) {
@@ -35,11 +37,17 @@ final class OreColumn {
         int i = index(x, y, z);
         opaque.set(i, solid);
         if (ore) ores.put(i, state);
-        else { ores.remove(i); hidden.clear(i); }
+        else { ores.remove(i); disguises.remove(i); hidden.clear(i); }
+    }
+    void setDisguise(int x, int y, int z, int state) {
+        if (contains(x, y, z)) disguises.put(index(x, y, z), state);
+    }
+    int disguise(int x, int y, int z, int fallback) {
+        return disguises.getOrDefault(index(x, y, z), fallback);
     }
     int visibleState(int x, int y, int z, int original, int replacement) {
         int i = index(x, y, z);
-        boolean mask = ores.containsKey(i) && enclosed(x, y, z);
+        boolean mask = ores.containsKey(i);
         hidden.set(i, mask);
         return mask ? replacement : original;
     }
@@ -50,7 +58,7 @@ final class OreColumn {
             int nx = x + d[0], ny = y + d[1], nz = z + d[2];
             if (!contains(nx, ny, nz)) continue;
             int i = index(nx, ny, nz);
-            if (hidden.get(i) && !enclosed(nx, ny, nz)) {
+            if (hidden.get(i)) {
                 Integer state = ores.get(i);
                 if (state != null) result.put(i, state);
                 hidden.clear(i);
