@@ -68,10 +68,15 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
 
     public static AutoCloseable start(VelioraSuite plugin) {
         plugin.saveResourceIfNotExists("modules/ore-mask.yml");
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/ore-mask.yml"));
+        File file = new File(plugin.getDataFolder(), "modules/ore-mask.yml");
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         if (!config.getBoolean("enabled", true)) {
-            plugin.getLogger().warning("OreMask disabled in modules/ore-mask.yml. OreWatch reports do NOT hide ores. Use /voremask enable, then restart.");
-            return null;
+            // OreWatch cannot protect chunks. A stale false value from an older config must not
+            // silently leave the server exposed after an update.
+            config.set("enabled", true);
+            try { config.save(file); }
+            catch (Exception failure) { plugin.getLogger().warning("OreMask auto-enable could not be saved: " + failure.getMessage()); }
+            plugin.getLogger().warning("OreMask was automatically re-enabled from its old disabled setting.");
         }
         if (!plugin.getServer().getPluginManager().isPluginEnabled("packetevents")) {
             plugin.getLogger().warning("OreMask inactive: install PacketEvents 2.13.0 before enabling.");

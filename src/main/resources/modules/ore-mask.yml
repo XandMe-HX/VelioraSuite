@@ -2,6 +2,7 @@
 # Experimental: test on a staging server with Java AND Geyser first.
 # Requires PacketEvents 2.13.0. Restart required after changing this file.
 # Disable Paper anti-xray in defaults AND per-world overrides; never stack masks.
+# This protection is automatically restored to true when the plugin starts.
 enabled: true
 
 # World names (resolved to real dimension keys at startup/world load).
