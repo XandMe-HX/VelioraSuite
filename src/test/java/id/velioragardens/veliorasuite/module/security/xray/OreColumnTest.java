@@ -54,11 +54,20 @@ class OreColumnTest {
         c.update(8, -1, 8, 0, false, false);
         assertEquals(99, c.revealAround(8, -1, 8).get(c.index(8, 0, 8)));
     }
-    @Test void recipientsDoNotShareExposure() {
+    @Test void recipientsKeepIndependentDisguises() {
         OreColumn first = filled(), second = filled();
         first.update(7, -20, 8, 0, false, false);
-        assertEquals(99, first.visibleState(8, -20, 8, 99, 1));
+        assertEquals(1, first.visibleState(8, -20, 8, 99, 1));
         assertEquals(1, second.visibleState(8, -20, 8, 99, 1));
+        assertEquals(99, first.revealAround(7, -20, 8).get(first.index(8, -20, 8)));
+        assertTrue(second.hidden.get(second.index(8, -20, 8)));
+    }
+    @Test void localDisguisePersistsOnlyWhileTheOreExists() {
+        OreColumn c = filled();
+        c.setDisguise(8, -20, 8, 123);
+        assertEquals(123, c.disguise(8, -20, 8, 1));
+        c.update(8, -20, 8, 0, false, false);
+        assertEquals(1, c.disguise(8, -20, 8, 1));
     }
     @Test void netherNegativeAndUpperCoordinates() {
         OreColumn c = new OreColumn(0, 256);

@@ -24,9 +24,14 @@ max-cached-columns: 2048
 max-columns-per-player: 512
 max-ores-per-column: 2048
 
+# All ore is concealed in the initial chunk packet, including ore beside natural caves.
+# It is restored only when the player is this close AND has an unobstructed line of sight.
+# This prevents distant cave ore from becoming an X-ray marker while preserving normal mining.
+nearby-reveal-radius: 7
+
 # Safety limitations of this experimental implementation:
-# - chunk edges are masked when neighboring snapshots exist; unknown neighbors count as exposed.
-# - only known full opaque terrain blocks count as cover; fluids/glass do not.
+# - ore disguises reuse an adjacent terrain block when known; chunk edges use the safe dimension fallback.
+# - only ore in the player's nearby unobstructed view is restored to the real state.
 # - no bans, fake bait ores, real block edits, forced chunk loads, or tick scanning.
 # - already-connected players must reconnect after module enable.
 # - custom dimensions exceeding 512 blocks height pass through unprotected.

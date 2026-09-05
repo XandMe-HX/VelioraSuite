@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntUnaryOperator;
 
-/** Six-face exposure using only available snapshots, following Paper's loaded-neighbor approach.
- * Independent implementation; does not call or copy Paper's NMS controller. */
+/** Per-recipient ore state using snapshots only; never reads or mutates a live Bukkit chunk. */
 final class OreNeighborhood {
     private static final int[][] FACES = {{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
     record Position(int x, int y, int z) {}
@@ -30,7 +29,9 @@ final class OreNeighborhood {
         OreColumn chunk = chunks.get(key(x >> 4, z >> 4));
         if (chunk == null || !chunk.contains(x & 15, y, z & 15)) return original;
         int i = chunk.index(x & 15, y, z & 15);
-        boolean hide = chunk.ores.containsKey(i) && enclosed(chunks, x, y, z);
+        // Initial chunk packets conceal every ore. PacketOreMask selectively restores only
+        // nearby, line-of-sight ore for normal cave mining.
+        boolean hide = chunk.ores.containsKey(i);
         chunk.hidden.set(i, hide);
         return hide ? replacement : original;
     }
@@ -43,7 +44,7 @@ final class OreNeighborhood {
             if (chunk == null || !chunk.contains(nx & 15, ny, nz & 15)) continue;
             int i = chunk.index(nx & 15, ny, nz & 15);
             Integer original = chunk.ores.get(i);
-            if (original != null && chunk.hidden.get(i) && !enclosed(chunks, nx, ny, nz)) {
+            if (original != null && chunk.hidden.get(i)) {
                 chunk.hidden.clear(i);
                 changes.put(new Position(nx, ny, nz), original);
             }

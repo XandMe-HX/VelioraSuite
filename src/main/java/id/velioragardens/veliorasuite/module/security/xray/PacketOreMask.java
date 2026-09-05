@@ -13,7 +13,14 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.entity.Player;
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
+import org.bukkit.util.RayTraceResult;
 
 import java.io.File;
 import java.util.*;
@@ -29,7 +36,7 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     private final Set<String> worldNames;
     private final Map<String, Integer> heightsByName;
     private final Map<String, Integer> heightsByKey = new ConcurrentHashMap<>();
-    private final int maxColumns, maxPerPlayer, maxOres;
+    private final int maxColumns, maxPerPlayer, maxOres, revealRadius;
     private final Map<User, View> views = new ConcurrentHashMap<>();
     private final Map<Integer, State> states = new ConcurrentHashMap<>();
     // Fast direct lookup for common state IDs, like Paper's state-indexed lookup tables.
@@ -53,6 +60,7 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     private static final class View {
         final String world;
         final Map<Long, OreColumn> chunks = new HashMap<>();
+        final Set<OreNeighborhood.Position> proximityVisible = new HashSet<>();
         volatile boolean failed;
         View(String world) { this.world = world; }
     }
@@ -96,6 +104,7 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
         maxColumns = Math.max(16, Math.min(8192, config.getInt("max-cached-columns", 2048)));
         maxPerPlayer = Math.max(16, Math.min(1024, config.getInt("max-columns-per-player", 512)));
         maxOres = Math.max(64, Math.min(4096, config.getInt("max-ores-per-column", 2048)));
+        revealRadius = Math.max(4, Math.min(12, config.getInt("nearby-reveal-radius", 7)));
         // Resolve server block-state IDs, not client IDs (ViaVersion translation happens separately).
         for (String ore : ORES) state(WrappedBlockState.getByString("minecraft:" + ore).getGlobalId());
     }
@@ -210,13 +219,22 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
         if (!replacing && columns.incrementAndGet() > maxColumns) {
             columns.decrementAndGet(); skipped.incrementAndGet(); return;
         }
+        // Pick an actual adjacent terrain state for every disguise. This keeps deepslate,
+        // netherrack, tuff and stone veins visually consistent instead of using one fake
+        // block for an entire dimension.
+        for (var ore : snapshot.ores.entrySet()) {
+            int i = ore.getKey(), x = i & 15, z = (i >> 4) & 15, relativeY = i >> 8;
+            int original = ore.getValue();
+            snapshot.setDisguise(x, snapshot.minY + relativeY, z,
+                    localDisguise(sections, x, relativeY, z, state(original).replacement));
+        }
         view.chunks.put(key, snapshot);
         boolean changed = false;
         for (var ore : snapshot.ores.entrySet()) {
             int i = ore.getKey(), x = i & 15, z = (i >> 4) & 15, y = (i >> 8) + snapshot.minY;
             int original = ore.getValue();
             int visible = OreNeighborhood.visible(view.chunks, column.getX() * 16 + x, y,
-                    column.getZ() * 16 + z, original, state(original).replacement);
+                    column.getZ() * 16 + z, original, snapshot.disguise(x, y, z, state(original).replacement));
             if (visible != original) {
                 int relativeY = y - snapshot.minY;
                 sections[relativeY >> 4].set(x, relativeY & 15, z, visible);
@@ -267,7 +285,24 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
     private int visible(View view, int x, int y, int z, int id) {
         OreColumn chunk = view.chunks.get(key(x >> 4, z >> 4));
         if (chunk == null || !chunk.contains(x & 15, y, z & 15)) return id;
-        return OreNeighborhood.visible(view.chunks, x, y, z, id, state(id).replacement);
+        return OreNeighborhood.visible(view.chunks, x, y, z, id,
+                chunk.disguise(x & 15, y, z & 15, state(id).replacement));
+    }
+
+    private int localDisguise(BaseChunk[] sections, int x, int relativeY, int z, int fallback) {
+        // Prefer horizontal neighbours, then floor/ceiling. Ore on a chunk edge safely uses
+        // the dimension fallback because that adjacent snapshot is not available yet.
+        int[][] faces = {{1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1}, {0, 1, 0}, {0, -1, 0}};
+        for (int[] face : faces) {
+            int nx = x + face[0], ny = relativeY + face[1], nz = z + face[2];
+            if (nx < 0 || nx > 15 || nz < 0 || nz > 15 || ny < 0 || ny >= sections.length * 16) continue;
+            BaseChunk section = sections[ny >> 4];
+            if (section == null) continue;
+            int candidate = section.getBlockId(nx, ny & 15, nz);
+            State candidateState = state(candidate);
+            if (candidateState.solid && !candidateState.ore) return candidate;
+        }
+        return fallback;
     }
 
     private void reveal(PacketSendEvent event, View view, List<Vector3i> positions) {
@@ -301,13 +336,90 @@ public final class PacketOreMask extends PacketListenerAbstract implements AutoC
                 blocks.toArray(WrapperPlayServerMultiBlockChange.EncodedBlock[]::new))));
     }
 
+    @EventHandler public void join(PlayerJoinEvent event) {
+        // The client receives JOIN_GAME before its first chunk batch. A short delay lets the
+        // normal cave view be restored without ever exposing distant ore to an X-ray client.
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> refreshNearby(event.getPlayer()), 12L);
+    }
+    @EventHandler(ignoreCancelled = true) public void move(PlayerMoveEvent event) {
+        if (event.getTo() == null || sameBlock(event.getFrom(), event.getTo())) return;
+        refreshNearby(event.getPlayer());
+    }
+    @EventHandler(ignoreCancelled = true) public void teleport(PlayerTeleportEvent event) {
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> refreshNearby(event.getPlayer()), 2L);
+    }
+
+    private static boolean sameBlock(Location a, Location b) {
+        return a.getBlockX() == b.getBlockX() && a.getBlockY() == b.getBlockY() && a.getBlockZ() == b.getBlockZ();
+    }
+
+    /** Restores only ores a normal player can actually see at short range. */
+    private void refreshNearby(Player player) {
+        if (closed || !player.isOnline()) return;
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+        View view = views.get(user);
+        if (view == null || view.failed || !view.world.equals(player.getWorld().getKey().toString())) return;
+        Location eye = player.getEyeLocation();
+        int radiusSquared = revealRadius * revealRadius;
+        Set<OreNeighborhood.Position> wanted = new HashSet<>();
+        synchronized (view) {
+            int centerX = eye.getBlockX() >> 4, centerZ = eye.getBlockZ() >> 4;
+            int chunkRadius = (revealRadius + 15) >> 4;
+            for (int cx = centerX - chunkRadius; cx <= centerX + chunkRadius; cx++) for (int cz = centerZ - chunkRadius; cz <= centerZ + chunkRadius; cz++) {
+                OreColumn column = view.chunks.get(key(cx, cz));
+                if (column == null) continue;
+                for (var ore : column.ores.entrySet()) {
+                    int i = ore.getKey(), x = cx * 16 + (i & 15), y = column.minY + (i >> 8), z = cz * 16 + ((i >> 4) & 15);
+                    double dx = x + .5 - eye.getX(), dy = y + .5 - eye.getY(), dz = z + .5 - eye.getZ();
+                    if (dx * dx + dy * dy + dz * dz <= radiusSquared && hasSight(player, eye, x, y, z, dx, dy, dz)) {
+                        wanted.add(new OreNeighborhood.Position(x, y, z));
+                    }
+                }
+            }
+            Map<Vector3i, Integer> changes = new HashMap<>();
+            for (OreNeighborhood.Position old : new HashSet<>(view.proximityVisible)) {
+                if (wanted.contains(old)) continue;
+                OreColumn column = view.chunks.get(key(old.x() >> 4, old.z() >> 4));
+                if (column == null) continue;
+                int i = column.index(old.x() & 15, old.y(), old.z() & 15);
+                Integer original = column.ores.get(i);
+                if (original == null) continue;
+                column.hidden.set(i);
+                changes.put(new Vector3i(old.x(), old.y(), old.z()),
+                        column.disguise(old.x() & 15, old.y(), old.z() & 15, state(original).replacement));
+            }
+            for (OreNeighborhood.Position next : wanted) {
+                OreColumn column = view.chunks.get(key(next.x() >> 4, next.z() >> 4));
+                if (column == null) continue;
+                int i = column.index(next.x() & 15, next.y(), next.z() & 15);
+                Integer original = column.ores.get(i);
+                if (original != null && column.hidden.get(i)) {
+                    column.hidden.clear(i);
+                    changes.put(new Vector3i(next.x(), next.y(), next.z()), original);
+                }
+            }
+            view.proximityVisible.clear();
+            view.proximityVisible.addAll(wanted);
+            sendChanges(user, changes);
+        }
+    }
+
+    private boolean hasSight(Player player, Location eye, int x, int y, int z, double dx, double dy, double dz) {
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (distance == 0) return true;
+        RayTraceResult result = player.getWorld().rayTraceBlocks(eye, new org.bukkit.util.Vector(dx, dy, dz), distance,
+                FluidCollisionMode.NEVER, true);
+        return result != null && result.getHitBlock() != null
+                && result.getHitBlock().getX() == x && result.getHitBlock().getY() == y && result.getHitBlock().getZ() == z;
+    }
+
     private void reset(User user, String world) {
         discard(user);
         if (worlds.contains(world)) views.put(user, new View(world));
     }
     private void discard(User user) {
         View old = views.remove(user);
-        if (old != null) synchronized (old) { columns.addAndGet(-old.chunks.size()); old.chunks.clear(); }
+        if (old != null) synchronized (old) { columns.addAndGet(-old.chunks.size()); old.chunks.clear(); old.proximityVisible.clear(); }
     }
     @Override public void onUserDisconnect(UserDisconnectEvent event) { discard(event.getUser()); }
     private static long key(int x, int z) { return ((long) x << 32) | (z & 0xffffffffL); }
