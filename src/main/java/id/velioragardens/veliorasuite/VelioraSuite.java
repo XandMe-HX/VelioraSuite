@@ -12,6 +12,7 @@ import id.velioragardens.veliorasuite.module.announcement.AnnouncementModule;
 import id.velioragardens.veliorasuite.module.biome.BiomeModule;
 import id.velioragardens.veliorasuite.module.adminmonitor.AdminMonitorModule;
 import id.velioragardens.veliorasuite.module.adventure.AdventureModule;
+import id.velioragardens.veliorasuite.module.actionhouse.ActionHouseModule;
 import id.velioragardens.veliorasuite.module.autotool.AutoToolModule;
 import id.velioragardens.veliorasuite.module.deathlaugh.DeathLaughModule;
 import id.velioragardens.veliorasuite.module.boss.BossModule;
@@ -135,6 +136,7 @@ public final class VelioraSuite extends JavaPlugin {
         moduleManager.register(new BossModule(this));
         moduleManager.register(new PetsModule(this));
         moduleManager.register(new AdventureModule(this));
+        moduleManager.register(new ActionHouseModule(this));
     }
 
     private void registerPlaceholderExpansion() {
