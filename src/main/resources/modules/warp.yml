@@ -1,8 +1,9 @@
 settings:
   enabled: true
   prefix: '&7[&eVELIORA &aWARP&7] &r'
-  cooldown-seconds: 3
-  countdown-seconds: 3
+  # Warp selalu langsung. Tidak ada cooldown atau hitungan mundur.
+  cooldown-seconds: 0
+  countdown-seconds: 0
   # Sesudah tiba pemain BOLEH langsung berjalan. Nilai ini hanya durasi blindness.
   arrival-freeze-seconds: 3
   afk:

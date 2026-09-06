@@ -1,4 +1,4 @@
-# Pengumuman biome bawaan VelioraSuite. Hanya Title/Action Bar sementara;
+# Pengumuman biome bawaan VelioraSuite. Hanya Action Bar sementara;
 # tidak membuat TextDisplay permanen atau entity tambahan di chunk.
 settings:
   enabled: true
@@ -11,11 +11,7 @@ anti-spam:
   only-first-discovery: true
 display:
   announce-on-join: false
-  # Pertama kali sebuah biome ditemukan di sesi ini, title menegaskan penemuan.
-  new-biome-title: '&d&lBIOME BARU'
-  # Kunjungan berikutnya hanya menampilkan nama biome, bukan title spam yang sama.
-  title: '&d&l{biome}'
-  subtitle: '&7Sekarang memasuki &f{biome}'
+  # Tidak memakai title agar layar tidak tertutup saat melewati batas biome.
   actionbar: '&8✦ &fMemasuki &d{biome}'
   fade-in-ticks: 8
   stay-ticks: 45

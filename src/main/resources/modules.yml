@@ -1,6 +1,6 @@
 modules:
   core: true
-  autotool: true
+  autotool: false
   deathlaugh: true
   adminmonitor: true
   guide: true
@@ -20,7 +20,7 @@ modules:
   pets: true
   security: true
   chat: true
-  combattag: true
+  combattag: false
   warp: true
   adventure: true
   notifications: true

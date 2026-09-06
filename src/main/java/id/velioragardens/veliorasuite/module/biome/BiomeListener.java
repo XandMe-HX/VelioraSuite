@@ -3,8 +3,6 @@ package id.velioragardens.veliorasuite.module.biome;
 import id.velioragardens.veliorasuite.VelioraSuite;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Particle;
@@ -29,7 +27,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.time.Duration;
 
 /** Lightweight title/action-bar biome notification. No persistent display entities are created. */
 public final class BiomeListener implements Listener, CommandExecutor, TabCompleter {
@@ -40,7 +37,6 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
     private final Map<UUID, Long> announced = new HashMap<>();
     private final Map<UUID, Boolean> toggles = new HashMap<>();
     private final Map<UUID, java.util.Set<String>> discovered = new HashMap<>();
-    private final Map<UUID, BukkitTask> animations = new HashMap<>();
     private static final MiniMessage MINI = MiniMessage.miniMessage();
     private FileConfiguration config;
     private BukkitTask task;
@@ -48,10 +44,10 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
     public BiomeListener(VelioraSuite plugin) { this.plugin = plugin; }
     public void load() { config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules/biome.yml")); }
     public void start() { stop(); task = Bukkit.getScheduler().runTaskTimer(plugin, this::checkPlayers, 20L, 10L); }
-    public void stop() { if (task != null) { task.cancel(); task = null; } animations.values().forEach(BukkitTask::cancel); animations.clear(); biomes.clear(); pendingBiomes.clear(); pendingSince.clear(); announced.clear(); toggles.clear(); discovered.clear(); }
+    public void stop() { if (task != null) { task.cancel(); task = null; } biomes.clear(); pendingBiomes.clear(); pendingSince.clear(); announced.clear(); toggles.clear(); discovered.clear(); }
 
     @EventHandler public void join(PlayerJoinEvent event) { Bukkit.getScheduler().runTaskLater(plugin, () -> announceJoin(event.getPlayer()), 40L); }
-    @EventHandler public void quit(PlayerQuitEvent event) { UUID id = event.getPlayer().getUniqueId(); biomes.remove(id); pendingBiomes.remove(id); pendingSince.remove(id); announced.remove(id); toggles.remove(id); discovered.remove(id); BukkitTask animation=animations.remove(id); if(animation!=null)animation.cancel(); }
+    @EventHandler public void quit(PlayerQuitEvent event) { UUID id = event.getPlayer().getUniqueId(); biomes.remove(id); pendingBiomes.remove(id); pendingSince.remove(id); announced.remove(id); toggles.remove(id); discovered.remove(id); }
 
     private void announceJoin(Player player) {
         if (!player.isOnline() || !enabled(player)) return;
@@ -86,10 +82,9 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
         String name = configuredName(biome);
         boolean firstDiscovery = discovered.computeIfAbsent(player.getUniqueId(), ignored -> new HashSet<>()).add(biome);
         if (!firstDiscovery && config.getBoolean("anti-spam.only-first-discovery", true)) return;
-        String titleKey = firstDiscovery ? "display.new-biome-title" : "display.title";
-        String title = config.getString(titleKey, firstDiscovery ? "&d&lBIOME BARU" : "&d&l{biome}");
-        String subtitle = config.getString("display.subtitle", "&7Sekarang memasuki &f{biome}");
-        startTyping(player,title,subtitle,config.getString("display.actionbar", "&8✦ &fMemasuki &d{biome}"),name);
+        // Notifikasi biome hanya tampil di action bar. Title dibuat mengganggu saat
+        // pemain bolak-balik melewati perbatasan biome.
+        player.sendActionBar(component(config.getString("display.actionbar", "&8✦ &fMemasuki &d{biome}").replace("{biome}", name)));
         if (config.getBoolean("effects.particles-enabled", true)) player.getWorld().spawnParticle(parseParticle(config.getString("effects.particle", "END_ROD")), player.getLocation().add(0, 1, 0), Math.max(1, config.getInt("effects.count", 12)), .45, .65, .45, .01);
         // Kompatibel dengan konfigurasi BiomeAnnouncer lama: animation.sound.*.
         boolean soundEnabled = config.contains("effects.sound-enabled") ? config.getBoolean("effects.sound-enabled") : config.getBoolean("animation.sound.enabled", true);
@@ -99,28 +94,6 @@ public final class BiomeListener implements Listener, CommandExecutor, TabComple
             float pitch = (float) config.getDouble("effects.sound-pitch", config.getDouble("animation.sound.pitch", 1.35D));
             player.playSound(player.getLocation(), parseSound(sound), Math.max(0.0F, volume), Math.max(0.5F, Math.min(2.0F, pitch)));
         }
-    }
-    private void startTyping(Player player,String titleTemplate,String subtitleTemplate,String actionTemplate,String biomeName) {
-        BukkitTask old=animations.remove(player.getUniqueId()); if(old!=null)old.cancel();
-        String plain=PlainTextComponentSerializer.plainText().serialize(component(biomeName)); if(plain.isBlank())plain=friendly(key(player));
-        final String target=plain; final int[] length={0};
-        long interval=Math.max(1L,config.getLong("display.typing.interval-ticks",2L));
-        boolean typing=config.getBoolean("display.typing.enabled",true);
-        Runnable frame=()->{
-            int visible=typing?Math.min(target.length(),length[0]):target.length();
-            String shown=target.substring(0,visible)+(typing&&visible<target.length()?"_":"");
-            Component title=component(titleTemplate.replace("{biome}",shown));
-            Component subtitle=component(subtitleTemplate.replace("{biome}",shown));
-            player.showTitle(Title.title(title,subtitle,Title.Times.times(Duration.ZERO,Duration.ofMillis((visible<target.length()?interval+1:Math.max(20,config.getInt("display.stay-ticks",45)))*50L),Duration.ofMillis(Math.max(0,config.getInt("display.fade-out-ticks",12))*50L))));
-            player.sendActionBar(component(actionTemplate.replace("{biome}",shown)));
-        };
-        if(!typing){frame.run();return;}
-        BukkitTask animation=Bukkit.getScheduler().runTaskTimer(plugin,()->{
-            if(!player.isOnline()){BukkitTask current=animations.remove(player.getUniqueId());if(current!=null)current.cancel();return;}
-            frame.run();
-            if(length[0]++>=target.length()){BukkitTask current=animations.remove(player.getUniqueId());if(current!=null)current.cancel();}
-        },0L,interval);
-        animations.put(player.getUniqueId(),animation);
     }
     private String key(Player player) { return player.getLocation().getBlock().getBiome().getKey().toString(); }
     private String configuredName(String biome) {
