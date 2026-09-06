@@ -2,7 +2,7 @@
 
 VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
-## VelioraActionHouse / Player Shop (1.6.17)
+## VelioraActionHouse / Player Shop (1.6.18)
 
 ActionHouse sekarang menjadi modul native VelioraSuite. Buka dengan `/ah`,
 `/playershop`, atau `/actionhouse`; jangan jalankan JAR VelioraActionHouse lama
