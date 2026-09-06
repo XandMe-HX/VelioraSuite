@@ -1,5 +1,5 @@
 name: VelioraSuite
-version: 1.6.16
+version: 1.6.17
 main: id.velioragardens.veliorasuite.VelioraSuite
 api-version: '1.21'
 author: XandMe
@@ -21,6 +21,11 @@ softdepend:
   - ExcellentCrates
 
 commands:
+  actionhouse:
+    description: Buka Player Shop Veliora untuk jual, beli, dan klaim hasil penjualan.
+    usage: /actionhouse
+    aliases: [ah, auctionhouse, playershop, pshop]
+    permission: veliorasuite.actionhouse.use
   voremask:
     description: Status experimental packet ore masking (admin only).
     usage: /voremask
@@ -273,6 +278,9 @@ commands:
     permission: veliorasuite.home.admin
 
 permissions:
+  veliorasuite.actionhouse.use:
+    description: Menggunakan Player Shop Veliora.
+    default: true
   veliorasuite.autotool.use:
     description: Menggunakan pemilih alat otomatis Veliora.
     default: true

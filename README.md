@@ -2,6 +2,26 @@
 
 VelioraSuite adalah plugin modular untuk server Minecraft Veliora Gardens.
 
+## VelioraActionHouse / Player Shop (1.6.17)
+
+ActionHouse sekarang menjadi modul native VelioraSuite. Buka dengan `/ah`,
+`/playershop`, atau `/actionhouse`; jangan jalankan JAR VelioraActionHouse lama
+bersamaan agar command tidak bentrok.
+
+- Market publik memiliki halaman, listing dipromosikan berada lebih atas, serta
+  pembelian yang aman melalui Vault.
+- **Toko Saya** memakai chest untuk slot aktif dan chain untuk slot yang belum
+  dibeli. Pemain mulai dengan 8 slot; harga slot dan masa listing dapat diatur
+  di `modules/actionhouse.yml`.
+- Barang habis masa jual masuk **Barrel** (tidak hilang), hasil jual masuk
+  **Bell** sebagai saldo yang diklaim, dan menu promosi menyediakan 1/3/7/14 hari.
+- Layar jual menerima item pada area kosong, kontrol harga, Gold Block untuk
+  konfirmasi, dan tombol merah untuk membatalkan serta mengembalikan item.
+
+Vault dengan economy provider diperlukan untuk membeli, menjual slot, promosi,
+dan klaim uang. Jika Vault tidak siap, transaksi ditolak tanpa mengambil item
+atau saldo.
+
 1.6.7 adds the optional VelioraEnchant 1.4.0 Patient Angler fishing hook. Only
 successful catches advance the streak. Rare weights gain at most 10% relatively;
 Mitologi/Secret at most 2.5%, without bypassing rod tier gates or adding extra fish.

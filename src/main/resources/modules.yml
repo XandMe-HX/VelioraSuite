@@ -27,3 +27,4 @@ modules:
   redeem: true
   home: true
   guardclaim: true
+  actionhouse: true

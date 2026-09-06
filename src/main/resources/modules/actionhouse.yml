@@ -1,0 +1,4 @@
+# Marketplace native VelioraSuite. Vault + economy provider wajib untuk transaksi uang.
+listing-duration-days: 14
+# Harga membuka satu slot jual tambahan setelah 8 slot awal.
+slot-price: 5000
