@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import org.bukkit.scheduler.BukkitTask;
 
 public final class WarpManager implements Listener {
     private static final Pattern SAFE_NAME = Pattern.compile("[a-z0-9_-]{2,24}");
@@ -36,10 +35,6 @@ public final class WarpManager implements Listener {
     private final File dataFile;
     private final Map<String, WarpPoint> warps = new LinkedHashMap<>();
     private final Map<String, String> aliases = new LinkedHashMap<>();
-    private final Map<UUID, Long> cooldowns = new LinkedHashMap<>();
-    private final Map<UUID, BukkitTask> pendingTeleports = new LinkedHashMap<>();
-    /** Origin recorded only while the player is waiting for a warp countdown. */
-    private final Map<UUID, Location> pendingOrigins = new LinkedHashMap<>();
     private YamlConfiguration config;
 
     public WarpManager(VelioraSuite plugin) {
@@ -146,16 +141,6 @@ public final class WarpManager implements Listener {
             return false;
         }
 
-        int cooldown = Math.max(0, config.getInt("settings.cooldown-seconds", 3));
-        long now = System.currentTimeMillis();
-        long available = cooldowns.getOrDefault(player.getUniqueId(), 0L);
-        if (!player.hasPermission("veliorasuite.warp.admin") && available > now) {
-            long seconds = Math.max(1L, (available - now + 999L) / 1000L);
-            player.sendMessage(color(message("cooldown", "%prefix% &eTunggu &f%seconds%s &esebelum warp lagi.")
-                    .replace("%seconds%", String.valueOf(seconds))));
-            return false;
-        }
-
         World world = Bukkit.getWorld(point.world());
         if (world == null && !point.worldName().isBlank()) world = Bukkit.getWorld(point.worldName());
         if (world == null) {
@@ -164,43 +149,17 @@ public final class WarpManager implements Listener {
         }
 
         Location target = new Location(world, point.x(), point.y(), point.z(), point.yaw(), point.pitch());
-        beginCountdown(player, point, target, cooldown, now);
+        target.getChunk().load(true);
+        if (!player.teleport(target)) {
+            player.sendMessage(color(message("failed", "%prefix% &cTeleport gagal. Coba lagi.")));
+            return false;
+        }
+        if (config.getBoolean("settings.sound.enabled", true)) {
+            try { player.playSound(player.getLocation(), Sound.valueOf(config.getString("settings.sound.name", "ENTITY_ENDERMAN_TELEPORT")), 0.8F, 1.1F); }
+            catch (IllegalArgumentException ignored) { }
+        }
+        player.sendMessage(color(message("teleported", "%prefix% &aTeleport ke &f%warp%&a.").replace("%warp%", point.name())));
         return true;
-    }
-
-    private void beginCountdown(Player player, WarpPoint point, Location target, int cooldown, long now) {
-        cancelPending(player.getUniqueId());
-        // Players may keep walking while the destination is prepared.  Freezing starts
-        // only after the teleport succeeds, handled centrally by TeleportSafetyListener.
-        final int[] remaining = {Math.max(1, config.getInt("settings.countdown-seconds", 3))};
-        pendingOrigins.put(player.getUniqueId(), player.getLocation().clone());
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!player.isOnline()) { cancelPending(player.getUniqueId()); return; }
-            if (remaining[0] > 0) {
-                player.sendTitle(color("&bTeleport dalam &f" + remaining[0]), color("&7Menyiapkan lokasi aman..."), 0, 24, 0);
-                remaining[0]--;
-                return;
-            }
-            cancelPending(player.getUniqueId());
-            target.getChunk().load(true);
-            if (!player.teleport(target)) {
-                player.sendMessage(color(message("failed", "%prefix% &cTeleport gagal. Coba lagi.")));
-                return;
-            }
-            cooldowns.put(player.getUniqueId(), now + cooldown * 1000L);
-            if (config.getBoolean("settings.sound.enabled", true)) {
-                try { player.playSound(player.getLocation(), Sound.valueOf(config.getString("settings.sound.name", "ENTITY_ENDERMAN_TELEPORT")), 0.8F, 1.1F); }
-                catch (IllegalArgumentException ignored) { }
-            }
-            player.sendMessage(color(message("teleported", "%prefix% &aTeleport ke &f%warp%&a.").replace("%warp%", point.name())));
-        }, 0L, 20L);
-        pendingTeleports.put(player.getUniqueId(), task);
-    }
-
-    private void cancelPending(UUID playerId) {
-        BukkitTask task = pendingTeleports.remove(playerId);
-        if (task != null) task.cancel();
-        pendingOrigins.remove(playerId);
     }
 
     /** One-way, non-destructive import from plugins/Essentials/warps/*.yml. */
@@ -223,23 +182,6 @@ public final class WarpManager implements Listener {
         }
         if (added > 0) { rebuildAliases(); save(); }
         return new ImportResult(added, skipped, invalid, "");
-    }
-
-    /**
-     * Cancels only a warp that is still in its pre-teleport countdown. Looking
-     * around does not count as movement; changing position does.
-     */
-    public boolean cancelPendingIfMoved(Player player, Location to) {
-        if (player == null || to == null) return false;
-        UUID id = player.getUniqueId();
-        Location origin = pendingOrigins.get(id);
-        if (origin == null || origin.getWorld() == null || !origin.getWorld().equals(to.getWorld())) return false;
-        if (origin.getX() == to.getX() && origin.getY() == to.getY() && origin.getZ() == to.getZ()) return false;
-        cancelPending(id);
-        player.clearTitle();
-        player.sendTitle(color("&cTeleport dibatalkan"), color("&7Kamu bergerak sebelum teleport."), 0, 30, 10);
-        player.sendMessage(color(message("moved", "%prefix% &cTeleport dibatalkan karena kamu bergerak.")));
-        return true;
     }
 
     public Location safetyTarget(Location from) {

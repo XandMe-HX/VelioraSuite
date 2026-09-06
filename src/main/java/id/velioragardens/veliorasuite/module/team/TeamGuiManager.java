@@ -3,6 +3,7 @@ package id.velioragardens.veliorasuite.module.team;
 import id.velioragardens.veliorasuite.core.gui.GuiLayout;
 import id.velioragardens.veliorasuite.module.team.model.Team;
 import id.velioragardens.veliorasuite.module.team.model.TeamMember;
+import id.velioragardens.veliorasuite.module.team.model.TeamInvite;
 import id.velioragardens.veliorasuite.util.SafePlayerHead;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -34,7 +35,7 @@ public final class TeamGuiManager implements Listener {
 
     public void openMain(Player player) {
         Team team = manager.getPlayerTeam(player.getUniqueId());
-        if (team == null) { player.sendMessage("§8[§bVELIORA TEAM§8] §cKamu belum memiliki team. Gunakan /team create atau /team join."); return; }
+        if (team == null) { openNoTeam(player); return; }
         Holder holder = new Holder("main", player.getUniqueId());
         Inventory inventory = Bukkit.createInventory(holder, 27, "§8Team §b" + team.getDisplayName()); holder.inventory = inventory;
         fill(inventory);
@@ -44,6 +45,30 @@ public final class TeamGuiManager implements Listener {
         inventory.setItem(13, item(Material.BOOK, "§d§lINFORMASI", List.of("§7Owner: §f" + team.getOwnerName(), "§7Saldo: §a$" + team.getBalance(), "§7Skor: §e" + team.getScore(), "§7Status: " + (team.isOpen() ? "§aTERBUKA" : "§eUNDANGAN"))));
         inventory.setItem(15, item(Material.COMPARATOR, "§6§lPENGATURAN", List.of("§7Home, PvP, status masuk,", "§7serta pembubaran team.", "§eOwner/Admin: klik untuk membuka.")));
         inventory.setItem(16, item(Material.BARRIER, "§c§lKELUAR TEAM", List.of("§7Keluar sebagai member.", "§cOwner harus pindahkan owner dahulu.")));
+        player.openInventory(inventory);
+    }
+
+    private void openNoTeam(Player player) {
+        Holder holder = new Holder("no-team", player.getUniqueId());
+        Inventory inventory = Bukkit.createInventory(holder, 27, "§8Veliora §bTeams"); holder.inventory = inventory;
+        fill(inventory);
+        inventory.setItem(11, item(Material.PLAYER_HEAD, "§b§lBELUM PUNYA TEAM", List.of("§7Buat team sendiri dengan", "§f/team create <nama>")));
+        inventory.setItem(13, item(Material.WRITABLE_BOOK, "§e§lPANDUAN TEAM", List.of("§7Undangan team akan muncul", "§7sebagai GUI seperti ini.")));
+        inventory.setItem(15, item(Material.BELL, "§d§lCEK UNDANGAN", List.of("§7Klik untuk membuka undangan", "§7yang masih aktif.")));
+        player.openInventory(inventory);
+    }
+
+    public void openInvite(Player player) {
+        TeamInvite invite = manager.getInvite(player);
+        if (invite == null) return;
+        Team team = manager.getDataManager().getTeam(invite.getTeamName());
+        String teamName = team == null ? invite.getTeamName() : team.getDisplayName();
+        Holder holder = new Holder("invite", player.getUniqueId());
+        Inventory inventory = Bukkit.createInventory(holder, 27, "§8Undangan Team"); holder.inventory = inventory;
+        fill(inventory);
+        inventory.setItem(11, item(Material.LIME_CONCRETE, "§a§lTERIMA UNDANGAN", List.of("§7Gabung ke team §f" + teamName, "§7Pengundang: §f" + invite.getInviterName(), "", "§aKlik untuk menerima.")));
+        inventory.setItem(13, item(Material.PLAYER_HEAD, "§b§l" + teamName, List.of("§7Kamu mendapat undangan", "§7untuk bergabung ke team ini.")));
+        inventory.setItem(15, item(Material.RED_CONCRETE, "§c§lTOLAK UNDANGAN", List.of("§7Undangan akan dihapus.", "", "§cKlik untuk menolak.")));
         player.openInventory(inventory);
     }
 
@@ -98,9 +123,18 @@ public final class TeamGuiManager implements Listener {
         if (!(event.getView().getTopInventory().getHolder() instanceof Holder holder) || !(event.getWhoClicked() instanceof Player player)) return;
         event.setCancelled(true);
         if (event.getClickedInventory() != event.getView().getTopInventory()) return;
+        int slot = event.getRawSlot();
+        if (holder.page.equals("invite")) {
+            if (slot == 11) { player.closeInventory(); manager.acceptInvite(player); }
+            else if (slot == 15) { player.closeInventory(); manager.declineInvite(player); }
+            return;
+        }
+        if (holder.page.equals("no-team")) {
+            if (slot == 15) openInvite(player);
+            return;
+        }
         Team team = manager.getPlayerTeam(holder.owner);
         if (team == null) { player.closeInventory(); return; }
-        int slot = event.getRawSlot();
         switch (holder.page) {
             case "main" -> { if (slot == 10) manager.teleportTeamHome(player); else if (slot == 11) manager.toggleTeamChat(player); else if (slot == 12) openMembers(player, team); else if (slot == 15) openSettings(player, team); else if (slot == 16) { player.closeInventory(); manager.leave(player); } }
             case "members" -> { if (slot == 45 && holder.currentPage > 0) openMembers(player, team, holder.currentPage - 1); else if (slot == 49) openMain(player); else if (slot == 53) openMembers(player, team, holder.currentPage + 1); }
@@ -110,7 +144,7 @@ public final class TeamGuiManager implements Listener {
         }
     }
 
-    private void fill(Inventory inventory) { GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.LIGHT_BLUE_STAINED_GLASS_PANE); }
+    private void fill(Inventory inventory) { GuiLayout.decorateMenu(inventory, Material.BLACK_STAINED_GLASS_PANE, Material.GRAY_STAINED_GLASS_PANE); }
     private ItemStack item(Material material, String name, List<String> lore) { ItemStack item = new ItemStack(material); ItemMeta meta = item.getItemMeta(); meta.setDisplayName(name); meta.setLore(lore); item.setItemMeta(meta); return item; }
     private String roleColor(String role) { return switch (role) { case "OWNER" -> "§6OWNER"; case "ADMIN" -> "§cADMIN"; default -> "§aMEMBER"; }; }
     private static final class Holder implements InventoryHolder { private final String page; private final UUID owner; private final int currentPage; private Inventory inventory; private Holder(String page, UUID owner) { this(page, owner, 0); } private Holder(String page, UUID owner, int currentPage) { this.page = page; this.owner = owner; this.currentPage = currentPage; } @Override public Inventory getInventory() { return inventory; } }

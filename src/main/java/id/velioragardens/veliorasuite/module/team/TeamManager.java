@@ -193,8 +193,9 @@ public final class TeamManager {
         long expiresAt = System.currentTimeMillis() + (configManager.getInviteTimeoutSeconds() * 1000L);
         inviteManager.createInvite(new TeamInvite(team.getName(), target.getUniqueId(), target.getName(), inviter.getUniqueId(), inviter.getName(), expiresAt));
         send(inviter, "invite-sent", "%prefix% &aInvite team dikirim ke &f%player%&a.", Map.of("%player%", target.getName(), "%team%", team.getDisplayName()));
-        send(target, "invite-received", "%prefix% &aKamu diundang ke team &f%team%&a. Ketik &f/team accept &auntuk bergabung.", Map.of("%team%", team.getDisplayName(), "%player%", inviter.getName()));
+        send(target, "invite-received", "%prefix% &aKamu diundang ke team &f%team%&a. Pilih jawaban pada GUI undangan.", Map.of("%team%", team.getDisplayName(), "%player%", inviter.getName()));
         target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.65F, 1.2F);
+        if (guiManager != null) guiManager.openInvite(target);
     }
 
     public void acceptInvite(Player player) {
@@ -233,6 +234,20 @@ public final class TeamManager {
         send(player, "accept-success", "%prefix% &aKamu bergabung ke team &f%team%&a.", teamPlaceholders(team, Map.of()));
         notifyTeam(team, "member-joined", "%prefix% &f%player% &abergabung ke team.", Map.of("%player%", player.getName()), player.getUniqueId());
         celebrate(player, Particle.HAPPY_VILLAGER, Sound.ENTITY_PLAYER_LEVELUP);
+    }
+
+    public TeamInvite getInvite(Player player) {
+        return player == null ? null : inviteManager.getInvite(player.getUniqueId());
+    }
+
+    public void declineInvite(Player player) {
+        if (player == null) return;
+        TeamInvite invite = inviteManager.removeInvite(player.getUniqueId());
+        if (invite == null) {
+            send(player, "no-invite", "%prefix% &cKamu tidak punya invite team.", Map.of());
+            return;
+        }
+        send(player, "invite-declined", "%prefix% &7Undangan team ditolak.", Map.of());
     }
 
     public void leave(Player player) {
@@ -627,7 +642,9 @@ public final class TeamManager {
         long expiresAt = System.currentTimeMillis() + (configManager.getInviteTimeoutSeconds() * 1000L);
         inviteManager.createInvite(new TeamInvite(team.getName(), target.getUniqueId(), target.getName(), null, sender.getName(), expiresAt));
         send(sender, "invite-sent", "%prefix% &aInvite team dikirim ke &f%player%&a.", teamPlaceholders(team, Map.of("%player%", target.getName())));
-        send(target, "invite-received", "%prefix% &aKamu diundang ke team &f%team%&a. Ketik &f/team accept &auntuk bergabung.", teamPlaceholders(team, Map.of()));
+        send(target, "invite-received", "%prefix% &aKamu diundang ke team &f%team%&a. Pilih jawaban pada GUI undangan.", teamPlaceholders(team, Map.of()));
+        target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.65F, 1.2F);
+        if (guiManager != null) guiManager.openInvite(target);
     }
 
     public void forceJoin(CommandSender sender, String teamName, Player target) {
