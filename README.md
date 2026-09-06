@@ -18,6 +18,20 @@ dan batas tinggi pemrosesan. Ini bukan salinan utuh mesin internal Paper.
 
 Author / owner name yang dipakai di source, config, guide, command, dan dokumentasi: **XandMe**.
 
+## ajLeaderboards / PlaceholderAPI
+
+ajLeaderboards membaca PlaceholderAPI yang menghasilkan angka. Tidak perlu bridge atau database tambahan.
+
+- `%veliorasuite_adventure_level%`
+- `%veliorasuite_adventure_exp%`
+- `%veliorasuite_adventure_quests_completed%`
+- `%veliorasuite_guild_level%`, `%veliorasuite_guild_exp%`
+- `%veliorasuite_fishing_coins%`
+- `%veliorasuite_playtime_seconds%`
+- `%veliorasuite_vanilla_kills%`, `%veliorasuite_vanilla_deaths%`, `%veliorasuite_vanilla_kd%`
+
+Contoh: `/ajleaderboards add %veliorasuite_adventure_level%`. Setelah itu gunakan placeholder leaderboard milik ajLeaderboards untuk menampilkannya.
+
 ## Status Module
 
 Module aktif phase 1:
