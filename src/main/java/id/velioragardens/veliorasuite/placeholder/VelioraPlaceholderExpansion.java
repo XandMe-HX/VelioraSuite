@@ -30,6 +30,10 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
         return switch (params.toLowerCase(Locale.ROOT)) {
             case "team_tag" -> teamTag(player);
             case "playtime" -> playtime(player);
+            case "playtime_seconds", "leaderboard_playtime" -> String.valueOf(playtimeSeconds(player));
+            case "vanilla_kills", "player_kills", "leaderboard_kills" -> String.valueOf(player.getStatistic(Statistic.PLAYER_KILLS));
+            case "vanilla_deaths", "deaths", "leaderboard_deaths" -> String.valueOf(player.getStatistic(Statistic.DEATHS));
+            case "vanilla_kd", "player_kd" -> ratio(player.getStatistic(Statistic.PLAYER_KILLS), player.getStatistic(Statistic.DEATHS));
             case "fishing_coins" -> String.valueOf(fishingCoins(player));
             case "fishing_coins_formatted" -> fishingCoinsFormatted(player);
             case "race", "ras" -> race(player) == null ? "BELUM_MEMILIH" : race(player).race(player.getUniqueId());
@@ -72,11 +76,19 @@ public final class VelioraPlaceholderExpansion extends PlaceholderExpansion {
     }
 
     private String playtime(Player player) {
-        long seconds = Math.max(0L, player.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20L);
+        long seconds = playtimeSeconds(player);
         long days = seconds / 86400L;
         long hours = (seconds % 86400L) / 3600L;
         long minutes = (seconds % 3600L) / 60L;
         return days > 0 ? days + "h " + hours + "j" : hours > 0 ? hours + "j " + minutes + "m" : minutes + "m";
+    }
+
+    private long playtimeSeconds(Player player) {
+        return Math.max(0L, player.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20L);
+    }
+
+    private String ratio(long numerator, long denominator) {
+        return String.format(Locale.ROOT, "%.2f", numerator / (double) Math.max(1L, denominator));
     }
 
     private long fishingCoins(Player player) {
