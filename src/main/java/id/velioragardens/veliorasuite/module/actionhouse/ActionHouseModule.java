@@ -33,7 +33,7 @@ public final class ActionHouseModule implements VelioraModule {
         double[] prices = new double[PROMOTION_TIERS.length]; int[] days = new int[PROMOTION_TIERS.length];
         for (int i = 0; i < PROMOTION_TIERS.length; i++) { String path = "promotion." + PROMOTION_TIERS[i]; prices[i] = Math.max(1D, config.getDouble(path + ".price", DEFAULT_PROMOTION_PRICES[i])); days[i] = Math.max(1, config.getInt(path + ".days", DEFAULT_PROMOTION_DAYS[i])); }
         store = new ActionHouseStore(plugin, initialSlots); store.load();
-        gui = new ActionHouseGui(plugin, store, new ActionHouseEconomy(plugin), Math.max(1, config.getLong("listing.duration-days", 14)) * 86400000L, Math.max(1D, config.getDouble("shop.slot-price", 5000)), prices, days);
+        gui = new ActionHouseGui(plugin, store, new ActionHouseEconomy(plugin), Math.max(1, config.getLong("listing.duration-days", 14)) * 86400000L, Math.max(1D, config.getDouble("shop.slot-price", 5000)), Math.max(1D, config.getDouble("shop.purchase-price", 10000)), prices, days);
     }
     /** Tambahkan key baru tanpa menimpa konfigurasi yang telah diubah owner. */
     private void mergeNewDefaults(File file, YamlConfiguration config) {

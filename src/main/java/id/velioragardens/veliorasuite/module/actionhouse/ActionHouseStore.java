@@ -18,6 +18,7 @@ final class ActionHouseStore {
     private final Map<String, Listing> listings = new LinkedHashMap<>();
     private final Map<UUID, Double> pending = new HashMap<>();
     private final Map<UUID, Integer> slots = new HashMap<>();
+    private final Set<UUID> shopOwners = new HashSet<>();
     private final Map<UUID, List<ItemStack>> expired = new HashMap<>();
 
     ActionHouseStore(VelioraSuite plugin, int defaultSlots) {
@@ -27,7 +28,7 @@ final class ActionHouseStore {
     }
 
     void load() {
-        listings.clear(); pending.clear(); slots.clear(); expired.clear();
+        listings.clear(); pending.clear(); slots.clear(); expired.clear(); shopOwners.clear();
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection source = yaml.getConfigurationSection("listings");
         if (source != null) for (String id : source.getKeys(false)) {
@@ -45,6 +46,7 @@ final class ActionHouseStore {
             UUID uuid = UUID.fromString(raw); String p = "profiles." + raw + ".";
             pending.put(uuid, Math.max(0D, yaml.getDouble(p + "pending")));
             slots.put(uuid, Math.max(1, yaml.getInt(p + "slots", defaultSlots)));
+            if (yaml.getBoolean(p + "shop-owned", false)) shopOwners.add(uuid);
             List<ItemStack> items = new ArrayList<>();
             for (Object value : yaml.getList(p + "expired", List.of())) if (value instanceof ItemStack item && !item.getType().isAir()) items.add(item);
             if (!items.isEmpty()) expired.put(uuid, items);
@@ -54,8 +56,8 @@ final class ActionHouseStore {
     void save() {
         YamlConfiguration yaml = new YamlConfiguration();
         for (Listing l : listings.values()) { String p = "listings." + l.id + "."; yaml.set(p + "owner", l.owner.toString()); yaml.set(p + "owner-name", l.ownerName); yaml.set(p + "item", l.item); yaml.set(p + "price", l.price); yaml.set(p + "created-at", l.createdAt); yaml.set(p + "expires-at", l.expiresAt); yaml.set(p + "promoted-until", l.promotedUntil); }
-        Set<UUID> owners = new HashSet<>(); owners.addAll(pending.keySet()); owners.addAll(slots.keySet()); owners.addAll(expired.keySet());
-        for (UUID owner : owners) { String p = "profiles." + owner + "."; yaml.set(p + "pending", pending.getOrDefault(owner, 0D)); yaml.set(p + "slots", slots.getOrDefault(owner, defaultSlots)); yaml.set(p + "expired", expired.getOrDefault(owner, List.of())); }
+        Set<UUID> owners = new HashSet<>(); owners.addAll(pending.keySet()); owners.addAll(slots.keySet()); owners.addAll(expired.keySet()); owners.addAll(shopOwners);
+        for (UUID owner : owners) { String p = "profiles." + owner + "."; yaml.set(p + "pending", pending.getOrDefault(owner, 0D)); yaml.set(p + "slots", slots.getOrDefault(owner, defaultSlots)); yaml.set(p + "shop-owned", shopOwners.contains(owner)); yaml.set(p + "expired", expired.getOrDefault(owner, List.of())); }
         try { File parent = file.getParentFile(); if (parent != null) parent.mkdirs(); yaml.save(file); } catch (IOException e) { plugin.getLogger().warning("ActionHouse gagal disimpan: " + e.getMessage()); }
     }
 
@@ -65,6 +67,8 @@ final class ActionHouseStore {
     void add(UUID owner, String ownerName, ItemStack item, double price, long lifeMillis) { long now = System.currentTimeMillis(); String id = UUID.randomUUID().toString().replace("-", ""); listings.put(id, new Listing(id, owner, ownerName, item.clone(), price, now, now + lifeMillis, 0L)); save(); }
     boolean remove(String id) { boolean result = listings.remove(id) != null; if (result) save(); return result; }
     int capacity(UUID owner) { return slots.getOrDefault(owner, defaultSlots); }
+    boolean hasShop(UUID owner) { return shopOwners.contains(owner); }
+    void buyShop(UUID owner) { shopOwners.add(owner); slots.putIfAbsent(owner, defaultSlots); save(); }
     void addSlot(UUID owner) { slots.put(owner, capacity(owner) + 1); save(); }
     double pending(UUID owner) { return pending.getOrDefault(owner, 0D); }
     void addPending(UUID owner, double amount) { pending.merge(owner, amount, Double::sum); save(); }

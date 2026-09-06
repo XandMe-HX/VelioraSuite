@@ -1,6 +1,8 @@
 # Marketplace native VelioraSuite. Vault + economy provider wajib untuk transaksi uang.
 # Semua angka ekonomi ActionHouse diatur dari sini, tanpa perlu edit kode.
 shop:
+  # Biaya membeli toko pertama kali. Setelah dibeli, nama pemain muncul di toko.
+  purchase-price: 10000
   # Jumlah chest yang langsung terbuka untuk pemain baru.
   initial-slots: 8
   # Biaya Vault untuk membuka satu chain (slot) tambahan.
